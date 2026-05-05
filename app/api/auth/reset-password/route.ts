@@ -6,8 +6,9 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
+    const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return NextResponse.json({ error: "Email and password required" }, { status: 400 });
     }
 
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
     const { data: otpData, error: otpError } = await supabaseAdmin
       .from("otp_codes")
       .select("*")
-      .eq("email", email)
+      .eq("email", normalizedEmail)
       .eq("verified", true)
       .order("id", { ascending: false })
       .limit(1)
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
     const { data: userData, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
     if (usersError) throw new Error(usersError.message);
 
-    const user = userData?.users?.find((u: any) => u.email === email);
+    const user = userData?.users?.find((u: any) => u.email?.toLowerCase() === normalizedEmail);
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -62,8 +63,6 @@ export async function POST(req: Request) {
       .from("otp_codes")
       .update({ verified: false })
       .eq("id", otpData.id);
-
-    console.log("Password successfully reset for user:", user.email);
 
     return NextResponse.json({ 
       message: "Password reset successful",

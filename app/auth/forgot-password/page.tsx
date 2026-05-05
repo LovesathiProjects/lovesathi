@@ -1,206 +1,172 @@
-"use client";
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Eye, EyeOff, ArrowLeft } from "lucide-react";
-import { toast } from "sonner";
-import { StaticBackground } from "@/components/discovery/static-background";
+"use client"
 
-export const dynamic = "force-dynamic";
+import type React from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useRef, useState } from "react"
+import { ArrowLeft, Eye, EyeOff } from "lucide-react"
+import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
 
+export const dynamic = "force-dynamic"
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
-  const [step, setStep] = useState<"request" | "verify" | "reset">("request");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState(["", "", "", ""]);
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const otpInputs = useRef<(HTMLInputElement | null)[]>([]);
+  const router = useRouter()
+  const [step, setStep] = useState<"request" | "verify" | "reset">("request")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState("")
+  const [otp, setOtp] = useState(["", "", "", ""])
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const otpInputs = useRef<(HTMLInputElement | null)[]>([])
 
-  // ✅ Send OTP to email
+  const normalizedEmail = email.trim().toLowerCase()
+
   const handleSendCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+    e.preventDefault()
+    setIsLoading(true)
 
     const res = await fetch("/api/auth/send-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
+      body: JSON.stringify({ email: normalizedEmail }),
+    })
 
-    const data = await res.json();
-    setIsLoading(false);
+    const data = await res.json()
+    setIsLoading(false)
 
-    if (!res.ok) return toast.error(data.error);
+    if (!res.ok) return toast.error(data.error)
 
-    toast.success("OTP sent to your email!");
-    setStep("verify");
-    setTimeout(() => otpInputs.current[0]?.focus(), 200);
-  };
+    toast.success("OTP sent to your email")
+    setStep("verify")
+    setTimeout(() => otpInputs.current[0]?.focus(), 200)
+  }
 
   const handleOtpChange = (index: number, value: string) => {
-    // Only allow single digit
-    const newValue = value.replace(/[^\d]/g, '');
-    
-    if (newValue.length === 0) {
-      // If cleared, just update the state
-      const newOtp = [...otp];
-      newOtp[index] = '';
-      setOtp(newOtp);
-      return;
-    }
+    const digit = value.replace(/[^\d]/g, "").slice(-1)
+    const newOtp = [...otp]
+    newOtp[index] = digit
+    setOtp(newOtp)
 
-    // Take only the last digit if multiple chars somehow entered
-    const digit = newValue.slice(-1);
-    
-    const newOtp = [...otp];
-    newOtp[index] = digit;
-    
-    // Focus next input BEFORE state update to avoid any blocking
     if (digit && index < 3) {
-      const nextInput = otpInputs.current[index + 1];
-      if (nextInput) {
-        // Focus immediately
-        nextInput.focus();
-        nextInput.select();
-      }
+      const nextInput = otpInputs.current[index + 1]
+      nextInput?.focus()
+      nextInput?.select()
     }
-    
-    // Update state after focusing
-    setOtp(newOtp);
-  };
+  }
 
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace") {
-      e.preventDefault();
-      
-      const newOtp = [...otp];
-      
-      if (otp[index]) {
-        // If current input has a value, clear it
-        newOtp[index] = "";
-        setOtp(newOtp);
-      } else if (index > 0) {
-        // If current input is empty, go back to previous
-        const prevInput = otpInputs.current[index - 1];
-        if (prevInput) {
-          prevInput.focus();
-          prevInput.select();
-        }
-        // Clear previous value
-        newOtp[index - 1] = "";
-        setOtp(newOtp);
-      }
+    if (e.key !== "Backspace") return
+    e.preventDefault()
+
+    const newOtp = [...otp]
+    if (otp[index]) {
+      newOtp[index] = ""
+      setOtp(newOtp)
+      return
     }
-  };
+
+    if (index > 0) {
+      const previousInput = otpInputs.current[index - 1]
+      previousInput?.focus()
+      previousInput?.select()
+      newOtp[index - 1] = ""
+      setOtp(newOtp)
+    }
+  }
 
   const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pasteData = e.clipboardData.getData("text").trim();
-    
-    // Only handle if pasted data is 4 digits
+    e.preventDefault()
+    const pasteData = e.clipboardData.getData("text").trim()
+
     if (/^\d{4}$/.test(pasteData)) {
-      const newOtp = pasteData.split("").slice(0, 4);
-      setOtp(newOtp);
-      otpInputs.current[3]?.focus();
+      setOtp(pasteData.split("").slice(0, 4))
+      otpInputs.current[3]?.focus()
     }
-  };
+  }
 
-  // ✅ Verify OTP
   const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+    e.preventDefault()
+    setIsLoading(true)
 
-    const code = otp.join("");
     const res = await fetch("/api/auth/verify-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, otp: code }),
-    });
+      body: JSON.stringify({ email: normalizedEmail, otp: otp.join("") }),
+    })
 
-    const data = await res.json();
-    setIsLoading(false);
+    const data = await res.json()
+    setIsLoading(false)
 
-    if (!res.ok) return toast.error(data.error);
+    if (!res.ok) return toast.error(data.error)
 
-    toast.success("OTP Verified ✅");
-    setStep("reset");
-  };
+    toast.success("OTP verified")
+    setStep("reset")
+  }
 
-  // ✅ Reset password
   const handleReset = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    if (password !== confirmPassword)
-      return toast.error("Passwords do not match");
+    if (password !== confirmPassword) {
+      return toast.error("Passwords do not match")
+    }
 
-    if (password.length < 6)
-      return toast.error("Password must be at least 6 characters");
+    if (password.length < 6) {
+      return toast.error("Password must be at least 6 characters")
+    }
 
-    setIsLoading(true);
+    setIsLoading(true)
 
     const res = await fetch("/api/auth/reset-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+      body: JSON.stringify({ email: normalizedEmail, password }),
+    })
 
-    const data = await res.json();
-    setIsLoading(false);
+    const data = await res.json()
+    setIsLoading(false)
 
-    if (!res.ok) return toast.error(data.error || "Password reset failed");
+    if (!res.ok) return toast.error(data.error || "Password reset failed")
 
-    // ✅ Success toast with better messaging
-    toast.success("Password reset successful! Redirecting to login...", {
+    toast.success("Password reset successful. Redirecting to login...", {
       duration: 2000,
-    });
-    
-    // ✅ Replace history entry to prevent back button issues
+    })
+
     setTimeout(() => {
-      router.replace("/auth");
-    }, 1500);
-  };
+      router.replace("/auth")
+    }, 1500)
+  }
+
+  const title = step === "request" ? "Forgot password" : step === "verify" ? "Verify OTP" : "Reset password"
+  const subtitle =
+    step === "request"
+      ? "Enter your email to receive a secure OTP."
+      : step === "verify"
+        ? "Enter the 4-digit OTP sent to your email."
+        : "Set a new password for your Lovesathi account."
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative">
-      <StaticBackground />
-      
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-black/10 relative z-10">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="p-2"
-          onClick={() => router.push("/auth")}
-        >
-          <ArrowLeft className="w-5 h-5" />
+    <div className="luxe-light-page flex min-h-screen flex-col overflow-x-hidden px-4 py-5 sm:px-6">
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-full border border-[#482b1a]/10 bg-[#fffaf2]/74 px-4 py-3 shadow-sm backdrop-blur-xl">
+        <Button variant="ghost" size="sm" className="rounded-full text-[#18110d]" onClick={() => router.push("/auth")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
         </Button>
-        <h2 className="text-lg font-bold text-black">
-          {step === "request" ? "Forgot password" : step === "verify" ? "Verify OTP" : "Reset password"}
-        </h2>
-        <div className="w-9" /> {/* Spacer for center alignment */}
+        <h2 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">{title}</h2>
+        <div className="w-16" />
       </div>
 
-      {/* Form */}
-      <div className="flex-1 px-6 py-8 overflow-y-auto relative z-10">
-        <div className="max-w-md mx-auto space-y-6">
+      <div className="flex flex-1 items-center justify-center py-10">
+        <div className="luxe-card mx-auto w-full max-w-lg space-y-6 rounded-[2rem] p-6 sm:p-8">
           <div className="space-y-2 text-center">
-            <h1 className="text-2xl sm:text-3xl font-bold text-black">
-              {step === "request" ? "Forgot password" : step === "verify" ? "Verify OTP" : "Reset password"}
-            </h1>
-            <p className="text-base text-black/70">
-              {step === "request" && "Enter your email to get OTP"}
-              {step === "verify" && "Enter 4-digit OTP sent to your email"}
-              {step === "reset" && "Set a new password"}
-            </p>
+            <p className="luxe-kicker text-[#8f001c]">Account recovery</p>
+            <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">{title}</h1>
+            <p className="text-base text-[#6c5a4a]">{subtitle}</p>
           </div>
 
           {step === "request" && (
@@ -214,10 +180,11 @@ export default function ForgotPasswordPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@email.com"
+                  className="h-12 rounded-2xl border-[#482b1a]/20 bg-[#fffaf2]"
                 />
               </div>
 
-              <Button className="w-full font-semibold" type="submit" size="lg" disabled={isLoading}>
+              <Button className="luxe-button h-12 w-full rounded-2xl font-bold" type="submit" size="lg" disabled={isLoading}>
                 {isLoading ? "Sending..." : "Send OTP"}
               </Button>
             </form>
@@ -227,35 +194,30 @@ export default function ForgotPasswordPage() {
             <form onSubmit={handleVerifyOtp} className="space-y-4 pt-4">
               <div className="space-y-2">
                 <Label>Enter OTP</Label>
-                <div className="flex gap-2 justify-center mb-2">
+                <div className="mb-2 flex justify-center gap-2">
                   {otp.map((d, i) => (
                     <input
                       key={i}
                       ref={(el) => {
-                        if (el) otpInputs.current[i] = el;
-                      }}                    
+                        if (el) otpInputs.current[i] = el
+                      }}
                       maxLength={1}
                       value={d}
                       onChange={(e) => handleOtpChange(i, e.target.value)}
-                      onInput={(e) => {
-                        // Ensure only digits are entered
-                        const target = e.target as HTMLInputElement;
-                        target.value = target.value.replace(/[^\d]/g, '');
-                      }}
                       onKeyDown={(e) => handleOtpKeyDown(i, e)}
                       onPaste={handleOtpPaste}
                       onFocus={(e) => e.target.select()}
-                      className="w-12 h-12 text-center text-xl border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      className="h-14 w-14 rounded-2xl border border-[#482b1a]/20 bg-[#fffaf2] text-center text-xl font-bold text-[#18110d] focus:outline-none focus:ring-2 focus:ring-[#b9904d]"
                       inputMode="numeric"
                       pattern="[0-9]"
                       type="text"
-                      autoComplete="off"
+                      autoComplete="one-time-code"
                     />
                   ))}
                 </div>
               </div>
 
-              <Button className="w-full font-semibold" size="lg" disabled={otp.some((d) => !d) || isLoading}>
+              <Button className="luxe-button h-12 w-full rounded-2xl font-bold" size="lg" disabled={otp.some((d) => !d) || isLoading}>
                 {isLoading ? "Verifying..." : "Verify OTP"}
               </Button>
             </form>
@@ -273,12 +235,13 @@ export default function ForgotPasswordPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter new password"
                     required
+                    className="h-12 rounded-2xl border-[#482b1a]/20 bg-[#fffaf2] pr-12"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-black/70"
+                    className="absolute right-1 top-1 h-10 rounded-xl px-3 text-[#6c5a4a] hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -296,12 +259,13 @@ export default function ForgotPasswordPage() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm new password"
                     required
+                    className="h-12 rounded-2xl border-[#482b1a]/20 bg-[#fffaf2] pr-12"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-black/70"
+                    className="absolute right-1 top-1 h-10 rounded-xl px-3 text-[#6c5a4a] hover:bg-transparent"
                     onClick={() => setShowConfirm(!showConfirm)}
                   >
                     {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -309,12 +273,12 @@ export default function ForgotPasswordPage() {
                 </div>
               </div>
 
-              <Button className="w-full font-semibold" size="lg" disabled={isLoading}>
+              <Button className="luxe-button h-12 w-full rounded-2xl font-bold" size="lg" disabled={isLoading}>
                 {isLoading ? "Updating..." : "Reset Password"}
               </Button>
 
               <Separator />
-              <Button asChild variant="link" className="w-full">
+              <Button asChild variant="link" className="w-full font-bold text-[#8f001c]">
                 <Link href="/auth">Back to login</Link>
               </Button>
             </form>
@@ -322,5 +286,5 @@ export default function ForgotPasswordPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

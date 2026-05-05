@@ -15,10 +15,11 @@ export default function GoogleLoginButton({ variant = "signup" }: GoogleLoginBut
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true)
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || window.location.origin
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${siteUrl}/auth/callback`,
         },
       })
       if (error) throw error
@@ -34,7 +35,7 @@ export default function GoogleLoginButton({ variant = "signup" }: GoogleLoginBut
   return (
     <Button
       variant="outline"
-      className={`w-full bg-white text-black border-2 border-black font-semibold transition-all hover:border-[#97011A] hover:text-[#97011A] active:bg-black/5 ${
+      className={`h-12 w-full rounded-2xl border border-[#482b1a]/18 bg-[#fffaf2]/86 font-bold text-[#18110d] shadow-sm transition-all hover:border-[#8f001c]/40 hover:bg-white hover:text-[#8f001c] active:bg-[#f6ead8] ${
         isPressed || isLoading ? "opacity-80" : ""
       }`}
       size="lg"

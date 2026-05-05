@@ -13,10 +13,11 @@ type Msg91EmailResponse = {
 export async function POST(req: Request) {
   try {
     const { email } = await req.json();
-    if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
+    const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+    if (!normalizedEmail) return NextResponse.json({ error: "Email required" }, { status: 400 });
 
     const msg91ApiKey = process.env.MSG91_API_KEY;
-    const msg91TemplateId = process.env.MSG91_EMAIL_TEMPLATE_ID;
+    const msg91TemplateId = process.env.MSG91_FORGOT_PASSWORD_TEMPLATE_ID || process.env.MSG91_EMAIL_TEMPLATE_ID;
     const msg91Domain = process.env.MSG91_EMAIL_DOMAIN || "no-reply.lovesathi.com";
     const msg91FromEmail = process.env.MSG91_EMAIL_FROM || `dev@${msg91Domain}`;
     const msg91FromName = process.env.MSG91_EMAIL_FROM_NAME || "LoveSathi";
@@ -27,17 +28,17 @@ export async function POST(req: Request) {
 
     const { data, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
     if (usersError) throw new Error(usersError.message);
-    const user = data?.users?.find((u: any) => u.email === email);
+    const user = data?.users?.find((u: any) => u.email?.toLowerCase() === normalizedEmail);
 
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-    const userName = user.user_metadata?.name || user.user_metadata?.full_name || email.split("@")[0];
+    const userName = user.user_metadata?.name || user.user_metadata?.full_name || normalizedEmail.split("@")[0];
     const otp = randomInt(1000, 9999).toString();
 
     const { error: otpError } = await supabaseAdmin
       .from("otp_codes")
       .insert({
-        email,
+        email: normalizedEmail,
         otp,
         expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
       });
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         recipients: [
           {
-            to: [{ email }],
+            to: [{ email: normalizedEmail }],
             variables: {
               name: userName,
               otp,

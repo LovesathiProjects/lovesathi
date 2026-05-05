@@ -7,14 +7,15 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   try {
     const { email, otp } = await req.json();
+    const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
 
-    if (!email || !otp)
+    if (!normalizedEmail || !otp)
       return NextResponse.json({ error: "Email & OTP required" }, { status: 400 });
 
     const { data, error } = await supabaseAdmin
       .from("otp_codes")
       .select("*")
-      .eq("email", email)
+      .eq("email", normalizedEmail)
       .eq("otp", otp)
       .order("id", { ascending: false })
       .limit(1)

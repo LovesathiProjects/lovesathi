@@ -1,0 +1,11 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#18110D"/>
+  <circle cx="154" cy="92" r="280" fill="#8F001C" opacity="0.42"/>
+  <circle cx="1050" cy="64" r="300" fill="#B9904D" opacity="0.28"/>
+  <rect x="70" y="70" width="1060" height="490" rx="52" fill="#FFFAF2" fill-opacity="0.08" stroke="#D9B978" stroke-opacity="0.34" stroke-width="2"/>
+  <circle cx="184" cy="182" r="54" fill="#8F001C" stroke="#D9B978" stroke-width="6"/>
+  <path d="M184 216C177 209 151 187 141 175C130 162 132 144 147 137C160 131 174 138 184 151C194 138 208 131 221 137C236 144 238 162 227 175C217 187 191 209 184 216Z" fill="#FFFAF2"/>
+  <text x="150" y="330" fill="#FFFAF2" font-family="Georgia, serif" font-size="92" font-weight="700" letter-spacing="-5">Lovesathi</text>
+  <text x="153" y="395" fill="#F2DFBD" font-family="Arial, sans-serif" font-size="32" font-weight="700" letter-spacing="8">PREMIUM MATRIMONY</text>
+  <text x="153" y="462" fill="#FFFAF2" fill-opacity="0.86" font-family="Arial, sans-serif" font-size="34">Verified. Private. Family-ready.</text>
+</svg>

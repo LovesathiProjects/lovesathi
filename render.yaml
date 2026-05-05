@@ -17,9 +17,13 @@ services:
         value: https://lovesathi.com
       - key: NEXT_PUBLIC_SOCKET_URL
         value: https://socket.lovesathi.com
+      - key: ADMIN_EMAILS
+        sync: false
       - key: MSG91_API_KEY
         sync: false
       - key: MSG91_EMAIL_TEMPLATE_ID
+        sync: false
+      - key: MSG91_FORGOT_PASSWORD_TEMPLATE_ID
         sync: false
       - key: MSG91_EMAIL_DOMAIN
         value: no-reply.lovesathi.com

@@ -34,12 +34,14 @@ export function SocketProvider({ children }: SocketProviderProps) {
         const { data: { session }, error } = await supabase.auth.getSession()
 
         if (error || !session?.access_token) {
-          console.error('No session found for Socket.io connection')
           return
         }
 
         // Socket.io server URL
-        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001'
+        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL
+        if (!socketUrl) {
+          return
+        }
 
         // Create socket connection with authentication
         const newSocket = io(socketUrl, {
@@ -118,4 +120,3 @@ export function SocketProvider({ children }: SocketProviderProps) {
     </SocketContext.Provider>
   )
 }
-

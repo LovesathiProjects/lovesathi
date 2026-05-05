@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -22,52 +23,49 @@ interface PremiumPlan {
 const premiumPlans: PremiumPlan[] = [
   {
     id: "monthly",
-    name: "Premium",
+    name: "Essential",
     duration: "1 Month",
-    price: "₹999",
+    price: "INR 999",
     features: [
-      "Unlimited likes",
-      "See who liked you",
-      "5 Super Likes per day",
-      "1 Boost per month",
-      "Advanced filters",
+      "Unlimited profile interests",
+      "See who shortlisted you",
+      "Advanced partner filters",
+      "Verified profile priority",
       "Read receipts",
-      "Priority support",
+      "Priority support queue",
     ],
   },
   {
     id: "quarterly",
-    name: "Premium Plus",
+    name: "Signature",
     duration: "3 Months",
-    price: "₹2,499",
-    originalPrice: "₹2,997",
+    price: "INR 2,499",
+    originalPrice: "INR 2,997",
     discount: "Save 17%",
     features: [
-      "Everything in Premium",
-      "10 Super Likes per day",
-      "3 Boosts per month",
-      "Incognito mode",
-      "Passport feature",
-      "Profile insights",
+      "Everything in Essential",
+      "Priority discovery placement",
+      "Private photo reveal controls",
+      "Contact intent insights",
+      "Family-ready profile prompts",
       "VIP customer support",
     ],
     isPopular: true,
   },
   {
     id: "yearly",
-    name: "Premium Gold",
+    name: "Heritage",
     duration: "12 Months",
-    price: "₹7,999",
-    originalPrice: "₹11,988",
+    price: "INR 7,999",
+    originalPrice: "INR 11,988",
     discount: "Save 33%",
     features: [
-      "Everything in Premium Plus",
-      "Unlimited Super Likes",
-      "5 Boosts per month",
+      "Everything in Signature",
       "Top Picks feature",
-      "Advanced matching algorithm",
-      "Profile verification priority",
-      "Exclusive events access",
+      "Advanced compatibility signals",
+      "Priority verification review",
+      "Premium support concierge",
+      "Exclusive event readiness",
     ],
   },
 ]
@@ -75,28 +73,28 @@ const premiumPlans: PremiumPlan[] = [
 const premiumFeatures = [
   {
     icon: Star,
-    title: "Unlimited Likes",
-    description: "Like as many profiles as you want without daily limits",
+    title: "Unlimited Interests",
+    description: "Express interest in serious profiles without daily limits",
   },
   {
     icon: Eye,
-    title: "See Who Likes You",
-    description: "View all the people who have already liked your profile",
+    title: "See Who Shortlisted You",
+    description: "Understand who is already considering your profile",
   },
   {
     icon: Zap,
-    title: "Super Likes",
-    description: "Stand out with Super Likes to get 3x more matches",
+    title: "Priority Discovery",
+    description: "Stand out respectfully in high-intent discovery moments",
   },
   {
     icon: Star,
-    title: "Profile Boosts",
-    description: "Be the top profile in your area for 30 minutes",
+    title: "Profile Polish",
+    description: "Prompts and signals that make your profile feel complete",
   },
   {
     icon: MessageCircle,
     title: "Advanced Filters",
-    description: "Filter by education, lifestyle, interests and more",
+    description: "Filter by education, lifestyle, family context, and preferences",
   },
 ]
 
@@ -284,8 +282,8 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
             <div className="text-center space-y-2">
               <p className={cn("text-xs", isMatrimony ? "text-[#666666]" : "text-[#A1A1AA]")}>Cancel anytime. Terms and conditions apply.</p>
               <div className={cn("flex items-center justify-center space-x-4 text-xs", isMatrimony ? "text-[#666666]" : "text-[#A1A1AA]")}>
-                <button className={cn("underline transition-colors", isMatrimony ? "hover:text-black" : "hover:text-white")}>Terms of Service</button>
-                <button className={cn("underline transition-colors", isMatrimony ? "hover:text-black" : "hover:text-white")}>Privacy Policy</button>
+                <Link href="/terms" className={cn("underline transition-colors", isMatrimony ? "hover:text-black" : "hover:text-white")}>Terms of Service</Link>
+                <Link href="/privacy" className={cn("underline transition-colors", isMatrimony ? "hover:text-black" : "hover:text-white")}>Privacy Policy</Link>
               </div>
             </div>
           </div>

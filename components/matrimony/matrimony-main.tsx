@@ -662,31 +662,34 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       {/* Floating header elements */}
       {currentScreen === "discover" && (
         <>
-          <div className="fixed top-3 left-4 z-40 text-xl font-semibold bg-white backdrop-blur-xl border border-[#E5E5E5] px-3 py-1.5 rounded-lg shadow-lg text-black">Find your match</div>
+          <div className="fixed top-3 left-4 z-40 rounded-full border border-[#d9b978]/30 bg-[#fffaf2]/82 px-4 py-2 shadow-[0_18px_45px_rgba(24,17,13,0.14)] backdrop-blur-xl">
+            <p className="luxe-kicker text-[0.62rem] text-[#8f001c]">Lovesathi</p>
+            <p className="font-serif text-xl font-bold leading-none tracking-[-0.04em] text-[#18110d]">Find your match</p>
+          </div>
           <div className="fixed top-3 right-3 z-40">
             <Button
               variant="secondary"
               size="default"
-              className="rounded-full px-5 py-4 shadow-md bg-white backdrop-blur-xl border border-[#E5E5E5] hover:bg-gray-50 text-black"
+              className="rounded-full border border-[#d9b978]/40 bg-[#fffaf2]/86 px-5 py-4 text-[#18110d] shadow-[0_18px_45px_rgba(24,17,13,0.14)] backdrop-blur-xl hover:bg-white"
               onClick={() => setShowFilters(true)}
             >
-              <Filter className="w-5 h-5 text-black" />
+              <Filter className="h-5 w-5 text-[#8f001c]" />
             </Button>
           </div>
         </>
       )}
 
       {currentScreen === "discover" && (
-        <div className="fixed inset-0 h-screen w-screen overflow-hidden flex flex-col relative bg-white">
-          {/* Dynamic Background */}
+        <div className="fixed inset-0 h-screen w-screen overflow-hidden flex flex-col relative bg-[#fbf6ed]">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(185,144,77,0.22),transparent_26rem),radial-gradient(circle_at_90%_10%,rgba(143,0,28,0.18),transparent_26rem),linear-gradient(135deg,#fffaf2,#fbf6ed_52%,#f0ddba)]" />
           <DynamicBackground imageUrl={currentProfile?.photos?.[0] || null} />
           
-          <div className="flex-1 overflow-hidden flex items-center justify-center p-4">
+          <div className="relative flex-1 overflow-hidden flex items-center justify-center p-4 pt-24">
             {loading ? (
               <div className="flex items-center justify-center h-full w-full">
-                <div className="text-center space-y-4 bg-white backdrop-blur-sm p-6 rounded-xl shadow-lg border border-[#E5E5E5]">
-                  <div className="w-12 h-12 mx-auto border-4 border-[#97011A] border-t-transparent rounded-full animate-spin" />
-                  <p className="text-sm text-black font-medium">Loading profiles...</p>
+                <div className="luxe-card rounded-[2rem] p-7 text-center">
+                  <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#8f001c] border-t-transparent" />
+                  <p className="mt-4 text-sm font-bold text-[#18110d]">Curating profiles...</p>
                 </div>
               </div>
             ) : (
@@ -727,21 +730,21 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                         ))}
                     </div>
                   ) : (
-                    <Card className="w-full max-w-sm h-96 flex items-center justify-center bg-white border border-[#E5E5E5] shadow-sm">
+                    <Card className="luxe-card flex h-96 w-full max-w-sm items-center justify-center rounded-[2rem] border-[#d9b978]/30">
                       <CardContent className="text-center space-y-4">
-                        <div className="w-16 h-16 mx-auto bg-[#97011A]/10 rounded-full flex items-center justify-center">
-                          <Heart className="w-8 h-8 text-[#97011A]" />
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#8f001c]/10">
+                          <Heart className="h-8 w-8 text-[#8f001c]" />
                         </div>
                         <div className="space-y-2">
-                          <h3 className="text-lg font-semibold text-black">No more profiles</h3>
-                          <p className="text-sm text-[#444444]">
+                          <h3 className="font-serif text-2xl font-bold text-[#18110d]">No more profiles</h3>
+                          <p className="text-sm text-[#6c5a4a]">
                             {profiles.length === 0 
                               ? "No profiles available. Check back later!" 
                               : "Check back later for new matches"}
                           </p>
                         </div>
                         {profiles.length > 0 && (
-                          <Button onClick={() => setCurrentCardIndex(0)} className="bg-[#97011A] hover:bg-[#7A0115] text-white">Start Over</Button>
+                          <Button onClick={() => setCurrentCardIndex(0)} className="luxe-button rounded-full">Start Over</Button>
                         )}
                       </CardContent>
                     </Card>
