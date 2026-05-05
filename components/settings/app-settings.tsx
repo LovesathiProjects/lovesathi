@@ -157,11 +157,11 @@ interface AppSettingsProps {
   onNavigate?: SettingsNavigateHandler
   onLogout?: () => void
   onBack?: () => void
-  mode?: 'dating' | 'matrimony'
+  mode?: 'matrimony'
 }
 
-export function AppSettings({ onNavigate, onLogout, onBack, mode = 'dating' }: AppSettingsProps) {
-  const isMatrimony = mode === 'matrimony'
+export function AppSettings({ onNavigate, onLogout, onBack, mode = 'matrimony' }: AppSettingsProps) {
+  const isMatrimony = true
   const [settings, setSettings] = useState<Record<string, boolean>>({
     push_notifications: true,
     message_notifications: true,

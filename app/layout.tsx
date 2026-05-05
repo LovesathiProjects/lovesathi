@@ -23,8 +23,8 @@ const dancingScript = Dancing_Script({
 })
 
 export const metadata: Metadata = {
-  title: "Lovesathi - Dating & Matrimony",
-  description: "Modern dating app for serious relationships and matrimony",
+  title: "Lovesathi - Matrimony",
+  description: "A matrimony app for serious life-partner discovery.",
   generator: "v0.app",
 }
 

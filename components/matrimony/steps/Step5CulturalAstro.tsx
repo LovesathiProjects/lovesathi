@@ -102,7 +102,6 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
       setIsOtherMotherTongue(false)
       setOtherMotherTongueValue("")
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -370,5 +369,4 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
     </Form>
   )
 }
-
 

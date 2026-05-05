@@ -88,7 +88,7 @@ interface UserInfo {
   accountType: string
 }
 
-export function SettingsScreen({ onNavigate, onLogout, mode, onBack }: { onNavigate?: SettingsNavigateHandler; onLogout?: () => void; mode?: 'dating' | 'matrimony'; onBack?: () => void }) {
+export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: SettingsNavigateHandler; onLogout?: () => void; mode?: 'matrimony'; onBack?: () => void }) {
   const isMatrimony = true
   const [userInfo, setUserInfo] = useState<UserInfo>({
     name: "Loading...",

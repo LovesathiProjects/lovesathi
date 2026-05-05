@@ -83,6 +83,5 @@ export interface Message {
   status: 'sent' | 'delivered' | 'seen'
   delivered_to: string[]
   seen_by: string[]
-  match_type: 'dating' | 'matrimony'
+  match_type: 'matrimony'
 }
-

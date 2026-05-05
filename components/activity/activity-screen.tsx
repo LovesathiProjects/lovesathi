@@ -242,9 +242,7 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
                 try {
                   const { data: { user } } = await supabase.auth.getUser()
                   if (user) {
-                    const activityData = mode === 'matrimony'
-                      ? await getMatrimonyActivity(user.id)
-                      : await getDatingActivity(user.id)
+                    const activityData = await getMatrimonyActivity(user.id)
                     setActivities(activityData)
                   }
                 } catch (err: any) {
@@ -325,12 +323,8 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
                         e.stopPropagation()
                         const { data: { user } } = await supabase.auth.getUser()
                         if (user) {
-                          const { getMatchId, getMatchIdAuto } = await import('@/lib/chatService')
-                          // In matrimony mode, always use matrimony match type
-                          // In dating mode, try both (dating first)
-                          const matchId = mode === 'matrimony'
-                            ? await getMatchId(user.id, activity.userId, 'matrimony')
-                            : (await getMatchIdAuto(user.id, activity.userId))?.matchId
+                          const { getMatchId } = await import('@/lib/chatService')
+                          const matchId = await getMatchId(user.id, activity.userId, 'matrimony')
                           
                           if (matchId && onMatchClick) {
                             onMatchClick(matchId)

@@ -53,7 +53,7 @@ export async function getMatchId(
 }
 
 /**
- * Get match_id from user IDs (tries both dating and matrimony)
+ * Get matrimony match_id from user IDs.
  */
 export async function getMatchIdAuto(
   userId: string,
@@ -69,7 +69,7 @@ export async function getMatchIdAuto(
 export async function getMessages(
   matchId: string,
   userId: string,
-  matchType: 'dating' | 'matrimony'
+  matchType: 'matrimony'
 ): Promise<Message[]> {
   try {
     const { data, error } = await supabase
@@ -100,7 +100,7 @@ export async function sendMessage(
   senderId: string,
   receiverId: string,
   content: string,
-  matchType: 'dating' | 'matrimony',
+  matchType: 'matrimony',
   allowEmpty: boolean = false,
   replyToMessageId?: string | null
 ): Promise<Message | null> {
@@ -188,7 +188,7 @@ export async function markMessageSeen(messageId: string, userId: string): Promis
  */
 export function subscribeToMessages(
   matchId: string,
-  matchType: 'dating' | 'matrimony',
+  matchType: 'matrimony',
   callbacks: {
     onInsert?: (message: Message) => void
     onUpdate?: (message: Message) => void
@@ -257,7 +257,7 @@ export function subscribeToMessages(
 /**
  * Get the last message for a match
  */
-export async function getLastMessage(matchId: string, matchType: 'dating' | 'matrimony'): Promise<Message | null> {
+export async function getLastMessage(matchId: string, matchType: 'matrimony'): Promise<Message | null> {
   try {
     const { data, error } = await supabase
       .from('messages')
@@ -287,7 +287,7 @@ export async function getLastMessage(matchId: string, matchType: 'dating' | 'mat
 /**
  * Get unread message count for a match
  */
-export async function getUnreadCount(matchId: string, userId: string, matchType: 'dating' | 'matrimony'): Promise<number> {
+export async function getUnreadCount(matchId: string, userId: string, matchType: 'matrimony'): Promise<number> {
   try {
     const { count, error } = await supabase
       .from('messages')
@@ -425,7 +425,7 @@ export async function deleteMessageForEveryone(
 export async function deleteAllMessagesForUser(
   matchId: string,
   userId: string,
-  matchType: 'dating' | 'matrimony'
+  matchType: 'matrimony'
 ): Promise<boolean> {
   try {
     // Get all messages in this match where the user is either sender or receiver

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Dating & Matrimony App",
-    "slug": "dating-matrimony-app",
+    "name": "Lovesathi",
+    "slug": "lovesathi",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./public/placeholder-logo.png",
@@ -9,7 +9,7 @@
     "splash": {
       "image": "./public/placeholder-logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#FFFFFF"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -20,13 +20,13 @@
       "infoPlist": {
         "NSCameraUsageDescription": "We need access to your camera for KYC identity verification. This helps keep our community safe and authentic.",
         "NSPhotoLibraryUsageDescription": "We need access to your photo library to upload profile photos.",
-        "NSMicrophoneUsageDescription": "Microphone access is needed for video calls with your matches."
+        "NSMicrophoneUsageDescription": "Microphone access is needed for future calling features."
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./public/placeholder-logo.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#FFFFFF"
       },
       "package": "com.lovesathi.app",
       "permissions": [
@@ -52,4 +52,3 @@
     ]
   }
 }
-

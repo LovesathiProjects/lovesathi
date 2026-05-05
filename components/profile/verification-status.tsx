@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Upload, Camera, X, FileText, AlertCircle, CheckCircle, Shield, ArrowLeft } from "lucide-react"
-import { StaticBackground } from "@/components/discovery/static-background"
 import { FaceScanModal } from "@/components/kyc/FaceScanModal"
 import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
@@ -19,8 +18,8 @@ import {
 
 type VerificationStatus = 'pending' | 'approved' | 'rejected' | 'in_review' | null
 
-export function VerificationStatus({ onBack, mode = 'dating' }: { onBack?: () => void; mode?: 'dating' | 'matrimony' }) {
-  const isMatrimony = mode === 'matrimony'
+export function VerificationStatus({ onBack }: { onBack?: () => void; mode?: 'matrimony' }) {
+  const isMatrimony = true
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>(null)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [filePreview, setFilePreview] = useState<string | null>(null)
@@ -183,7 +182,6 @@ export function VerificationStatus({ onBack, mode = 'dating' }: { onBack?: () =>
 
   return (
     <div className={cn("min-h-screen relative", isMatrimony ? "bg-white" : "bg-[#0E0F12]")}>
-      {!isMatrimony && <StaticBackground />}
       <div className={cn(
         "sticky top-0 border-b shadow-lg z-10",
         isMatrimony 

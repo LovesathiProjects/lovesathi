@@ -253,7 +253,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
               variant="ghost" 
               disabled={isLoading} 
               onClick={() => {
-                // Navigate back to path selection by going to home and triggering path-select step
+                // Navigate back to the welcome step.
                 try {
                   localStorage.removeItem("onboardingCompleteMode")
                   localStorage.removeItem("onboardingShowComplete")
@@ -279,5 +279,4 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
     </Form>
   )
 }
-
 

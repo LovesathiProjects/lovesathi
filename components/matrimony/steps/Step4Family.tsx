@@ -104,7 +104,6 @@ export function Step4Family({ onNext, onBack }: { onNext: () => void; onBack: ()
       setIsOtherMotherOccupation(false)
       setOtherMotherOccupationValue("")
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -409,5 +408,4 @@ export function Step4Family({ onNext, onBack }: { onNext: () => void; onBack: ()
     </Form>
   )
 }
-
 

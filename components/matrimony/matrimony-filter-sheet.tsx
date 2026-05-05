@@ -143,7 +143,7 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
             </Label>
             <Slider
               value={filters.ageRange}
-              onValueChange={(value) => setFilters((prev) => ({ ...prev, ageRange: value }))}
+              onValueChange={(value) => setFilters((prev) => ({ ...prev, ageRange: value as [number, number] }))}
               max={60}
               min={18}
               step={1}
@@ -160,7 +160,7 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
             </Label>
             <Slider
               value={filters.heightRange}
-              onValueChange={(value) => setFilters((prev) => ({ ...prev, heightRange: value }))}
+              onValueChange={(value) => setFilters((prev) => ({ ...prev, heightRange: value as [number, number] }))}
               max={250}
               min={90}
               step={1}

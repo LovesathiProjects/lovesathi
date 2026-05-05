@@ -60,6 +60,5 @@ CREATE POLICY "Users can delete their shortlist entries"
 -- ============================================
 -- NOTES
 -- ============================================
--- * Shortlisting is a matrimony-only feature; no dating flows should insert rows here.
+-- * Shortlisting is a matrimony-only feature.
 -- * Add API helpers to insert/delete/select from this table via Supabase client.
-

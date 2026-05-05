@@ -215,7 +215,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
     console.log('📅 Calculated age:', age)
     
     if (age < 18) {
-      setUnderageMessage("You're underage to use a dating app.")
+      setUnderageMessage("You're underage to use Lovesathi.")
       setProfileValid(false)
       toast({
         title: "Age Restriction",

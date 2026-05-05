@@ -1,6 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import type {
+  FaceDetector,
+  MediaPipeFaceDetectorTfjsModelConfig,
+} from "@tensorflow-models/face-detection"
 
 /**
  * Custom hook for face detection using TensorFlow.js MediaPipe Face Detection
@@ -16,9 +20,8 @@ export function useFaceDetection() {
   const [numFaces, setNumFaces] = useState(0)
   
   // Store detector instance
-  const detectorRef = useRef<any>(null)
+  const detectorRef = useRef<FaceDetector | null>(null)
   const tfRef = useRef<any>(null)
-  const faceDetectionRef = useRef<any>(null)
 
   /**
    * Load TensorFlow.js and MediaPipe Face Detection model
@@ -46,15 +49,13 @@ export function useFaceDetection() {
         if (!isMounted) return
 
         tfRef.current = tf
-        faceDetectionRef.current = faceDetection
 
         // Create detector with MediaPipe FaceDetector model
         // This is lightweight and fast compared to BlazeFace
         const model = faceDetection.SupportedModels.MediaPipeFaceDetector
-        const detectorConfig: faceDetection.MediaPipeFaceDetectorTfjsModelConfig = {
+        const detectorConfig: MediaPipeFaceDetectorTfjsModelConfig = {
           runtime: "tfjs",
           maxFaces: 1, // Only detect one face for performance
-          refineLandmarks: false, // Disable for better performance
         }
 
         const detector = await faceDetection.createDetector(model, detectorConfig)
@@ -81,13 +82,11 @@ export function useFaceDetection() {
           if (!isMounted) return
           
           tfRef.current = tf
-          faceDetectionRef.current = faceDetection
 
           const model = faceDetection.SupportedModels.MediaPipeFaceDetector
-          const detectorConfig: faceDetection.MediaPipeFaceDetectorTfjsModelConfig = {
+          const detectorConfig: MediaPipeFaceDetectorTfjsModelConfig = {
             runtime: "tfjs",
             maxFaces: 1,
-            refineLandmarks: false,
           }
 
           const detector = await faceDetection.createDetector(model, detectorConfig)
@@ -282,4 +281,3 @@ export function useFaceDetection() {
   }
 }
 */
-

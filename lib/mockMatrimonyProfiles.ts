@@ -2,10 +2,11 @@ export interface MatrimonyProfile {
   id: string
   name: string
   age: number
-  education: string
+  education?: string
   profession: string
   location: string
   community?: string
+  religion?: string
   photos: string[]
   bio?: string
   interests?: string[]

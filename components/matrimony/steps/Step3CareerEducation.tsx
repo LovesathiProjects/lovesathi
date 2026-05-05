@@ -111,7 +111,6 @@ export function Step3CareerEducation({ onNext, onBack }: { onNext: () => void; o
       setIsOtherJobTitle(false)
       setOtherJobTitleValue("")
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -357,5 +356,4 @@ export function Step3CareerEducation({ onNext, onBack }: { onNext: () => void; o
     </Form>
   )
 }
-
 

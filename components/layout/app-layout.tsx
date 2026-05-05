@@ -14,7 +14,7 @@ interface AppLayoutProps {
   onSettingsClick?: () => void
   showSettingsButton?: boolean
   currentScreen?: string
-  mode?: 'dating' | 'matrimony'
+  mode?: 'matrimony'
 }
 
 export function AppLayout({ 
@@ -25,15 +25,14 @@ export function AppLayout({
   onSettingsClick,
   showSettingsButton = true,
   currentScreen,
-  mode = 'dating'
+  mode = 'matrimony'
 }: AppLayoutProps) {
   const isDiscoverScreen = currentScreen === "discover"
-  const isMatrimony = mode === 'matrimony'
   
   return (
     <div className={cn(
       "min-h-screen", 
-      isMatrimony ? "bg-white" : "bg-[#0E0F12]",
+      "bg-white",
       isDiscoverScreen && "h-screen overflow-hidden"
     )}>
       {/* Settings Icon - Only show on profile page */}
@@ -43,8 +42,8 @@ export function AppLayout({
             className="w-6 h-6 cursor-pointer" 
             onClick={onSettingsClick}
             style={{ 
-              color: isMatrimony ? '#000000' : '#FFFFFF', 
-              stroke: isMatrimony ? '#000000' : '#FFFFFF', 
+              color: '#000000',
+              stroke: '#000000',
               fill: 'none' 
             }}
             strokeWidth={2}

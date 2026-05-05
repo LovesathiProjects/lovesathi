@@ -83,7 +83,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
   const [uploading, setUploading] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [chatUser, setChatUser] = useState<ChatUser | null>(null)
-  const [matchType, setMatchType] = useState<'dating' | 'matrimony'>('matrimony')
+  const [matchType, setMatchType] = useState<'matrimony'>('matrimony')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const channelRef = useRef<RealtimeChannel | null>(null)
   const observerRef = useRef<IntersectionObserver | null>(null)
@@ -409,7 +409,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
           .single()
 
         let otherUserId: string | null = null
-        let currentMatchType: 'dating' | 'matrimony' = 'matrimony'
+        let currentMatchType: 'matrimony' = 'matrimony'
 
         if (matchError || !matchData) {
           console.error('Match not found')
@@ -1327,7 +1327,6 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
                   ? "border-[#E5E5E5] bg-white text-black placeholder:text-[#444444]"
                   : "border-white/20 bg-[#14161B] text-white"
               )}
-              placeholder="Type a message..."
               disabled={uploading}
             />
             <Button

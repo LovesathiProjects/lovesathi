@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient'
 export interface ReportData {
   reporter_id: string
   reported_user_id: string
-  match_type: 'dating' | 'matrimony'
+  match_type: 'matrimony'
   reason: string
   description?: string
   created_at: string
@@ -44,14 +44,6 @@ export async function reportUser(reportData: Omit<ReportData, 'created_at'>): Pr
 }
 
 export const REPORT_REASONS = {
-  dating: [
-    'Inappropriate behavior',
-    'Fake profile',
-    'Spam or scam',
-    'Harassment',
-    'Underage user',
-    'Other'
-  ],
   matrimony: [
     'Inappropriate behavior',
     'Fake profile',
@@ -62,7 +54,7 @@ export const REPORT_REASONS = {
   ]
 } as const
 
-export async function getUserReports(userId: string, matchType: 'dating' | 'matrimony'): Promise<ReportData[]> {
+export async function getUserReports(userId: string, matchType: 'matrimony'): Promise<ReportData[]> {
   try {
     const { data, error } = await supabase
       .from('user_reports')

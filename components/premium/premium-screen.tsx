@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Crown, Eye, MessageCircle, Zap, Star, Check, ArrowLeft } from "lucide-react"
-import { StaticBackground } from "@/components/discovery/static-background"
 import { cn } from "@/lib/utils"
 
 interface PremiumPlan {
@@ -101,13 +100,12 @@ const premiumFeatures = [
   },
 ]
 
-export function PremiumScreen({ onPlanSelect, onSubscribe, onBack, mode = 'dating' }: { onPlanSelect?: (planId: string) => void; onSubscribe?: (planId: string) => void; onBack?: () => void; mode?: 'dating' | 'matrimony' }) {
+export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSelect?: (planId: string) => void; onSubscribe?: (planId: string) => void; onBack?: () => void; mode?: 'matrimony' }) {
   const [selectedPlan, setSelectedPlan] = useState<string>("quarterly")
-  const isMatrimony = mode === 'matrimony'
+  const isMatrimony = true
 
   return (
     <div className={cn("min-h-screen relative", isMatrimony ? "bg-white" : "bg-[#0E0F12]")}>
-      {!isMatrimony && <StaticBackground />}
       {/* Header */}
       <div className={cn(
         "sticky top-0 border-b shadow-lg z-10",
