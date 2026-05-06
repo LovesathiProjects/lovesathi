@@ -450,8 +450,8 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
           id: otherUserId,
           name: profile?.name || 'Unknown',
           avatar: (profile?.photos as string[])?.[0] || '/placeholder-user.jpg',
-          isOnline: false, // TODO: Implement online status
-          isPremium: false, // TODO: Get premium status
+          isOnline: false,
+          isPremium: false,
         })
 
         // Load messages

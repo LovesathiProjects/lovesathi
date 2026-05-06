@@ -197,25 +197,24 @@ export function AppSettings({ onNavigate, onLogout, onBack, mode = 'matrimony' }
     try {
       setIsDeleting(true)
 
-      // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
 
-      if (userError || !user) {
+      if (!session?.access_token) {
         toast({
           title: "Error",
-          description: "Unable to verify user session",
+          description: "Please sign in again before deleting your account.",
           variant: "destructive",
         })
         return
       }
 
-      // Call delete account API
       const response = await fetch('/api/auth/delete-account', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ userId: user.id }),
       })
 
       const data = await response.json()
@@ -233,17 +232,14 @@ export function AppSettings({ onNavigate, onLogout, onBack, mode = 'matrimony' }
         title: "Account Deleted",
         description: "Your account and all data have been permanently deleted.",
       })
-
-      // Call logout handler to redirect user
       setTimeout(() => {
         handleLogout()
       }, 1500)
 
     } catch (error: any) {
-      console.error('Error deleting account:', error)
       toast({
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: error.message || "An unexpected error occurred. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -403,7 +399,7 @@ export function AppSettings({ onNavigate, onLogout, onBack, mode = 'matrimony' }
           <AlertDialogHeader>
             <AlertDialogTitle>Delete account?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your account and all data.
+              This action cannot be undone. This will permanently delete your account, profile, verification records, photos, matches, messages, and saved profiles where database cascades apply.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

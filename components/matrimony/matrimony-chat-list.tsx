@@ -61,8 +61,6 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
     onMessage: async (message: Message) => {
       if (!currentUserId) return
 
-      console.log('Matrimony chat list received message:', message)
-
       // Update the chat list when a new message arrives
       setChats((prevChats) => {
         const chatIndex = prevChats.findIndex((chat) => chat.matchId === message.match_id)
@@ -134,8 +132,6 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
 
       const channel = subscribeToMessages(chat.matchId, 'matrimony', {
         onInsert: async (message: Message) => {
-          console.log('Matrimony chat list received message via Supabase Realtime:', message)
-          
           // Update the chat list
           setChats((prevChats) => {
             const chatIndex = prevChats.findIndex((c) => c.matchId === message.match_id)
@@ -224,9 +220,9 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
               lastMessage: lastMessage?.content || "You matched! Start the conversation.",
               timestamp: lastMessage?.created_at || match.matchedAt,
               unreadCount,
-              isOnline: false, // TODO: Implement online status
+              isOnline: false,
               isMatch: true,
-              isPremium: false, // TODO: Get premium status from profile
+              isPremium: false,
             }
           })
         )

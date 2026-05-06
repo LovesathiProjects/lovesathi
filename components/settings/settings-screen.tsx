@@ -32,6 +32,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { StaticBackground } from "@/components/discovery/static-background"
 import { supabase } from "@/lib/supabaseClient"
 import { getIDVerification } from "@/lib/verificationApi"
+import { useToast } from "@/hooks/use-toast"
 
 interface SettingsSection {
   title: string
@@ -53,7 +54,7 @@ type SettingsNavigateHandler = (id: string) => void
 
 const settingsSections: SettingsSection[] = [
   {
-    title: "Account",
+    title: "Profile & Membership",
     items: [
       {
         id: "profile",
@@ -79,6 +80,59 @@ const settingsSections: SettingsSection[] = [
       },
     ],
   },
+  {
+    title: "Trust & Support",
+    items: [
+      {
+        id: "app_settings",
+        label: "Privacy & App Settings",
+        description: "Control visibility, notifications, and preferences",
+        icon: Settings,
+        type: "navigation",
+      },
+      {
+        id: "help_safety",
+        label: "Safety Centre",
+        description: "Read verification, reporting, and safe matrimony guidance",
+        icon: Info,
+        type: "navigation",
+      },
+      {
+        id: "help_contact",
+        label: "Contact Support",
+        description: "Get help with verification, profiles, or reports",
+        icon: Mail,
+        type: "navigation",
+      },
+      {
+        id: "help_report_bug",
+        label: "Report a Bug",
+        description: "Tell us if something feels broken",
+        icon: Bug,
+        type: "navigation",
+      },
+    ],
+  },
+  {
+    title: "Account Control",
+    items: [
+      {
+        id: "logout",
+        label: "Log Out",
+        description: "Sign out of Lovesathi on this device",
+        icon: LogOut,
+        type: "action",
+      },
+      {
+        id: "delete_account",
+        label: "Delete Account",
+        description: "Permanently delete your profile and account data",
+        icon: Power,
+        type: "action",
+        destructive: true,
+      },
+    ],
+  },
 ]
 
 interface UserInfo {
@@ -97,7 +151,9 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
     accountType: "Standard Membership",
   })
   const [loading, setLoading] = useState(true)
+  const [deletingAccount, setDeletingAccount] = useState(false)
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'approved' | 'rejected' | 'in_review' | null>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchUserInfo()
@@ -192,6 +248,46 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
     if (id === "delete_account") {
       const trigger = document.getElementById("delete-account-trigger") as HTMLButtonElement | null
       trigger?.click()
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    try {
+      setDeletingAccount(true)
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        throw new Error("Please sign in again before deleting your account.")
+      }
+
+      const response = await fetch("/api/auth/delete-account", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      })
+      const payload = await response.json()
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.error || "Failed to delete account.")
+      }
+
+      await supabase.auth.signOut()
+      toast({
+        title: "Account deleted",
+        description: "Your Lovesathi account and profile data were deleted.",
+      })
+      onLogout?.()
+    } catch (error: any) {
+      toast({
+        title: "Could not delete account",
+        description: error.message || "Please contact support.",
+        variant: "destructive",
+      })
+    } finally {
+      setDeletingAccount(false)
     }
   }
 
@@ -371,19 +467,16 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
           <AlertDialogHeader>
             <AlertDialogTitle>Delete account?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your account and all data.
+              This action cannot be undone. This will permanently delete your account, profile, verification records, photos, matches, messages, and saved profiles where database cascades apply.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                // Simulate deletion success
-                alert("Your account has been deleted.")
-                onLogout?.()
-              }}
+              disabled={deletingAccount}
+              onClick={handleDeleteAccount}
             >
-              Delete
+              {deletingAccount ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

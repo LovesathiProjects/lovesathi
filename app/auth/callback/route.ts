@@ -26,7 +26,6 @@ export async function GET(request: NextRequest) {
     if (user) {
       // Check if email is verified (OAuth providers usually verify automatically, but check anyway)
       if (!user.email_confirmed_at) {
-        console.log('Email not verified, sending to email verification')
         return NextResponse.redirect(new URL('/auth/verify-email', redirectOrigin))
       }
 
@@ -38,14 +37,10 @@ export async function GET(request: NextRequest) {
         .single()
 
       if (error || !profile) {
-        console.log('No profile found, sending to onboarding')
         return NextResponse.redirect(new URL('/onboarding/verification', redirectOrigin))
       }
 
       if (profile.onboarding_matrimony !== true) {
-        console.log('Matrimony onboarding not completed, sending to verification:', {
-          onboarding_matrimony: profile.onboarding_matrimony,
-        })
         return NextResponse.redirect(new URL('/onboarding/verification', redirectOrigin))
       }
 

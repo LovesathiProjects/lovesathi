@@ -66,22 +66,16 @@ export interface VerificationStatus {
  * Save or update user's date of birth
  */
 export async function saveDateOfBirth(dob: string) {
-  console.log('🔵 saveDateOfBirth called with DOB:', dob)
-  
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     if (authError) {
-      console.error('❌ Auth error:', authError)
       throw new Error('Authentication error: ' + authError.message)
     }
     
     if (!user) {
-      console.error('❌ No user found')
       throw new Error('User not authenticated')
     }
-    
-    console.log('✅ User authenticated:', user.id)
 
     // Calculate age
     const birthDate = new Date(dob)
@@ -93,8 +87,8 @@ export async function saveDateOfBirth(dob: string) {
     }
 
     // Validate age
-    if (age < 17) {
-      throw new Error('You must be at least 17 years old to use this app')
+    if (age < 18) {
+      throw new Error('You must be at least 18 years old to use Lovesathi')
     }
 
     // First, try to get existing profile
@@ -131,12 +125,8 @@ export async function saveDateOfBirth(dob: string) {
     }
 
     if (result.error) {
-      console.error('❌ Error saving DOB to user_profiles:', result.error)
-      console.error('Error details:', JSON.stringify(result.error, null, 2))
       throw result.error
     }
-    
-    console.log('✅ DOB saved to user_profiles:', result.data)
 
     const { data: existingMatrimonyProfile } = await supabase
       .from('matrimony_profile_full')
@@ -156,21 +146,19 @@ export async function saveDateOfBirth(dob: string) {
         .eq('user_id', user.id)
       
       if (updateError) {
-        console.warn('Warning: Could not update matrimony_profile_full:', updateError.message)
+        return { success: false, error: updateError.message }
       }
     }
 
     // Update verification progress (don't fail if this errors)
     try {
       await updateVerificationProgress('dob_completed')
-    } catch (progressError: any) {
-      console.warn('Warning: Could not update verification progress:', progressError.message)
-      // Don't throw - this is optional
+    } catch {
+      // Progress is helpful for onboarding UI, but the DOB save itself is the critical operation.
     }
 
     return { success: true, data: result.data }
   } catch (error: any) {
-    console.error('Error saving date of birth:', error)
     return { success: false, error: error.message }
   }
 }
@@ -224,7 +212,6 @@ export async function saveGender(gender: 'male' | 'female' | 'prefer_not_to_say'
     }
 
     if (result.error) {
-      console.error('Error saving gender to user_profiles:', result.error)
       throw result.error
     }
 
@@ -267,14 +254,12 @@ export async function saveGender(gender: 'male' | 'female' | 'prefer_not_to_say'
     // Update verification progress (don't fail if this errors)
     try {
       await updateVerificationProgress('gender_completed')
-    } catch (progressError: any) {
-      console.warn('Warning: Could not update verification progress:', progressError.message)
-      // Don't throw - this is optional
+    } catch {
+      // Progress is helpful for onboarding UI, but gender save should not be rolled back for it.
     }
 
     return { success: true, data: result.data }
   } catch (error: any) {
-    console.error('Error saving gender:', error)
     return { success: false, error: error.message }
   }
 }
@@ -304,7 +289,6 @@ export async function getUserProfile() {
 
     return { success: true, data }
   } catch (error: any) {
-    console.error('Error getting user profile:', error)
     return { success: false, error: error.message }
   }
 }
@@ -324,13 +308,9 @@ export async function uploadIDDocument(file: File) {
       throw new Error('User not authenticated')
     }
 
-    console.log('🔄 Uploading ID document for user:', user.id)
-
     // Generate unique filename
     const fileExt = file.name.split('.').pop()
     const fileName = `${user.id}/id-document-${Date.now()}.${fileExt}`
-
-    console.log('📁 Upload path:', fileName)
 
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
@@ -341,11 +321,8 @@ export async function uploadIDDocument(file: File) {
       })
 
     if (error) {
-      console.error('❌ Upload error:', error)
       throw new Error(`Storage upload failed: ${error.message}. Please check if storage policies are applied.`)
     }
-
-    console.log('✅ Upload successful:', data)
 
     // Get public URL
     const { data: urlData } = supabase.storage
@@ -362,7 +339,6 @@ export async function uploadIDDocument(file: File) {
       }
     }
   } catch (error: any) {
-    console.error('Error uploading ID document:', error)
     return { success: false, error: error.message }
   }
 }
@@ -378,13 +354,9 @@ export async function uploadFaceScan(file: File) {
       throw new Error('User not authenticated')
     }
 
-    console.log('🔄 Uploading face scan for user:', user.id)
-
     // Generate unique filename
     const fileExt = file.name.split('.').pop()
     const fileName = `${user.id}/face-scan-${Date.now()}.${fileExt}`
-
-    console.log('📁 Upload path:', fileName)
 
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
@@ -395,11 +367,8 @@ export async function uploadFaceScan(file: File) {
       })
 
     if (error) {
-      console.error('❌ Upload error:', error)
       throw new Error(`Storage upload failed: ${error.message}. Please check if storage policies are applied.`)
     }
-
-    console.log('✅ Upload successful:', data)
 
     // Get public URL
     const { data: urlData } = supabase.storage
@@ -416,7 +385,6 @@ export async function uploadFaceScan(file: File) {
       }
     }
   } catch (error: any) {
-    console.error('Error uploading face scan:', error)
     return { success: false, error: error.message }
   }
 }
@@ -482,7 +450,6 @@ export async function saveIDVerification(
 
     return { success: true, data: result.data }
   } catch (error: any) {
-    console.error('Error saving ID verification:', error)
     return { success: false, error: error.message }
   }
 }
@@ -508,7 +475,6 @@ export async function getIDVerification() {
 
     return { success: true, data }
   } catch (error: any) {
-    console.error('Error getting ID verification:', error)
     return { success: false, error: error.message }
   }
 }
@@ -581,7 +547,6 @@ export async function updateVerificationProgress(
 
     return { success: true, data: result.data }
   } catch (error: any) {
-    console.error('Error updating verification progress:', error)
     return { success: false, error: error.message }
   }
 }
@@ -607,7 +572,6 @@ export async function getVerificationProgress() {
 
     return { success: true, data }
   } catch (error: any) {
-    console.error('Error getting verification progress:', error)
     return { success: false, error: error.message }
   }
 }
@@ -631,7 +595,6 @@ export async function getVerificationStatus(): Promise<{ success: boolean; data?
 
     return { success: true, data: data?.[0] }
   } catch (error: any) {
-    console.error('Error getting verification status:', error)
     return { success: false, error: error.message }
   }
 }
@@ -676,7 +639,6 @@ export async function completeIDVerification(
       message: 'ID verification submitted successfully'
     }
   } catch (error: any) {
-    console.error('Error completing ID verification:', error)
     return { success: false, error: error.message }
   }
 }

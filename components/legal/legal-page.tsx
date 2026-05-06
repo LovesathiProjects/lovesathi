@@ -37,7 +37,7 @@ export function LegalPage({ eyebrow, title, description, sections }: LegalPagePr
           </h1>
           <p className="mt-5 max-w-3xl text-lg leading-8 text-[#6c5a4a]">{description}</p>
           <p className="mt-5 rounded-2xl border border-[#b9904d]/24 bg-[#fffaf2]/72 p-4 text-sm leading-6 text-[#6c5a4a]">
-            This page is product-ready placeholder copy and should be reviewed by qualified legal counsel before launch approval.
+            Last updated: May 2026. These policies are written for the live Lovesathi product experience and should be reviewed with counsel before final store submission.
           </p>
         </section>
 

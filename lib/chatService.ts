@@ -241,9 +241,7 @@ export function subscribeToMessages(
       }
     )
     .subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        console.log('[subscribeToMessages] Subscribed to match:', matchId, 'type:', matchType)
-      } else if (status === 'CHANNEL_ERROR') {
+      if (status === 'CHANNEL_ERROR') {
         console.error('[subscribeToMessages] Channel error for match:', matchId, 'type:', matchType)
         if (callbacks.onError) {
           callbacks.onError(new Error('Channel subscription error'))

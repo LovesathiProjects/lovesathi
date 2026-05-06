@@ -3,10 +3,8 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Mail, CheckCircle, XCircle, Loader2 } from "lucide-react"
+import { Mail, CheckCircle, Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
-import { StaticBackground } from "@/components/discovery/static-background"
 import { useToast } from "@/components/ui/use-toast"
 
 interface EmailVerificationScreenProps {
@@ -35,7 +33,6 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
         
         // If no session and we haven't retried too many times, wait and retry
         if (!session && retryCount < 5) {
-          console.log(`No session yet, retrying... (${retryCount + 1}/5)`)
           setTimeout(() => {
             if (mounted) {
               checkEmailVerification(retryCount + 1)
@@ -50,7 +47,6 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
           if (!user) {
             // No user found - stay on page, don't redirect
             // This allows users who just signed up to see the verification page
-            console.log("No user session found, but staying on verification page")
             if (mounted) {
               setUserEmail(null)
               setIsLoading(false)
@@ -363,4 +359,3 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
     </div>
   )
 }
-

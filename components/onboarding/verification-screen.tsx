@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Shield, CheckCircle, Upload, Camera, X, FileText, CalendarDays, ArrowLeft } from "lucide-react"
+import { Shield, Upload, Camera, X, FileText, ArrowLeft } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { FaceScanModal } from "@/components/kyc/FaceScanModal"
 import { 
@@ -12,6 +12,7 @@ import {
   saveGender, 
   completeIDVerification 
 } from "@/lib/verificationApi"
+import { calculateAgeFromDate, getMinimumBirthDate } from "@/lib/age"
 
 interface VerificationScreenProps {
   onComplete?: () => void
@@ -20,22 +21,13 @@ interface VerificationScreenProps {
 
 export function VerificationScreen({ onComplete, onSkip }: VerificationScreenProps) {
   const [step, setStep] = useState<"profile" | "gender" | "id">("profile")
-  const [verificationMethod, setVerificationMethod] = useState<"phone" | "email">("phone")
-  const [contactValue, setContactValue] = useState("")
-  const [verificationCode, setVerificationCode] = useState("")
-  const [codeSent, setCodeSent] = useState(false)
-  const [contactVerified, setContactVerified] = useState(true)
-  const [phoneVerified, setPhoneVerified] = useState(false)
-  const [emailVerified, setEmailVerified] = useState(false)
   const [gender, setGender] = useState<"male" | "female" | "prefer_not_to_say" | null>(null)
   const [dob, setDob] = useState("")
   const [profileValid, setProfileValid] = useState(false)
   const [underageMessage, setUnderageMessage] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
-  const today = new Date()
-  const defaultMonth = new Date(new Date().setFullYear(today.getFullYear() - 20))
-  const [calendarMonth, setCalendarMonth] = useState<Date>(defaultMonth)
+  const minimumBirthDate = getMinimumBirthDate(18)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [filePreview, setFilePreview] = useState<string | null>(null)
   const [capturedFacePhoto, setCapturedFacePhoto] = useState<File | null>(null)
@@ -49,8 +41,8 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
       setUnderageMessage(null)
       return
     }
-    const age = calculateAge(dob)
-    if (age < 18) {
+    const age = calculateAgeFromDate(dob)
+    if (age !== null && age < 18) {
       setUnderageMessage("You are not eligible to use Lovesathi according to age criteria (18+).")
     } else {
       setUnderageMessage(null)
@@ -134,11 +126,8 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
     // Show success toast
     toast({
       title: "Face Scan Complete",
-      description: "Your face has been successfully verified.",
+      description: "Your face scan has been captured and will be reviewed with your ID.",
     })
-
-    // TODO: Send to backend API for verification
-    // await verifyFaceScan(file)
   }
 
   const handleRemoveFacePhoto = () => {
@@ -146,63 +135,14 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
     setFacePhotoPreview(null)
   }
 
-  const handleSendCode = async () => {
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setIsLoading(false)
-    setCodeSent(true)
-  }
-
-  const handleVerifyCode = async () => {
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1200))
-    setIsLoading(false)
-
-    if (verificationMethod === "phone") {
-      setPhoneVerified(true)
-      if (emailVerified) {
-        setContactVerified(true)
-        setStep("profile")
-      } else {
-        // Switch to email for second verification
-        setVerificationMethod("email")
-        setCodeSent(false)
-        setVerificationCode("")
-        setContactValue("")
-      }
-    } else {
-      setEmailVerified(true)
-      if (phoneVerified) {
-        setContactVerified(true)
-        setStep("profile")
-      } else {
-        // Switch to phone for second verification
-        setVerificationMethod("phone")
-        setCodeSent(false)
-        setVerificationCode("")
-        setContactValue("")
-      }
-    }
-  }
-
   const calculateAge = (dateString: string) => {
-    const today = new Date()
-    const birth = new Date(dateString)
-    let age = today.getFullYear() - birth.getFullYear()
-    const m = today.getMonth() - birth.getMonth()
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-      age--
-    }
-    return age
+    return calculateAgeFromDate(dateString) || 0
   }
 
   const handleProfileContinue = async () => {
-    console.log('🔵 handleProfileContinue called', { dob, isLoading })
-    
     setUnderageMessage(null)
     
     if (!dob) {
-      console.log('❌ No DOB provided')
       toast({
         title: "Date Required",
         description: "Please select your date of birth.",
@@ -211,10 +151,9 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
       return
     }
 
-    const age = calculateAge(dob)
-    console.log('📅 Calculated age:', age)
+    const age = calculateAgeFromDate(dob)
     
-    if (age < 18) {
+    if (age === null || age < 18) {
       setUnderageMessage("You're underage to use Lovesathi.")
       setProfileValid(false)
       toast({
@@ -225,17 +164,13 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
       return
     }
 
-    console.log('✅ Age validation passed, starting save...')
     setIsLoading(true)
     
     try {
-      console.log('📤 Calling saveDateOfBirth with:', dob)
       // Save DOB to Supabase
       const result = await saveDateOfBirth(dob)
-      console.log('📥 saveDateOfBirth result:', result)
       
       if (result.success) {
-        console.log('✅ DOB saved successfully')
         toast({
           title: "Date of Birth Saved",
           description: "Your date of birth has been saved successfully.",
@@ -243,7 +178,6 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
         setProfileValid(true)
         setStep("gender")
       } else {
-        console.error('❌ Failed to save DOB:', result.error)
         toast({
           title: "Error",
           description: result.error || "Failed to save date of birth. Please try again.",
@@ -251,8 +185,6 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
         })
       }
     } catch (error: any) {
-      console.error('❌ Error in handleProfileContinue:', error)
-      console.error('Error stack:', error.stack)
       toast({
         title: "Error",
         description: error.message || "An unexpected error occurred. Please try again.",
@@ -260,7 +192,6 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
       })
     } finally {
       setIsLoading(false)
-      console.log('🏁 handleProfileContinue finished')
     }
   }
 
@@ -369,7 +300,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                       value={dob}
                       onChange={(e) => setDob(e.target.value)}
                       min="1950-01-01"
-                      max={`${today.getFullYear() - 18}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`}
+                      max={minimumBirthDate}
                       className="w-full h-14 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
                     />
                   </div>
@@ -394,7 +325,6 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  console.log('🔘 Continue button clicked', { dob, isLoading })
                   handleProfileContinue()
                 }}
                 className="w-full h-14 text-base font-semibold bg-[#97011A] hover:bg-[#7A010E] text-white rounded-full shadow-sm transition-colors"
@@ -502,10 +432,10 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                   <Shield className="w-5 h-5 text-[#97011A] mt-0.5 flex-shrink-0" />
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-[#111]">Why verify your ID?</p>
-                    <ul className="text-sm text-black/60 space-y-1">
-                      <li>• Get a verified badge on your profile</li>
-                      <li>• Increase trust with potential matches</li>
-                      <li>• Access premium features</li>
+                    <ul className="list-disc space-y-1 pl-4 text-sm text-black/60">
+                      <li>Get a verified badge on your profile</li>
+                      <li>Increase trust with potential matches</li>
+                      <li>Help the review team keep Lovesathi safe</li>
                     </ul>
                   </div>
                 </div>

@@ -28,7 +28,6 @@ export default function MatrimonyDiscovery() {
 
         // If error or no profile, redirect to onboarding
         if (error || !profile) {
-          console.log('No profile or error fetching profile, redirecting to matrimony onboarding:', error?.message)
           router.push('/matrimony/onboarding/basic-details')
           return
         }
@@ -36,7 +35,6 @@ export default function MatrimonyDiscovery() {
         // STRICT CHECK: onboarding_matrimony must be EXACTLY true
         // If it's false, null, or undefined, redirect to onboarding
         if (profile.onboarding_matrimony !== true) {
-          console.log('onboarding_matrimony is not true, redirecting to onboarding:', profile.onboarding_matrimony)
           router.push('/matrimony/onboarding/basic-details')
           return
         }

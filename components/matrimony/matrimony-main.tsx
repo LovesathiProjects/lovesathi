@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { AppLayout } from "@/components/layout/app-layout"
 import { QuickActions } from "@/components/navigation/quick-actions"
@@ -18,7 +18,6 @@ import { BackFloatingButton } from "@/components/navigation/back-floating-button
 import { SettingsScreen } from "@/components/settings/settings-screen"
 import { ActivityScreen } from "@/components/activity/activity-screen"
 import { AppSettings } from "@/components/settings/app-settings"
-import { ProfileSetup } from "@/components/profile/profile-setup"
 import { PremiumScreen } from "@/components/premium/premium-screen"
 import { PaymentScreen } from "@/components/premium/payment-screen"
 import { PremiumFeatures } from "@/components/premium/premium-features"
@@ -35,33 +34,7 @@ import { useMatrimonyShortlist } from "@/hooks/useMatrimonyShortlist"
 import { MatrimonyShortlistView } from "@/components/matrimony/matrimony-shortlist"
 import { MatrimonyProfileModal } from "@/components/matrimony/matrimony-profile-modal"
 import { ProfileView } from "@/components/profile/profile-view"
-
-// Helper function to calculate age from date of birth
-function calculateAge(dob: string | null, ageFromProfile: number | null): number {
-	if (ageFromProfile) {
-		return ageFromProfile
-	}
-	if (dob) {
-		const birthDate = new Date(dob)
-		const today = new Date()
-		let age = today.getFullYear() - birthDate.getFullYear()
-		const monthDiff = today.getMonth() - birthDate.getMonth()
-		if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-			age--
-		}
-		return age
-	}
-	return 0
-}
-
-// Helper function to convert height from cm to feet and inches
-function formatHeight(heightCm: number | null): string | undefined {
-	if (!heightCm) return undefined
-	const totalInches = Math.round(heightCm / 2.54)
-	const feet = Math.floor(totalInches / 12)
-	const inches = totalInches % 12
-	return `${feet}'${inches}"`
-}
+import { calculateAgeFromDate } from "@/lib/age"
 
 interface MatrimonyMainProps {
   onExit?: () => void
@@ -71,7 +44,6 @@ interface MatrimonyMainProps {
     | "activity"
     | "chat"
     | "profile"
-    | "profile-setup"
     | "edit-profile"
     | "premium"
     | "payment"
@@ -93,7 +65,6 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     | "activity"
     | "chat"
     | "profile"
-    | "profile-setup"
     | "edit-profile"
     | "premium"
     | "payment"
@@ -221,8 +192,6 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     async function fetchProfiles() {
       try {
         setLoading(true)
-        console.log("Starting to fetch matrimony profiles...")
-
         // Get current user
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         
@@ -234,13 +203,10 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         }
 
         if (!user) {
-          console.log("No user found, redirecting to auth...")
           setProfiles([])
           setLoading(false)
           return
         }
-
-        console.log("User authenticated:", user.id)
 
         // Fetch current user's gender from user_profiles
         const { data: currentUserProfile, error: currentUserError } = await supabase
@@ -254,8 +220,6 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         }
 
         // Fetch matrimony profiles from consolidated table (only completed ones)
-        console.log("Fetching matrimony profiles from matrimony_profile_full...")
-        
         // Build query with age filter if applied
         let query = supabase
           .from("matrimony_profile_full")
@@ -284,21 +248,12 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
         if (profilesError) {
           console.error("Error fetching matrimony profiles:", profilesError)
-          console.error("Error details:", {
-            message: profilesError.message,
-            details: profilesError.details,
-            hint: profilesError.hint,
-            code: profilesError.code
-          })
           setProfiles([])
           setLoading(false)
           return
         }
 
-        console.log(`Found ${matrimonyProfiles?.length || 0} completed matrimony profiles`)
-
         if (!matrimonyProfiles || matrimonyProfiles.length === 0) {
-          console.log("No completed matrimony profiles found")
           setProfiles([])
           setLoading(false)
           return
@@ -306,8 +261,6 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
         // Get user IDs for verifications
         const userIds = matrimonyProfiles.map((p) => p.user_id)
-        console.log(`Fetching verifications for ${userIds.length} users...`)
-
         // Fetch ID verifications (for verified status)
         const { data: verifications, error: verificationsError } = await supabase
           .from("id_verifications")
@@ -320,11 +273,9 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
         // Get current user's gender for filtering
         const currentUserGender = currentUserProfile?.gender
-        console.log("Current user gender:", currentUserGender)
 
         // Get already liked/passed profiles to exclude from discovery
         const likedProfileIds = await getMatrimonyLikedProfiles(user.id)
-        console.log(`Excluding ${likedProfileIds.length} already liked/passed matrimony profiles`)
 
         // Combine all data from consolidated table
         const combinedProfiles = matrimonyProfiles
@@ -367,14 +318,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             // Calculate age (prefer from profile, fallback to DOB calculation)
             let calculatedAge = matrimonyProfile.age || 0
             if (culturalData?.date_of_birth) {
-              const birthDate = new Date(culturalData.date_of_birth)
-              const today = new Date()
-              let age = today.getFullYear() - birthDate.getFullYear()
-              const monthDiff = today.getMonth() - birthDate.getMonth()
-              if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                age--
-              }
-              calculatedAge = age
+              calculatedAge = calculateAgeFromDate(culturalData.date_of_birth) || calculatedAge
             }
 
             // Format location from work_location object
@@ -522,10 +466,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                 }
               }
 
-              // Apply premium only filter (skip for now - not implemented in schema)
-              // if (appliedFilters.premiumOnly) {
-              //   // TODO: Add premium check when premium feature is implemented
-              // }
+              // Premium-only filtering remains disabled in the UI until entitlement data exists.
             }
 
             return {
@@ -546,7 +487,6 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           })
           .filter((profile): profile is NonNullable<typeof profile> => profile !== null) as MatrimonyProfile[]
 
-        console.log(`Successfully processed ${combinedProfiles.length} matrimony profiles for display`)
         setProfiles(combinedProfiles)
       } catch (error) {
         console.error("Unexpected error fetching matrimony profiles:", error)
@@ -581,29 +521,36 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     try {
       const currentProfile = profiles[currentCardIndex]
       if (!currentProfile) {
-        console.error('[handleLike] No current profile')
+        toast({
+          title: "No profile selected",
+          description: "Please wait while we prepare the next profile.",
+          variant: "destructive",
+        })
         return
       }
 
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        console.error('[handleLike] No user found')
+        toast({
+          title: "Please sign in",
+          description: "You need to be signed in to send interest.",
+          variant: "destructive",
+        })
         return
       }
 
-      console.log('[handleLike] User liking profile:', { userId: user.id, profileId: currentProfile.id })
-
       // Record the like in database
       const result = await recordMatrimonyLike(user.id, currentProfile.id, 'like')
-      
-      console.log('[handleLike] Result:', result)
 
       if (!result.success) {
-        console.error('[handleLike] Failed to record like:', result.error)
+        toast({
+          title: "Could not send interest",
+          description: result.error || "Please try again.",
+          variant: "destructive",
+        })
       }
       
       if (result.success && result.isMatch) {
-        console.log('[handleLike] Match detected!', result.matchId)
         // Show match notification
         setMatchedProfile(currentProfile)
         setMatchedMatchId(result.matchId || null)
@@ -621,25 +568,33 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     try {
       const currentProfile = profiles[currentCardIndex]
       if (!currentProfile) {
-        console.error('[handlePass] No current profile')
+        toast({
+          title: "No profile selected",
+          description: "Please wait while we prepare the next profile.",
+          variant: "destructive",
+        })
         return
       }
 
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        console.error('[handlePass] No user found')
+        toast({
+          title: "Please sign in",
+          description: "You need to be signed in to update discovery.",
+          variant: "destructive",
+        })
         return
       }
 
-      console.log('[handlePass] User passing profile:', { userId: user.id, profileId: currentProfile.id })
-
       // Record the pass in database
       const result = await recordMatrimonyLike(user.id, currentProfile.id, 'pass')
-      
-      console.log('[handlePass] Result:', result)
 
       if (!result.success) {
-        console.error('[handlePass] Failed to record pass:', result.error)
+        toast({
+          title: "Could not update profile",
+          description: result.error || "Please try again.",
+          variant: "destructive",
+        })
       }
 
       if (currentCardIndex < profiles.length - 1) setCurrentCardIndex((p) => p + 1)
@@ -721,8 +676,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                               isShortlisted={shortlistedIds.has(profile.id)}
                               onToggleShortlist={() => handleShortlistToggle(profile)}
                               onProfileClick={() => {
-                                // TODO: Implement profile modal for matrimony
-                                console.log("Profile clicked:", profile.name)
+                                setShortlistModalProfile(profile)
                               }}
                               stackIndex={index}
                             />
@@ -737,15 +691,29 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                         </div>
                         <div className="space-y-2">
                           <h3 className="font-serif text-2xl font-bold text-[#18110d]">No more profiles</h3>
-                          <p className="text-sm text-[#6c5a4a]">
-                            {profiles.length === 0 
-                              ? "No profiles available. Check back later!" 
-                              : "Check back later for new matches"}
+                          <p className="text-sm leading-6 text-[#6c5a4a]">
+                            {profiles.length === 0
+                              ? "No matching completed profiles are available right now. Try relaxing filters, checking your preferences, or coming back after more members complete verification."
+                              : "You have reviewed this set. New completed profiles will appear here as members join."}
                           </p>
                         </div>
-                        {profiles.length > 0 && (
-                          <Button onClick={() => setCurrentCardIndex(0)} className="luxe-button rounded-full">Start Over</Button>
-                        )}
+                        <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+                          {profiles.length > 0 && (
+                            <Button onClick={() => setCurrentCardIndex(0)} className="luxe-button rounded-full">Start Over</Button>
+                          )}
+                          {appliedFilters && (
+                            <Button
+                              variant="outline"
+                              className="rounded-full border-[#482b1a]/15 bg-white"
+                              onClick={() => {
+                                setAppliedFilters(null)
+                                setCurrentCardIndex(0)
+                              }}
+                            >
+                              Clear filters
+                            </Button>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   )}
@@ -849,6 +817,10 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             if (id === "profile") setCurrentScreen("edit-profile")
             else if (id === "premium") setCurrentScreen("premium")
             else if (id === "verification") setCurrentScreen("verification-status")
+            else if (id === "app_settings") setCurrentScreen("app-settings")
+            else if (id === "help_safety") router.push("/safety")
+            else if (id === "help_contact") router.push("/contact")
+            else if (id === "help_report_bug") router.push("/contact")
           }}
           onLogout={handleLogout}
           onBack={() => setCurrentScreen("discover")}
@@ -865,12 +837,6 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
               setCurrentScreen("profile")
             }}
           />
-        </div>
-      )}
-
-      {currentScreen === "profile-setup" && (
-        <div className="p-0 pb-0 mt-0">
-          <ProfileSetup onComplete={() => setCurrentScreen("discover")} onBack={() => setCurrentScreen("profile")} />
         </div>
       )}
 
@@ -915,7 +881,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           <ProfileView 
             mode="matrimony" 
             userId={viewedUserId}
-            onEdit={() => setCurrentScreen("profile-setup")} 
+            isOwnProfile={false}
             onBack={() => {
               if (cameFromChat) {
                 setCameFromChat(false)
@@ -1003,7 +969,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       
-      {currentScreen !== "chat" && currentScreen !== "app-settings" && currentScreen !== "premium" && currentScreen !== "payment" && currentScreen !== "premium-features" && currentScreen !== "verification-status" && currentScreen !== "edit-profile" && (
+      {currentScreen !== "chat" && currentScreen !== "app-settings" && currentScreen !== "premium" && currentScreen !== "payment" && currentScreen !== "premium-features" && currentScreen !== "verification-status" && currentScreen !== "edit-profile" && currentScreen !== "view-profile" && (
         <QuickActions
           activeTab={currentScreen}
           onOpenChat={() => setCurrentScreen("messages")}

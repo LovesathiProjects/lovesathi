@@ -750,7 +750,6 @@ export async function submitProfile(payload: {
 }) {
   // Profile is already saved step-by-step
   // This function can be used for final validation or additional processing
-  console.log("Matrimony profile completed:", payload)
   await clearDraft()
   return { ok: true }
 }
@@ -828,4 +827,3 @@ export async function getMatrimonyLocations(): Promise<string[]> {
     return []
   }
 }
-
