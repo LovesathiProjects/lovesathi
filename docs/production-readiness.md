@@ -21,7 +21,7 @@ This file keeps the launch checklist inside the repo so the app, admin portal, D
 
 - `lovesathi.com` should point to the main Render web service.
 - `www.lovesathi.com` should redirect to `lovesathi.com`.
-- `admin.lovesathi.com` should be added as a custom domain on the same main Render web service. The middleware rewrites that host to `/admin`.
+- `admin.lovesathi.com` should be added as a custom domain on the same main Render web service. `proxy.ts` rewrites that host to `/admin`.
 - `socket.lovesathi.com` should point to the Render socket service and must pass `/health`.
 - `no-reply.lovesathi.com` must be verified in MSG91 with SPF, DKIM, and MX records before OTP email can send.
 
@@ -44,4 +44,6 @@ This file keeps the launch checklist inside the repo so the app, admin portal, D
 - Confirm `/test-storage` and `/test-face-scanner` return `404`.
 - Confirm `/auth/callback` never redirects to localhost in production.
 - Confirm admin users outside `ADMIN_EMAILS` receive `403`.
+- Confirm `https://admin.lovesathi.com` opens the admin portal after Render custom domain SSL is active.
+- Confirm admin verification/report status actions work only for users inside `ADMIN_EMAILS`.
 - Confirm MSG91 can send forgot-password OTP after DNS verification.

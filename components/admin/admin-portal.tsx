@@ -8,14 +8,22 @@ import {
   AlertTriangle,
   ArrowUpRight,
   BadgeCheck,
+  CheckCircle2,
+  Clock3,
   Crown,
   Database,
+  FileWarning,
   Lock,
   LogOut,
   MessageCircle,
+  RefreshCw,
   ShieldCheck,
+  Sparkles,
+  UserRoundCheck,
   Users,
+  XCircle,
 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -35,32 +43,129 @@ type ReadinessItem = {
   detail: string
 }
 
+type QueueResult<T> = {
+  status: "ok" | "warning"
+  detail?: string
+  items: T[]
+}
+
+type AdminProfileItem = {
+  id: string
+  userId: string
+  name: string
+  age: number | null
+  gender: string | null
+  createdBy: string | null
+  city: string | null
+  education: string | null
+  jobTitle: string | null
+  photoCount: number
+  completionSteps: number
+  profileCompleted: boolean
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+type AdminVerificationItem = {
+  id: string
+  userId: string
+  profileName: string
+  documentType: string | null
+  status: string
+  documentFileName: string | null
+  faceScanFileName: string | null
+  notes: string | null
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+type AdminReportItem = {
+  id: string
+  reporterId: string
+  reportedUserId: string
+  reporterName: string
+  reportedName: string
+  reason: string
+  description: string | null
+  status: string
+  createdAt: string | null
+  reviewedAt: string | null
+}
+
 type AdminOverview = {
   admin: {
     email: string
   }
+  host: string
   generatedAt: string
   metrics: AdminMetric[]
+  queues: {
+    profiles: QueueResult<AdminProfileItem>
+    verifications: QueueResult<AdminVerificationItem>
+    reports: QueueResult<AdminReportItem>
+  }
   readiness: ReadinessItem[]
 }
 
-const metricIcons = [Users, BadgeCheck, ShieldCheck, AlertTriangle, Crown, MessageCircle, Database]
+const metricIcons = [Users, BadgeCheck, Clock3, ShieldCheck, FileWarning, Crown, MessageCircle, Database, Sparkles]
+
+function formatDate(value?: string | null) {
+  if (!value) return "Not available"
+  return new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value))
+}
+
+function statusLabel(value: string) {
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const safeStatus = status.toLowerCase()
+  const isGood = ["ok", "approved", "resolved"].includes(safeStatus)
+  const isWarning = ["pending", "in_review", "reviewed", "warning"].includes(safeStatus)
+
+  return (
+    <Badge
+      variant="outline"
+      className={
+        isGood
+          ? "border-[#1b6b43]/20 bg-[#1b6b43]/10 text-[#1b6b43]"
+          : isWarning
+            ? "border-[#b9904d]/25 bg-[#b9904d]/12 text-[#8a641f]"
+            : "border-[#8f001c]/20 bg-[#8f001c]/10 text-[#8f001c]"
+      }
+    >
+      {statusLabel(status)}
+    </Badge>
+  )
+}
+
+function EmptyState({ copy }: { copy: string }) {
+  return (
+    <div className="rounded-[1.4rem] border border-dashed border-[#482b1a]/18 bg-white/45 p-5 text-sm font-semibold text-[#6c5a4a]">
+      {copy}
+    </div>
+  )
+}
 
 export function AdminPortal() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(true)
   const [authLoading, setAuthLoading] = useState(false)
+  const [actionKey, setActionKey] = useState<string | null>(null)
+  const [refreshIndex, setRefreshIndex] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [overview, setOverview] = useState<AdminOverview | null>(null)
 
-  const generatedAt = overview?.generatedAt
-    ? new Intl.DateTimeFormat("en-IN", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(new Date(overview.generatedAt))
-    : null
+  const generatedAt = overview?.generatedAt ? formatDate(overview.generatedAt) : null
+  const refreshing = loading && Boolean(sessionToken)
 
   useEffect(() => {
     let mounted = true
@@ -95,6 +200,8 @@ export function AdminPortal() {
   useEffect(() => {
     if (!sessionToken) return
 
+    let mounted = true
+
     async function loadOverview() {
       setLoading(true)
       setError(null)
@@ -109,16 +216,26 @@ export function AdminPortal() {
         if (!response.ok) {
           throw new Error(payload.error || "Unable to load admin overview")
         }
-        setOverview(payload)
+        if (mounted) {
+          setOverview(payload)
+        }
       } catch (err: any) {
-        setError(err.message || "Unable to load admin overview")
+        if (mounted) {
+          setError(err.message || "Unable to load admin overview")
+        }
       } finally {
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
 
     void loadOverview()
-  }, [sessionToken])
+
+    return () => {
+      mounted = false
+    }
+  }, [sessionToken, refreshIndex])
 
   async function handleLogin(event: FormEvent) {
     event.preventDefault()
@@ -142,6 +259,43 @@ export function AdminPortal() {
     await supabase.auth.signOut()
     setSessionToken(null)
     setOverview(null)
+  }
+
+  async function handleAction(resource: "verification" | "report", id: string, status: string) {
+    if (!sessionToken) return
+    const label = `${resource} as ${statusLabel(status)}`
+    if (!window.confirm(`Mark this ${label}?`)) return
+
+    const key = `${resource}:${id}:${status}`
+    setActionKey(key)
+    setError(null)
+    try {
+      const response = await fetch("/api/admin/actions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          resource,
+          id,
+          status,
+          notes:
+            resource === "verification" && status === "rejected"
+              ? "Rejected by Lovesathi admin review."
+              : "Updated by Lovesathi admin review.",
+        }),
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to update admin record")
+      }
+      setRefreshIndex((value) => value + 1)
+    } catch (err: any) {
+      setError(err.message || "Unable to update admin record")
+    } finally {
+      setActionKey(null)
+    }
   }
 
   if (loading && !sessionToken) {
@@ -168,11 +322,11 @@ export function AdminPortal() {
               </div>
               <p className="luxe-kicker mb-4 text-[#d9b978]">admin.lovesathi.com</p>
               <h1 className="luxe-title max-w-lg text-7xl font-bold text-[#fffaf2]">
-                Command center for a premium matrimony brand.
+                Private command room for the Lovesathi team.
               </h1>
             </div>
             <p className="max-w-md text-lg leading-8 text-[#f2dfbd]">
-              Review users, safety, verification, messages, reports, and launch readiness from a secure allowlisted portal.
+              Review membership health, verification queues, safety reports, and launch readiness from one guarded portal.
             </p>
           </div>
 
@@ -225,19 +379,28 @@ export function AdminPortal() {
 
   return (
     <main className="luxe-light-page luxe-admin-grid min-h-screen px-4 py-6 sm:px-8 lg:px-10">
-      <header className="mx-auto mb-8 flex max-w-7xl flex-col gap-4 rounded-[2rem] border border-[#482b1a]/10 bg-[#fffaf2]/78 p-5 shadow-[0_24px_80px_rgba(24,17,13,0.1)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+      <header className="mx-auto mb-8 flex max-w-7xl flex-col gap-4 rounded-[2rem] border border-[#482b1a]/10 bg-[#fffaf2]/82 p-5 shadow-[0_24px_80px_rgba(24,17,13,0.1)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="luxe-kicker mb-2 text-[#8f001c]">Lovesathi admin</p>
           <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">
-            Operations overview
+            Operations command center
           </h1>
           <p className="mt-2 text-sm text-[#6c5a4a]">
             Signed in as {overview?.admin.email || "admin"} {generatedAt ? `- refreshed ${generatedAt}` : ""}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            className="rounded-full border-[#482b1a]/15 bg-white"
+            onClick={() => setRefreshIndex((value) => value + 1)}
+            disabled={refreshing}
+          >
+            <RefreshCw className={refreshing ? "mr-2 h-4 w-4 animate-spin" : "mr-2 h-4 w-4"} />
+            Refresh
+          </Button>
           <Button asChild variant="outline" className="rounded-full border-[#482b1a]/15 bg-white">
-            <Link href="/">
+            <Link href="https://lovesathi.com">
               View site
               <ArrowUpRight className="ml-2 h-4 w-4" />
             </Link>
@@ -256,7 +419,7 @@ export function AdminPortal() {
           </div>
         )}
 
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {(overview?.metrics || []).map((metric, index) => {
             const Icon = metricIcons[index % metricIcons.length]
             return (
@@ -276,47 +439,242 @@ export function AdminPortal() {
           })}
         </section>
 
-        <section className="grid gap-5 lg:grid-cols-[1fr_0.9fr]">
+        <section className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
           <Card className="luxe-card rounded-[2rem] border-[#d9b978]/24">
             <CardHeader>
-              <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#18110d]">Launch readiness</CardTitle>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="luxe-kicker mb-2 text-[#8f001c]">member quality</p>
+                  <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#18110d]">
+                    Latest profiles
+                  </CardTitle>
+                </div>
+                <StatusBadge status={overview?.queues.profiles.status || "pending"} />
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {(overview?.readiness || []).map((item) => (
-                <div key={item.label} className="flex gap-3 rounded-2xl border border-[#482b1a]/10 bg-white/58 p-4">
-                  {item.status === "ok" ? (
-                    <BadgeCheck className="mt-1 h-5 w-5 shrink-0 text-[#8f001c]" />
-                  ) : (
-                    <AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-[#b9904d]" />
-                  )}
-                  <div>
-                    <p className="font-bold text-[#18110d]">{item.label}</p>
-                    <p className="text-sm leading-6 text-[#6c5a4a]">{item.detail}</p>
+              {overview?.queues.profiles.detail && (
+                <p className="rounded-2xl border border-[#b9904d]/20 bg-[#b9904d]/10 p-3 text-sm font-semibold text-[#8a641f]">
+                  {overview.queues.profiles.detail}
+                </p>
+              )}
+              {overview?.queues.profiles.items.length ? (
+                overview.queues.profiles.items.map((profile) => (
+                  <div key={profile.id} className="rounded-[1.35rem] border border-[#482b1a]/10 bg-white/60 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">{profile.name}</p>
+                        <p className="mt-1 text-sm text-[#6c5a4a]">
+                          {[profile.age ? `${profile.age} yrs` : null, profile.gender, profile.city].filter(Boolean).join(" - ") ||
+                            "Profile details pending"}
+                        </p>
+                      </div>
+                      <StatusBadge status={profile.profileCompleted ? "approved" : "pending"} />
+                    </div>
+                    <div className="mt-4 grid gap-2 text-xs font-semibold text-[#6c5a4a] sm:grid-cols-3">
+                      <span>{profile.completionSteps}/7 steps complete</span>
+                      <span>{profile.photoCount} photos</span>
+                      <span>{profile.createdBy ? `Created by ${profile.createdBy}` : "Creator pending"}</span>
+                    </div>
+                    <p className="mt-3 text-sm text-[#6c5a4a]">
+                      {[profile.education, profile.jobTitle].filter(Boolean).join(" - ") || "Career and education pending"}
+                    </p>
+                    <p className="mt-2 text-xs text-[#9d7a55]">Updated {formatDate(profile.updatedAt)}</p>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <EmptyState copy="No matrimony profiles were returned yet." />
+              )}
             </CardContent>
           </Card>
 
           <Card className="luxe-dark-card rounded-[2rem] border-[#d9b978]/24 text-[#fffaf2]">
             <CardHeader>
-              <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#fffaf2]">Admin scope</CardTitle>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="luxe-kicker mb-2 text-[#d9b978]">identity queue</p>
+                  <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#fffaf2]">
+                    Verifications
+                  </CardTitle>
+                </div>
+                <StatusBadge status={overview?.queues.verifications.status || "pending"} />
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4 text-sm leading-7 text-[#f2dfbd]">
-              <div className="flex gap-3 rounded-2xl border border-white/10 bg-white/8 p-4">
-                <Activity className="mt-1 h-5 w-5 shrink-0 text-[#d9b978]" />
-                <p>
-                  This first portal is read-only and safe by default. It gives leadership a polished production command center without risking accidental data changes.
+            <CardContent className="space-y-3">
+              {overview?.queues.verifications.detail && (
+                <p className="rounded-2xl border border-[#d9b978]/20 bg-white/8 p-3 text-sm font-semibold text-[#f2dfbd]">
+                  {overview.queues.verifications.detail}
                 </p>
-              </div>
-              <div className="flex gap-3 rounded-2xl border border-white/10 bg-white/8 p-4">
-                <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-[#d9b978]" />
-                <p>
-                  Destructive admin actions should be added later behind confirmation dialogs, audit logs, and role-based permissions.
-                </p>
-              </div>
+              )}
+              {overview?.queues.verifications.items.length ? (
+                overview.queues.verifications.items.map((item) => (
+                  <div key={item.id} className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#fffaf2]">{item.profileName}</p>
+                        <p className="mt-1 text-sm text-[#f2dfbd]">
+                          {item.documentType ? statusLabel(item.documentType) : "Document type pending"}
+                        </p>
+                      </div>
+                      <StatusBadge status={item.status} />
+                    </div>
+                    <p className="mt-3 text-xs leading-5 text-[#d9c8a8]">
+                      Document: {item.documentFileName || "Not uploaded"} | Face scan: {item.faceScanFileName || "Not uploaded"}
+                    </p>
+                    <p className="mt-1 text-xs text-[#d9c8a8]">Submitted {formatDate(item.createdAt)}</p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        className="rounded-full bg-[#1b6b43] text-white hover:bg-[#155333]"
+                        disabled={Boolean(actionKey)}
+                        onClick={() => handleAction("verification", item.id, "approved")}
+                      >
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full border-[#d9b978]/40 bg-white/10 text-[#fffaf2] hover:bg-white/15"
+                        disabled={Boolean(actionKey)}
+                        onClick={() => handleAction("verification", item.id, "in_review")}
+                      >
+                        <UserRoundCheck className="mr-2 h-4 w-4" />
+                        In review
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full border-[#f3b2b2]/40 bg-[#8f001c]/30 text-[#fffaf2] hover:bg-[#8f001c]/45"
+                        disabled={Boolean(actionKey)}
+                        onClick={() => handleAction("verification", item.id, "rejected")}
+                      >
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <EmptyState copy="No pending identity verifications right now." />
+              )}
             </CardContent>
           </Card>
+        </section>
+
+        <section className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
+          <Card className="luxe-card rounded-[2rem] border-[#d9b978]/24">
+            <CardHeader>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="luxe-kicker mb-2 text-[#8f001c]">trust desk</p>
+                  <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#18110d]">Safety reports</CardTitle>
+                </div>
+                <StatusBadge status={overview?.queues.reports.status || "pending"} />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {overview?.queues.reports.detail && (
+                <p className="rounded-2xl border border-[#b9904d]/20 bg-[#b9904d]/10 p-3 text-sm font-semibold text-[#8a641f]">
+                  {overview.queues.reports.detail}
+                </p>
+              )}
+              {overview?.queues.reports.items.length ? (
+                overview.queues.reports.items.map((item) => (
+                  <div key={item.id} className="rounded-[1.35rem] border border-[#482b1a]/10 bg-white/60 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">
+                          {item.reportedName}
+                        </p>
+                        <p className="mt-1 text-sm text-[#6c5a4a]">Reported by {item.reporterName}</p>
+                      </div>
+                      <StatusBadge status={item.status} />
+                    </div>
+                    <p className="mt-3 text-sm font-bold text-[#8f001c]">{statusLabel(item.reason)}</p>
+                    <p className="mt-1 line-clamp-3 text-sm leading-6 text-[#6c5a4a]">
+                      {item.description || "No extra description was provided."}
+                    </p>
+                    <p className="mt-2 text-xs text-[#9d7a55]">Submitted {formatDate(item.createdAt)}</p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        className="rounded-full bg-[#1b6b43] text-white hover:bg-[#155333]"
+                        disabled={Boolean(actionKey)}
+                        onClick={() => handleAction("report", item.id, "resolved")}
+                      >
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Resolve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full border-[#482b1a]/15 bg-white"
+                        disabled={Boolean(actionKey)}
+                        onClick={() => handleAction("report", item.id, "reviewed")}
+                      >
+                        Mark reviewed
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full border-[#8f001c]/20 bg-[#8f001c]/10 text-[#8f001c]"
+                        disabled={Boolean(actionKey)}
+                        onClick={() => handleAction("report", item.id, "dismissed")}
+                      >
+                        Dismiss
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <EmptyState copy="No open safety reports right now." />
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="space-y-5">
+            <Card className="luxe-card rounded-[2rem] border-[#d9b978]/24">
+              <CardHeader>
+                <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#18110d]">Launch readiness</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {(overview?.readiness || []).map((item) => (
+                  <div key={item.label} className="flex gap-3 rounded-2xl border border-[#482b1a]/10 bg-white/58 p-4">
+                    {item.status === "ok" ? (
+                      <BadgeCheck className="mt-1 h-5 w-5 shrink-0 text-[#8f001c]" />
+                    ) : (
+                      <AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-[#b9904d]" />
+                    )}
+                    <div>
+                      <p className="font-bold text-[#18110d]">{item.label}</p>
+                      <p className="text-sm leading-6 text-[#6c5a4a]">{item.detail}</p>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card className="luxe-dark-card rounded-[2rem] border-[#d9b978]/24 text-[#fffaf2]">
+              <CardHeader>
+                <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#fffaf2]">Admin safety model</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm leading-7 text-[#f2dfbd]">
+                <div className="flex gap-3 rounded-2xl border border-white/10 bg-white/8 p-4">
+                  <Activity className="mt-1 h-5 w-5 shrink-0 text-[#d9b978]" />
+                  <p>
+                    This portal can update verification and report statuses only after Supabase login and ADMIN_EMAILS allowlist checks.
+                  </p>
+                </div>
+                <div className="flex gap-3 rounded-2xl border border-white/10 bg-white/8 p-4">
+                  <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-[#d9b978]" />
+                  <p>
+                    Account deletion, bulk edits, refunds, and subscription changes should stay locked until we add audit logs, roles, and confirmation workflows.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </section>
       </div>
     </main>
