@@ -124,15 +124,15 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:w-[500px] overflow-y-auto flex flex-col bg-white matrimony-filter-sheet">
+      <SheetContent side="right" className="matrimony-filter-sheet flex w-full flex-col overflow-y-auto border-l border-[#d9b978]/24 bg-[#fffaf2] sm:w-[520px]">
         <SheetHeader className="space-y-3">
           <div className="flex items-center justify-between pr-12">
-            <SheetTitle className="text-black matrimony-filter-title">Matrimony Filters</SheetTitle>
-            <Button variant="ghost" size="sm" onClick={handleReset} className="bg-gray-100 hover:bg-gray-200 border border-[#E5E5E5] text-black">
+            <SheetTitle className="matrimony-filter-title font-serif text-3xl tracking-[-0.05em] text-[#18110d]">Refine Matches</SheetTitle>
+            <Button variant="ghost" size="sm" onClick={handleReset} className="rounded-full border border-[#d9b978]/30 bg-white/70 text-[#18110d] hover:bg-white">
               Reset
             </Button>
           </div>
-          <SheetDescription className="text-[#444444]">Customize your matrimony preferences to find your perfect life partner</SheetDescription>
+          <SheetDescription className="text-[#6c5a4a]">Tune discovery by age, height, location, family context, and lifestyle.</SheetDescription>
         </SheetHeader>
 
         <div className="space-y-6 px-6 pb-6">
@@ -316,11 +316,14 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
                 />
               </div>
               <div className="flex items-center justify-between py-1">
-                <Label htmlFor="premium-only" className="text-black">Premium members only</Label>
+                <div>
+                  <Label htmlFor="premium-only" className="text-black">Premium members only</Label>
+                  <p className="text-xs text-[#6c5a4a]">Queued until subscription entitlements are connected.</p>
+                </div>
                 <Switch
                   id="premium-only"
-                  checked={filters.premiumOnly}
-                  onCheckedChange={(checked) => setFilters((prev) => ({ ...prev, premiumOnly: checked }))}
+                  checked={false}
+                  disabled
                 />
               </div>
             </div>
@@ -328,8 +331,8 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
         </div>
 
         {/* Apply Button */}
-        <div className="sticky bottom-0 bg-white border-t border-[#E5E5E5] px-6 py-5">
-          <Button onClick={handleApply} className="w-full bg-[#97011A] hover:bg-[#7A0115] text-white" size="lg">
+        <div className="sticky bottom-0 border-t border-[#482b1a]/10 bg-[#fffaf2]/92 px-6 py-5 backdrop-blur-xl">
+          <Button onClick={handleApply} className="luxe-button w-full rounded-full" size="lg">
             Apply Matrimony Filters
           </Button>
         </div>

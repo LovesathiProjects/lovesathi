@@ -757,7 +757,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {currentScreen === "messages" && (
-        <div className="fixed inset-0 flex flex-col bg-white h-screen overflow-hidden">
+        <div className="fixed inset-0 flex h-screen flex-col overflow-hidden bg-[#fbf6ed]">
           <MatrimonyChatList onChatClick={(chatId) => {
             setSelectedChatId(chatId)
             setCurrentScreen("chat")
@@ -766,7 +766,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {currentScreen === "activity" && (
-        <div className="fixed inset-0 flex flex-col bg-white h-screen overflow-hidden">
+        <div className="fixed inset-0 flex h-screen flex-col overflow-hidden bg-[#fbf6ed]">
           <ActivityScreen
             mode="matrimony"
             onProfileClick={(userId) => {
@@ -783,13 +783,13 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {currentScreen === "shortlist" && (
-        <div className="fixed inset-0 flex flex-col bg-white h-screen overflow-hidden">
+        <div className="fixed inset-0 flex h-screen flex-col overflow-hidden bg-[#fbf6ed]">
           <div className="flex flex-col h-full relative">
             {/* Static Background */}
             <StaticBackground />
             
             {/* Header */}
-            <div className="flex-shrink-0 p-4 border-b border-[#E5E5E5] bg-white backdrop-blur-sm">
+            <div className="flex-shrink-0 border-b border-[#482b1a]/10 bg-[#fffaf2]/84 p-4 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur-xl">
               <div className="space-y-4">
                 <div className="flex items-center space-x-4">
                   <Button 
@@ -800,13 +800,16 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </Button>
-                  <h1 className="text-2xl font-bold text-black">Shortlist</h1>
+                  <div>
+                    <p className="luxe-kicker text-[0.62rem] text-[#8f001c]">saved profiles</p>
+                    <h1 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#18110d]">Shortlist</h1>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 min-h-0">
+            <div className="min-h-0 flex-1 overflow-y-auto p-4">
               <MatrimonyShortlistView
                 profiles={shortlistedProfiles}
                 loading={shortlistLoading}
@@ -983,10 +986,15 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           <AppSettings
             mode="matrimony"
             onNavigate={(id) => {
-              if (id === "help_faq") window.alert("FAQ coming soon")
-              else if (id === "help_contact") window.alert("Contact us at support@example.com")
-              else if (id === "help_report_bug") window.alert("Bug report submitted")
-              else if (id === "app_settings") window.alert("Open App Settings")
+              if (id === "help_faq") router.push("/safety")
+              else if (id === "help_contact") router.push("/contact")
+              else if (id === "help_report_bug") router.push("/contact")
+              else if (id === "app_settings") {
+                toast({
+                  title: "Settings saved locally",
+                  description: "Persistent notification and visibility controls are queued for the next backend pass.",
+                })
+              }
             }}
             onLogout={handleLogout}
             onBack={() => setCurrentScreen("profile")}

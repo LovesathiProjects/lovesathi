@@ -66,13 +66,13 @@ export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () =>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex-1 space-y-6">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-[#111]">A Few Words About You</h1>
-            <p className="text-base text-black/60">Write a short bio to introduce yourself.</p>
+            <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">A Few Words About You</h1>
+            <p className="text-base leading-7 text-[#6c5a4a]">Write a warm introduction that helps families and serious matches understand your personality.</p>
           </div>
           
           <FormField control={form.control} name="bio" render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-black">Bio (20–300 characters)</FormLabel>
+              <FormLabel className="text-black">Bio (20-300 characters)</FormLabel>
               <FormControl>
                 <Textarea 
                   rows={12} 
@@ -121,7 +121,7 @@ export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () =>
               disabled={isLoading}
               className="bg-[#97011A] hover:bg-[#7A010E] text-white rounded-full px-6"
             >
-              {isLoading ? "Saving..." : "Complete"}
+              {isLoading ? "Saving..." : "Next"}
             </Button>
           </div>
         </div>
@@ -129,5 +129,4 @@ export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () =>
     </Form>
   )
 }
-
 

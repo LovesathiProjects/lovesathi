@@ -1,62 +1,48 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { StaticBackground } from "@/components/discovery/static-background"
+import { ArrowLeft, Crown, Lock, Sparkles } from "lucide-react"
 
-export function PaymentScreen({ planId, onSuccess, onCancel }: { planId: string; onSuccess?: () => void; onCancel?: () => void }) {
-  const [cardNumber, setCardNumber] = useState("")
-  const [expiry, setExpiry] = useState("")
-  const [cvc, setCvc] = useState("")
-  const [name, setName] = useState("")
-  const [loading, setLoading] = useState(false)
-
-  const handlePay = async () => {
-    setLoading(true)
-    await new Promise((r) => setTimeout(r, 800))
-    setLoading(false)
-    onSuccess?.()
-  }
-
+export function PaymentScreen({ planId, onCancel }: { planId: string; onSuccess?: () => void; onCancel?: () => void }) {
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="luxe-light-page relative flex h-full min-h-screen flex-col">
       <StaticBackground />
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        <Card>
+      <div className="relative z-10 flex flex-1 items-center justify-center overflow-y-auto p-6">
+        <Card className="luxe-card w-full max-w-2xl rounded-[2rem] border-[#d9b978]/24">
           <CardHeader>
-            <CardTitle>Payment for {planId}</CardTitle>
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#8f001c] text-[#fffaf2] shadow-xl">
+              <Crown className="h-7 w-7" />
+            </div>
+            <p className="luxe-kicker mb-3 text-[#8f001c]">secure checkout</p>
+            <CardTitle className="font-serif text-4xl tracking-[-0.05em] text-[#18110d] sm:text-5xl">
+              Premium checkout is queued for gateway connection.
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Cardholder Name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name on card" />
-            </div>
-            <div className="space-y-2">
-              <Label>Card Number</Label>
-              <Input value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} placeholder="4242 4242 4242 4242" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Expiry</Label>
-                <Input value={expiry} onChange={(e) => setExpiry(e.target.value)} placeholder="MM/YY" />
+          <CardContent className="space-y-5">
+            <p className="text-base leading-7 text-[#6c5a4a]">
+              The selected plan is <span className="font-bold text-[#18110d]">{planId}</span>. Before launch, this screen should be connected to a real payment provider with subscriptions,
+              invoices, refunds, and entitlement checks. Until then, Lovesathi will not collect card details.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-3xl border border-[#482b1a]/10 bg-white/62 p-4">
+                <Lock className="mb-3 h-5 w-5 text-[#8f001c]" />
+                <p className="font-bold text-[#18110d]">No dummy card capture</p>
+                <p className="mt-1 text-sm leading-6 text-[#6c5a4a]">Safer for approval and user trust.</p>
               </div>
-              <div className="space-y-2">
-                <Label>CVC</Label>
-                <Input value={cvc} onChange={(e) => setCvc(e.target.value)} placeholder="123" />
+              <div className="rounded-3xl border border-[#482b1a]/10 bg-white/62 p-4">
+                <Sparkles className="mb-3 h-5 w-5 text-[#8f001c]" />
+                <p className="font-bold text-[#18110d]">Gateway-ready next</p>
+                <p className="mt-1 text-sm leading-6 text-[#6c5a4a]">Razorpay, Stripe, or Cashfree can be wired here.</p>
               </div>
             </div>
+            <Button className="luxe-button w-full rounded-full" onClick={() => onCancel?.()}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to premium plans
+            </Button>
           </CardContent>
         </Card>
-      </div>
-
-      <div className="p-6 border-t border-border glass-apple space-y-3">
-        <Button size="lg" className="w-full" onClick={handlePay} disabled={loading}>
-          {loading ? "Processing..." : "Pay Now"}
-        </Button>
-        <Button variant="outline" className="w-full" onClick={() => onCancel?.()}>Cancel</Button>
       </div>
     </div>
   )

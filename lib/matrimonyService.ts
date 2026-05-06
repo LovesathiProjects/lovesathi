@@ -602,7 +602,7 @@ export async function saveStep6(
       name: existing?.name || '',
       bio: bio,
       step6_completed: true,
-      profile_completed: true, // Step 6 is now the final step
+      profile_completed: existing?.step7_completed || false,
     }
 
     // Preserve other fields
@@ -620,12 +620,15 @@ export async function saveStep6(
       profileData.step3_completed = existing.step3_completed || false
       profileData.step4_completed = existing.step4_completed || false
       profileData.step5_completed = existing.step5_completed || false
+      profileData.step7_completed = existing.step7_completed || false
+      profileData.partner_preferences = existing.partner_preferences || {}
     } else {
       profileData.photos = []
       profileData.personal = {}
       profileData.career = {}
       profileData.family = {}
       profileData.cultural = {}
+      profileData.partner_preferences = {}
     }
 
     const { error } = await supabase
@@ -825,5 +828,4 @@ export async function getMatrimonyLocations(): Promise<string[]> {
     return []
   }
 }
-
 

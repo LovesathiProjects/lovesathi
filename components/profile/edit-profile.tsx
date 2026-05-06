@@ -206,30 +206,36 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-black">Loading...</p>
+      <div className="luxe-light-page flex min-h-screen items-center justify-center">
+        <div className="luxe-card rounded-[2rem] p-7 text-center">
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#8f001c] border-t-transparent" />
+          <p className="mt-4 font-bold text-[#18110d]">Preparing your profile atelier...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="sticky top-0 z-20 border-b border-[#E5E5E5] bg-white">
+    <div className="luxe-light-page min-h-screen">
+      <div className="sticky top-0 z-20 border-b border-[#482b1a]/10 bg-[#fffaf2]/84 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur-xl">
         <div className="flex items-center justify-between p-4">
           <Button variant="ghost" size="sm" className="p-2" onClick={onBack}>
             <ArrowLeft className="w-5 h-5 text-black" />
           </Button>
-          <h1 className="text-2xl font-bold text-black">Edit Profile</h1>
-          <Button className="bg-[#97011A] hover:bg-[#7A0115]" onClick={handleSave} disabled={saving}>
+          <div className="text-center">
+            <p className="luxe-kicker text-[0.62rem] text-[#8f001c]">profile atelier</p>
+            <h1 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#18110d]">Edit Profile</h1>
+          </div>
+          <Button className="luxe-button rounded-full" onClick={handleSave} disabled={saving}>
             <Save className="w-4 h-4 mr-2" />
             {saving ? "Saving..." : "Save"}
           </Button>
         </div>
       </div>
 
-      <div className="p-4 pb-20">
+      <div className="mx-auto max-w-6xl p-4 pb-24 sm:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-5 rounded-[1.5rem] border border-[#d9b978]/24 bg-[#fffaf2]/80 p-1 shadow-[0_14px_45px_rgba(24,17,13,0.08)]">
             <TabsTrigger value="photos">Photos</TabsTrigger>
             <TabsTrigger value="basic">Basic</TabsTrigger>
             <TabsTrigger value="career">Career</TabsTrigger>
@@ -238,18 +244,18 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
           </TabsList>
 
           <TabsContent value="photos" className="mt-4">
-            <Card className="border-[#E5E5E5]">
+            <Card className="luxe-card rounded-[2rem] border-[#d9b978]/24">
               <CardHeader>
-                <CardTitle>Photos</CardTitle>
+                <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#18110d]">Photos</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {photos.map((photo, index) => (
                     <div key={index} className="space-y-2">
-                      <div className="aspect-square overflow-hidden rounded-xl border border-[#E5E5E5]">
+                      <div className="aspect-square overflow-hidden rounded-2xl border border-[#d9b978]/24 bg-[#18110d] shadow-sm">
                         <img src={photo.url || "/placeholder.svg"} alt={`Photo ${index + 1}`} className="h-full w-full object-cover" />
                       </div>
-                      <Button size="sm" className="w-full bg-[#97011A] hover:bg-[#7A0115]" onClick={() => removePhoto(index)}>
+                      <Button size="sm" className="luxe-button w-full rounded-full" onClick={() => removePhoto(index)}>
                         <X className="w-4 h-4 mr-1" />
                         Remove
                       </Button>
@@ -258,7 +264,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                   {photos.length < 6 && (
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="aspect-square rounded-xl border border-dashed border-[#E5E5E5] bg-[#FAFAFA] flex flex-col items-center justify-center gap-2"
+                      className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[#b9904d]/45 bg-[#fffaf2]/68 text-[#6c5a4a] transition hover:border-[#8f001c] hover:text-[#8f001c]"
                     >
                       <Plus className="w-5 h-5 text-[#97011A]" />
                       <span className="text-sm text-[#666666]">Add Photo</span>
@@ -271,7 +277,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
           </TabsContent>
 
           <TabsContent value="basic" className="mt-4 space-y-4">
-            <Card className="border-[#E5E5E5]">
+            <Card className="luxe-card rounded-[2rem] border-[#d9b978]/24">
               <CardHeader>
                 <CardTitle>Basic Details</CardTitle>
               </CardHeader>
@@ -333,7 +339,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
               </CardContent>
             </Card>
 
-            <Card className="border-[#E5E5E5]">
+            <Card className="luxe-card rounded-[2rem] border-[#d9b978]/24">
               <CardHeader>
                 <CardTitle>About Me</CardTitle>
               </CardHeader>
@@ -344,7 +350,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
           </TabsContent>
 
           <TabsContent value="career" className="mt-4 space-y-4">
-            <Card className="border-[#E5E5E5]">
+            <Card className="luxe-card rounded-[2rem] border-[#d9b978]/24">
               <CardHeader>
                 <CardTitle>Career & Cultural Details</CardTitle>
               </CardHeader>
@@ -402,7 +408,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
           </TabsContent>
 
           <TabsContent value="family" className="mt-4">
-            <Card className="border-[#E5E5E5]">
+            <Card className="luxe-card rounded-[2rem] border-[#d9b978]/24">
               <CardHeader>
                 <CardTitle>Family Details</CardTitle>
               </CardHeader>
@@ -436,7 +442,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
           </TabsContent>
 
           <TabsContent value="preferences" className="mt-4">
-            <Card className="border-[#E5E5E5]">
+            <Card className="luxe-card rounded-[2rem] border-[#d9b978]/24">
               <CardHeader>
                 <CardTitle>Partner Preferences</CardTitle>
               </CardHeader>

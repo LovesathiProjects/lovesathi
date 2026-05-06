@@ -96,6 +96,13 @@ CREATE POLICY "Users can view own matrimony profile full"
   ON matrimony_profile_full FOR SELECT
   USING (auth.uid() = user_id);
 
+-- Authenticated members can discover completed profiles from other users.
+-- The app only selects public-facing profile fields for discovery/profile views.
+CREATE POLICY "Authenticated users can view completed matrimony profiles"
+  ON matrimony_profile_full FOR SELECT
+  TO authenticated
+  USING (profile_completed = TRUE);
+
 -- Users can insert their own profile
 CREATE POLICY "Users can insert own matrimony profile full"
   ON matrimony_profile_full FOR INSERT
@@ -189,4 +196,3 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- 3. Drop old helper functions if they exist:
 --    DROP FUNCTION IF EXISTS get_complete_matrimony_profile(UUID);
 --    DROP FUNCTION IF EXISTS get_matrimony_profile_completion(UUID);
-

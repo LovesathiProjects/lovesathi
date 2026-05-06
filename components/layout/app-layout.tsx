@@ -32,7 +32,7 @@ export function AppLayout({
   return (
     <div className={cn(
       "min-h-screen", 
-      "bg-white",
+      "luxe-light-page",
       isDiscoverScreen && "h-screen overflow-hidden"
     )}>
       {/* Settings Icon - Only show on profile page */}

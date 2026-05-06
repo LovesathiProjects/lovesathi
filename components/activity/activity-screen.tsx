@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Heart, Eye, Sparkles, Loader2, ArrowLeft } from "lucide-react"
+import { Heart, Sparkles, Loader2, ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { StaticBackground } from "@/components/discovery/static-background"
 import { supabase } from "@/lib/supabaseClient"
@@ -23,7 +23,7 @@ interface ActivityScreenProps {
 }
 
 export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: ActivityScreenProps) {
-  const [activeTab, setActiveTab] = useState<'all' | 'matches' | 'likes' | 'views'>('all')
+  const [activeTab, setActiveTab] = useState<'all' | 'matches' | 'likes'>('all')
   const [activities, setActivities] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -114,13 +114,10 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
 
   const filteredActivities = activities.filter(activity => {
     if (activeTab === 'all') return true
-    if (activeTab === 'views') return false // Views not implemented yet
-    
     // Map tab IDs to activity types
-    const tabToTypeMap: Record<string, 'match' | 'like' | 'view'> = {
+    const tabToTypeMap: Record<string, 'match' | 'like'> = {
       'matches': 'match',
       'likes': 'like',
-      'views': 'view'
     }
     
     return activity.type === tabToTypeMap[activeTab]
@@ -132,8 +129,6 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
         return <Sparkles className="w-4 h-4 text-[#97011A]" />
       case 'like':
         return <Heart className="w-4 h-4 text-red-500 fill-current" />
-      case 'view':
-        return <Eye className="w-4 h-4 text-white/60" />
       default:
         return null
     }
@@ -145,8 +140,6 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
         return 'You matched!'
       case 'like':
         return 'liked your profile'
-      case 'view':
-        return 'viewed your profile'
       default:
         return ''
     }
@@ -156,18 +149,17 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
     { id: 'all', label: 'All', count: activities.length },
     { id: 'matches', label: 'Matches', count: activities.filter(a => a.type === 'match').length },
     { id: 'likes', label: 'Likes', count: activities.filter(a => a.type === 'like').length },
-    { id: 'views', label: 'Views', count: activities.filter(a => a.type === 'view').length },
   ]
 
   return (
-    <div className={cn("flex flex-col h-full relative", isMatrimony ? "bg-white" : "bg-[#0E0F12]")}>
+    <div className={cn("relative flex h-full flex-col", isMatrimony ? "luxe-light-page" : "bg-[#0E0F12]")}>
       {/* Static Background */}
       <StaticBackground />
       
       {/* Header with Back Button */}
       <div className={cn(
         "flex-shrink-0 p-4 border-b backdrop-blur-xl shadow-lg",
-        isMatrimony ? "border-[#E5E5E5] bg-white" : "border-white/20 bg-[#14161B]/50"
+        isMatrimony ? "border-[#482b1a]/10 bg-[#fffaf2]/84" : "border-white/20 bg-[#14161B]/50"
       )}>
         <div className="space-y-4">
           <div className="flex items-center space-x-4">
@@ -184,7 +176,10 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
                 <ArrowLeft className={cn("w-5 h-5", isMatrimony ? "text-black" : "text-white")} />
               </Button>
             )}
-            <h1 className={cn("text-2xl font-bold", isMatrimony ? "text-black" : "text-white")}>Activity</h1>
+            <div>
+              <p className="luxe-kicker text-[0.62rem] text-[#8f001c]">interest ledger</p>
+              <h1 className={cn("font-serif text-3xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#18110d]" : "text-white")}>Activity</h1>
+            </div>
           </div>
 
           {/* Tabs */}
@@ -196,9 +191,9 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
                 className={cn(
                   "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
                   activeTab === tab.id
-                    ? "bg-[#97011A] text-white"
+                    ? "bg-[#8f001c] text-[#fffaf2] shadow-[0_12px_28px_rgba(143,0,28,0.22)]"
                     : isMatrimony 
-                      ? "bg-gray-100 hover:bg-gray-200 text-black"
+                      ? "border border-[#482b1a]/10 bg-white/70 text-[#6c5a4a] hover:bg-white"
                       : "bg-white/10 hover:bg-white/20 text-[#A1A1AA]"
                 )}
               >
@@ -264,7 +259,7 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
             </div>
             <h3 className={cn("text-lg font-semibold mb-2", isMatrimony ? "text-black" : "text-white")}>No activity yet</h3>
             <p className={cn("text-sm", isMatrimony ? "text-[#444444]" : "text-[#A1A1AA]")}>
-              Start swiping to see matches, likes, and views here!
+              Explore curated profiles to see interests and matches here.
             </p>
           </div>
         ) : (
@@ -275,7 +270,7 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
                 className={cn(
                   "border backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer",
                   isMatrimony 
-                    ? "bg-white border-[#E5E5E5] hover:bg-gray-50"
+                    ? "luxe-card border-[#d9b978]/24 hover:bg-[#fffaf2]"
                     : "bg-[#14161B] border-white/20 hover:bg-white/10"
                 )}
                 onClick={() => {

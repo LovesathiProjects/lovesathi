@@ -94,7 +94,7 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
     name: "Loading...",
     email: "Loading...",
     photo: null,
-    accountType: "Free Account",
+    accountType: "Standard Membership",
   })
   const [loading, setLoading] = useState(true)
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'approved' | 'rejected' | 'in_review' | null>(null)
@@ -131,7 +131,7 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
           name: "User",
           email: "Not available",
           photo: null,
-          accountType: "Free Account",
+          accountType: "Standard Membership",
         })
         setLoading(false)
         return
@@ -166,7 +166,7 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
         name,
         email,
         photo,
-        accountType: "Free Account", // TODO: Check subscription status if you have a subscriptions table
+        accountType: "Standard Membership",
       })
     } catch (error) {
       console.error("Error fetching user info:", error)
@@ -174,7 +174,7 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
         name: "User",
         email: "Not available",
         photo: null,
-        accountType: "Free Account",
+        accountType: "Standard Membership",
       })
     } finally {
       setLoading(false)
@@ -206,14 +206,14 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
   }
 
   return (
-    <div className={cn("flex flex-col h-full relative", isMatrimony ? "bg-white" : "bg-[#0E0F12]")}>
+    <div className={cn("relative flex h-full flex-col", isMatrimony ? "luxe-light-page" : "bg-[#0E0F12]")}>
       {/* Static Background */}
       <StaticBackground />
       
       {/* Header */}
       <div className={cn(
         "flex-shrink-0 p-6 border-b backdrop-blur-xl relative z-10",
-        isMatrimony ? "border-[#E5E5E5] bg-white" : "border-white/20 bg-[#14161B]/50"
+        isMatrimony ? "border-[#482b1a]/10 bg-[#fffaf2]/84 shadow-[0_18px_55px_rgba(24,17,13,0.08)]" : "border-white/20 bg-[#14161B]/50"
       )}>
         <div className="flex items-center space-x-4">
           {onBack && (
@@ -229,19 +229,19 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
               <ArrowLeft className={cn("w-5 h-5", isMatrimony ? "text-black" : "text-white")} />
             </Button>
           )}
-          <Avatar className={cn("w-16 h-16 border-2", isMatrimony ? "border-[#E5E5E5]" : "border-white/30")}>
+          <Avatar className={cn("h-16 w-16 border-2 shadow-lg", isMatrimony ? "border-[#d9b978]/50" : "border-white/30")}>
             <AvatarImage src={userInfo.photo || "/placeholder-user.jpg"} alt="Profile" />
             <AvatarFallback className={cn("font-semibold", isMatrimony ? "bg-gray-100 text-black" : "bg-white/20 text-white")}>
               {getInitials(userInfo.name)}
             </AvatarFallback>
           </Avatar>
           <div className="space-y-1">
-            <h1 className={cn("text-xl font-bold", isMatrimony ? "text-black" : "text-white")}>{userInfo.name}</h1>
+            <h1 className={cn("font-serif text-3xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#18110d]" : "text-white")}>{userInfo.name}</h1>
             <p className={cn("text-sm font-medium", isMatrimony ? "text-[#444444]" : "text-white/75")}>{userInfo.email}</p>
             <Badge variant="secondary" className={cn(
               "text-xs font-semibold",
               isMatrimony 
-                ? "bg-gray-100 text-black border-[#E5E5E5]"
+                ? "border-[#d9b978]/35 bg-[#fffaf2] text-[#8f001c]"
                 : "bg-white/20 text-white border-white/30"
             )}>
               {userInfo.accountType}
@@ -255,14 +255,14 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
         <div className="p-6 space-y-6">
           {settingsSections.map((section) => (
             <div key={section.title} className="space-y-3">
-              <h2 className={cn("text-sm font-semibold uppercase tracking-wider", isMatrimony ? "text-[#444444]" : "text-white/75")}>
+              <h2 className={cn("luxe-kicker", isMatrimony ? "text-[#8f001c]" : "text-white/75")}>
                 {section.title}
               </h2>
 
               <Card className={cn(
                 "overflow-hidden backdrop-blur-sm",
                 isMatrimony 
-                  ? "bg-white border-[#E5E5E5]"
+                  ? "luxe-card border-[#d9b978]/24"
                   : "bg-[#14161B] border-white/20"
               )}>
                 <CardContent className="p-0">
@@ -348,7 +348,7 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
                         </div>
 
                         <div className="flex items-center">
-                          {item.type === "navigation" && <ChevronRight className="w-5 h-5" style={{ color: 'rgba(255, 255, 255, 0.7)' }} />}
+                          {item.type === "navigation" && <ChevronRight className="w-5 h-5" style={{ color: isMatrimony ? '#8f001c' : 'rgba(255, 255, 255, 0.7)' }} />}
                         </div>
                       </div>
 

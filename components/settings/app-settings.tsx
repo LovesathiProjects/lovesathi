@@ -252,7 +252,7 @@ export function AppSettings({ onNavigate, onLogout, onBack, mode = 'matrimony' }
   }
 
   return (
-    <div className={cn("flex flex-col h-full relative min-h-screen", isMatrimony ? "bg-white" : "bg-[#0E0F12]")}>
+    <div className={cn("relative flex h-full min-h-screen flex-col", isMatrimony ? "luxe-light-page" : "bg-[#0E0F12]")}>
       {!isMatrimony && <StaticBackground />}
       {/* Header */}
       <div className={cn(
@@ -277,7 +277,10 @@ export function AppSettings({ onNavigate, onLogout, onBack, mode = 'matrimony' }
               <ArrowLeft className={cn("w-5 h-5", isMatrimony ? "text-black" : "text-white")} />
             </Button>
           )}
-          <h1 className={cn("text-2xl font-bold", isMatrimony ? "text-black" : "text-white")}>Settings</h1>
+          <div>
+            <p className="luxe-kicker text-[0.62rem] text-[#8f001c]">controls</p>
+            <h1 className={cn("font-serif text-3xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#18110d]" : "text-white")}>Settings</h1>
+          </div>
         </div>
       </div>
 
@@ -286,12 +289,12 @@ export function AppSettings({ onNavigate, onLogout, onBack, mode = 'matrimony' }
         <div className="p-6 space-y-6">
           {settingsSections.map((section) => (
             <div key={section.title} className="space-y-3">
-              <h2 className={cn("text-sm font-semibold uppercase tracking-wider", isMatrimony ? "text-black" : "text-white")}>{section.title}</h2>
+              <h2 className={cn("luxe-kicker", isMatrimony ? "text-[#8f001c]" : "text-white")}>{section.title}</h2>
 
               <Card className={cn(
                 "overflow-hidden shadow-sm",
                 isMatrimony 
-                  ? "bg-white border-[#E5E5E5]" 
+                  ? "luxe-card border-[#d9b978]/24"
                   : "bg-[#14161B]/50 border border-white/20"
               )}>
                 <CardContent className="p-0">

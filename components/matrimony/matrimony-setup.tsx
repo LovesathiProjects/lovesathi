@@ -1,7 +1,6 @@
 "use client"
 
-import React, { useMemo, useState } from "react"
-import { Button } from "@/components/ui/button"
+import React, { useState } from "react"
 import { X } from "lucide-react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -11,6 +10,7 @@ import { Step3CareerEducation } from "@/components/matrimony/steps/Step3CareerEd
 import { Step4Family } from "@/components/matrimony/steps/Step4Family"
 import { Step5CulturalAstro } from "@/components/matrimony/steps/Step5CulturalAstro"
 import { Step6Bio } from "@/components/matrimony/steps/Step6Bio"
+import { Step7PartnerPreferences } from "@/components/matrimony/steps/Step7PartnerPreferences"
 import { MatrimonySetupProvider } from "@/components/matrimony/store"
 import { supabase } from "@/lib/supabaseClient"
 import { completeOnboarding } from "@/lib/pathService"
@@ -22,6 +22,7 @@ const stepTitles = [
   "Family Information",
   "Your Cultural Details",
   "A Few Words About You",
+  "Partner Preferences",
 ]
 
 export function MatrimonySetup() {
@@ -35,34 +36,69 @@ export function MatrimonySetup() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="luxe-light-page relative flex min-h-screen flex-col overflow-hidden">
+      <div className="luxe-orb left-[-8rem] top-20 h-80 w-80 bg-[#b9904d]/18" />
+      <div className="luxe-orb right-[-10rem] top-10 h-96 w-96 bg-[#8f001c]/14" style={{ animationDelay: "1.2s" }} />
       {/* Header with exit button and progress */}
-      <div className="px-6 py-4 flex items-center justify-between border-b border-black/10">
+      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[#482b1a]/10 bg-[#fffaf2]/78 px-4 py-4 shadow-[0_16px_60px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:px-6">
         <button
           onClick={onExit}
-          className="p-2 -ml-2 hover:bg-black/5 rounded-full transition-colors"
+          className="-ml-2 rounded-full border border-[#482b1a]/10 bg-white/70 p-2 text-[#18110d] transition-colors hover:border-[#8f001c]/30 hover:bg-white"
         >
-          <X className="w-6 h-6 text-black" />
+          <X className="h-6 w-6" />
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex max-w-[56vw] items-center gap-2 overflow-hidden">
           {stepTitles.map((_, index) => (
             <div
               key={index}
-              className={`h-2 rounded-full transition-all ${
+              className={`h-2 shrink-0 rounded-full transition-all ${
                 index === step
-                  ? "w-8 bg-[#97011A]"
+                  ? "w-9 bg-[#8f001c]"
                   : index < step
-                  ? "w-2 bg-[#97011A]"
-                  : "w-2 bg-black/20"
+                  ? "w-3 bg-[#b9904d]"
+                  : "w-2 bg-[#482b1a]/18"
               }`}
             />
           ))}
         </div>
-        <div className="w-10" />
+        <div className="w-10 text-right text-xs font-bold uppercase tracking-[0.16em] text-[#8f001c]">{step + 1}/7</div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col px-6 py-8 max-w-2xl w-full mx-auto">
+      <div className="relative z-10 mx-auto grid w-full max-w-7xl flex-1 gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[0.72fr_1.28fr] lg:px-8 lg:py-12">
+        <aside className="hidden lg:block">
+          <div className="sticky top-28 space-y-5">
+            <div className="luxe-dark-card rounded-[2rem] p-7 text-[#fffaf2]">
+              <p className="luxe-kicker mb-4 text-[#d9b978]">profile atelier</p>
+              <h1 className="font-serif text-5xl font-bold leading-[0.92] tracking-[-0.055em] text-[#fffaf2]">
+                Build a profile worthy of a serious introduction.
+              </h1>
+              <p className="mt-5 text-sm leading-7 text-[#f2dfbd]">
+                We collect family, culture, career, and preference signals so discovery can feel calm,
+                intentional, and premium.
+              </p>
+            </div>
+            <div className="rounded-[2rem] border border-[#482b1a]/10 bg-[#fffaf2]/76 p-4 shadow-[0_20px_70px_rgba(24,17,13,0.08)] backdrop-blur">
+              {stepTitles.map((title, index) => (
+                <div
+                  key={title}
+                  className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold ${
+                    index === step ? "bg-[#8f001c] text-[#fffaf2]" : index < step ? "text-[#8f001c]" : "text-[#6c5a4a]"
+                  }`}
+                >
+                  <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs ${
+                    index === step ? "bg-[#fffaf2] text-[#8f001c]" : "bg-[#f2dfbd] text-[#18110d]"
+                  }`}>
+                    {index + 1}
+                  </span>
+                  {title}
+                </div>
+              ))}
+            </div>
+          </div>
+        </aside>
+        <main className="w-full min-w-0">
+          <div className="luxe-card rounded-[2rem] p-5 sm:p-8">
         <MatrimonySetupProvider>
           {step === 0 && (
             <Step1WelcomeIdentity onNext={() => setStep(1)} />
@@ -80,7 +116,10 @@ export function MatrimonySetup() {
             <Step5CulturalAstro onNext={() => setStep(5)} onBack={() => setStep(3)} />
           )}
           {step === 5 && (
-            <Step6Bio onNext={async () => {
+            <Step6Bio onNext={() => setStep(6)} onBack={() => setStep(4)} />
+          )}
+          {step === 6 && (
+            <Step7PartnerPreferences onNext={async () => {
               try {
                 // Mark onboarding as completed
                 const { data: { user } } = await supabase.auth.getUser()
@@ -93,11 +132,12 @@ export function MatrimonySetup() {
                 console.error("Error completing matrimony onboarding:", error)
                 toast.error("Failed to complete setup")
               }
-            }} onBack={() => setStep(4)} />
+            }} onBack={() => setStep(5)} />
           )}
         </MatrimonySetupProvider>
+          </div>
+        </main>
       </div>
     </div>
   )
 }
-

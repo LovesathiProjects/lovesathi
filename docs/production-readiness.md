@@ -39,6 +39,7 @@ This file keeps the launch checklist inside the repo so the app, admin portal, D
 - `npm run lint`
 - `npm run build`
 - `node --check server.js`
+- Confirm local `.env.local` and `supabase/.temp/project-ref` point to the Lovesathi Supabase project, not the old Affinity project.
 - Confirm `/favicon.ico`, `/manifest.json`, `/robots.txt`, and `/sitemap.xml` return `200`.
 - Confirm `/test-storage` and `/test-face-scanner` return `404`.
 - Confirm `/auth/callback` never redirects to localhost in production.

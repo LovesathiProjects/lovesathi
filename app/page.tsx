@@ -47,7 +47,7 @@ export default function Home() {
       <section className="relative isolate min-h-screen px-4 py-6 sm:px-8 lg:px-12">
         <div className="luxe-orb left-[-8rem] top-24 h-80 w-80 bg-[#b9904d]/20" />
         <div className="luxe-orb right-[-10rem] top-8 h-96 w-96 bg-[#8f001c]/16" style={{ animationDelay: "1.4s" }} />
-        <div className="mx-auto flex w-[calc(100vw-2rem)] max-w-7xl items-center justify-between gap-3 overflow-hidden rounded-full border border-[#482b1a]/10 bg-[#fffaf2]/72 px-3 py-3 shadow-[0_18px_60px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:w-full sm:px-4">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 rounded-full border border-[#482b1a]/10 bg-[#fffaf2]/72 px-3 py-3 shadow-[0_18px_60px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:px-4">
           <Link href="/" className="flex items-center gap-3 text-[#18110d] no-underline">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#8f001c] text-[#fffaf2] shadow-lg">
               <Heart className="h-5 w-5 fill-current" />
@@ -59,25 +59,25 @@ export default function Home() {
             <a href="#trust">Trust</a>
             <a href="#membership">Membership</a>
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <Button asChild variant="ghost" className="hidden text-[#18110d] sm:inline-flex">
               <Link href="/auth">Sign in</Link>
             </Button>
-            <Button asChild className="luxe-button rounded-full px-4 sm:px-5">
+            <Button asChild className="luxe-button hidden h-11 w-11 shrink-0 rounded-full p-0 sm:inline-flex sm:w-auto sm:px-5">
               <Link href="/auth">
                 <span className="hidden sm:inline">Begin</span>
-                <span className="sm:hidden">Start</span>
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <span className="sr-only sm:hidden">Join</span>
+                <ArrowRight className="h-4 w-4 sm:ml-2" />
               </Link>
             </Button>
           </div>
         </div>
 
-        <div className="mx-auto grid w-[calc(100vw-2rem)] max-w-7xl min-w-0 items-center gap-12 overflow-hidden py-16 sm:w-full lg:grid-cols-[1.08fr_0.92fr] lg:py-24">
+        <div className="mx-auto grid w-full max-w-7xl min-w-0 items-center gap-12 overflow-hidden py-16 lg:grid-cols-[1.08fr_0.92fr] lg:py-24">
           <div className="w-full min-w-0 max-w-full space-y-8 overflow-hidden">
             <div className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-full border border-[#b9904d]/30 bg-[#fffaf2]/70 px-4 py-2 text-[#6c5a4a] shadow-sm backdrop-blur">
               <Sparkles className="h-4 w-4 text-[#8f001c]" />
-              <span className="luxe-kicker max-w-full truncate sm:whitespace-normal">Premium matrimony for serious families</span>
+              <span className="luxe-kicker max-w-full text-[0.62rem] leading-5 sm:text-[0.72rem]">Premium matrimony for serious families</span>
             </div>
             <div className="space-y-5">
               <h1 className="luxe-title max-w-[22rem] text-4xl font-bold text-[#18110d] sm:max-w-4xl sm:text-7xl lg:text-8xl">
@@ -90,7 +90,7 @@ export default function Home() {
                 family context, and meaningful compatibility come before noise.
               </p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex max-w-[22rem] flex-col gap-3 sm:max-w-none sm:flex-row">
               <Button asChild size="lg" className="luxe-button w-full rounded-full px-7 sm:w-auto">
                 <Link href="/auth">
                   Create your profile
@@ -101,7 +101,7 @@ export default function Home() {
                 <Link href="#experience">Explore the experience</Link>
               </Button>
             </div>
-            <div className="grid max-w-xl grid-cols-1 gap-3 pt-3 sm:grid-cols-3">
+            <div className="grid max-w-[22rem] grid-cols-1 gap-3 pt-3 sm:max-w-xl sm:grid-cols-3">
               {[
                 ["Verified", "profiles"],
                 ["Private", "by design"],

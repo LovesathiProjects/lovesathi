@@ -33,8 +33,8 @@ export function MatrimonyShortlistView({
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
-        <Loader2 className="w-8 h-8 animate-spin text-[#97011A]" />
-        <p className="text-black text-sm">Loading your shortlist...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-[#8f001c]" />
+        <p className="text-sm font-bold text-[#18110d]">Preparing your shortlist...</p>
       </div>
     )
   }
@@ -42,11 +42,13 @@ export function MatrimonyShortlistView({
   if (!profiles || profiles.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
-        <Star className="w-10 h-10 text-[#444444]" />
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#8f001c]/10">
+          <Star className="h-8 w-8 text-[#8f001c]" />
+        </div>
         <div className="space-y-2">
-          <h3 className="text-lg font-semibold text-black">No shortlisted profiles yet</h3>
-          <p className="text-sm text-[#444444] max-w-sm">
-            Tap the star icon on profiles you like to add them to your shortlist and revisit them anytime.
+          <h3 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#18110d]">No shortlisted profiles yet</h3>
+          <p className="max-w-sm text-sm leading-6 text-[#6c5a4a]">
+            Tap the star icon on profiles that deserve a second look and build a calmer family-ready shortlist.
           </p>
         </div>
       </div>
@@ -58,7 +60,7 @@ export function MatrimonyShortlistView({
       {profiles.map((profile) => (
         <div
           key={profile.id}
-          className="bg-white border border-[#E5E5E5] rounded-2xl p-4 shadow-sm hover:shadow-md hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+          className="luxe-card cursor-pointer rounded-[1.5rem] border-[#d9b978]/24 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(24,17,13,0.14)]"
           onClick={() => onOpenProfile?.(profile)}
           role="button"
           tabIndex={0}
@@ -147,4 +149,3 @@ export function MatrimonyShortlistScreen({
     />
   )
 }
-

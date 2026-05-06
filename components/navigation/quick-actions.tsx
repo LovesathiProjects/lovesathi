@@ -54,8 +54,7 @@ export function QuickActions({
       )}
     >
       <div className={cn(
-        "flex items-center gap-4 px-8 py-3 rounded-3xl backdrop-blur-xl border shadow-[0_8px_24px_rgba(0,0,0,0.3)]",
-        "bg-white border-[#E5E5E5] shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
+        "flex items-center gap-3 rounded-[2rem] border border-[#d9b978]/32 bg-[#fffaf2]/86 px-5 py-3 shadow-[0_22px_70px_rgba(24,17,13,0.2)] backdrop-blur-2xl sm:gap-4 sm:px-8",
       )}>
         {tabs.map((tab) => {
           const Icon = tab.icon
@@ -66,26 +65,26 @@ export function QuickActions({
               key={tab.id}
               onClick={tab.onClick}
               className={cn(
-                "relative flex items-center justify-center w-11 h-11 rounded-full transition-all duration-150 ease-in-out",
-                isActive ? "" : "hover:bg-black/4 cursor-pointer"
+                "relative flex h-11 w-11 items-center justify-center rounded-full transition-all duration-150 ease-in-out",
+                isActive ? "bg-[#8f001c] shadow-[0_14px_34px_rgba(143,0,28,0.28)]" : "cursor-pointer hover:bg-[#8f001c]/8"
               )}
             >
               <div className={cn(
                 "relative flex items-center justify-center",
-                isActive && "p-2 rounded-full bg-black/8 backdrop-blur-[8px] shadow-[0_4px_10px_rgba(0,0,0,0.08)]"
+                isActive && "p-2 rounded-full"
               )}>
                 <Icon 
                   className={cn(
                     "w-5 h-5 transition-all duration-150 ease-in-out"
                   )} 
-                  stroke={isActive ? "#000000" : "rgba(0,0,0,0.75)"}
+                  stroke={isActive ? "#fffaf2" : "#6c5a4a"}
                   strokeWidth={isActive ? 2.5 : 2}
                   fill="none"
                   style={{
-                    color: isActive ? '#000000' : 'rgba(0,0,0,0.75)',
-                    stroke: isActive ? '#000000' : 'rgba(0,0,0,0.75)',
+                    color: isActive ? '#fffaf2' : '#6c5a4a',
+                    stroke: isActive ? '#fffaf2' : '#6c5a4a',
                     fill: 'none',
-                    opacity: isActive ? 1 : 0.75
+                    opacity: isActive ? 1 : 0.9
                   }}
                 />
                 {/* Unread message badge for messages icon */}
