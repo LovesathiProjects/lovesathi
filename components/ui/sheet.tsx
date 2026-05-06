@@ -62,7 +62,7 @@ function SheetContent({
           'bg-[#14161B] data-[state=open]:animate-in data-[state=closed]:animate-out fixed flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.5)] transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500',
           'z-[51]',
           side === 'right' &&
-            'data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right right-4 top-4 bottom-4 h-[calc(100vh-2rem)] w-full max-w-[500px] rounded-2xl border border-white/20 overflow-hidden',
+            'data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right right-0 top-0 bottom-0 h-dvh w-full max-w-none rounded-none border border-white/20 overflow-hidden sm:right-4 sm:top-4 sm:bottom-4 sm:h-[calc(100vh-2rem)] sm:max-w-[500px] sm:rounded-2xl',
           side === 'left' &&
             'data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm',
           side === 'top' &&

@@ -253,10 +253,10 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="flex min-h-dvh flex-col overflow-x-hidden bg-white">
       {/* Header with back button and progress */}
-      <div className="sticky top-0 z-10 bg-white">
-        <div className="flex items-center justify-between px-6 py-4">
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur">
+        <div className="flex items-center justify-between px-5 py-4 sm:px-6">
           <button
             onClick={() => {
               if (step === "gender") {
@@ -278,17 +278,17 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col px-6 py-8">
+      <div className="flex min-w-0 flex-1 flex-col px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 sm:px-6 sm:py-8">
         {/* Profile step (DOB) */}
         {step === "profile" && (
-          <div className="flex-1 flex flex-col justify-between max-w-md w-full mx-auto">
-            <div className="space-y-6 pt-8">
+          <div className="mx-auto flex min-h-[calc(100dvh-6rem)] w-full max-w-md min-w-0 flex-1 flex-col">
+            <div className="space-y-6 pt-6 sm:pt-8">
               <div className="space-y-2">
-                <h1 className="text-3xl font-bold text-[#111]">When were you born?</h1>
-                <p className="text-base text-black/60">Select your date of birth. Minimum age is 18.</p>
+                <h1 className="font-serif text-4xl font-bold leading-tight tracking-[-0.05em] text-[#111] sm:text-5xl">When were you born?</h1>
+                <p className="text-base leading-7 text-black/60">Select your date of birth. Minimum age is 18.</p>
               </div>
 
-              <div className="space-y-4 pt-4">
+              <div className="space-y-4 pt-3">
                 <div className="space-y-2">
                   <Label htmlFor="dob" className="text-sm font-semibold text-[#111] uppercase tracking-wide">
                     DATE OF BIRTH
@@ -301,7 +301,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                       onChange={(e) => setDob(e.target.value)}
                       min="1950-01-01"
                       max={minimumBirthDate}
-                      className="w-full h-14 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
+                      className="block h-14 w-full max-w-full min-w-0 appearance-none rounded-2xl border-black/20 text-base text-[#111] focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20"
                     />
                   </div>
                 </div>
@@ -320,14 +320,14 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
               </div>
             </div>
 
-            <div className="pb-8">
+            <div className="pt-8 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
               <Button
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
                   handleProfileContinue()
                 }}
-                className="w-full h-14 text-base font-semibold bg-[#97011A] hover:bg-[#7A010E] text-white rounded-full shadow-sm transition-colors"
+                className="h-14 w-full rounded-full bg-[#97011A] text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#7A010E] disabled:bg-[#d08190] disabled:text-white"
                 disabled={isLoading || !dob}
                 type="button"
               >
@@ -339,11 +339,11 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
 
         {/* Gender step */}
         {step === "gender" && (
-          <div className="flex-1 flex flex-col justify-between max-w-md w-full mx-auto">
-            <div className="space-y-6 pt-8">
+          <div className="mx-auto flex min-h-[calc(100dvh-6rem)] w-full max-w-md min-w-0 flex-1 flex-col">
+            <div className="space-y-6 pt-6 sm:pt-8">
               <div className="space-y-2">
-                <h1 className="text-3xl font-bold text-[#111]">Who are you?</h1>
-                <p className="text-base text-black/60">Select your gender.</p>
+                <h1 className="font-serif text-4xl font-bold leading-tight tracking-[-0.05em] text-[#111] sm:text-5xl">Who are you?</h1>
+                <p className="text-base leading-7 text-black/60">Select your gender.</p>
               </div>
 
               <div className="space-y-3 pt-4">
@@ -383,9 +383,9 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
               </div>
             </div>
 
-            <div className="pb-8">
+            <div className="mt-auto pt-8 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
               <Button
-                className="w-full h-14 text-base font-semibold bg-[#97011A] hover:bg-[#7A010E] text-white rounded-full shadow-sm transition-colors"
+                className="h-14 w-full rounded-full bg-[#97011A] text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#7A010E] disabled:bg-[#d08190] disabled:text-white"
                 onClick={async () => {
                   if (gender === null) return
                   
@@ -420,14 +420,14 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
 
         {/* ID Verification step */}
         {step === "id" && (
-          <div className="flex-1 flex flex-col justify-between max-w-md w-full mx-auto">
-            <div className="space-y-6 pt-8">
+          <div className="mx-auto flex min-h-[calc(100dvh-6rem)] w-full max-w-md min-w-0 flex-1 flex-col">
+            <div className="space-y-5 pt-6 sm:space-y-6 sm:pt-8">
               <div className="space-y-2">
-                <h1 className="text-3xl font-bold text-[#111]">ID Verification</h1>
-                <p className="text-base text-black/60">Optional but recommended for enhanced trust</p>
+                <h1 className="font-serif text-4xl font-bold leading-tight tracking-[-0.05em] text-[#111] sm:text-5xl">ID Verification</h1>
+                <p className="text-base leading-7 text-black/60">Optional but recommended for enhanced trust.</p>
               </div>
 
-              <div className="p-4 bg-black/5 rounded-xl">
+              <div className="rounded-3xl bg-black/[0.045] p-4">
                 <div className="flex items-start gap-3">
                   <Shield className="w-5 h-5 text-[#97011A] mt-0.5 flex-shrink-0" />
                   <div className="space-y-1">
@@ -441,7 +441,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                 </div>
               </div>
 
-              <div className="space-y-4 pt-2">
+              <div className="space-y-4 pt-1">
                 {/* Hidden input for file picking */}
                 <input
                   ref={uploadInputRef}
@@ -462,13 +462,13 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                   {!uploadedFile ? (
                     <button
                       onClick={handleUploadId}
-                      className="h-32 flex flex-col items-center justify-center gap-2 bg-white border-2 border-dashed border-black/20 rounded-xl hover:border-black/40 transition-colors"
+                      className="flex h-28 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-black/20 bg-white transition-colors hover:border-black/40 sm:h-32"
                     >
                       <Upload className="w-6 h-6 text-[#111]" />
                       <span className="text-sm font-medium text-[#111]">Upload ID</span>
                     </button>
                   ) : (
-                    <div className="relative h-32 border-2 border-[#97011A] rounded-xl bg-[#97011A]/5 p-3 overflow-hidden">
+                    <div className="relative h-28 overflow-hidden rounded-2xl border-2 border-[#97011A] bg-[#97011A]/5 p-3 sm:h-32">
                       <button
                         onClick={handleRemoveFile}
                         className="absolute top-2 right-2 z-10 h-6 w-6 rounded-full bg-[#97011A] hover:bg-[#7A010E] text-white flex items-center justify-center transition-colors"
@@ -494,13 +494,13 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                   {!capturedFacePhoto ? (
                     <button
                       onClick={handleTakePhoto}
-                      className="h-32 flex flex-col items-center justify-center gap-2 bg-white border-2 border-dashed border-black/20 rounded-xl hover:border-black/40 transition-colors"
+                      className="flex h-28 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-black/20 bg-white transition-colors hover:border-black/40 sm:h-32"
                     >
                       <Camera className="w-6 h-6 text-[#111]" />
                       <span className="text-sm font-medium text-[#111]">Take Photo</span>
                     </button>
                   ) : (
-                    <div className="relative h-32 border-2 border-[#97011A] rounded-xl bg-[#97011A]/5 p-3 overflow-hidden">
+                    <div className="relative h-28 overflow-hidden rounded-2xl border-2 border-[#97011A] bg-[#97011A]/5 p-3 sm:h-32">
                       <button
                         onClick={handleRemoveFacePhoto}
                         className="absolute top-2 right-2 z-10 h-6 w-6 rounded-full bg-[#97011A] hover:bg-[#7A010E] text-white flex items-center justify-center transition-colors"
@@ -523,10 +523,10 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
               </div>
             </div>
 
-            <div className="space-y-3 pb-8">
+            <div className="mt-auto space-y-3 pt-8 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
               <Button
                 onClick={handleComplete}
-                className="w-full h-14 text-base font-semibold bg-[#97011A] hover:bg-[#7A010E] text-white rounded-full shadow-sm transition-colors"
+                className="h-14 w-full rounded-full bg-[#97011A] text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#7A010E] disabled:bg-[#d08190] disabled:text-white"
                 disabled={isLoading || !uploadedFile || !capturedFacePhoto}
               >
                 {isLoading ? "Uploading & Saving..." : "Verify ID"}

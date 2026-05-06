@@ -315,24 +315,26 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <FormField
-              control={form.control}
-              name="dob"
-              render={({ field }) => (
-                <FormItem className={verifiedDob ? "hidden" : ""}>
-                  <FormLabel className="text-black">Date of Birth</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      {...field}
-                      className="h-12 rounded-xl border-black/20 text-base text-[#111] focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {!verifiedDob && (
+              <FormField
+                control={form.control}
+                name="dob"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-black">Date of Birth</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        {...field}
+                        className="h-12 rounded-xl border-black/20 text-base text-[#111] focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={form.control}
               name="tob"
@@ -350,18 +352,21 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
                 </FormItem>
               )}
             />
+          </div>
+
+          <div className="rounded-3xl border border-[#d9b978]/24 bg-white/58 p-4">
             <FormField
               control={form.control}
               name="pob"
               render={({ field }) => (
-                <FormItem className={verifiedDob ? "sm:col-span-2" : ""}>
+                <FormItem>
                   <LocationCascadeSelect
                     value={parseLocationValue(field.value)}
                     onChange={(location) => field.onChange(formatLocationValue(location))}
                     countryLabel="Birth Country"
                     stateLabel="Birth State"
                     cityLabel="Birth City"
-                    className="grid grid-cols-1 gap-4 sm:grid-cols-3"
+                    className="grid grid-cols-1 gap-4 md:grid-cols-3"
                   />
                   <FormMessage />
                 </FormItem>

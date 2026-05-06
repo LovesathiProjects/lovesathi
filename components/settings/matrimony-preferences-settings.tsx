@@ -59,7 +59,7 @@ interface MatrimonyPreferencesSettingsProps {
 }
 
 export function MatrimonyPreferencesSettings({ onBack }: MatrimonyPreferencesSettingsProps) {
-  const { canUseVerifiedFilter, loading: verifiedFilterLoading, matchCount, remainingFreeUses } = useVerifiedFilterAllowance()
+  const { canUseVerifiedFilter, loading: verifiedFilterLoading, matchCount } = useVerifiedFilterAllowance()
   const [settings, setSettings] = useState<MatrimonyPreferences>({
     ageRange: [21, 35],
     heightRange: [150, 190],
@@ -423,7 +423,7 @@ export function MatrimonyPreferencesSettings({ onBack }: MatrimonyPreferencesSet
                 <Label className="font-medium">Verified profiles only</Label>
                 <p className="text-sm text-muted-foreground">
                   {canUseVerifiedFilter
-                    ? `${remainingFreeUses} of ${FREE_VERIFIED_FILTER_MATCH_LIMIT} free-match verified filters remaining`
+                    ? `Free until ${FREE_VERIFIED_FILTER_MATCH_LIMIT} active matches. Current: ${matchCount}/${FREE_VERIFIED_FILTER_MATCH_LIMIT}.`
                     : `Premium unlock required after ${matchCount} active matches`}
                 </p>
               </div>
