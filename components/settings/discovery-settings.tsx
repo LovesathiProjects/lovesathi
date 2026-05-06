@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, MapPin, Users, Filter } from "lucide-react"
 import { StaticBackground } from "@/components/discovery/static-background"
+import { RELIGION_OPTIONS } from "@/lib/matrimonyOptions"
 
 interface DiscoverySettingsProps {
   onBack?: () => void
@@ -29,7 +30,7 @@ interface DiscoverySettings {
 
 const educationOptions = ["High School", "Bachelor's Degree", "Master's Degree", "PhD", "Trade School", "Some College"]
 
-const religionOptions = ["Hindu", "Muslim", "Christian", "Sikh", "Buddhist", "Jain", "Other", "Prefer not to say"]
+const religionOptions = ["Prefer not to say", ...RELIGION_OPTIONS]
 
 const lifestyleOptions = [
   "Non-smoker",

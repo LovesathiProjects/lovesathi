@@ -13,6 +13,7 @@ import { StaticBackground } from "@/components/discovery/static-background"
 import { supabase } from "@/lib/supabaseClient"
 import { useToast } from "@/hooks/use-toast"
 import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
+import { COMMUNITY_PREFERENCE_OPTIONS } from "@/lib/matrimonyOptions"
 
 interface MatrimonyPreferences {
   ageRange: [number, number]
@@ -38,10 +39,7 @@ const professionOptions = [
   "Teacher", "Government job", "Private sector", "Entrepreneur", "Any"
 ]
 
-const communityOptions = [
-  "Any", "Brahmin", "Kshatriya", "Vaishya", "Shudra", "Jain", 
-  "Sikh", "Muslim", "Christian", "Buddhist", "Other"
-]
+const communityOptions = ["Any", ...COMMUNITY_PREFERENCE_OPTIONS]
 
 const familyTypeOptions = [
   "Nuclear", "Joint", "Any"
@@ -171,11 +169,19 @@ export function MatrimonyPreferencesSettings({ onBack }: MatrimonyPreferencesSet
 
   const handleArrayToggle = (key: keyof MatrimonyPreferences, value: string) => {
     const currentArray = settings[key] as string[]
+    if (value === "Any") {
+      setSettings((prev) => ({
+        ...prev,
+        [key]: currentArray.includes("Any") ? [] : ["Any"],
+      }))
+      return
+    }
+
     setSettings((prev) => ({
       ...prev,
       [key]: currentArray.includes(value)
         ? currentArray.filter((item) => item !== value)
-        : [...currentArray, value],
+        : [...currentArray.filter((item) => item !== "Any"), value],
     }))
   }
 

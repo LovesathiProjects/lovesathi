@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { X } from "lucide-react"
 import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
+import { COMMUNITY_PREFERENCE_OPTIONS } from "@/lib/matrimonyOptions"
 
 export interface FilterState {
   ageRange: [number, number]
@@ -47,10 +48,7 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
     premiumOnly: false,
   })
 
-  // Community/Caste options from matrimony onboarding (matrimony-preferences.tsx)
-  const communityOptions = [
-    "Any", "Brahmin", "Kshatriya", "Vaishya", "Shudra", "Other"
-  ]
+  const communityOptions = ["Any", ...COMMUNITY_PREFERENCE_OPTIONS]
 
   // Family Type options from matrimony onboarding (matrimony-preferences.tsx)
   const familyTypeOptions = [
@@ -68,10 +66,15 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
   ]
 
   const handleArrayToggle = (array: string[], item: string, setter: (value: string[]) => void) => {
+    if (item === "Any") {
+      setter(array.includes("Any") ? [] : ["Any"])
+      return
+    }
+
     if (array.includes(item)) {
       setter(array.filter(i => i !== item))
     } else {
-      setter([...array, item])
+      setter([...array.filter(i => i !== "Any"), item])
     }
   }
 

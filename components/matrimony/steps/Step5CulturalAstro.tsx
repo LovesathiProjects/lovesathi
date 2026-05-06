@@ -16,8 +16,9 @@ import { formatDateForDisplay } from "@/lib/age"
 import { LocationCascadeSelect } from "@/components/location/location-cascade-select"
 import { formatLocationValue, parseLocationValue } from "@/lib/location"
 import {
-  COMMUNITY_OPTIONS,
+  getCommunityOptionsForReligion,
   MOTHER_TONGUE_OPTIONS,
+  normalizeReligionOption,
   RELIGION_OPTIONS,
   STAR_RAASHI_OPTIONS,
   withoutOther,
@@ -36,6 +37,7 @@ function OtherSelect({
   placeholder,
   options,
   otherPlaceholder,
+  disabled = false,
   onChange,
 }: {
   label: string
@@ -43,18 +45,33 @@ function OtherSelect({
   placeholder: string
   options: readonly string[]
   otherPlaceholder: string
+  disabled?: boolean
   onChange: (value: string) => void
 }) {
   const [customValue, setCustomValue] = React.useState(isPreset(value, options) ? "" : value || "")
-  const selectValue = value && isPreset(value, options) ? value : value ? "Other" : undefined
+  const [customMode, setCustomMode] = React.useState(Boolean(value && !isPreset(value, options)))
+  const optionsKey = React.useMemo(() => options.join("\u0000"), [options])
+  const previousOptionsKey = React.useRef(optionsKey)
+  const selectValue = customMode ? "Other" : value && isPreset(value, options) ? value : undefined
 
   useEffect(() => {
-    if (!value || isPreset(value, options)) {
+    const optionsChanged = previousOptionsKey.current !== optionsKey
+    previousOptionsKey.current = optionsKey
+
+    if (optionsChanged && !value) {
+      setCustomMode(false)
       setCustomValue("")
-    } else {
+      return
+    }
+
+    if (value && isPreset(value, options)) {
+      setCustomMode(false)
+      setCustomValue("")
+    } else if (value) {
+      setCustomMode(true)
       setCustomValue(value)
     }
-  }, [options, value])
+  }, [options, optionsKey, value])
 
   return (
     <FormItem>
@@ -63,13 +80,17 @@ function OtherSelect({
         <Select
           onValueChange={(nextValue) => {
             if (nextValue === "Other") {
+              setCustomMode(true)
               setCustomValue("")
               onChange("")
               return
             }
+            setCustomMode(false)
+            setCustomValue("")
             onChange(nextValue)
           }}
           value={selectValue}
+          disabled={disabled}
         >
           <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white">
             <SelectValue placeholder={placeholder} />
@@ -91,6 +112,7 @@ function OtherSelect({
             setCustomValue(event.target.value)
             onChange(event.target.value)
           }}
+          disabled={disabled}
           className="mt-2 h-12 rounded-xl border-black/20 bg-white text-base text-[#111] focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20"
         />
       )}
@@ -107,7 +129,7 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
   const form = useForm<FormValues>({
     resolver: zodResolver(culturalAstroSchema),
     defaultValues: {
-      religion: cultural.religion || "",
+      religion: normalizeReligionOption(cultural.religion) || "",
       motherTongue: cultural.motherTongue || "",
       community: cultural.community || "",
       subCaste: cultural.subCaste || "",
@@ -119,6 +141,9 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
     },
     mode: "onChange",
   })
+
+  const selectedReligion = form.watch("religion")
+  const communityOptions = React.useMemo(() => getCommunityOptionsForReligion(selectedReligion), [selectedReligion])
 
   useEffect(() => {
     let mounted = true
@@ -235,7 +260,11 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
                   placeholder="Select religion"
                   options={RELIGION_OPTIONS}
                   otherPlaceholder="Enter religion"
-                  onChange={field.onChange}
+                  onChange={(value) => {
+                    field.onChange(value)
+                    form.setValue("community", "", { shouldDirty: true, shouldValidate: true })
+                    form.setValue("subCaste", "", { shouldDirty: true, shouldValidate: true })
+                  }}
                 />
               )}
             />
@@ -258,11 +287,12 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
               name="community"
               render={({ field }) => (
                 <OtherSelect
-                  label="Community / Caste"
+                  label="Community / Caste / Denomination"
                   value={field.value}
-                  placeholder="Select community"
-                  options={COMMUNITY_OPTIONS}
-                  otherPlaceholder="Enter community"
+                  placeholder={selectedReligion ? "Select community" : "Select religion first"}
+                  options={communityOptions}
+                  otherPlaceholder="Enter community, caste, or denomination"
+                  disabled={!selectedReligion}
                   onChange={field.onChange}
                 />
               )}
@@ -272,7 +302,7 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
               name="subCaste"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-black">Sub-caste (optional)</FormLabel>
+                  <FormLabel className="text-black">Sub-caste / sub-community (optional)</FormLabel>
                   <FormControl>
                     <Input
                       {...field}

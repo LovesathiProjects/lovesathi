@@ -11,6 +11,7 @@ import { useMatrimonySetupStore } from "@/components/matrimony/store"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
+import { COMMUNITY_PREFERENCE_OPTIONS } from "@/lib/matrimonyOptions"
 
 type PreferenceKey =
   | "dietPrefs"
@@ -43,7 +44,7 @@ const preferenceGroups: Array<{
     key: "communities",
     title: "Community",
     description: "Keep this broad if you are open to wider matches.",
-    options: ["Any", "Brahmin", "Kshatriya", "Vaishya", "Jain", "Muslim", "Christian", "Sikh"],
+    options: ["Any", ...COMMUNITY_PREFERENCE_OPTIONS],
   },
   {
     key: "dietPrefs",

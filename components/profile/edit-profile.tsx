@@ -18,12 +18,15 @@ import { LocationCascadeSelect, LocationPreferencePicker } from "@/components/lo
 import { formatLocationValue, parseLocationValue, type LocationValue } from "@/lib/location"
 import {
   BODY_TYPE_OPTIONS,
+  COMMUNITY_PREFERENCE_OPTIONS,
   DIET_OPTIONS,
   EDUCATION_OPTIONS,
   FAMILY_TYPE_OPTIONS,
   FAMILY_VALUES_OPTIONS,
+  getCommunityOptionsForReligion,
   MARITAL_STATUS_OPTIONS,
   MOTHER_TONGUE_OPTIONS,
+  normalizeReligionOption,
   PROFESSION_OPTIONS,
   RELIGION_OPTIONS,
 } from "@/lib/matrimonyOptions"
@@ -85,6 +88,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
   const [family, setFamily] = useState<any>({})
   const [cultural, setCultural] = useState<any>({})
   const [partnerPreferences, setPartnerPreferences] = useState<any>({})
+  const [customCommunityEntry, setCustomCommunityEntry] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
@@ -122,7 +126,11 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
         setPersonal(typed.personal || {})
         setCareer(typed.career || {})
         setFamily(typed.family || {})
-        setCultural(typed.cultural || {})
+        const culturalData = (typed.cultural as any) || {}
+        setCultural({
+          ...culturalData,
+          religion: normalizeReligionOption(culturalData.religion),
+        })
         setPartnerPreferences(typed.partner_preferences || {})
       }
     } catch (error) {
@@ -171,6 +179,20 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
     } as const
 
     map[section]({ ...stateMap[section], [key]: value })
+  }
+
+  function togglePartnerCommunity(community: string) {
+    const current = Array.isArray(partnerPreferences.communities) ? partnerPreferences.communities : []
+    const next =
+      community === "Any"
+        ? current.includes("Any")
+          ? []
+          : ["Any"]
+        : current.includes(community)
+          ? current.filter((item: string) => item !== community)
+          : [...current.filter((item: string) => item !== "Any"), community]
+
+    setNested("partner", "communities", next)
   }
 
   function updateWorkLocation(location: LocationValue) {
@@ -264,6 +286,13 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
       </div>
     )
   }
+
+  const communityOptions = getCommunityOptionsForReligion(cultural.religion)
+  const communityValue = cultural.community || ""
+  const shouldShowCustomCommunity = customCommunityEntry || Boolean(communityValue && !communityOptions.includes(communityValue))
+  const communitySelectValue = shouldShowCustomCommunity ? "Other" : communityValue || undefined
+  const partnerCommunityOptions = ["Any", ...COMMUNITY_PREFERENCE_OPTIONS]
+  const selectedPartnerCommunities = Array.isArray(partnerPreferences.communities) ? partnerPreferences.communities : []
 
   return (
     <div className="luxe-light-page min-h-screen">
@@ -458,7 +487,15 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                   value={cultural.religion || ""}
                   placeholder="Select religion"
                   options={RELIGION_OPTIONS}
-                  onValueChange={(value) => setNested("cultural", "religion", value)}
+                  onValueChange={(value) => {
+                    setCustomCommunityEntry(false)
+                    setCultural({
+                      ...cultural,
+                      religion: value,
+                      community: "",
+                      sub_caste: "",
+                    })
+                  }}
                 />
                 <SelectField
                   label="Mother Tongue"
@@ -468,8 +505,42 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                   onValueChange={(value) => setNested("cultural", "mother_tongue", value)}
                 />
                 <div className="space-y-2">
-                  <Label>Community</Label>
-                  <Input value={cultural.community || ""} onChange={(e) => setNested("cultural", "community", e.target.value)} />
+                  <Label>Community / Caste / Denomination</Label>
+                  <Select
+                    value={communitySelectValue}
+                    onValueChange={(value) => {
+                      if (value === "Other") {
+                        setCustomCommunityEntry(true)
+                        setNested("cultural", "community", "")
+                        return
+                      }
+
+                      setCustomCommunityEntry(false)
+                      setNested("cultural", "community", value)
+                    }}
+                    disabled={!cultural.religion}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={cultural.religion ? "Select community" : "Select religion first"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {communityOptions.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {shouldShowCustomCommunity && (
+                    <Input
+                      value={communityValue}
+                      onChange={(event) => {
+                        setCustomCommunityEntry(true)
+                        setNested("cultural", "community", event.target.value)
+                      }}
+                      placeholder="Enter community, caste, or denomination"
+                    />
+                  )}
                 </div>
                 <div className="space-y-2 sm:col-span-2">
                   <LocationCascadeSelect
@@ -560,10 +631,25 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                 </div>
                 <div className="space-y-2 sm:col-span-2">
                   <Label>Preferred Communities</Label>
-                  <Textarea
-                    value={(partnerPreferences.communities || []).join(", ")}
-                    onChange={(e) => setNested("partner", "communities", e.target.value.split(",").map((item) => item.trim()).filter(Boolean))}
-                  />
+                  <div className="flex flex-wrap gap-2 rounded-3xl border border-[#482b1a]/10 bg-white/58 p-3">
+                    {partnerCommunityOptions.map((community) => (
+                      <Button
+                        key={community}
+                        type="button"
+                        size="sm"
+                        variant={selectedPartnerCommunities.includes(community) ? "default" : "outline"}
+                        className={cn(
+                          "rounded-full",
+                          selectedPartnerCommunities.includes(community)
+                            ? "bg-[#8f001c] text-[#fffaf2] hover:bg-[#740016]"
+                            : "border-[#482b1a]/12 bg-white/70 text-[#6c5a4a] hover:border-[#b9904d] hover:text-[#18110d]",
+                        )}
+                        onClick={() => togglePartnerCommunity(community)}
+                      >
+                        {community}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               </CardContent>
             </Card>

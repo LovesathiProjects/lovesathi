@@ -7,6 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Users, Home } from "lucide-react"
+import {
+  getCommunityOptionsForReligion,
+  MOTHER_TONGUE_OPTIONS,
+  RELIGION_OPTIONS,
+} from "@/lib/matrimonyOptions"
 
 export function MatrimonyPreferences() {
   const [preferences, setPreferences] = useState({
@@ -20,6 +25,7 @@ export function MatrimonyPreferences() {
     showCommunityInfo: true,
     showFamilyInfo: true,
   })
+  const communityOptions = getCommunityOptionsForReligion(preferences.religion)
 
   return (
     <div className="space-y-6">
@@ -47,62 +53,59 @@ export function MatrimonyPreferences() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Religion</Label>
-                  <Select onValueChange={(value) => setPreferences((prev) => ({ ...prev, religion: value }))}>
+                  <Select
+                    value={preferences.religion || undefined}
+                    onValueChange={(value) => setPreferences((prev) => ({ ...prev, religion: value, caste: "" }))}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select religion" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="hindu">Hindu</SelectItem>
-                      <SelectItem value="muslim">Muslim</SelectItem>
-                      <SelectItem value="christian">Christian</SelectItem>
-                      <SelectItem value="sikh">Sikh</SelectItem>
-                      <SelectItem value="buddhist">Buddhist</SelectItem>
-                      <SelectItem value="jain">Jain</SelectItem>
-                      <SelectItem value="jewish">Jewish</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                      <SelectItem value="spiritual">Spiritual but not religious</SelectItem>
-                      <SelectItem value="atheist">Atheist/Agnostic</SelectItem>
+                      {RELIGION_OPTIONS.map((religion) => (
+                        <SelectItem key={religion} value={religion}>
+                          {religion}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
                   <Label>Mother Tongue</Label>
-                  <Select onValueChange={(value) => setPreferences((prev) => ({ ...prev, motherTongue: value }))}>
+                  <Select
+                    value={preferences.motherTongue || undefined}
+                    onValueChange={(value) => setPreferences((prev) => ({ ...prev, motherTongue: value }))}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select language" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="hindi">Hindi</SelectItem>
-                      <SelectItem value="english">English</SelectItem>
-                      <SelectItem value="tamil">Tamil</SelectItem>
-                      <SelectItem value="telugu">Telugu</SelectItem>
-                      <SelectItem value="bengali">Bengali</SelectItem>
-                      <SelectItem value="marathi">Marathi</SelectItem>
-                      <SelectItem value="gujarati">Gujarati</SelectItem>
-                      <SelectItem value="kannada">Kannada</SelectItem>
-                      <SelectItem value="malayalam">Malayalam</SelectItem>
-                      <SelectItem value="punjabi">Punjabi</SelectItem>
-                      <SelectItem value="urdu">Urdu</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      {MOTHER_TONGUE_OPTIONS.map((language) => (
+                        <SelectItem key={language} value={language}>
+                          {language}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Community/Caste (Optional)</Label>
-                <Select onValueChange={(value) => setPreferences((prev) => ({ ...prev, caste: value }))}>
+                <Label>Community / Caste / Denomination (Optional)</Label>
+                <Select
+                  value={preferences.caste || undefined}
+                  onValueChange={(value) => setPreferences((prev) => ({ ...prev, caste: value }))}
+                  disabled={!preferences.religion}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select community" />
+                    <SelectValue placeholder={preferences.religion ? "Select community" : "Select religion first"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
-                    <SelectItem value="brahmin">Brahmin</SelectItem>
-                    <SelectItem value="kshatriya">Kshatriya</SelectItem>
-                    <SelectItem value="vaishya">Vaishya</SelectItem>
-                    <SelectItem value="shudra">Shudra</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    {communityOptions.map((community) => (
+                      <SelectItem key={community} value={community}>
+                        {community}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

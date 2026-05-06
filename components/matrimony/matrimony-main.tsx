@@ -395,11 +395,13 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
               // Apply community filter
               if (appliedFilters.communities && appliedFilters.communities.length > 0) {
-                if (!appliedFilters.communities.includes("Any")) {
+                if (!appliedFilters.communities.includes("Any") && !appliedFilters.communities.includes("Open to all")) {
                   const community = (culturalData?.community || "").toLowerCase()
+                  if (!community) return null
+
                   const matchesCommunity = appliedFilters.communities.some(pref => {
-                    return community.includes(pref.toLowerCase()) ||
-                           pref.toLowerCase().includes(community)
+                    const preference = pref.toLowerCase()
+                    return community.includes(preference) || preference.includes(community)
                   })
                   if (!matchesCommunity) {
                     return null
