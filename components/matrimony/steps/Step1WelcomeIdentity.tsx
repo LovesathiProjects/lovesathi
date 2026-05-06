@@ -25,6 +25,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
   const [photos, setPhotos] = React.useState<string[]>(welcome.photoUrls || (welcome.photoUrl ? [welcome.photoUrl] : []))
   const [isLoading, setIsLoading] = React.useState(false)
   const [verifiedDob, setVerifiedDob] = React.useState<string | null>(null)
+  const [verifiedGender, setVerifiedGender] = React.useState<"Male" | "Female" | "Other" | null>(null)
   const router = useRouter()
 
   const form = useForm<FormValues>({
@@ -77,8 +78,9 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
         }
       }
 
-      if (data?.gender && !welcome.gender) {
+      if (data?.gender) {
         const nextGender = data.gender === "male" ? "Male" : data.gender === "female" ? "Female" : "Other"
+        setVerifiedGender(nextGender)
         form.setValue("gender", nextGender, { shouldValidate: true })
         setPartial("welcome", { gender: nextGender })
       }
@@ -255,28 +257,40 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
             />
           )}
 
-          <FormField
-            control={form.control}
-            name="gender"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black">Gender</FormLabel>
-                <FormControl>
-                  <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    {(["Male", "Female", "Other"] as const).map((opt) => (
-                      <div key={opt} className="flex items-center space-x-2 border-2 border-black/20 rounded-xl p-3 hover:border-[#97011A] transition-colors">
-                        <RadioGroupItem value={opt} id={`gender-${opt}`} className="border-black/40 data-[state=checked]:border-[#97011A] data-[state=checked]:bg-[#97011A]" />
-                        <label htmlFor={`gender-${opt}`} className="text-xs sm:text-sm text-black cursor-pointer">
-                          {opt}
-                        </label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {verifiedGender ? (
+            <div className="rounded-3xl border border-[#b9904d]/24 bg-[#fffaf2]/76 p-4">
+              <p className="luxe-kicker text-[#8f001c]">verified gender</p>
+              <p className="mt-1 font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">
+                {verifiedGender}
+              </p>
+              <p className="mt-1 text-sm text-[#6c5a4a]">
+                This was already captured during verification, so we will not ask again here.
+              </p>
+            </div>
+          ) : (
+            <FormField
+              control={form.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-black">Gender</FormLabel>
+                  <FormControl>
+                    <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {(["Male", "Female", "Other"] as const).map((opt) => (
+                        <div key={opt} className="flex items-center space-x-2 border-2 border-black/20 rounded-xl p-3 hover:border-[#97011A] transition-colors">
+                          <RadioGroupItem value={opt} id={`gender-${opt}`} className="border-black/40 data-[state=checked]:border-[#97011A] data-[state=checked]:bg-[#97011A]" />
+                          <label htmlFor={`gender-${opt}`} className="text-xs sm:text-sm text-black cursor-pointer">
+                            {opt}
+                          </label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <FormField
             control={form.control}
@@ -322,7 +336,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
             </Button>
             <Button 
               type="submit" 
-              disabled={isLoading || photos.length < 2}
+              disabled={isLoading}
               className="bg-[#97011A] hover:bg-[#7A010E] text-white rounded-full px-6"
             >
               {isLoading ? "Saving..." : "Next"}
