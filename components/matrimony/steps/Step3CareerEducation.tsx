@@ -102,8 +102,8 @@ export function Step3CareerEducation({ onNext, onBack }: { onNext: () => void; o
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex-1 space-y-6">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-[#111]">Your Career & Education</h1>
-            <p className="text-base text-black/60">Share details about your professional and educational background.</p>
+            <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">Your Career & Education</h1>
+            <p className="text-base leading-7 text-[#6c5a4a]">Share the professional and educational details families look for while keeping the profile refined.</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

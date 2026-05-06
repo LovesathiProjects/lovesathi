@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { useToast } from "@/hooks/use-toast"
 import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
 import { COMMUNITY_PREFERENCE_OPTIONS } from "@/lib/matrimonyOptions"
+import { FREE_VERIFIED_FILTER_MATCH_LIMIT, useVerifiedFilterAllowance } from "@/hooks/useVerifiedFilterAllowance"
 
 interface MatrimonyPreferences {
   ageRange: [number, number]
@@ -58,6 +59,7 @@ interface MatrimonyPreferencesSettingsProps {
 }
 
 export function MatrimonyPreferencesSettings({ onBack }: MatrimonyPreferencesSettingsProps) {
+  const { canUseVerifiedFilter, loading: verifiedFilterLoading, matchCount, remainingFreeUses } = useVerifiedFilterAllowance()
   const [settings, setSettings] = useState<MatrimonyPreferences>({
     ageRange: [21, 35],
     heightRange: [150, 190],
@@ -78,6 +80,12 @@ export function MatrimonyPreferencesSettings({ onBack }: MatrimonyPreferencesSet
   useEffect(() => {
     loadPreferences()
   }, [])
+
+  useEffect(() => {
+    if (!canUseVerifiedFilter && settings.verifiedOnly) {
+      setSettings((prev) => ({ ...prev, verifiedOnly: false }))
+    }
+  }, [canUseVerifiedFilter, settings.verifiedOnly])
 
   const loadPreferences = async () => {
     try {
@@ -413,10 +421,15 @@ export function MatrimonyPreferencesSettings({ onBack }: MatrimonyPreferencesSet
             <div className="flex items-center justify-between">
               <div>
                 <Label className="font-medium">Verified profiles only</Label>
-                <p className="text-sm text-muted-foreground">Show only verified profiles</p>
+                <p className="text-sm text-muted-foreground">
+                  {canUseVerifiedFilter
+                    ? `${remainingFreeUses} of ${FREE_VERIFIED_FILTER_MATCH_LIMIT} free-match verified filters remaining`
+                    : `Premium unlock required after ${matchCount} active matches`}
+                </p>
               </div>
               <Switch
                 checked={settings.verifiedOnly}
+                disabled={verifiedFilterLoading || !canUseVerifiedFilter}
                 onCheckedChange={(checked) => setSettings((prev) => ({ ...prev, verifiedOnly: checked }))}
               />
             </div>

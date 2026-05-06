@@ -621,14 +621,12 @@ export async function saveStep6(
       profileData.step4_completed = existing.step4_completed || false
       profileData.step5_completed = existing.step5_completed || false
       profileData.step7_completed = existing.step7_completed || false
-      profileData.partner_preferences = existing.partner_preferences || {}
     } else {
       profileData.photos = []
       profileData.personal = {}
       profileData.career = {}
       profileData.family = {}
       profileData.cultural = {}
-      profileData.partner_preferences = {}
     }
 
     const { error } = await supabase

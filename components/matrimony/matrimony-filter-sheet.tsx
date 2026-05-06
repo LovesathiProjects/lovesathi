@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { X } from "lucide-react"
 import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
 import { COMMUNITY_PREFERENCE_OPTIONS } from "@/lib/matrimonyOptions"
+import { FREE_VERIFIED_FILTER_MATCH_LIMIT, useVerifiedFilterAllowance } from "@/hooks/useVerifiedFilterAllowance"
 
 export interface FilterState {
   ageRange: [number, number]
@@ -34,6 +35,7 @@ interface MatrimonyFilterSheetProps {
 }
 
 export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: MatrimonyFilterSheetProps) {
+  const { canUseVerifiedFilter, loading: verifiedFilterLoading, matchCount, remainingFreeUses } = useVerifiedFilterAllowance()
   const [filters, setFilters] = useState<FilterState>({
     ageRange: [21, 35],
     heightRange: [150, 190], // in cm
@@ -49,6 +51,12 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
   })
 
   const communityOptions = ["Any", ...COMMUNITY_PREFERENCE_OPTIONS]
+
+  useEffect(() => {
+    if (!canUseVerifiedFilter && filters.verifiedOnly) {
+      setFilters((prev) => ({ ...prev, verifiedOnly: false }))
+    }
+  }, [canUseVerifiedFilter, filters.verifiedOnly])
 
   // Family Type options from matrimony onboarding (matrimony-preferences.tsx)
   const familyTypeOptions = [
@@ -274,10 +282,18 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
             <h3 className="font-semibold text-black">Account Type</h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between py-1">
-                <Label htmlFor="verified-only" className="text-black">Verified profiles only</Label>
+                <div>
+                  <Label htmlFor="verified-only" className="text-black">Verified profiles only</Label>
+                  <p className="text-xs leading-5 text-[#6c5a4a]">
+                    {canUseVerifiedFilter
+                      ? `${remainingFreeUses} of ${FREE_VERIFIED_FILTER_MATCH_LIMIT} free-match verified filters remaining.`
+                      : `Available again with Premium after ${matchCount} active matches.`}
+                  </p>
+                </div>
                 <Switch
                   id="verified-only"
                   checked={filters.verifiedOnly}
+                  disabled={verifiedFilterLoading || !canUseVerifiedFilter}
                   onCheckedChange={(checked) => setFilters((prev) => ({ ...prev, verifiedOnly: checked }))}
                 />
               </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ArrowLeft, Plus, Save, X } from "lucide-react"
+import { ArrowLeft, Plus, Save, Sparkles, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabaseClient"
 import { uploadAsset, type MatrimonyProfileFull } from "@/lib/matrimonyService"
+import { generateSmartBioSuggestions } from "@/lib/matrimonyBio"
 import { useToast } from "@/hooks/use-toast"
 import { calculateAgeFromDate, formatDateForDisplay } from "@/lib/age"
 import { LocationCascadeSelect, LocationPreferencePicker } from "@/components/location/location-cascade-select"
@@ -293,6 +294,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
   const communitySelectValue = shouldShowCustomCommunity ? "Other" : communityValue || undefined
   const partnerCommunityOptions = ["Any", ...COMMUNITY_PREFERENCE_OPTIONS]
   const selectedPartnerCommunities = Array.isArray(partnerPreferences.communities) ? partnerPreferences.communities : []
+  const bioSuggestions = generateSmartBioSuggestions({ name, career, cultural, family, personal })
 
   return (
     <div className="luxe-light-page min-h-screen">
@@ -435,8 +437,39 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
               <CardHeader>
                 <CardTitle>About Me</CardTitle>
               </CardHeader>
-              <CardContent>
-                <Textarea value={bio} onChange={(e) => setBio(e.target.value)} className="min-h-32" />
+              <CardContent className="space-y-4">
+                <Textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value.slice(0, 300))}
+                  className="min-h-40 resize-none"
+                  maxLength={300}
+                  placeholder="Describe your personality, values, and what you are looking for in a life partner."
+                />
+                <div className="flex items-center justify-between text-xs text-[#6c5a4a]">
+                  <span>{bio.length > 0 && bio.length < 20 ? "At least 20 characters recommended" : "Keep it warm, sincere, and family-ready."}</span>
+                  <span>{bio.length}/300</span>
+                </div>
+                <div className="rounded-[1.75rem] border border-[#d9b978]/24 bg-[#fffaf2]/78 p-4 shadow-[0_16px_45px_rgba(24,17,13,0.06)]">
+                  <div className="mb-3 flex items-center gap-2 text-[#8f001c]">
+                    <Sparkles className="h-4 w-4" />
+                    <p className="luxe-kicker">smart bio from profile details</p>
+                  </div>
+                  <div className="grid gap-3">
+                    {bioSuggestions.map((suggestion, index) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => setBio(suggestion)}
+                        className="rounded-2xl border border-[#482b1a]/10 bg-white/78 p-3 text-left text-sm leading-6 text-[#6c5a4a] transition hover:border-[#8f001c]/30 hover:text-[#18110d]"
+                      >
+                        <span className="mb-1 block text-xs font-bold uppercase tracking-[0.16em] text-[#8f001c]">
+                          Option {index + 1}
+                        </span>
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

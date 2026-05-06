@@ -13,6 +13,7 @@ import { saveStep6 } from "@/lib/matrimonyService"
 import { supabase } from "@/lib/supabaseClient"
 import { toast } from "sonner"
 import { Sparkles } from "lucide-react"
+import { generateSmartBioSuggestions } from "@/lib/matrimonyBio"
 
 type FormValues = z.infer<typeof bioSchema>
 
@@ -63,21 +64,13 @@ export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () =>
   }
 
   const suggestions = React.useMemo(() => {
-    const name = welcome.name?.trim()
-    const subject = name || "I"
-    const verb = name ? "is" : "am"
-    const role = career.jobTitle || "a grounded professional"
-    const education = career.highestEducation ? ` with a ${career.highestEducation} background` : ""
-    const city = career.workLocation?.city ? ` based in ${career.workLocation.city}` : ""
-    const faith = cultural.religion ? `${cultural.religion.toLowerCase()} values` : "family values"
-    const familyTone = family.familyValues ? `${family.familyValues.toLowerCase()} family values` : "warm family values"
-    const lifestyle = personal.diet ? `${personal.diet.toLowerCase()} lifestyle` : "balanced lifestyle"
-
-    return [
-      `${subject} ${verb} ${role}${education}${city}, known for a calm, sincere nature and ${familyTone}. Looking for a life partner who values respect, loyalty, and meaningful family bonds.`,
-      `I believe marriage is built on trust, patience, and shared growth. My life is guided by ${faith}, a ${lifestyle}, and the hope of building a peaceful home with the right person.`,
-      `A thoughtful and family-oriented person, I value honest conversations, emotional maturity, and mutual support. I am looking for someone kind, grounded, and ready for a serious commitment.`,
-    ].map((item) => item.slice(0, 300))
+    return generateSmartBioSuggestions({
+      name: welcome.name,
+      career,
+      cultural,
+      family,
+      personal,
+    })
   }, [career, cultural, family, personal, welcome])
 
   function applySuggestion(suggestion: string) {

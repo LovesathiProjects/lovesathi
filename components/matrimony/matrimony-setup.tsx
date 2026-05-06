@@ -40,7 +40,7 @@ export function MatrimonySetup() {
       <div className="luxe-orb left-[-8rem] top-20 h-80 w-80 bg-[#b9904d]/18" />
       <div className="luxe-orb right-[-10rem] top-10 h-96 w-96 bg-[#8f001c]/14" style={{ animationDelay: "1.2s" }} />
       {/* Header with exit button and progress */}
-      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[#482b1a]/10 bg-[#fffaf2]/78 px-4 py-4 shadow-[0_16px_60px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:px-6">
+      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[#d9b978]/24 bg-white/82 px-4 py-4 shadow-[0_16px_60px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:px-6">
         <button
           onClick={onExit}
           className="-ml-2 rounded-full border border-[#482b1a]/10 bg-white/70 p-2 text-[#18110d] transition-colors hover:border-[#8f001c]/30 hover:bg-white"
@@ -65,7 +65,7 @@ export function MatrimonySetup() {
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 mx-auto grid w-full max-w-7xl flex-1 gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[0.72fr_1.28fr] lg:px-8 lg:py-12">
+      <div className="relative z-10 mx-auto grid w-full max-w-7xl flex-1 gap-8 px-3 py-5 sm:px-6 sm:py-8 lg:grid-cols-[0.72fr_1.28fr] lg:px-8 lg:py-12">
         <aside className="hidden lg:block">
           <div className="sticky top-28 space-y-5">
             <div className="luxe-dark-card rounded-[2rem] p-7 text-[#fffaf2]">
@@ -98,7 +98,7 @@ export function MatrimonySetup() {
           </div>
         </aside>
         <main className="w-full min-w-0">
-          <div className="luxe-card rounded-[2rem] p-5 sm:p-8">
+          <div className="luxe-card overflow-hidden rounded-[1.75rem] p-4 sm:rounded-[2.25rem] sm:p-8">
         <MatrimonySetupProvider>
           {step === 0 && (
             <Step1WelcomeIdentity onNext={() => setStep(1)} />
