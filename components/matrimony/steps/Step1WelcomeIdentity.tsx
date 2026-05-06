@@ -16,6 +16,7 @@ import { uploadAsset, saveStep1 } from "@/lib/matrimonyService"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import { toast } from "sonner"
+import { calculateAgeFromDate, formatDateForDisplay } from "@/lib/age"
 
 type FormValues = z.infer<typeof welcomeIdentitySchema>
 
@@ -23,6 +24,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
   const { welcome, setPartial } = useMatrimonySetupStore()
   const [photos, setPhotos] = React.useState<string[]>(welcome.photoUrls || (welcome.photoUrl ? [welcome.photoUrl] : []))
   const [isLoading, setIsLoading] = React.useState(false)
+  const [verifiedDob, setVerifiedDob] = React.useState<string | null>(null)
   const router = useRouter()
 
   const form = useForm<FormValues>({
@@ -48,6 +50,46 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
     })
     return () => sub.unsubscribe()
   }, [form, setPartial])
+
+  useEffect(() => {
+    let mounted = true
+
+    async function hydrateVerifiedProfile() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data } = await supabase
+        .from("user_profiles")
+        .select("date_of_birth, gender")
+        .eq("user_id", user.id)
+        .maybeSingle()
+
+      if (!mounted) return
+
+      if (data?.date_of_birth) {
+        const age = calculateAgeFromDate(data.date_of_birth)
+        setVerifiedDob(data.date_of_birth)
+        if (age) {
+          form.setValue("age", age, { shouldValidate: true })
+          setPartial("welcome", { age })
+        }
+      }
+
+      if (data?.gender && !welcome.gender) {
+        const nextGender = data.gender === "male" ? "Male" : data.gender === "female" ? "Female" : "Other"
+        form.setValue("gender", nextGender, { shouldValidate: true })
+        setPartial("welcome", { gender: nextGender })
+      }
+    }
+
+    void hydrateVerifiedProfile()
+
+    return () => {
+      mounted = false
+    }
+  }, [form, setPartial, welcome.gender])
 
   const onSubmit = async (values: FormValues) => {
     if (photos.length < 2) {
@@ -104,8 +146,8 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex-1 space-y-6">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-[#111]">Welcome</h1>
-            <p className="text-base text-black/60">Tell us who you are to get started.</p>
+            <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">Welcome</h1>
+            <p className="text-base leading-7 text-[#6c5a4a]">Tell us whose profile we are preparing. Age is derived from your verified birth date.</p>
           </div>
           
           <div className="flex items-center gap-3 sm:gap-4">
@@ -180,26 +222,38 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="age"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black">Age</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    min={18} 
-                    max={80} 
-                    {...field} 
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {verifiedDob ? (
+            <div className="rounded-3xl border border-[#b9904d]/24 bg-[#fffaf2]/76 p-4">
+              <p className="luxe-kicker text-[#8f001c]">verified age</p>
+              <p className="mt-1 font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">
+                {form.watch("age")} years
+              </p>
+              <p className="mt-1 text-sm text-[#6c5a4a]">
+                Based on {formatDateForDisplay(verifiedDob)}. You will not need to enter age again.
+              </p>
+            </div>
+          ) : (
+            <FormField
+              control={form.control}
+              name="age"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-black">Age</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={18}
+                      max={80}
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <FormField
             control={form.control}
@@ -279,4 +333,3 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
     </Form>
   )
 }
-

@@ -1,71 +1,106 @@
 "use client"
 
 import React, { useEffect } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { culturalAstroSchema } from "@/lib/schemas/matrimony"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Button } from "@/components/ui/button"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useMatrimonySetupStore } from "@/components/matrimony/store"
+import { culturalAstroSchema } from "@/lib/schemas/matrimony"
 import { saveStep5 } from "@/lib/matrimonyService"
 import { supabase } from "@/lib/supabaseClient"
+import { formatDateForDisplay } from "@/lib/age"
+import {
+  COMMUNITY_OPTIONS,
+  MOTHER_TONGUE_OPTIONS,
+  RELIGION_OPTIONS,
+  STAR_RAASHI_OPTIONS,
+  withoutOther,
+} from "@/lib/matrimonyOptions"
 import { toast } from "sonner"
 
 type FormValues = z.infer<typeof culturalAstroSchema>
 
-const RELIGION_OPTIONS = [
-  "Hinduism",
-  "Islam",
-  "Christianity",
-  "Sikhism",
-  "Buddhism",
-  "Jainism",
-  "Judaism",
-  "Zoroastrianism",
-  "Bahá'í",
-  "Atheist",
-  "Agnostic",
-  "Spiritual",
-  "Other"
-]
+function isPreset(value: string | undefined, options: readonly string[]) {
+  return Boolean(value && withoutOther(options).includes(value))
+}
 
-const MOTHER_TONGUE_OPTIONS = [
-  "Hindi",
-  "English",
-  "Bengali",
-  "Telugu",
-  "Marathi",
-  "Tamil",
-  "Gujarati",
-  "Urdu",
-  "Kannada",
-  "Odia",
-  "Malayalam",
-  "Punjabi",
-  "Assamese",
-  "Sanskrit",
-  "Kashmiri",
-  "Sindhi",
-  "Konkani",
-  "Manipuri",
-  "Nepali",
-  "Bodo",
-  "Santhali",
-  "Maithili",
-  "Dogri",
-  "Other"
-]
+function OtherSelect({
+  label,
+  value,
+  placeholder,
+  options,
+  otherPlaceholder,
+  onChange,
+}: {
+  label: string
+  value?: string
+  placeholder: string
+  options: readonly string[]
+  otherPlaceholder: string
+  onChange: (value: string) => void
+}) {
+  const [customValue, setCustomValue] = React.useState(isPreset(value, options) ? "" : value || "")
+  const selectValue = value && isPreset(value, options) ? value : value ? "Other" : undefined
+
+  useEffect(() => {
+    if (!value || isPreset(value, options)) {
+      setCustomValue("")
+    } else {
+      setCustomValue(value)
+    }
+  }, [options, value])
+
+  return (
+    <FormItem>
+      <FormLabel className="text-black">{label}</FormLabel>
+      <FormControl>
+        <Select
+          onValueChange={(nextValue) => {
+            if (nextValue === "Other") {
+              setCustomValue("")
+              onChange("")
+              return
+            }
+            onChange(nextValue)
+          }}
+          value={selectValue}
+        >
+          <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white">
+            <SelectValue placeholder={placeholder} />
+          </SelectTrigger>
+          <SelectContent position="popper" className="z-50 border border-black/20 bg-white text-black">
+            {options.map((option) => (
+              <SelectItem key={option} value={option} className="text-black">
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FormControl>
+      {selectValue === "Other" && (
+        <Input
+          placeholder={otherPlaceholder}
+          value={customValue}
+          onChange={(event) => {
+            setCustomValue(event.target.value)
+            onChange(event.target.value)
+          }}
+          className="mt-2 h-12 rounded-xl border-black/20 bg-white text-base text-[#111] focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20"
+        />
+      )}
+      <FormMessage />
+    </FormItem>
+  )
+}
 
 export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const { cultural, setPartial } = useMatrimonySetupStore()
   const [isLoading, setIsLoading] = React.useState(false)
-  const [isOtherReligion, setIsOtherReligion] = React.useState(false)
-  const [otherReligionValue, setOtherReligionValue] = React.useState("")
-  const [isOtherMotherTongue, setIsOtherMotherTongue] = React.useState(false)
-  const [otherMotherTongueValue, setOtherMotherTongueValue] = React.useState("")
+  const [verifiedDob, setVerifiedDob] = React.useState<string | null>(cultural.dob || null)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(culturalAstroSchema),
@@ -83,26 +118,34 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
     mode: "onChange",
   })
 
-  // Check if the current values are "Other" or not in the predefined list
   useEffect(() => {
-    const currentReligionValue = cultural.religion || ""
-    if (currentReligionValue && !RELIGION_OPTIONS.slice(0, -1).includes(currentReligionValue)) {
-      setIsOtherReligion(true)
-      setOtherReligionValue(currentReligionValue)
-    } else {
-      setIsOtherReligion(false)
-      setOtherReligionValue("")
+    let mounted = true
+
+    async function hydrateVerifiedDob() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data } = await supabase
+        .from("user_profiles")
+        .select("date_of_birth")
+        .eq("user_id", user.id)
+        .maybeSingle()
+
+      if (!mounted || !data?.date_of_birth) return
+
+      setVerifiedDob(data.date_of_birth)
+      form.setValue("dob", data.date_of_birth, { shouldValidate: true })
+      setPartial("cultural", { dob: data.date_of_birth })
     }
 
-    const currentMotherTongueValue = cultural.motherTongue || ""
-    if (currentMotherTongueValue && !MOTHER_TONGUE_OPTIONS.slice(0, -1).includes(currentMotherTongueValue)) {
-      setIsOtherMotherTongue(true)
-      setOtherMotherTongueValue(currentMotherTongueValue)
-    } else {
-      setIsOtherMotherTongue(false)
-      setOtherMotherTongueValue("")
+    void hydrateVerifiedDob()
+
+    return () => {
+      mounted = false
     }
-  }, [])
+  }, [form, setPartial])
 
   useEffect(() => {
     const sub = form.watch((values) => {
@@ -113,10 +156,13 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true)
-    
+
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser()
+
       if (authError || !user) {
         toast.error("Please sign in to continue")
         setIsLoading(false)
@@ -156,211 +202,179 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex-1 space-y-6">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-[#111]">Your Cultural Details</h1>
-            <p className="text-base text-black/60">Tell us about your cultural and religious background.</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField control={form.control} name="religion" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black">Religion</FormLabel>
-                <FormControl>
-                  <Select 
-                    onValueChange={(value) => {
-                      if (value === "Other") {
-                        setIsOtherReligion(true)
-                        setOtherReligionValue("")
-                        field.onChange("")
-                      } else {
-                        setIsOtherReligion(false)
-                        setOtherReligionValue("")
-                        field.onChange(value)
-                      }
-                    }} 
-                    value={field.value && RELIGION_OPTIONS.slice(0, -1).includes(field.value) ? field.value : isOtherReligion ? "Other" : undefined}
-                  >
-                    <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white">
-                      <SelectValue placeholder="Select religion" />
-                    </SelectTrigger>
-                    <SelectContent position="popper" className="bg-white text-black border border-black/20 z-50">
-                      {RELIGION_OPTIONS.map((option) => (
-                        <SelectItem key={option} value={option} className="text-black">
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                {isOtherReligion && (
-                  <Input
-                    placeholder="Enter religion"
-                    value={otherReligionValue}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      setOtherReligionValue(value)
-                      field.onChange(value)
-                    }}
-                    className="mt-2 h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white"
-                  />
-                )}
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="motherTongue" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black">Mother Tongue</FormLabel>
-                <FormControl>
-                  <Select 
-                    onValueChange={(value) => {
-                      if (value === "Other") {
-                        setIsOtherMotherTongue(true)
-                        setOtherMotherTongueValue("")
-                        field.onChange("")
-                      } else {
-                        setIsOtherMotherTongue(false)
-                        setOtherMotherTongueValue("")
-                        field.onChange(value)
-                      }
-                    }} 
-                    value={field.value && MOTHER_TONGUE_OPTIONS.slice(0, -1).includes(field.value) ? field.value : isOtherMotherTongue ? "Other" : undefined}
-                  >
-                    <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white">
-                      <SelectValue placeholder="Select mother tongue" />
-                    </SelectTrigger>
-                    <SelectContent position="popper" className="bg-white text-black border border-black/20 z-50">
-                      {MOTHER_TONGUE_OPTIONS.map((option) => (
-                        <SelectItem key={option} value={option} className="text-black">
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                {isOtherMotherTongue && (
-                  <Input
-                    placeholder="Enter mother tongue"
-                    value={otherMotherTongueValue}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      setOtherMotherTongueValue(value)
-                      field.onChange(value)
-                    }}
-                    className="mt-2 h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white"
-                  />
-                )}
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="community" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black">Community / Caste</FormLabel>
-                <FormControl>
-                  <Input 
-                    {...field}
-                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="subCaste" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black">Sub-caste (optional)</FormLabel>
-                <FormControl>
-                  <Input 
-                    {...field}
-                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
+            <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">
+              Cultural & Birth Details
+            </h1>
+            <p className="text-base leading-7 text-[#6c5a4a]">
+              We use your verified date of birth once, then collect the extra cultural details families expect in matrimony.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormField control={form.control} name="dob" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black">Date of Birth</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="date" 
-                    {...field}
-                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="tob" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black">Time of Birth</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="time" 
-                    {...field}
-                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="pob" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black">Place of Birth</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="City, Country" 
-                    {...field}
-                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
+          {verifiedDob && (
+            <div className="rounded-3xl border border-[#b9904d]/24 bg-[#fffaf2]/76 p-4">
+              <p className="luxe-kicker text-[#8f001c]">verified birth date</p>
+              <p className="mt-1 font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">
+                {formatDateForDisplay(verifiedDob)}
+              </p>
+              <p className="mt-1 text-sm text-[#6c5a4a]">
+                This comes from the age verification step, so we will not ask for it again.
+              </p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="religion"
+              render={({ field }) => (
+                <OtherSelect
+                  label="Religion"
+                  value={field.value}
+                  placeholder="Select religion"
+                  options={RELIGION_OPTIONS}
+                  otherPlaceholder="Enter religion"
+                  onChange={field.onChange}
+                />
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="motherTongue"
+              render={({ field }) => (
+                <OtherSelect
+                  label="Mother Tongue"
+                  value={field.value}
+                  placeholder="Select mother tongue"
+                  options={MOTHER_TONGUE_OPTIONS}
+                  otherPlaceholder="Enter mother tongue"
+                  onChange={field.onChange}
+                />
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="community"
+              render={({ field }) => (
+                <OtherSelect
+                  label="Community / Caste"
+                  value={field.value}
+                  placeholder="Select community"
+                  options={COMMUNITY_OPTIONS}
+                  otherPlaceholder="Enter community"
+                  onChange={field.onChange}
+                />
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="subCaste"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-black">Sub-caste (optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      className="h-12 rounded-xl border-black/20 text-base text-[#111] focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField control={form.control} name="star" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black">Star / Raashi (optional)</FormLabel>
-                <FormControl>
-                  <Input 
-                    {...field}
-                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="gotra" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black">Gotra (optional)</FormLabel>
-                <FormControl>
-                  <Input 
-                    {...field}
-                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <FormField
+              control={form.control}
+              name="dob"
+              render={({ field }) => (
+                <FormItem className={verifiedDob ? "hidden" : ""}>
+                  <FormLabel className="text-black">Date of Birth</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      {...field}
+                      className="h-12 rounded-xl border-black/20 text-base text-[#111] focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="tob"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-black">Time of Birth</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="time"
+                      {...field}
+                      className="h-12 rounded-xl border-black/20 text-base text-[#111] focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="pob"
+              render={({ field }) => (
+                <FormItem className={verifiedDob ? "sm:col-span-2" : ""}>
+                  <FormLabel className="text-black">Place of Birth</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="City, Country"
+                      {...field}
+                      className="h-12 rounded-xl border-black/20 text-base text-[#111] focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="star"
+              render={({ field }) => (
+                <OtherSelect
+                  label="Star / Raashi (optional)"
+                  value={field.value}
+                  placeholder="Select star / raashi"
+                  options={STAR_RAASHI_OPTIONS}
+                  otherPlaceholder="Enter star / raashi"
+                  onChange={field.onChange}
+                />
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="gotra"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-black">Gotra (optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      className="h-12 rounded-xl border-black/20 text-base text-[#111] focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
           <div className="flex justify-between pt-2">
-            <Button 
-              type="button" 
-              variant="ghost" 
-              onClick={onBack} 
-              disabled={isLoading}
-              className="text-black hover:text-[#97011A]"
-            >
+            <Button type="button" variant="ghost" onClick={onBack} disabled={isLoading} className="text-black hover:text-[#97011A]">
               Back
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isLoading}
-              className="bg-[#97011A] hover:bg-[#7A010E] text-white rounded-full px-6"
-            >
+            <Button type="submit" disabled={isLoading} className="bg-[#97011A] hover:bg-[#7A010E] text-white rounded-full px-6">
               {isLoading ? "Saving..." : "Next"}
             </Button>
           </div>
@@ -369,4 +383,3 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
     </Form>
   )
 }
-

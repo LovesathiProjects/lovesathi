@@ -6,7 +6,7 @@ export const welcomeIdentitySchema = z.object({
   gender: z.enum(["Male", "Female", "Other"], { required_error: "Select gender" }),
   createdBy: z.enum(["Self", "Parent", "Sibling", "Other"], { required_error: "Select who created the profile" }),
   photo: z.any().optional(),
-  photoUrls: z.array(z.string().url()).min(3).max(6).optional(),
+  photoUrls: z.array(z.string().url()).min(2).max(6).optional(),
 })
 
 export const personalPhysicalSchema = z.object({
@@ -87,5 +87,4 @@ export const fullMatrimonySchema = z.object({
   preferences: partnerPreferencesSchema,
   verification: verificationSchema,
 })
-
 

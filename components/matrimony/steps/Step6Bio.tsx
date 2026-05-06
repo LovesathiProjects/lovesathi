@@ -12,11 +12,12 @@ import { useMatrimonySetupStore } from "@/components/matrimony/store"
 import { saveStep6 } from "@/lib/matrimonyService"
 import { supabase } from "@/lib/supabaseClient"
 import { toast } from "sonner"
+import { Sparkles } from "lucide-react"
 
 type FormValues = z.infer<typeof bioSchema>
 
 export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
-  const { bio, setPartial } = useMatrimonySetupStore()
+  const { bio, career, cultural, family, personal, welcome, setPartial } = useMatrimonySetupStore()
   const [isLoading, setIsLoading] = React.useState(false)
 
   const form = useForm<FormValues>({
@@ -59,6 +60,29 @@ export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () =>
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const suggestions = React.useMemo(() => {
+    const name = welcome.name?.trim()
+    const subject = name || "I"
+    const verb = name ? "is" : "am"
+    const role = career.jobTitle || "a grounded professional"
+    const education = career.highestEducation ? ` with a ${career.highestEducation} background` : ""
+    const city = career.workLocation?.city ? ` based in ${career.workLocation.city}` : ""
+    const faith = cultural.religion ? `${cultural.religion.toLowerCase()} values` : "family values"
+    const familyTone = family.familyValues ? `${family.familyValues.toLowerCase()} family values` : "warm family values"
+    const lifestyle = personal.diet ? `${personal.diet.toLowerCase()} lifestyle` : "balanced lifestyle"
+
+    return [
+      `${subject} ${verb} ${role}${education}${city}, known for a calm, sincere nature and ${familyTone}. Looking for a life partner who values respect, loyalty, and meaningful family bonds.`,
+      `I believe marriage is built on trust, patience, and shared growth. My life is guided by ${faith}, a ${lifestyle}, and the hope of building a peaceful home with the right person.`,
+      `A thoughtful and family-oriented person, I value honest conversations, emotional maturity, and mutual support. I am looking for someone kind, grounded, and ready for a serious commitment.`,
+    ].map((item) => item.slice(0, 300))
+  }, [career, cultural, family, personal, welcome])
+
+  function applySuggestion(suggestion: string) {
+    form.setValue("bio", suggestion, { shouldDirty: true, shouldValidate: true })
+    setPartial("bio", { bio: suggestion })
   }
 
   return (
@@ -106,6 +130,28 @@ export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () =>
             </FormItem>
           )} />
 
+          <div className="rounded-[1.75rem] border border-[#d9b978]/24 bg-[#fffaf2]/78 p-4 shadow-[0_16px_45px_rgba(24,17,13,0.06)]">
+            <div className="mb-3 flex items-center gap-2 text-[#8f001c]">
+              <Sparkles className="h-4 w-4" />
+              <p className="luxe-kicker">bio suggestions from your details</p>
+            </div>
+            <div className="grid gap-3">
+              {suggestions.map((suggestion, index) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  onClick={() => applySuggestion(suggestion)}
+                  className="rounded-2xl border border-[#482b1a]/10 bg-white/70 p-3 text-left text-sm leading-6 text-[#6c5a4a] transition hover:border-[#8f001c]/30 hover:text-[#18110d]"
+                >
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-[0.16em] text-[#8f001c]">
+                    Option {index + 1}
+                  </span>
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex justify-between pt-2">
             <Button 
               type="button" 
@@ -129,4 +175,3 @@ export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () =>
     </Form>
   )
 }
-

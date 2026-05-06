@@ -14,6 +14,7 @@ import { Check } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
 import { saveStep2 } from "@/lib/matrimonyService"
 import { toast } from "sonner"
+import { BODY_TYPE_OPTIONS, COMPLEXION_OPTIONS, DIET_OPTIONS, MARITAL_STATUS_OPTIONS } from "@/lib/matrimonyOptions"
 
 type FormValues = z.infer<typeof personalPhysicalSchema>
 
@@ -21,6 +22,14 @@ function toCm(value: { cm?: number; ft?: number; inch?: number }) {
   if (value.cm) return value.cm
   const totalInches = (value.ft || 0) * 12 + (value.inch || 0)
   return Math.round(totalInches * 2.54)
+}
+
+function cmToFtIn(cm?: number) {
+  const totalInches = Math.round((cm || 170) / 2.54)
+  return {
+    ft: Math.floor(totalInches / 12),
+    inch: totalInches % 12,
+  }
 }
 
 export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
@@ -100,7 +109,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
             <p className="text-base text-black/60">Tell us more about your personal details.</p>
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <FormLabel className="text-black">Height unit</FormLabel>
               <div className="flex gap-2">
@@ -144,8 +153,12 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                         <Input 
                           type="number" 
                           placeholder="ft" 
+                          min={3}
+                          max={8}
+                          value={cmToFtIn(field.value).ft}
                           onChange={(e) => {
-                            const cm = toCm({ ft: Number(e.target.value), inch: 0 })
+                            const current = cmToFtIn(field.value)
+                            const cm = toCm({ ft: Number(e.target.value), inch: current.inch })
                             field.onChange(cm)
                           }}
                           className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
@@ -153,9 +166,13 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                         <Input 
                           type="number" 
                           placeholder="in" 
+                          min={0}
+                          max={11}
+                          value={cmToFtIn(field.value).inch}
                           onChange={(e) => {
-                            const cm = toCm({ inch: Number(e.target.value) })
-                            field.onChange((field.value || 0) + cm)
+                            const current = cmToFtIn(field.value)
+                            const cm = toCm({ ft: current.ft, inch: Number(e.target.value) })
+                            field.onChange(cm)
                           }}
                           className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
                         />
@@ -168,7 +185,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField
               control={form.control}
               name="complexion"
@@ -182,7 +199,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="bg-white text-black border border-black/20">
-                      {["Fair", "Wheatish", "Dusky", "Dark"].map((option) => (
+                      {COMPLEXION_OPTIONS.map((option) => (
                         <SelectItem key={option} value={option} className="text-black">
                           {option}
                         </SelectItem>
@@ -207,7 +224,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="bg-white text-black border border-black/20">
-                      {["Slim", "Athletic", "Average", "Plus-size"].map((option) => (
+                      {BODY_TYPE_OPTIONS.map((option) => (
                         <SelectItem key={option} value={option} className="text-black">
                           {option}
                         </SelectItem>
@@ -220,7 +237,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField
               control={form.control}
               name="diet"
@@ -235,13 +252,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                     </FormControl>
                     <SelectContent className="bg-white text-black border border-black/20">
                       {[
-                        "Vegetarian",
-                        "Eggetarian",
-                        "Non-vegetarian",
-                        "Pescatarian",
-                        "Vegan",
-                        "Jain",
-                        "Other",
+                        ...DIET_OPTIONS,
                       ].map((option) => (
                         <SelectItem key={option} value={option} className="text-black">
                           {option}
@@ -254,13 +265,13 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="smoker"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-black">Smoker</FormLabel>
+                  <FormLabel className="text-black">Smoker</FormLabel>
                     <FormControl>
                       <button
                         type="button"
@@ -268,10 +279,10 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                         className={`w-12 h-10 rounded-lg flex items-center justify-center transition-all ${
                           field.value
                             ? "bg-[#97011A] text-white border border-[#97011A]"
-                            : "bg-white text-black border border-black/20"
+                          : "bg-white text-black border border-black/20"
                         }`}
                       >
-                        {field.value && <Check className="w-5 h-5" />}
+                        {field.value ? <Check className="w-5 h-5" /> : <span className="text-xs font-bold">No</span>}
                       </button>
                     </FormControl>
                     <FormMessage />
@@ -283,7 +294,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                 name="drinker"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-black">Drinker</FormLabel>
+                  <FormLabel className="text-black">Drinker</FormLabel>
                     <FormControl>
                       <button
                         type="button"
@@ -294,7 +305,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                             : "bg-white text-black border border-black/20"
                         }`}
                       >
-                        {field.value && <Check className="w-5 h-5" />}
+                        {field.value ? <Check className="w-5 h-5" /> : <span className="text-xs font-bold">No</span>}
                       </button>
                     </FormControl>
                     <FormMessage />
@@ -317,7 +328,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent className="bg-white text-black border border-black/20">
-                    {["Never Married", "Divorced", "Widowed", "Annulled", "Separated"].map(
+                    {MARITAL_STATUS_OPTIONS.map(
                       (option) => (
                         <SelectItem key={option} value={option} className="text-black">
                           {option}
@@ -354,5 +365,4 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
     </Form>
   )
 }
-
 

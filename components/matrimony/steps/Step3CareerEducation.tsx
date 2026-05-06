@@ -13,63 +13,9 @@ import { useMatrimonySetupStore } from "@/components/matrimony/store"
 import { saveStep3 } from "@/lib/matrimonyService"
 import { supabase } from "@/lib/supabaseClient"
 import { toast } from "sonner"
+import { EDUCATION_OPTIONS, INCOME_OPTIONS, PROFESSION_OPTIONS, withoutOther } from "@/lib/matrimonyOptions"
 
 type FormValues = z.infer<typeof careerEducationSchema>
-
-const EDUCATION_OPTIONS = [
-  "High School",
-  "Diploma",
-  "Associate's Degree",
-  "Bachelor's Degree",
-  "Master's Degree",
-  "MBA",
-  "PhD",
-  "MD",
-  "JD",
-  "Other"
-]
-
-const JOB_TITLE_OPTIONS = [
-  "Software Engineer",
-  "Data Scientist",
-  "Product Manager",
-  "Business Analyst",
-  "Consultant",
-  "Doctor",
-  "Engineer",
-  "Teacher",
-  "Professor",
-  "Lawyer",
-  "Accountant",
-  "Architect",
-  "Designer",
-  "Marketing Manager",
-  "Sales Manager",
-  "HR Manager",
-  "Operations Manager",
-  "Financial Analyst",
-  "Investment Banker",
-  "Entrepreneur",
-  "Business Owner",
-  "Nurse",
-  "Pharmacist",
-  "Dentist",
-  "Veterinarian",
-  "Scientist",
-  "Researcher",
-  "Journalist",
-  "Writer",
-  "Artist",
-  "Musician",
-  "Chef",
-  "Pilot",
-  "Civil Servant",
-  "Government Employee",
-  "Student",
-  "Unemployed",
-  "Retired",
-  "Other"
-]
 
 export function Step3CareerEducation({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const { career, setPartial } = useMatrimonySetupStore()
@@ -95,7 +41,7 @@ export function Step3CareerEducation({ onNext, onBack }: { onNext: () => void; o
   // Check if the current value is "Other" or not in the predefined list
   useEffect(() => {
     const currentEducationValue = career.highestEducation || ""
-    if (currentEducationValue && !EDUCATION_OPTIONS.slice(0, -1).includes(currentEducationValue)) {
+    if (currentEducationValue && !withoutOther(EDUCATION_OPTIONS).includes(currentEducationValue)) {
       setIsOtherEducation(true)
       setOtherEducationValue(currentEducationValue)
     } else {
@@ -104,7 +50,7 @@ export function Step3CareerEducation({ onNext, onBack }: { onNext: () => void; o
     }
 
     const currentJobTitleValue = career.jobTitle || ""
-    if (currentJobTitleValue && !JOB_TITLE_OPTIONS.slice(0, -1).includes(currentJobTitleValue)) {
+    if (currentJobTitleValue && !withoutOther(PROFESSION_OPTIONS).includes(currentJobTitleValue)) {
       setIsOtherJobTitle(true)
       setOtherJobTitleValue(currentJobTitleValue)
     } else {
@@ -176,7 +122,7 @@ export function Step3CareerEducation({ onNext, onBack }: { onNext: () => void; o
                         field.onChange(value)
                       }
                     }} 
-                    value={field.value && EDUCATION_OPTIONS.slice(0, -1).includes(field.value) ? field.value : isOtherEducation ? "Other" : undefined}
+                    value={field.value && withoutOther(EDUCATION_OPTIONS).includes(field.value) ? field.value : isOtherEducation ? "Other" : undefined}
                   >
                     <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white">
                       <SelectValue placeholder="Select highest education" />
@@ -234,13 +180,13 @@ export function Step3CareerEducation({ onNext, onBack }: { onNext: () => void; o
                         field.onChange(value)
                       }
                     }} 
-                    value={field.value && JOB_TITLE_OPTIONS.slice(0, -1).includes(field.value) ? field.value : isOtherJobTitle ? "Other" : undefined}
+                    value={field.value && withoutOther(PROFESSION_OPTIONS).includes(field.value) ? field.value : isOtherJobTitle ? "Other" : undefined}
                   >
                     <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white">
                       <SelectValue placeholder="Select job title" />
                     </SelectTrigger>
                     <SelectContent position="popper" className="bg-white text-black border border-black/20 z-50">
-                      {JOB_TITLE_OPTIONS.map((option) => (
+                      {PROFESSION_OPTIONS.map((option) => (
                         <SelectItem key={option} value={option} className="text-black">
                           {option}
                         </SelectItem>
@@ -280,11 +226,18 @@ export function Step3CareerEducation({ onNext, onBack }: { onNext: () => void; o
               <FormItem>
                 <FormLabel className="text-black">Annual Income</FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder="e.g., 10–15 LPA / Prefer not to say" 
-                    {...field}
-                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
-                  />
+                  <Select onValueChange={field.onChange} value={field.value || undefined}>
+                    <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white">
+                      <SelectValue placeholder="Select annual income" />
+                    </SelectTrigger>
+                    <SelectContent position="popper" className="bg-white text-black border border-black/20 z-50">
+                      {INCOME_OPTIONS.map((option) => (
+                        <SelectItem key={option} value={option} className="text-black">
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -356,4 +309,3 @@ export function Step3CareerEducation({ onNext, onBack }: { onNext: () => void; o
     </Form>
   )
 }
-

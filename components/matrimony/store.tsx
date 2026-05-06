@@ -17,12 +17,12 @@ export interface WelcomeIdentityState {
 export interface PersonalPhysicalState {
   heightCm?: number
   heightUnit?: "cm" | "ftin"
-  complexion?: "Fair" | "Wheatish" | "Dark"
-  bodyType?: "Slim" | "Athletic" | "Average" | "Heavy"
-  diet?: "Vegetarian" | "Non-vegetarian" | "Eggetarian" | "Vegan" | "Jain"
+  complexion?: "Fair" | "Wheatish" | "Dusky" | "Dark"
+  bodyType?: "Slim" | "Athletic" | "Average" | "Plus-size"
+  diet?: "Vegetarian" | "Non-vegetarian" | "Eggetarian" | "Pescatarian" | "Vegan" | "Jain" | "Other"
   smoker?: boolean
   drinker?: boolean
-  maritalStatus?: "Never Married" | "Divorced" | "Widowed" | "Annulled"
+  maritalStatus?: "Never Married" | "Divorced" | "Widowed" | "Annulled" | "Separated"
 }
 
 export interface CareerEducationState {
@@ -35,15 +35,15 @@ export interface CareerEducationState {
 }
 
 export interface FamilyState {
-  familyType?: "Joint" | "Nuclear"
-  familyValues?: "Traditional" | "Moderate" | "Modern"
+  familyType?: "Joint" | "Nuclear" | "Extended" | "Single Parent"
+  familyValues?: "Traditional" | "Moderate" | "Modern" | "Progressive"
   fatherOccupation?: string
   fatherCompany?: string
   motherOccupation?: string
   motherCompany?: string
   brothers?: number
   sisters?: number
-  siblingsMarried?: "None" | "Some" | "All"
+  siblingsMarried?: "None" | "Some" | "All" | "Mostly Married" | "Mostly Single"
   showOnProfile?: boolean
 }
 
@@ -127,5 +127,4 @@ export function useMatrimonySetupStore() {
   if (!ctx) throw new Error("useMatrimonySetupStore must be used within MatrimonySetupProvider")
   return ctx
 }
-
 

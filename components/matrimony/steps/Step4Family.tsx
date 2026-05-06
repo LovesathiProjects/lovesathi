@@ -14,51 +14,15 @@ import { saveStep4 } from "@/lib/matrimonyService"
 import { Check } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
 import { toast } from "sonner"
+import {
+  FAMILY_TYPE_OPTIONS,
+  FAMILY_VALUES_OPTIONS,
+  PROFESSION_OPTIONS,
+  SIBLINGS_MARRIED_OPTIONS,
+  withoutOther,
+} from "@/lib/matrimonyOptions"
 
 type FormValues = z.infer<typeof familySchema>
-
-const OCCUPATION_OPTIONS = [
-  "Software Engineer",
-  "Data Scientist",
-  "Product Manager",
-  "Business Analyst",
-  "Consultant",
-  "Doctor",
-  "Engineer",
-  "Teacher",
-  "Professor",
-  "Lawyer",
-  "Accountant",
-  "Architect",
-  "Designer",
-  "Marketing Manager",
-  "Sales Manager",
-  "HR Manager",
-  "Operations Manager",
-  "Financial Analyst",
-  "Investment Banker",
-  "Entrepreneur",
-  "Business Owner",
-  "Nurse",
-  "Pharmacist",
-  "Dentist",
-  "Veterinarian",
-  "Scientist",
-  "Researcher",
-  "Journalist",
-  "Writer",
-  "Artist",
-  "Musician",
-  "Chef",
-  "Pilot",
-  "Civil Servant",
-  "Government Employee",
-  "Student",
-  "Unemployed",
-  "Retired",
-  "Homemaker",
-  "Other"
-]
 
 export function Step4Family({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const { family, setPartial } = useMatrimonySetupStore()
@@ -88,7 +52,7 @@ export function Step4Family({ onNext, onBack }: { onNext: () => void; onBack: ()
   // Check if the current values are "Other" or not in the predefined list
   useEffect(() => {
     const currentFatherOccupation = family.fatherOccupation || ""
-    if (currentFatherOccupation && !OCCUPATION_OPTIONS.slice(0, -1).includes(currentFatherOccupation)) {
+    if (currentFatherOccupation && !withoutOther(PROFESSION_OPTIONS).includes(currentFatherOccupation)) {
       setIsOtherFatherOccupation(true)
       setOtherFatherOccupationValue(currentFatherOccupation)
     } else {
@@ -97,7 +61,7 @@ export function Step4Family({ onNext, onBack }: { onNext: () => void; onBack: ()
     }
 
     const currentMotherOccupation = family.motherOccupation || ""
-    if (currentMotherOccupation && !OCCUPATION_OPTIONS.slice(0, -1).includes(currentMotherOccupation)) {
+    if (currentMotherOccupation && !withoutOther(PROFESSION_OPTIONS).includes(currentMotherOccupation)) {
       setIsOtherMotherOccupation(true)
       setOtherMotherOccupationValue(currentMotherOccupation)
     } else {
@@ -163,7 +127,7 @@ export function Step4Family({ onNext, onBack }: { onNext: () => void; onBack: ()
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent position="popper" className="bg-white text-black border border-black/20 z-50">
-                    {["Joint", "Nuclear", "Extended", "Single Parent"].map((option) => (
+                    {FAMILY_TYPE_OPTIONS.map((option) => (
                       <SelectItem key={option} value={option} className="text-black">
                         {option}
                       </SelectItem>
@@ -183,7 +147,7 @@ export function Step4Family({ onNext, onBack }: { onNext: () => void; onBack: ()
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent position="popper" className="bg-white text-black border border-black/20 z-50">
-                    {["Traditional", "Moderate", "Modern", "Progressive"].map((option) => (
+                    {FAMILY_VALUES_OPTIONS.map((option) => (
                       <SelectItem key={option} value={option} className="text-black">
                         {option}
                       </SelectItem>
@@ -212,13 +176,13 @@ export function Step4Family({ onNext, onBack }: { onNext: () => void; onBack: ()
                         field.onChange(value)
                       }
                     }} 
-                    value={field.value && OCCUPATION_OPTIONS.slice(0, -1).includes(field.value) ? field.value : isOtherFatherOccupation ? "Other" : undefined}
+                    value={field.value && withoutOther(PROFESSION_OPTIONS).includes(field.value) ? field.value : isOtherFatherOccupation ? "Other" : undefined}
                   >
                     <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white">
                       <SelectValue placeholder="Select occupation" />
                     </SelectTrigger>
                     <SelectContent position="popper" className="bg-white text-black border border-black/20 z-50">
-                      {OCCUPATION_OPTIONS.map((option) => (
+                      {PROFESSION_OPTIONS.map((option) => (
                         <SelectItem key={option} value={option} className="text-black">
                           {option}
                         </SelectItem>
@@ -269,13 +233,13 @@ export function Step4Family({ onNext, onBack }: { onNext: () => void; onBack: ()
                         field.onChange(value)
                       }
                     }} 
-                    value={field.value && OCCUPATION_OPTIONS.slice(0, -1).includes(field.value) ? field.value : isOtherMotherOccupation ? "Other" : undefined}
+                    value={field.value && withoutOther(PROFESSION_OPTIONS).includes(field.value) ? field.value : isOtherMotherOccupation ? "Other" : undefined}
                   >
                     <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white">
                       <SelectValue placeholder="Select occupation" />
                     </SelectTrigger>
                     <SelectContent position="popper" className="bg-white text-black border border-black/20 z-50">
-                      {OCCUPATION_OPTIONS.map((option) => (
+                      {PROFESSION_OPTIONS.map((option) => (
                         <SelectItem key={option} value={option} className="text-black">
                           {option}
                         </SelectItem>
@@ -353,7 +317,7 @@ export function Step4Family({ onNext, onBack }: { onNext: () => void; onBack: ()
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent position="popper" className="bg-white text-black border border-black/20 z-50">
-                    {["None", "Some", "All", "Mostly Married", "Mostly Single"].map((option) => (
+                    {SIBLINGS_MARRIED_OPTIONS.map((option) => (
                       <SelectItem key={option} value={option} className="text-black">
                         {option}
                       </SelectItem>
@@ -408,4 +372,3 @@ export function Step4Family({ onNext, onBack }: { onNext: () => void; onBack: ()
     </Form>
   )
 }
-

@@ -13,6 +13,18 @@ import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabaseClient"
 import { uploadAsset, type MatrimonyProfileFull } from "@/lib/matrimonyService"
 import { useToast } from "@/hooks/use-toast"
+import { calculateAgeFromDate, formatDateForDisplay } from "@/lib/age"
+import {
+  BODY_TYPE_OPTIONS,
+  DIET_OPTIONS,
+  EDUCATION_OPTIONS,
+  FAMILY_TYPE_OPTIONS,
+  FAMILY_VALUES_OPTIONS,
+  MARITAL_STATUS_OPTIONS,
+  MOTHER_TONGUE_OPTIONS,
+  PROFESSION_OPTIONS,
+  RELIGION_OPTIONS,
+} from "@/lib/matrimonyOptions"
 
 interface EditProfileProps {
   onBack: () => void
@@ -22,6 +34,38 @@ interface EditProfileProps {
 
 type PhotoItem = { url: string; file?: File }
 
+function SelectField({
+  label,
+  value,
+  placeholder,
+  options,
+  onValueChange,
+}: {
+  label: string
+  value?: string
+  placeholder: string
+  options: readonly string[]
+  onValueChange: (value: string) => void
+}) {
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <Select value={value || undefined} onValueChange={onValueChange}>
+        <SelectTrigger>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option} value={option}>
+              {option}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
+}
+
 export function EditProfile({ onBack, onSave }: EditProfileProps) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -30,6 +74,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
   const [photos, setPhotos] = useState<PhotoItem[]>([])
   const [name, setName] = useState("")
   const [age, setAge] = useState("")
+  const [dateOfBirth, setDateOfBirth] = useState("")
   const [gender, setGender] = useState("")
   const [createdBy, setCreatedBy] = useState("")
   const [bio, setBio] = useState("")
@@ -66,7 +111,9 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
         setProfile(typed)
         setPhotos(((typed.photos as string[]) || []).map((url) => ({ url })))
         setName(typed.name || "")
-        setAge(typed.age ? String(typed.age) : "")
+        const profileDob = typed.cultural?.date_of_birth || ""
+        setDateOfBirth(profileDob)
+        setAge(profileDob ? String(calculateAgeFromDate(profileDob) || typed.age || "") : typed.age ? String(typed.age) : "")
         setGender(typed.gender || "")
         setCreatedBy(typed.created_by || "")
         setBio(typed.bio || "")
@@ -157,7 +204,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
       const updateData: any = {
         user_id: user.id,
         name,
-        age: age ? Number(age) : null,
+        age: dateOfBirth ? calculateAgeFromDate(dateOfBirth) : age ? Number(age) : null,
         gender: gender || null,
         created_by: createdBy || null,
         photos: uploadedPhotoUrls,
@@ -165,7 +212,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
         personal,
         career,
         family,
-        cultural,
+        cultural: dateOfBirth ? { ...cultural, date_of_birth: dateOfBirth } : cultural,
         partner_preferences: partnerPreferences,
       }
 
@@ -235,12 +282,12 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
 
       <div className="mx-auto max-w-6xl p-4 pb-24 sm:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5 rounded-[1.5rem] border border-[#d9b978]/24 bg-[#fffaf2]/80 p-1 shadow-[0_14px_45px_rgba(24,17,13,0.08)]">
-            <TabsTrigger value="photos">Photos</TabsTrigger>
-            <TabsTrigger value="basic">Basic</TabsTrigger>
-            <TabsTrigger value="career">Career</TabsTrigger>
-            <TabsTrigger value="family">Family</TabsTrigger>
-            <TabsTrigger value="preferences">Preferences</TabsTrigger>
+          <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto rounded-[1.5rem] border border-[#d9b978]/24 bg-[#fffaf2]/80 p-1 shadow-[0_14px_45px_rgba(24,17,13,0.08)]">
+            <TabsTrigger value="photos" className="min-w-[6.5rem] rounded-[1.15rem]">Photos</TabsTrigger>
+            <TabsTrigger value="basic" className="min-w-[6.5rem] rounded-[1.15rem]">Basic</TabsTrigger>
+            <TabsTrigger value="career" className="min-w-[6.5rem] rounded-[1.15rem]">Career</TabsTrigger>
+            <TabsTrigger value="family" className="min-w-[6.5rem] rounded-[1.15rem]">Family</TabsTrigger>
+            <TabsTrigger value="preferences" className="min-w-[7.5rem] rounded-[1.15rem]">Preferences</TabsTrigger>
           </TabsList>
 
           <TabsContent value="photos" className="mt-4">
@@ -287,8 +334,15 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                   <Input value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Age</Label>
-                  <Input type="number" value={age} onChange={(e) => setAge(e.target.value)} />
+                  <Label>{dateOfBirth ? "Verified Age" : "Age"}</Label>
+                  {dateOfBirth ? (
+                    <div className="rounded-2xl border border-[#b9904d]/24 bg-[#fffaf2]/76 p-3">
+                      <p className="font-bold text-[#18110d]">{age || "Not available"} years</p>
+                      <p className="text-xs text-[#6c5a4a]">Based on {formatDateForDisplay(dateOfBirth)}</p>
+                    </div>
+                  ) : (
+                    <Input type="number" value={age} min={18} max={80} onChange={(e) => setAge(e.target.value)} />
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Gender</Label>
@@ -321,21 +375,27 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                     onChange={(e) => setNested("personal", "height_cm", e.target.value ? Number(e.target.value) : null)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Marital Status</Label>
-                  <Input
-                    value={personal.marital_status || ""}
-                    onChange={(e) => setNested("personal", "marital_status", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Diet</Label>
-                  <Input value={personal.diet || ""} onChange={(e) => setNested("personal", "diet", e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Body Type</Label>
-                  <Input value={personal.body_type || ""} onChange={(e) => setNested("personal", "body_type", e.target.value)} />
-                </div>
+                <SelectField
+                  label="Marital Status"
+                  value={personal.marital_status || ""}
+                  placeholder="Select marital status"
+                  options={MARITAL_STATUS_OPTIONS}
+                  onValueChange={(value) => setNested("personal", "marital_status", value)}
+                />
+                <SelectField
+                  label="Diet"
+                  value={personal.diet || ""}
+                  placeholder="Select diet"
+                  options={DIET_OPTIONS}
+                  onValueChange={(value) => setNested("personal", "diet", value)}
+                />
+                <SelectField
+                  label="Body Type"
+                  value={personal.body_type || ""}
+                  placeholder="Select body type"
+                  options={BODY_TYPE_OPTIONS}
+                  onValueChange={(value) => setNested("personal", "body_type", value)}
+                />
               </CardContent>
             </Card>
 
@@ -355,18 +415,24 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                 <CardTitle>Career & Cultural Details</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Highest Education</Label>
-                  <Input value={career.highest_education || ""} onChange={(e) => setNested("career", "highest_education", e.target.value)} />
-                </div>
+                <SelectField
+                  label="Highest Education"
+                  value={career.highest_education || ""}
+                  placeholder="Select education"
+                  options={EDUCATION_OPTIONS}
+                  onValueChange={(value) => setNested("career", "highest_education", value)}
+                />
                 <div className="space-y-2">
                   <Label>College</Label>
                   <Input value={career.college || ""} onChange={(e) => setNested("career", "college", e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Job Title</Label>
-                  <Input value={career.job_title || ""} onChange={(e) => setNested("career", "job_title", e.target.value)} />
-                </div>
+                <SelectField
+                  label="Job Title"
+                  value={career.job_title || ""}
+                  placeholder="Select profession"
+                  options={PROFESSION_OPTIONS}
+                  onValueChange={(value) => setNested("career", "job_title", value)}
+                />
                 <div className="space-y-2">
                   <Label>Company</Label>
                   <Input value={career.company || ""} onChange={(e) => setNested("career", "company", e.target.value)} />
@@ -387,14 +453,20 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                   <Label>Country</Label>
                   <Input value={career.work_location?.country || ""} onChange={(e) => updateWorkLocation("country", e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Religion</Label>
-                  <Input value={cultural.religion || ""} onChange={(e) => setNested("cultural", "religion", e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Mother Tongue</Label>
-                  <Input value={cultural.mother_tongue || ""} onChange={(e) => setNested("cultural", "mother_tongue", e.target.value)} />
-                </div>
+                <SelectField
+                  label="Religion"
+                  value={cultural.religion || ""}
+                  placeholder="Select religion"
+                  options={RELIGION_OPTIONS}
+                  onValueChange={(value) => setNested("cultural", "religion", value)}
+                />
+                <SelectField
+                  label="Mother Tongue"
+                  value={cultural.mother_tongue || ""}
+                  placeholder="Select mother tongue"
+                  options={MOTHER_TONGUE_OPTIONS}
+                  onValueChange={(value) => setNested("cultural", "mother_tongue", value)}
+                />
                 <div className="space-y-2">
                   <Label>Community</Label>
                   <Input value={cultural.community || ""} onChange={(e) => setNested("cultural", "community", e.target.value)} />
@@ -413,22 +485,34 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                 <CardTitle>Family Details</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Family Type</Label>
-                  <Input value={family.family_type || ""} onChange={(e) => setNested("family", "family_type", e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Family Values</Label>
-                  <Input value={family.family_values || ""} onChange={(e) => setNested("family", "family_values", e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Father Occupation</Label>
-                  <Input value={family.father_occupation || ""} onChange={(e) => setNested("family", "father_occupation", e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Mother Occupation</Label>
-                  <Input value={family.mother_occupation || ""} onChange={(e) => setNested("family", "mother_occupation", e.target.value)} />
-                </div>
+                <SelectField
+                  label="Family Type"
+                  value={family.family_type || ""}
+                  placeholder="Select family type"
+                  options={FAMILY_TYPE_OPTIONS}
+                  onValueChange={(value) => setNested("family", "family_type", value)}
+                />
+                <SelectField
+                  label="Family Values"
+                  value={family.family_values || ""}
+                  placeholder="Select family values"
+                  options={FAMILY_VALUES_OPTIONS}
+                  onValueChange={(value) => setNested("family", "family_values", value)}
+                />
+                <SelectField
+                  label="Father Occupation"
+                  value={family.father_occupation || ""}
+                  placeholder="Select occupation"
+                  options={PROFESSION_OPTIONS}
+                  onValueChange={(value) => setNested("family", "father_occupation", value)}
+                />
+                <SelectField
+                  label="Mother Occupation"
+                  value={family.mother_occupation || ""}
+                  placeholder="Select occupation"
+                  options={PROFESSION_OPTIONS}
+                  onValueChange={(value) => setNested("family", "mother_occupation", value)}
+                />
                 <div className="space-y-2">
                   <Label>Brothers</Label>
                   <Input type="number" value={family.brothers || ""} onChange={(e) => setNested("family", "brothers", e.target.value ? Number(e.target.value) : null)} />
