@@ -35,6 +35,7 @@ import { MatrimonyShortlistView } from "@/components/matrimony/matrimony-shortli
 import { MatrimonyProfileModal } from "@/components/matrimony/matrimony-profile-modal"
 import { ProfileView } from "@/components/profile/profile-view"
 import { calculateAgeFromDate } from "@/lib/age"
+import { getLocationCity } from "@/lib/location"
 
 interface MatrimonyMainProps {
   onExit?: () => void
@@ -352,8 +353,8 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                 // If "Any" is selected, skip location filtering
                 if (!appliedFilters.locations.includes("Any")) {
                   const profileCity = workLocation.city?.toLowerCase() || ""
-                  const matchesLocation = appliedFilters.locations.some(selectedCity => {
-                    const selectedCityLower = selectedCity.toLowerCase()
+                  const matchesLocation = appliedFilters.locations.some(selectedLocation => {
+                    const selectedCityLower = getLocationCity(selectedLocation).toLowerCase()
                     // Match only by city name (case-insensitive)
                     return profileCity === selectedCityLower
                   })

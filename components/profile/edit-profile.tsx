@@ -14,6 +14,8 @@ import { supabase } from "@/lib/supabaseClient"
 import { uploadAsset, type MatrimonyProfileFull } from "@/lib/matrimonyService"
 import { useToast } from "@/hooks/use-toast"
 import { calculateAgeFromDate, formatDateForDisplay } from "@/lib/age"
+import { LocationCascadeSelect, LocationPreferencePicker } from "@/components/location/location-cascade-select"
+import { formatLocationValue, parseLocationValue, type LocationValue } from "@/lib/location"
 import {
   BODY_TYPE_OPTIONS,
   DIET_OPTIONS,
@@ -171,12 +173,13 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
     map[section]({ ...stateMap[section], [key]: value })
   }
 
-  function updateWorkLocation(key: string, value: string) {
+  function updateWorkLocation(location: LocationValue) {
     setCareer({
       ...career,
       work_location: {
-        ...(career.work_location || {}),
-        [key]: value,
+        city: location.city || "",
+        state: location.state || "",
+        country: location.country || "",
       },
     })
   }
@@ -441,17 +444,14 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                   <Label>Annual Income</Label>
                   <Input value={career.annual_income || ""} onChange={(e) => setNested("career", "annual_income", e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label>City</Label>
-                  <Input value={career.work_location?.city || ""} onChange={(e) => updateWorkLocation("city", e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>State</Label>
-                  <Input value={career.work_location?.state || ""} onChange={(e) => updateWorkLocation("state", e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Country</Label>
-                  <Input value={career.work_location?.country || ""} onChange={(e) => updateWorkLocation("country", e.target.value)} />
+                <div className="space-y-2 sm:col-span-2">
+                  <LocationCascadeSelect
+                    value={career.work_location || {}}
+                    onChange={updateWorkLocation}
+                    countryLabel="Work Country"
+                    stateLabel="Work State"
+                    cityLabel="Work City"
+                  />
                 </div>
                 <SelectField
                   label="Religion"
@@ -471,9 +471,14 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                   <Label>Community</Label>
                   <Input value={cultural.community || ""} onChange={(e) => setNested("cultural", "community", e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Place of Birth</Label>
-                  <Input value={cultural.place_of_birth || ""} onChange={(e) => setNested("cultural", "place_of_birth", e.target.value)} />
+                <div className="space-y-2 sm:col-span-2">
+                  <LocationCascadeSelect
+                    value={parseLocationValue(cultural.place_of_birth || "")}
+                    onChange={(location) => setNested("cultural", "place_of_birth", formatLocationValue(location))}
+                    countryLabel="Birth Country"
+                    stateLabel="Birth State"
+                    cityLabel="Birth City"
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -547,11 +552,10 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                     onChange={(e) => setNested("partner", "max_age", e.target.value ? Number(e.target.value) : null)}
                   />
                 </div>
-                <div className="space-y-2 sm:col-span-2">
-                  <Label>Preferred Locations</Label>
-                  <Textarea
-                    value={(partnerPreferences.locations || []).join(", ")}
-                    onChange={(e) => setNested("partner", "locations", e.target.value.split(",").map((item) => item.trim()).filter(Boolean))}
+                <div className="sm:col-span-2">
+                  <LocationPreferencePicker
+                    value={partnerPreferences.locations || []}
+                    onChange={(locations) => setNested("partner", "locations", locations)}
                   />
                 </div>
                 <div className="space-y-2 sm:col-span-2">

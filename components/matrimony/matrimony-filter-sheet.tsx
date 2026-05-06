@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { X } from "lucide-react"
-import { getMatrimonyLocations } from "@/lib/matrimonyService"
+import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
 
 export interface FilterState {
   ageRange: [number, number]
@@ -46,29 +46,6 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
     verifiedOnly: false,
     premiumOnly: false,
   })
-
-  const defaultLocationOptions = [
-    "Mumbai", "Delhi", "Bangalore", "Chennai", "Kolkata", "Hyderabad", 
-    "Pune", "Ahmedabad", "Jaipur", "Surat", "USA", "Canada", "UK", 
-    "Australia", "Singapore", "Dubai", "Any"
-  ]
-
-  const [locationOptions, setLocationOptions] = useState<string[]>(defaultLocationOptions)
-
-  // Fetch locations from database when sheet opens
-  useEffect(() => {
-    if (open) {
-      async function fetchLocations() {
-        const locations = await getMatrimonyLocations()
-        if (locations.length > 0) {
-          // Combine with default options and remove duplicates
-          const allLocations = [...new Set([...defaultLocationOptions, ...locations])].sort()
-          setLocationOptions(allLocations)
-        }
-      }
-      fetchLocations()
-    }
-  }, [open])
 
   // Community/Caste options from matrimony onboarding (matrimony-preferences.tsx)
   const communityOptions = [
@@ -172,25 +149,11 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
 
           {/* Locations */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-black">Location Preferences</h3>
-              <span className="text-sm text-[#444444]">{filters.locations.length} selected</span>
-            </div>
-            <div className="flex flex-wrap gap-2.5">
-              {locationOptions.map((location) => (
-                <Badge
-                  key={location}
-                  variant={filters.locations.includes(location) ? "default" : "outline"}
-                  className={filters.locations.includes(location) 
-                    ? "cursor-pointer bg-[#97011A] text-white border-[#97011A]/50 hover:bg-[#7A0115]" 
-                    : "cursor-pointer bg-gray-100 border-[#E5E5E5] text-black hover:bg-gray-200"}
-                  onClick={() => handleArrayToggle(filters.locations, location, (value) => setFilters(prev => ({ ...prev, locations: value })))}
-                >
-                  {location}
-                  {filters.locations.includes(location) && <X className="w-3 h-3 ml-1" />}
-                </Badge>
-              ))}
-            </div>
+            <LocationPreferencePicker
+              value={filters.locations}
+              onChange={(locations) => setFilters((prev) => ({ ...prev, locations }))}
+              label="Location Preferences"
+            />
           </div>
 
           <Separator className="bg-[#E5E5E5]" />

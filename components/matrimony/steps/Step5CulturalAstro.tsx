@@ -13,6 +13,8 @@ import { culturalAstroSchema } from "@/lib/schemas/matrimony"
 import { saveStep5 } from "@/lib/matrimonyService"
 import { supabase } from "@/lib/supabaseClient"
 import { formatDateForDisplay } from "@/lib/age"
+import { LocationCascadeSelect } from "@/components/location/location-cascade-select"
+import { formatLocationValue, parseLocationValue } from "@/lib/location"
 import {
   COMMUNITY_OPTIONS,
   MOTHER_TONGUE_OPTIONS,
@@ -323,14 +325,14 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
               name="pob"
               render={({ field }) => (
                 <FormItem className={verifiedDob ? "sm:col-span-2" : ""}>
-                  <FormLabel className="text-black">Place of Birth</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="City, Country"
-                      {...field}
-                      className="h-12 rounded-xl border-black/20 text-base text-[#111] focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20"
-                    />
-                  </FormControl>
+                  <LocationCascadeSelect
+                    value={parseLocationValue(field.value)}
+                    onChange={(location) => field.onChange(formatLocationValue(location))}
+                    countryLabel="Birth Country"
+                    stateLabel="Birth State"
+                    cityLabel="Birth City"
+                    className="grid grid-cols-1 gap-4 sm:grid-cols-3"
+                  />
                   <FormMessage />
                 </FormItem>
               )}

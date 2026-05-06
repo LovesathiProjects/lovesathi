@@ -13,6 +13,8 @@ import { MatrimonyPreferences } from "@/components/profile/matrimony-preferences
 import { User, Camera } from "lucide-react"
 import { BackFloatingButton } from "@/components/navigation/back-floating-button"
 import { StaticBackground } from "@/components/discovery/static-background"
+import { LocationCascadeSelect } from "@/components/location/location-cascade-select"
+import { formatLocationValue, parseLocationValue } from "@/lib/location"
 
 interface ProfileSetupProps {
   onComplete?: () => void
@@ -145,13 +147,13 @@ export function ProfileSetup({ onComplete, onBack }: ProfileSetupProps) {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
-                    <Input
-                      id="location"
-                      value={profile.location}
-                      onChange={(e) => setProfile(prev => ({ ...prev, location: e.target.value }))}
-                      placeholder="City, State"
+                  <div className="col-span-2 space-y-2">
+                    <LocationCascadeSelect
+                      value={parseLocationValue(profile.location)}
+                      onChange={(location) => setProfile((prev) => ({ ...prev, location: formatLocationValue(location) }))}
+                      countryLabel="Country"
+                      stateLabel="State"
+                      cityLabel="City"
                     />
                   </div>
                 </div>

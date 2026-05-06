@@ -14,6 +14,7 @@ import { saveStep3 } from "@/lib/matrimonyService"
 import { supabase } from "@/lib/supabaseClient"
 import { toast } from "sonner"
 import { EDUCATION_OPTIONS, INCOME_OPTIONS, PROFESSION_OPTIONS, withoutOther } from "@/lib/matrimonyOptions"
+import { LocationCascadeSelect } from "@/components/location/location-cascade-select"
 
 type FormValues = z.infer<typeof careerEducationSchema>
 
@@ -244,47 +245,18 @@ export function Step3CareerEducation({ onNext, onBack }: { onNext: () => void; o
             )} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormField control={form.control} name="workLocation.city" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black">City</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="City" 
-                    {...field}
-                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="workLocation.state" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black">State</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="State" 
-                    {...field}
-                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="workLocation.country" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black">Country</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Country" 
-                    {...field}
-                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-          </div>
+          <FormField control={form.control} name="workLocation" render={({ field }) => (
+            <FormItem>
+              <LocationCascadeSelect
+                value={field.value}
+                onChange={(location) => field.onChange(location)}
+                countryLabel="Work Country"
+                stateLabel="Work State"
+                cityLabel="Work City"
+              />
+              <FormMessage />
+            </FormItem>
+          )} />
 
           <div className="flex justify-between pt-2">
             <Button 

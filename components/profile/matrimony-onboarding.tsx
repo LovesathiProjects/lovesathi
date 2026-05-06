@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { MatrimonyPreferences } from "@/components/profile/matrimony-preferences"
 import { useState } from "react"
 import { StaticBackground } from "@/components/discovery/static-background"
+import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
 
 interface MatrimonyOnboardingProps {
   onComplete?: () => void
@@ -14,6 +15,7 @@ interface MatrimonyOnboardingProps {
 
 export function MatrimonyOnboarding({ onComplete }: MatrimonyOnboardingProps) {
   const [step, setStep] = useState(0)
+  const [preferredLocations, setPreferredLocations] = useState<string[]>([])
   const totalSteps = 2
   const progress = ((step + 1) / totalSteps) * 100
 
@@ -55,10 +57,12 @@ export function MatrimonyOnboarding({ onComplete }: MatrimonyOnboardingProps) {
             <div className="space-y-4">
               <CardTitle className="text-base">Location & Education Preferences</CardTitle>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Lightweight inputs to keep scope small; can be expanded later */}
-                <div>
-                  <label className="text-sm block mb-1">Preferred Locations</label>
-                  <input className="w-full h-10 rounded-md border bg-background px-3 text-sm" placeholder="City, State or Country" />
+                <div className="md:col-span-2">
+                  <LocationPreferencePicker
+                    value={preferredLocations}
+                    onChange={setPreferredLocations}
+                    label="Preferred Locations"
+                  />
                 </div>
                 <div>
                   <label className="text-sm block mb-1">Education</label>

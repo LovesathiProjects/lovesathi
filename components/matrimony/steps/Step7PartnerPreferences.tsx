@@ -10,6 +10,7 @@ import { saveStep7 } from "@/lib/matrimonyService"
 import { useMatrimonySetupStore } from "@/components/matrimony/store"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
 
 type PreferenceKey =
   | "dietPrefs"
@@ -37,12 +38,6 @@ const preferenceGroups: Array<{
     title: "Profession",
     description: "Career paths that feel compatible with your expectations.",
     options: ["Any", "Software Engineer", "Doctor", "Business Owner", "Civil Servant", "Teacher", "Finance"],
-  },
-  {
-    key: "locations",
-    title: "Location",
-    description: "Preferred cities or regions for serious conversations.",
-    options: ["Any", "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Pune", "Dubai", "USA"],
   },
   {
     key: "communities",
@@ -105,6 +100,14 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
   const togglePreference = (key: PreferenceKey, option: string) => {
     setValues((prev) => {
       const next = { ...prev, [key]: toggleList(prev[key], option) }
+      setPartial("preferences", next)
+      return next
+    })
+  }
+
+  const setLocations = (locations: string[]) => {
+    setValues((prev) => {
+      const next = { ...prev, locations }
       setPartial("preferences", next)
       return next
     })
@@ -220,6 +223,21 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="rounded-[1.75rem] border border-[#d9b978]/24 bg-[#fffaf2]/76 p-5 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur">
+        <div className="mb-4 flex items-start gap-3">
+          <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#8f001c]/10 text-[#8f001c]">
+            <MapPin className="h-4 w-4" />
+          </div>
+          <div>
+            <h3 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">Location</h3>
+            <p className="text-sm leading-6 text-[#6c5a4a]">
+              Add preferred cities by choosing country, state, then city.
+            </p>
+          </div>
+        </div>
+        <LocationPreferencePicker value={values.locations} onChange={setLocations} label="Preferred Cities" />
       </section>
 
       <div className="grid gap-4">

@@ -12,6 +12,7 @@ import { ArrowLeft, MapPin, Users, Filter, Heart } from "lucide-react"
 import { StaticBackground } from "@/components/discovery/static-background"
 import { supabase } from "@/lib/supabaseClient"
 import { useToast } from "@/hooks/use-toast"
+import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
 
 interface MatrimonyPreferences {
   ageRange: [number, number]
@@ -26,12 +27,6 @@ interface MatrimonyPreferences {
   verifiedOnly: boolean
   premiumOnly: boolean
 }
-
-const locationOptions = [
-  "Mumbai", "Delhi", "Bangalore", "Chennai", "Kolkata", "Hyderabad", 
-  "Pune", "Ahmedabad", "Jaipur", "Surat", "USA", "Canada", "UK", 
-  "Australia", "Singapore", "Dubai", "Any"
-]
 
 const educationOptions = [
   "Any professional degree", "MBA", "B.Tech", "MBBS", "CA", "CS", 
@@ -266,18 +261,11 @@ export function MatrimonyPreferencesSettings({ onBack }: MatrimonyPreferencesSet
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {locationOptions.map((location) => (
-                <Button
-                  key={location}
-                  variant={settings.locations.includes(location) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleArrayToggle("locations", location)}
-                >
-                  {location}
-                </Button>
-              ))}
-            </div>
+            <LocationPreferencePicker
+              value={settings.locations}
+              onChange={(locations) => setSettings((prev) => ({ ...prev, locations }))}
+              label="Preferred Cities"
+            />
           </CardContent>
         </Card>
 
@@ -447,4 +435,3 @@ export function MatrimonyPreferencesSettings({ onBack }: MatrimonyPreferencesSet
     </div>
   )
 }
-
