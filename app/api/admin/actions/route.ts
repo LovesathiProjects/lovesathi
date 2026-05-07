@@ -13,6 +13,45 @@ function validateId(value: unknown) {
   return typeof value === "string" && uuidPattern.test(value)
 }
 
+async function writeAdminAuditLog(
+  supabase: any,
+  {
+    actorId,
+    actorEmail,
+    resource,
+    recordId,
+    previousStatus,
+    nextStatus,
+    notes,
+    metadata,
+  }: {
+    actorId: string
+    actorEmail: string | null
+    resource: "verification" | "report"
+    recordId: string
+    previousStatus: string | null
+    nextStatus: string
+    notes: string | null
+    metadata?: Record<string, unknown>
+  },
+) {
+  const { error } = await supabase.from("admin_audit_logs").insert({
+    actor_id: actorId,
+    actor_email: actorEmail,
+    action: `${resource}.${nextStatus}`,
+    resource,
+    record_id: recordId,
+    previous_status: previousStatus,
+    next_status: nextStatus,
+    notes,
+    metadata: metadata || {},
+  })
+
+  if (error) {
+    console.warn("[admin/actions] Unable to write admin audit log:", error.message)
+  }
+}
+
 export async function POST(request: Request) {
   const auth = await requireAdmin(request)
   if (auth.response) {
@@ -40,9 +79,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid verification status." }, { status: 400 })
     }
 
+    const notes = cleanText(body.notes)
+    const { data: previousRecord } = await supabase
+      .from("id_verifications")
+      .select("id,user_id,verification_status,document_type")
+      .eq("id", id)
+      .maybeSingle()
+
     const payload: Record<string, unknown> = {
       verification_status: status,
-      verification_notes: cleanText(body.notes),
+      verification_notes: notes,
     }
 
     if (status === "approved" || status === "rejected") {
@@ -61,6 +107,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
+    await writeAdminAuditLog(supabase, {
+      actorId: user.id,
+      actorEmail: user.email || null,
+      resource: "verification",
+      recordId: id,
+      previousStatus: previousRecord?.verification_status || null,
+      nextStatus: status,
+      notes,
+      metadata: {
+        userId: previousRecord?.user_id || null,
+        documentType: previousRecord?.document_type || null,
+      },
+    })
+
     return NextResponse.json({ ok: true, record: data })
   }
 
@@ -68,6 +128,13 @@ export async function POST(request: Request) {
     if (!reportStatuses.has(status)) {
       return NextResponse.json({ error: "Invalid report status." }, { status: 400 })
     }
+
+    const notes = cleanText(body.notes)
+    const { data: previousRecord } = await supabase
+      .from("user_reports")
+      .select("id,reporter_id,reported_user_id,reason,status")
+      .eq("id", id)
+      .maybeSingle()
 
     const { data, error } = await supabase
       .from("user_reports")
@@ -83,6 +150,21 @@ export async function POST(request: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
+
+    await writeAdminAuditLog(supabase, {
+      actorId: user.id,
+      actorEmail: user.email || null,
+      resource: "report",
+      recordId: id,
+      previousStatus: previousRecord?.status || null,
+      nextStatus: status,
+      notes,
+      metadata: {
+        reporterId: previousRecord?.reporter_id || null,
+        reportedUserId: previousRecord?.reported_user_id || null,
+        reason: previousRecord?.reason || null,
+      },
+    })
 
     return NextResponse.json({ ok: true, record: data })
   }

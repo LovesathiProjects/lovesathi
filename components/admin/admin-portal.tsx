@@ -18,6 +18,7 @@ import {
   Mail,
   MessageCircle,
   RefreshCw,
+  Search,
   ShieldCheck,
   Sparkles,
   UserRoundCheck,
@@ -93,6 +94,18 @@ type AdminReportItem = {
   reviewedAt: string | null
 }
 
+type AdminAuditItem = {
+  id: string
+  actorEmail: string | null
+  action: string
+  resource: string
+  recordId: string | null
+  previousStatus: string | null
+  nextStatus: string | null
+  notes: string | null
+  createdAt: string | null
+}
+
 type AuthEmailCount = {
   action: string
   label: string
@@ -144,12 +157,18 @@ type AdminOverview = {
     profiles: QueueResult<AdminProfileItem>
     verifications: QueueResult<AdminVerificationItem>
     reports: QueueResult<AdminReportItem>
+    audit: QueueResult<AdminAuditItem>
   }
   authEmailTelemetry: AuthEmailTelemetry
   readiness: ReadinessItem[]
 }
 
 const metricIcons = [Users, BadgeCheck, Clock3, ShieldCheck, FileWarning, Crown, MessageCircle, Database, Sparkles]
+
+function matchesSearch(parts: Array<string | number | null | undefined>, query: string) {
+  if (!query) return true
+  return parts.some((part) => String(part || "").toLowerCase().includes(query))
+}
 
 function formatDate(value?: string | null) {
   if (!value) return "Not available"
@@ -161,7 +180,7 @@ function formatDate(value?: string | null) {
 
 function statusLabel(value: string) {
   return value
-    .split("_")
+    .split(/[_\.]/)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ")
 }
@@ -205,15 +224,42 @@ export function AdminPortal() {
   const [error, setError] = useState<string | null>(null)
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [overview, setOverview] = useState<AdminOverview | null>(null)
+  const [adminSearch, setAdminSearch] = useState("")
 
   const generatedAt = overview?.generatedAt ? formatDate(overview.generatedAt) : null
   const refreshing = loading && Boolean(sessionToken)
+  const searchTerm = adminSearch.trim().toLowerCase()
   const authEmailOverall =
     overview?.authEmailTelemetry.summary.find((item) => item.category === "email")?.overall ||
     overview?.authEmailTelemetry.counts.reduce((total, item) => total + item.total, 0) ||
     0
   const authEmailLast30 =
     overview?.authEmailTelemetry.summary.find((item) => item.category === "email")?.last30Days || 0
+  const profileItems = overview?.queues.profiles.items || []
+  const verificationItems = overview?.queues.verifications.items || []
+  const reportItems = overview?.queues.reports.items || []
+  const auditItems = overview?.queues.audit.items || []
+  const filteredProfiles = profileItems.filter((profile) =>
+    matchesSearch(
+      [profile.name, profile.userId, profile.gender, profile.city, profile.education, profile.jobTitle, profile.createdBy],
+      searchTerm,
+    ),
+  )
+  const filteredVerifications = verificationItems.filter((item) =>
+    matchesSearch([item.profileName, item.userId, item.documentType, item.status, item.documentFileName, item.notes], searchTerm),
+  )
+  const filteredReports = reportItems.filter((item) =>
+    matchesSearch(
+      [item.reporterName, item.reportedName, item.reporterId, item.reportedUserId, item.reason, item.description, item.status],
+      searchTerm,
+    ),
+  )
+  const filteredAudit = auditItems.filter((item) =>
+    matchesSearch(
+      [item.actorEmail, item.action, item.resource, item.recordId, item.previousStatus, item.nextStatus, item.notes],
+      searchTerm,
+    ),
+  )
 
   useEffect(() => {
     let mounted = true
@@ -314,6 +360,22 @@ export function AdminPortal() {
     const label = `${resource} as ${statusLabel(status)}`
     if (!window.confirm(`Mark this ${label}?`)) return
 
+    const defaultNote =
+      resource === "verification" && status === "rejected"
+        ? "Rejected by Lovesathi admin review."
+        : resource === "verification" && status === "approved"
+          ? "Approved by Lovesathi admin review."
+          : resource === "verification"
+            ? "Moved to in-review by Lovesathi admin."
+            : `Report marked ${statusLabel(status)} by Lovesathi admin.`
+    const shouldAskForNote =
+      resource === "report" || status === "rejected" || status === "in_review"
+    const noteInput = shouldAskForNote
+      ? window.prompt("Add an admin note for the audit trail:", defaultNote)
+      : defaultNote
+
+    if (noteInput === null) return
+
     const key = `${resource}:${id}:${status}`
     setActionKey(key)
     setError(null)
@@ -328,10 +390,7 @@ export function AdminPortal() {
           resource,
           id,
           status,
-          notes:
-            resource === "verification" && status === "rejected"
-              ? "Rejected by Lovesathi admin review."
-              : "Updated by Lovesathi admin review.",
+          notes: noteInput.trim() || defaultNote,
         }),
       })
       const payload = await response.json()
@@ -438,6 +497,15 @@ export function AdminPortal() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <div className="relative w-full sm:w-72">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9d7a55]" />
+            <Input
+              value={adminSearch}
+              onChange={(event) => setAdminSearch(event.target.value)}
+              placeholder="Search profiles, reports, audit..."
+              className="h-10 rounded-full border-[#482b1a]/15 bg-white pl-10 text-sm"
+            />
+          </div>
           <Button
             variant="outline"
             className="rounded-full border-[#482b1a]/15 bg-white"
@@ -642,8 +710,8 @@ export function AdminPortal() {
                   {overview.queues.profiles.detail}
                 </p>
               )}
-              {overview?.queues.profiles.items.length ? (
-                overview.queues.profiles.items.map((profile) => (
+              {filteredProfiles.length ? (
+                filteredProfiles.map((profile) => (
                   <div key={profile.id} className="rounded-[1.35rem] border border-[#482b1a]/10 bg-white/60 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -667,7 +735,7 @@ export function AdminPortal() {
                   </div>
                 ))
               ) : (
-                <EmptyState copy="No matrimony profiles were returned yet." />
+                <EmptyState copy={searchTerm ? "No profiles match this admin search." : "No matrimony profiles were returned yet."} />
               )}
             </CardContent>
           </Card>
@@ -690,8 +758,8 @@ export function AdminPortal() {
                   {overview.queues.verifications.detail}
                 </p>
               )}
-              {overview?.queues.verifications.items.length ? (
-                overview.queues.verifications.items.map((item) => (
+              {filteredVerifications.length ? (
+                filteredVerifications.map((item) => (
                   <div key={item.id} className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -740,7 +808,7 @@ export function AdminPortal() {
                   </div>
                 ))
               ) : (
-                <EmptyState copy="No pending identity verifications right now." />
+                <EmptyState copy={searchTerm ? "No verifications match this admin search." : "No pending identity verifications right now."} />
               )}
             </CardContent>
           </Card>
@@ -763,8 +831,8 @@ export function AdminPortal() {
                   {overview.queues.reports.detail}
                 </p>
               )}
-              {overview?.queues.reports.items.length ? (
-                overview.queues.reports.items.map((item) => (
+              {filteredReports.length ? (
+                filteredReports.map((item) => (
                   <div key={item.id} className="rounded-[1.35rem] border border-[#482b1a]/10 bg-white/60 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -812,7 +880,7 @@ export function AdminPortal() {
                   </div>
                 ))
               ) : (
-                <EmptyState copy="No open safety reports right now." />
+                <EmptyState copy={searchTerm ? "No safety reports match this admin search." : "No open safety reports right now."} />
               )}
             </CardContent>
           </Card>
@@ -836,6 +904,48 @@ export function AdminPortal() {
                     </div>
                   </div>
                 ))}
+              </CardContent>
+            </Card>
+
+            <Card className="luxe-card rounded-[2rem] border-[#d8c79f]/24">
+              <CardHeader>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="luxe-kicker mb-2 text-[#8f001c]">audit trail</p>
+                    <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#18110d]">Action history</CardTitle>
+                  </div>
+                  <StatusBadge status={overview?.queues.audit.status || "pending"} />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {overview?.queues.audit.detail && (
+                  <p className="rounded-2xl border border-[#b79b62]/20 bg-[#b79b62]/10 p-3 text-sm font-semibold text-[#8a641f]">
+                    {overview.queues.audit.detail}
+                  </p>
+                )}
+                {filteredAudit.length ? (
+                  filteredAudit.map((item) => (
+                    <div key={item.id} className="rounded-[1.35rem] border border-[#482b1a]/10 bg-white/60 p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-bold text-[#18110d]">{statusLabel(item.action)}</p>
+                          <p className="mt-1 text-sm text-[#685f58]">
+                            {item.actorEmail || "Admin"} updated {item.resource}
+                          </p>
+                        </div>
+                        <p className="text-xs font-semibold text-[#9d7a55]">{formatDate(item.createdAt)}</p>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {item.previousStatus && <StatusBadge status={item.previousStatus} />}
+                        <span className="text-sm font-bold text-[#9d7a55]">to</span>
+                        {item.nextStatus && <StatusBadge status={item.nextStatus} />}
+                      </div>
+                      {item.notes && <p className="mt-3 text-sm leading-6 text-[#685f58]">{item.notes}</p>}
+                    </div>
+                  ))
+                ) : (
+                  <EmptyState copy={searchTerm ? "No audit records match this admin search." : "No admin actions have been recorded yet."} />
+                )}
               </CardContent>
             </Card>
 

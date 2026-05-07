@@ -57,6 +57,18 @@ type AdminReportItem = {
   reviewedAt: string | null
 }
 
+type AdminAuditItem = {
+  id: string
+  actorEmail: string | null
+  action: string
+  resource: string
+  recordId: string | null
+  previousStatus: string | null
+  nextStatus: string | null
+  notes: string | null
+  createdAt: string | null
+}
+
 type AuthEmailCount = {
   action: string
   label: string
@@ -381,11 +393,12 @@ export async function GET(request: Request) {
       safeCount(supabase, "Messages", "messages"),
       safeCount(supabase, "Shortlists", "shortlists"),
       safeCount(supabase, "New profiles 7d", "matrimony_profile_full", (query) => query.gte("created_at", sevenDaysAgo)),
+      safeCount(supabase, "Admin actions 7d", "admin_audit_logs", (query) => query.gte("created_at", sevenDaysAgo)),
     ]),
     loadAuthEmailTelemetry(supabase),
   ])
 
-  const [profileRows, verificationRows, reportRows] = await Promise.all([
+  const [profileRows, verificationRows, reportRows, auditRows] = await Promise.all([
     safeRows<any>(() =>
       supabase
         .from("matrimony_profile_full")
@@ -412,6 +425,13 @@ export async function GET(request: Request) {
         .in("status", ["pending", "reviewed"])
         .order("created_at", { ascending: false })
         .limit(8),
+    ),
+    safeRows<any>(() =>
+      supabase
+        .from("admin_audit_logs")
+        .select("id,actor_email,action,resource,record_id,previous_status,next_status,notes,created_at")
+        .order("created_at", { ascending: false })
+        .limit(10),
     ),
   ])
 
@@ -473,6 +493,21 @@ export async function GET(request: Request) {
       } satisfies QueueResult<AdminProfileItem>,
       verifications,
       reports,
+      audit: {
+        status: auditRows.status,
+        detail: auditRows.detail,
+        items: auditRows.items.map((item) => ({
+          id: item.id,
+          actorEmail: item.actor_email || null,
+          action: item.action || "admin.action",
+          resource: item.resource || "record",
+          recordId: item.record_id || null,
+          previousStatus: item.previous_status || null,
+          nextStatus: item.next_status || null,
+          notes: item.notes || null,
+          createdAt: item.created_at || null,
+        })),
+      } satisfies QueueResult<AdminAuditItem>,
     },
     authEmailTelemetry,
     readiness: [
@@ -493,6 +528,14 @@ export async function GET(request: Request) {
         label: "Moderation actions",
         status: "ok",
         detail: "Verification and report status actions are guarded by Supabase login plus ADMIN_EMAILS.",
+      },
+      {
+        label: "Audit trail",
+        status: auditRows.status,
+        detail:
+          auditRows.status === "ok"
+            ? "Admin decisions are being written to admin_audit_logs."
+            : "Run the latest Supabase migrations so admin_audit_logs can record review decisions.",
       },
       {
         label: "Supabase email",
