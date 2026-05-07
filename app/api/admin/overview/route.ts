@@ -321,9 +321,9 @@ export async function GET(request: Request) {
         detail: "Verification and report status actions are guarded by Supabase login plus ADMIN_EMAILS.",
       },
       {
-        label: "MSG91 email",
+        label: "Supabase email",
         status: "warning",
-        detail: "DNS verification must be completed in MSG91 before password OTP email can work.",
+        detail: "Confirm Supabase Auth email templates and redirect URLs before relying on confirmation and recovery email.",
       },
       {
         label: "Socket domain",

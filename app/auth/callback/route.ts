@@ -11,10 +11,26 @@ function getRedirectOrigin(requestOrigin: string) {
   return requestOrigin
 }
 
+function getSafeNextPath(requestUrl: URL) {
+  const next = requestUrl.searchParams.get('next')
+  if (!next || !next.startsWith('/') || next.startsWith('//')) {
+    return null
+  }
+
+  const nextUrl = new URL(next, requestUrl.origin)
+  const mode = requestUrl.searchParams.get('mode')
+  if (mode) {
+    nextUrl.searchParams.set('mode', mode)
+  }
+
+  return `${nextUrl.pathname}${nextUrl.search}`
+}
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const redirectOrigin = getRedirectOrigin(requestUrl.origin)
   const code = requestUrl.searchParams.get('code')
+  const safeNextPath = getSafeNextPath(requestUrl)
 
   if (code) {
     const supabase = createRouteHandlerClient({ cookies })
@@ -22,8 +38,12 @@ export async function GET(request: NextRequest) {
     
     // Get the current user
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     if (user) {
+      if (safeNextPath) {
+        return NextResponse.redirect(new URL(safeNextPath, redirectOrigin))
+      }
+
       // Check if email is verified (OAuth providers usually verify automatically, but check anyway)
       if (!user.email_confirmed_at) {
         return NextResponse.redirect(new URL('/auth/verify-email', redirectOrigin))

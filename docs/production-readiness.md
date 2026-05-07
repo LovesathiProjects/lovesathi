@@ -10,12 +10,6 @@ This file keeps the launch checklist inside the repo so the app, admin portal, D
 - `NEXT_PUBLIC_SITE_URL=https://lovesathi.com`
 - `NEXT_PUBLIC_SOCKET_URL=https://socket.lovesathi.com`
 - `ADMIN_EMAILS` as a comma-separated allowlist for `/admin`
-- `MSG91_API_KEY`
-- `MSG91_EMAIL_TEMPLATE_ID`
-- `MSG91_FORGOT_PASSWORD_TEMPLATE_ID`
-- `MSG91_EMAIL_DOMAIN=no-reply.lovesathi.com`
-- `MSG91_EMAIL_FROM=dev@no-reply.lovesathi.com`
-- `MSG91_EMAIL_FROM_NAME=LoveSathi`
 
 ## Required domains
 
@@ -23,7 +17,6 @@ This file keeps the launch checklist inside the repo so the app, admin portal, D
 - `www.lovesathi.com` should redirect to `lovesathi.com`.
 - `admin.lovesathi.com` should be added as a custom domain on the same main Render web service. `proxy.ts` rewrites that host to `/admin`.
 - `socket.lovesathi.com` should point to the Render socket service and must pass `/health`.
-- `no-reply.lovesathi.com` must be verified in MSG91 with SPF, DKIM, and MX records before OTP email can send.
 
 ## Supabase auth URLs
 
@@ -46,4 +39,4 @@ This file keeps the launch checklist inside the repo so the app, admin portal, D
 - Confirm admin users outside `ADMIN_EMAILS` receive `403`.
 - Confirm `https://admin.lovesathi.com` opens the admin portal after Render custom domain SSL is active.
 - Confirm admin verification/report status actions work only for users inside `ADMIN_EMAILS`.
-- Confirm MSG91 can send forgot-password OTP after DNS verification.
+- Confirm Supabase Auth sends both signup confirmation and forgot-password recovery emails.

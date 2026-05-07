@@ -3,152 +3,112 @@
 import type React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useRef, useState } from "react"
-import { ArrowLeft, Eye, EyeOff } from "lucide-react"
+import { useEffect, useState } from "react"
+import { ArrowLeft, CheckCircle2, Eye, EyeOff, Mail } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { supabase } from "@/lib/supabaseClient"
 
 export const dynamic = "force-dynamic"
 
+function getClientSiteUrl() {
+  const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL
+  if (configuredUrl?.startsWith("http")) {
+    return configuredUrl.replace(/\/$/, "")
+  }
+  return window.location.origin
+}
+
 export default function ForgotPasswordPage() {
   const router = useRouter()
-  const [step, setStep] = useState<"request" | "verify" | "reset">("request")
+  const [step, setStep] = useState<"request" | "sent" | "reset">("request")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState("")
-  const [otp, setOtp] = useState(["", "", "", ""])
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const otpInputs = useRef<(HTMLInputElement | null)[]>([])
 
   const normalizedEmail = email.trim().toLowerCase()
 
-  const handleSendCode = async (e: React.FormEvent) => {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("mode") === "reset") {
+      setStep("reset")
+    }
+  }, [])
+
+  const handleSendResetLink = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
-    const res = await fetch("/api/auth/send-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: normalizedEmail }),
-    })
+    try {
+      const redirectTo = `${getClientSiteUrl()}/auth/callback?next=/auth/forgot-password&mode=reset`
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+        redirectTo,
+      })
 
-    const data = await res.json()
-    setIsLoading(false)
+      if (error) throw error
 
-    if (!res.ok) return toast.error(data.error)
-
-    toast.success(data.message || "If an account exists, we sent an OTP to that email.")
-    setStep("verify")
-    setTimeout(() => otpInputs.current[0]?.focus(), 200)
-  }
-
-  const handleOtpChange = (index: number, value: string) => {
-    const digit = value.replace(/[^\d]/g, "").slice(-1)
-    const newOtp = [...otp]
-    newOtp[index] = digit
-    setOtp(newOtp)
-
-    if (digit && index < 3) {
-      const nextInput = otpInputs.current[index + 1]
-      nextInput?.focus()
-      nextInput?.select()
+      toast.success("If an account exists, Supabase has sent a password reset link.")
+      setStep("sent")
+    } catch (error: any) {
+      toast.error(error?.message || "Could not send password reset email")
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== "Backspace") return
-    e.preventDefault()
-
-    const newOtp = [...otp]
-    if (otp[index]) {
-      newOtp[index] = ""
-      setOtp(newOtp)
-      return
-    }
-
-    if (index > 0) {
-      const previousInput = otpInputs.current[index - 1]
-      previousInput?.focus()
-      previousInput?.select()
-      newOtp[index - 1] = ""
-      setOtp(newOtp)
-    }
-  }
-
-  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault()
-    const pasteData = e.clipboardData.getData("text").trim()
-
-    if (/^\d{4}$/.test(pasteData)) {
-      setOtp(pasteData.split("").slice(0, 4))
-      otpInputs.current[3]?.focus()
-    }
-  }
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    const res = await fetch("/api/auth/verify-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: normalizedEmail, otp: otp.join("") }),
-    })
-
-    const data = await res.json()
-    setIsLoading(false)
-
-    if (!res.ok) return toast.error(data.error)
-
-    toast.success("OTP verified")
-    setStep("reset")
-  }
-
-  const handleReset = async (e: React.FormEvent) => {
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (password !== confirmPassword) {
       return toast.error("Passwords do not match")
     }
 
-    if (password.length < 6) {
-      return toast.error("Password must be at least 6 characters")
+    if (password.length < 8) {
+      return toast.error("Password must be at least 8 characters")
     }
 
     setIsLoading(true)
 
-    const res = await fetch("/api/auth/reset-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: normalizedEmail, password }),
-    })
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
 
-    const data = await res.json()
-    setIsLoading(false)
+      if (!session) {
+        throw new Error("Reset link expired or invalid. Please request a new password reset email.")
+      }
 
-    if (!res.ok) return toast.error(data.error || "Password reset failed")
+      const { error } = await supabase.auth.updateUser({ password })
+      if (error) throw error
 
-    toast.success("Password reset successful. Redirecting to login...", {
-      duration: 2000,
-    })
+      await supabase.auth.signOut()
+      toast.success("Password updated. Please log in with your new password.", {
+        duration: 2200,
+      })
 
-    setTimeout(() => {
-      router.replace("/auth")
-    }, 1500)
+      setTimeout(() => {
+        router.replace("/auth")
+      }, 1200)
+    } catch (error: any) {
+      toast.error(error?.message || "Password reset failed")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const title = step === "request" ? "Forgot password" : step === "verify" ? "Verify OTP" : "Reset password"
+  const title = step === "reset" ? "Set new password" : step === "sent" ? "Check your email" : "Forgot password"
   const subtitle =
-    step === "request"
-      ? "Enter your email and we will send a secure OTP if the account exists."
-      : step === "verify"
-        ? "Enter the 4-digit OTP sent to your email."
-        : "Set a new password for your Lovesathi account."
+    step === "reset"
+      ? "Choose a new password for your Lovesathi account."
+      : step === "sent"
+        ? "Open the Supabase recovery email and follow the secure link."
+        : "Enter your email and Supabase will send a secure recovery link if the account exists."
 
   return (
     <div className="luxe-light-page flex min-h-screen flex-col overflow-x-hidden px-4 py-5 sm:px-6">
@@ -164,13 +124,13 @@ export default function ForgotPasswordPage() {
       <div className="flex flex-1 items-center justify-center py-10">
         <div className="luxe-card mx-auto w-full max-w-lg space-y-6 rounded-[2rem] p-6 sm:p-8">
           <div className="space-y-2 text-center">
-            <p className="luxe-kicker text-[#8f001c]">Account recovery</p>
+            <p className="luxe-kicker text-[#8f001c]">Supabase recovery</p>
             <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">{title}</h1>
             <p className="text-base text-[#6c5a4a]">{subtitle}</p>
           </div>
 
           {step === "request" && (
-            <form onSubmit={handleSendCode} className="space-y-4 pt-4">
+            <form onSubmit={handleSendResetLink} className="space-y-4 pt-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -180,51 +140,41 @@ export default function ForgotPasswordPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@email.com"
+                  autoComplete="email"
                   className="h-12 rounded-2xl border-[#482b1a]/20 bg-[#fffaf2]"
                 />
               </div>
 
               <Button className="luxe-button h-12 w-full rounded-2xl font-bold" type="submit" size="lg" disabled={isLoading}>
-                {isLoading ? "Sending..." : "Send OTP"}
+                {isLoading ? "Sending..." : "Send reset link"}
               </Button>
             </form>
           )}
 
-          {step === "verify" && (
-            <form onSubmit={handleVerifyOtp} className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label>Enter OTP</Label>
-                <div className="mb-2 flex justify-center gap-2">
-                  {otp.map((d, i) => (
-                    <input
-                      key={i}
-                      ref={(el) => {
-                        if (el) otpInputs.current[i] = el
-                      }}
-                      maxLength={1}
-                      value={d}
-                      onChange={(e) => handleOtpChange(i, e.target.value)}
-                      onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                      onPaste={handleOtpPaste}
-                      onFocus={(e) => e.target.select()}
-                      className="h-14 w-14 rounded-2xl border border-[#482b1a]/20 bg-[#fffaf2] text-center text-xl font-bold text-[#18110d] focus:outline-none focus:ring-2 focus:ring-[#b9904d]"
-                      inputMode="numeric"
-                      pattern="[0-9]"
-                      type="text"
-                      autoComplete="one-time-code"
-                    />
-                  ))}
-                </div>
+          {step === "sent" && (
+            <div className="space-y-5 pt-4 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#d9b978]/28 bg-[#fff7e8] text-[#8f001c] shadow-[0_18px_48px_rgba(24,17,13,0.08)]">
+                <Mail className="h-8 w-8" />
               </div>
-
-              <Button className="luxe-button h-12 w-full rounded-2xl font-bold" size="lg" disabled={otp.some((d) => !d) || isLoading}>
-                {isLoading ? "Verifying..." : "Verify OTP"}
+              <div className="rounded-[1.5rem] border border-[#d9b978]/24 bg-white/62 p-4 text-sm font-semibold leading-6 text-[#6c5a4a]">
+                Check your inbox and spam folder. The recovery link opens a secure Supabase session where you can set a new password.
+              </div>
+              <Button
+                variant="outline"
+                className="h-12 w-full rounded-2xl border-[#482b1a]/16 bg-[#fffaf2] font-bold text-[#18110d]"
+                onClick={() => setStep("request")}
+              >
+                Use a different email
               </Button>
-            </form>
+            </div>
           )}
 
           {step === "reset" && (
-            <form onSubmit={handleReset} className="space-y-4 pt-4">
+            <form onSubmit={handleResetPassword} className="space-y-4 pt-4">
+              <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-[#1b6b43]/10 text-[#1b6b43]">
+                <CheckCircle2 className="h-7 w-7" />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="password">New Password</Label>
                 <div className="relative">
@@ -235,6 +185,7 @@ export default function ForgotPasswordPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter new password"
                     required
+                    autoComplete="new-password"
                     className="h-12 rounded-2xl border-[#482b1a]/20 bg-[#fffaf2] pr-12"
                   />
                   <Button
@@ -259,6 +210,7 @@ export default function ForgotPasswordPage() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm new password"
                     required
+                    autoComplete="new-password"
                     className="h-12 rounded-2xl border-[#482b1a]/20 bg-[#fffaf2] pr-12"
                   />
                   <Button
@@ -274,7 +226,7 @@ export default function ForgotPasswordPage() {
               </div>
 
               <Button className="luxe-button h-12 w-full rounded-2xl font-bold" size="lg" disabled={isLoading}>
-                {isLoading ? "Updating..." : "Reset Password"}
+                {isLoading ? "Updating..." : "Update Password"}
               </Button>
 
               <Separator />

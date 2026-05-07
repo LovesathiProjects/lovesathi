@@ -19,18 +19,6 @@ services:
         value: https://socket.lovesathi.com
       - key: ADMIN_EMAILS
         sync: false
-      - key: MSG91_API_KEY
-        sync: false
-      - key: MSG91_EMAIL_TEMPLATE_ID
-        sync: false
-      - key: MSG91_FORGOT_PASSWORD_TEMPLATE_ID
-        sync: false
-      - key: MSG91_EMAIL_DOMAIN
-        value: no-reply.lovesathi.com
-      - key: MSG91_EMAIL_FROM
-        value: dev@no-reply.lovesathi.com
-      - key: MSG91_EMAIL_FROM_NAME
-        value: LoveSathi
 
   - type: web
     name: lovesathi-socket
