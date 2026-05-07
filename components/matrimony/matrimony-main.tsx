@@ -578,7 +578,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           description: "Please wait while we prepare the next profile.",
           variant: "destructive",
         })
-        return
+        return false
       }
 
       const { data: { user } } = await supabase.auth.getUser()
@@ -588,11 +588,11 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           description: "You need to be signed in to send interest.",
           variant: "destructive",
         })
-        return
+        return false
       }
 
       const allowed = await ensureSwipeAllowed(user.id)
-      if (!allowed) return
+      if (!allowed) return false
 
       // Record the like in database
       const result = await recordMatrimonyLike(user.id, currentProfile.id, 'like')
@@ -601,14 +601,14 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         if (result.error?.toLowerCase().includes("swipe limit")) {
           await refreshSwipeLimitStatus(user.id)
           showSwipePaywall()
-          return
+          return false
         }
         toast({
           title: "Could not send interest",
           description: result.error || "Please try again.",
           variant: "destructive",
         })
-        return
+        return false
       }
       await refreshSwipeLimitStatus(user.id)
       
@@ -620,8 +620,10 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       }
 
       advanceToNextProfile()
+      return true
     } catch (error) {
       console.error('[handleLike] Unexpected error:', error)
+      return false
     }
   }
 
@@ -634,7 +636,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           description: "Please wait while we prepare the next profile.",
           variant: "destructive",
         })
-        return
+        return false
       }
 
       const { data: { user } } = await supabase.auth.getUser()
@@ -644,11 +646,11 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           description: "You need to be signed in to update discovery.",
           variant: "destructive",
         })
-        return
+        return false
       }
 
       const allowed = await ensureSwipeAllowed(user.id)
-      if (!allowed) return
+      if (!allowed) return false
 
       // Record the pass in database
       const result = await recordMatrimonyLike(user.id, currentProfile.id, 'pass')
@@ -657,20 +659,22 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         if (result.error?.toLowerCase().includes("swipe limit")) {
           await refreshSwipeLimitStatus(user.id)
           showSwipePaywall()
-          return
+          return false
         }
         toast({
           title: "Could not update profile",
           description: result.error || "Please try again.",
           variant: "destructive",
         })
-        return
+        return false
       }
       await refreshSwipeLimitStatus(user.id)
 
       advanceToNextProfile()
+      return true
     } catch (error) {
       console.error('[handlePass] Unexpected error:', error)
+      return false
     }
   }
 

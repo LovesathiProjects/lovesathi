@@ -80,33 +80,22 @@ export async function recordMatrimonyLike(
       return { success: true }
     }
 
-    let data
-    let error
-
     const payload = { liker_id: likerId, liked_id: likedId, action }
-    const { data: inserted, error: insertError } = await supabase
+    const { error: insertError } = await supabase
       .from("matrimony_likes")
       .insert(payload)
-      .select()
-      .single()
 
     if (insertError && (insertError.code === "23505" || insertError.message?.includes("unique"))) {
-      const { data: updated, error: updateError } = await supabase
+      const { error: updateError } = await supabase
         .from("matrimony_likes")
         .update({ action })
         .eq("liker_id", likerId)
         .eq("liked_id", likedId)
-        .select()
-        .single()
 
-      data = updated
-      error = updateError
-    } else {
-      data = inserted
-      error = insertError
+      if (updateError) throw updateError
+    } else if (insertError) {
+      throw insertError
     }
-
-    if (error) throw error
 
     if (action === "like" || action === "connect") {
       await new Promise((resolve) => setTimeout(resolve, 200))

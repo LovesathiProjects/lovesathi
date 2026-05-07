@@ -30,8 +30,8 @@ interface MatrimonySwipeCardProps {
   bio?: string
   interests?: string[]
   education?: string
-  onConnect: () => void
-  onNotNow: () => void
+  onConnect: () => boolean | void | Promise<boolean | void>
+  onNotNow: () => boolean | void | Promise<boolean | void>
   onProfileClick?: () => void
   stackIndex?: number // 0 is top, then 1,2 for depth visuals
   isShortlisted?: boolean
@@ -235,7 +235,9 @@ export function MatrimonySwipeCard({
         mass: 0.5
       })
       setTimeout(() => {
-        onConnect()
+        void Promise.resolve(onConnect()).then((result) => {
+          if (result === false) resetSwipePosition()
+        })
       }, 300)
     } else if (shouldNotNow) {
       // Not Now - swipe out with smooth spring (no X animation)
@@ -246,7 +248,9 @@ export function MatrimonySwipeCard({
         mass: 0.5
       })
       setTimeout(() => {
-        onNotNow()
+        void Promise.resolve(onNotNow()).then((result) => {
+          if (result === false) resetSwipePosition()
+        })
       }, 300)
     } else {
       // Reset card position smoothly with optimized spring animation
@@ -636,7 +640,9 @@ export function MatrimonySwipeCard({
                 mass: 0.5
               })
               setTimeout(() => {
-                onNotNow()
+                void Promise.resolve(onNotNow()).then((result) => {
+                  if (result === false) resetSwipePosition()
+                })
               }, 300)
             }}
           >
@@ -663,7 +669,9 @@ export function MatrimonySwipeCard({
               showHeartBurst()
               animate(x, 1000, { duration: 0.4, ease: "easeInOut" })
               setTimeout(() => {
-                onConnect()
+                void Promise.resolve(onConnect()).then((result) => {
+                  if (result === false) resetSwipePosition()
+                })
               }, 400)
             }}
           >
@@ -1076,7 +1084,11 @@ export function MatrimonySwipeCard({
                               return
                             }
                             handleInfoClick(e)
-                            setTimeout(() => onNotNow(), 300)
+                            setTimeout(() => {
+                              void Promise.resolve(onNotNow()).then((result) => {
+                                if (result === false) resetSwipePosition()
+                              })
+                            }, 300)
                           }}
                         >
                           <X className="w-8 h-8 sm:w-10 sm:h-10" />
@@ -1092,7 +1104,11 @@ export function MatrimonySwipeCard({
                               return
                             }
                             handleInfoClick(e)
-                            setTimeout(() => onConnect(), 300)
+                            setTimeout(() => {
+                              void Promise.resolve(onConnect()).then((result) => {
+                                if (result === false) resetSwipePosition()
+                              })
+                            }, 300)
                           }}
                         >
                           <Check className="w-8 h-8 sm:w-10 sm:h-10" />
@@ -1135,7 +1151,7 @@ export function MatrimonySwipeCard({
           return
         }
         setShowProfileModal(false)
-        onConnect()
+        void onConnect()
       }}
       onNotNow={() => {
         if (swipeLocked) {
@@ -1143,7 +1159,7 @@ export function MatrimonySwipeCard({
           return
         }
         setShowProfileModal(false)
-        onNotNow()
+        void onNotNow()
       }}
     />
 
