@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient'
 import type { Message } from './types'
 import { RealtimeChannel } from '@supabase/supabase-js'
+import { getMessageSendLimitStatus, normalizeLimitError } from '@/lib/planLimits'
 
 /**
  * Get match_id from user IDs and match type
@@ -112,6 +113,11 @@ export async function sendMessage(
     // Use empty string if content is empty (for media-only messages)
     // The database should allow empty content after running the fix script
     const messageContent = allowEmpty && !content.trim() ? '' : content.trim()
+    const limitStatus = await getMessageSendLimitStatus(senderId, receiverId)
+
+    if (!limitStatus.allowed) {
+      throw new Error(limitStatus.error || 'Free plan message limit reached.')
+    }
 
     const { data, error } = await supabase
       .from('messages')
@@ -135,7 +141,7 @@ export async function sendMessage(
     return data as Message
   } catch (error: any) {
     console.error('[sendMessage] Exception:', error)
-    throw error
+    throw new Error(normalizeLimitError(error?.message) || 'Failed to send message')
   }
 }
 

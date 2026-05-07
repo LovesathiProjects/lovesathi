@@ -551,6 +551,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           description: result.error || "Please try again.",
           variant: "destructive",
         })
+        return
       }
       
       if (result.success && result.isMatch) {
@@ -598,6 +599,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           description: result.error || "Please try again.",
           variant: "destructive",
         })
+        return
       }
 
       if (currentCardIndex < profiles.length - 1) setCurrentCardIndex((p) => p + 1)

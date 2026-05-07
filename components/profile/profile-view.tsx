@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { recordMatrimonyLike } from "@/lib/matchmakingService"
 import { EditProfile } from "./edit-profile"
 import type { MatrimonyProfileFull } from "@/lib/matrimonyService"
+import { useToast } from "@/hooks/use-toast"
 
 interface ProfileViewProps {
   isOwnProfile?: boolean
@@ -29,6 +30,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId }: ProfileVie
   const [isMatched, setIsMatched] = useState(false)
   const [canLikeBack, setCanLikeBack] = useState(false)
   const [isLiking, setIsLiking] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     void fetchProfile()
@@ -130,9 +132,20 @@ export function ProfileView({ isOwnProfile = false, onBack, userId }: ProfileVie
       const result = await recordMatrimonyLike(user.id, userId, "like")
       if (result.success) {
         await fetchProfile()
+      } else {
+        toast({
+          title: "Could not send interest",
+          description: result.error || "Please try again.",
+          variant: "destructive",
+        })
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error liking matrimony profile:", error)
+      toast({
+        title: "Could not send interest",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setIsLiking(false)
     }

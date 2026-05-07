@@ -114,9 +114,9 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="matrimony-filter-sheet flex w-full min-w-0 flex-col overflow-hidden border-l border-[#d9b978]/24 bg-[#fffdf8] sm:w-[520px]">
         <SheetHeader className="shrink-0 space-y-3 px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6">
-          <div className="flex items-center justify-between gap-3 pr-10">
-            <SheetTitle className="matrimony-filter-title font-serif text-[2rem] leading-none tracking-[-0.05em] text-[#18110d] sm:text-3xl">Refine Matches</SheetTitle>
-            <Button variant="ghost" size="sm" onClick={handleReset} className="rounded-full border border-[#d9b978]/30 bg-white/70 text-[#18110d] hover:bg-white">
+          <div className="flex min-w-0 items-center justify-between gap-3 pr-16 sm:pr-12">
+            <SheetTitle className="matrimony-filter-title min-w-0 flex-1 truncate font-serif text-[1.8rem] leading-none tracking-[-0.05em] text-[#18110d] sm:text-3xl">Refine Matches</SheetTitle>
+            <Button variant="ghost" size="sm" onClick={handleReset} className="h-11 shrink-0 rounded-full border border-[#d9b978]/30 bg-white/78 px-5 text-[#18110d] shadow-[0_10px_24px_rgba(24,17,13,0.06)] hover:bg-white sm:h-12 sm:px-6">
               Reset
             </Button>
           </div>

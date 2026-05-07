@@ -14,6 +14,7 @@ import {
   recordMatrimonyLike,
   type ActivityItem 
 } from "@/lib/matchmakingService"
+import { useToast } from "@/hooks/use-toast"
 
 interface ActivityScreenProps {
   onProfileClick?: (userId: string) => void
@@ -30,6 +31,7 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
   const [likedBack, setLikedBack] = useState<Set<string>>(new Set())
   const [likingInProgress, setLikingInProgress] = useState<Set<string>>(new Set())
   const isMatrimony = true
+  const { toast } = useToast()
 
   // Fetch activity data
   useEffect(() => {
@@ -98,11 +100,19 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
           }
         }
       } else {
-        setError(result.error || "Failed to like back")
+        toast({
+          title: "Could not like back",
+          description: result.error || "Please try again.",
+          variant: "destructive",
+        })
       }
     } catch (err: any) {
       console.error("Error liking back:", err)
-      setError(err.message || "Failed to like back")
+      toast({
+        title: "Could not like back",
+        description: err.message || "Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setLikingInProgress(prev => {
         const next = new Set(prev)

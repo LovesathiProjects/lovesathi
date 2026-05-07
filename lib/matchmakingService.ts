@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient"
+import { getSwipeLimitStatus, normalizeLimitError } from "@/lib/planLimits"
 
 export interface LikeAction {
   success: boolean
@@ -32,6 +33,11 @@ export async function recordMatrimonyLike(
   action: "like" | "pass" | "connect",
 ): Promise<LikeAction> {
   try {
+    const limitStatus = await getSwipeLimitStatus(likerId)
+    if (!limitStatus.allowed) {
+      return { success: false, error: limitStatus.error }
+    }
+
     let data
     let error
 
@@ -83,7 +89,7 @@ export async function recordMatrimonyLike(
     return { success: true }
   } catch (error: any) {
     console.error("Error recording matrimony like:", error)
-    return { success: false, error: error.message }
+    return { success: false, error: normalizeLimitError(error.message) }
   }
 }
 

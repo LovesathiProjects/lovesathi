@@ -498,6 +498,18 @@
   .matrimony-filter-sheet button[class*="absolute top-5 right-5"] svg {
     color: #18110d !important;
   }
+
+  .matrimony-filter-sheet button[class*="absolute top-5 right-5"] {
+    top: calc(1.32rem + env(safe-area-inset-top)) !important;
+    right: 1rem !important;
+    display: inline-flex !important;
+    height: 2.75rem !important;
+    width: 2.75rem !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 9999px !important;
+    background: rgba(255, 250, 242, 0.82) !important;
+  }
 }
 
 @keyframes luxe-float {

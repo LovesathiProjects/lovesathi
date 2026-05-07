@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabaseClient"
 import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
+import { getShortlistLimitStatus, normalizeLimitError } from "@/lib/planLimits"
 
 export interface ShortlistRecord {
   id: string
@@ -67,6 +68,11 @@ export async function addToShortlist(
 ): Promise<ShortlistActionResult> {
   try {
     const resolvedUserId = await resolveUserId(userId)
+    const limitStatus = await getShortlistLimitStatus(resolvedUserId, targetUserId)
+    if (!limitStatus.allowed) {
+      return { success: false, error: limitStatus.error }
+    }
+
     const { error } = await supabase.from("shortlists").upsert(
       {
         user_id: resolvedUserId,
@@ -81,7 +87,7 @@ export async function addToShortlist(
     return { success: true }
   } catch (error: any) {
     console.error("[addToShortlist] Failed:", error.message)
-    return { success: false, error: error.message }
+    return { success: false, error: normalizeLimitError(error.message) }
   }
 }
 
@@ -183,4 +189,3 @@ export function subscribeToShortlist(
     supabase.removeChannel(channel)
   }
 }
-

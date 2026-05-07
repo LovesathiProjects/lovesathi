@@ -32,6 +32,7 @@ import { useMessageNotifications } from "@/hooks/useMessageNotifications"
 import { MessageActionMenu } from "@/components/chat/message-action-menu"
 import { ReportDialog } from "@/components/chat/report-dialog"
 import { getPreferredVerticalPlacement, type VerticalPlacement } from "@/components/chat/menu-position"
+import { getMessageSendLimitStatus } from "@/lib/planLimits"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -580,10 +581,20 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
     if (!newMessage.trim() || !matchId || !currentUserId || !chatUser) return
 
     const messageContent = newMessage.trim()
-    setNewMessage("")
 
     try {
       setUploading(true)
+      const limitStatus = await getMessageSendLimitStatus(currentUserId, chatUser.id)
+      if (!limitStatus.allowed) {
+        toast({
+          title: "Free plan limit reached",
+          description: limitStatus.error || "Upgrade for unlimited conversations.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      setNewMessage("")
 
       // Optimistic update
       const tempMessage: Message = {
