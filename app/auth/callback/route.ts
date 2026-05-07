@@ -12,6 +12,10 @@ function getRedirectOrigin(requestOrigin: string) {
 }
 
 function getSafeNextPath(requestUrl: URL) {
+  if (requestUrl.searchParams.get('mode') === 'reset' || requestUrl.searchParams.get('type') === 'recovery') {
+    return '/auth/reset-password'
+  }
+
   const next = requestUrl.searchParams.get('next')
   if (!next || !next.startsWith('/') || next.startsWith('//')) {
     return null
