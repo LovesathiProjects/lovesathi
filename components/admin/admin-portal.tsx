@@ -103,7 +103,7 @@ type AuthEmailCount = {
 }
 
 type AuthEmailSummaryItem = {
-  category: "email" | "otp" | "magic_link"
+  category: "email" | "magic_link"
   label: string
   description: string
   overall: number
@@ -500,8 +500,8 @@ export function AdminPortal() {
                     Auth email telemetry
                   </CardTitle>
                   <p className="mt-3 max-w-3xl text-sm leading-6 text-[#6c5a4a]">
-                    Tracks Supabase Auth audit events with separate lifetime and last-30-day counters for email, OTP,
-                    and magic-link activity.
+                    Tracks Supabase Auth audit events with separate lifetime and last-30-day counters for emails and
+                    clickable magic links, including confirmation and reset-password links.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -522,7 +522,7 @@ export function AdminPortal() {
                 </div>
               )}
 
-              <div className="grid gap-3 lg:grid-cols-3">
+              <div className="grid gap-3 lg:grid-cols-2">
                 {overview?.authEmailTelemetry.summary.length ? (
                   overview.authEmailTelemetry.summary.map((item) => (
                     <div key={item.category} className="rounded-[1.6rem] border border-[#482b1a]/10 bg-white/72 p-5 shadow-[0_18px_48px_rgba(24,17,13,0.05)]">
@@ -546,7 +546,7 @@ export function AdminPortal() {
                     </div>
                   ))
                 ) : (
-                  <div className="lg:col-span-3">
+                  <div className="lg:col-span-2">
                     <EmptyState copy="No Supabase auth email counters are available yet." />
                   </div>
                 )}

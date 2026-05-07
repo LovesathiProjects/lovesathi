@@ -67,7 +67,7 @@ type AuthEmailCount = {
 }
 
 type AuthEmailSummaryItem = {
-  category: "email" | "otp" | "magic_link"
+  category: "email" | "magic_link"
   label: string
   description: string
   overall: number
@@ -279,7 +279,7 @@ function mapAuthEmailTelemetry(payload: any): AuthEmailTelemetry {
     until: typeof payload?.until === "string" ? payload.until : null,
     summary: summary.map((item: any) => {
       const category =
-        item?.category === "otp" || item?.category === "magic_link" || item?.category === "email"
+        item?.category === "magic_link" || item?.category === "email"
           ? item.category
           : "email"
 

@@ -65,8 +65,7 @@ The admin portal reads a guarded Supabase RPC named `get_lovesathi_auth_email_ev
 The top admin counters separate lifetime totals from the last 30 days:
 
 - Overall email and email in the last 30 days.
-- Overall OTP and OTP in the last 30 days.
-- Overall magic link and magic link in the last 30 days.
+- Overall magic link and magic link in the last 30 days, including signup confirmation/resend and reset-password recovery links.
 
 Tracked actions:
 
