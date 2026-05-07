@@ -55,3 +55,5 @@ This lets Supabase exchange the email confirmation code, establish the browser s
 4. The confirmation link lands on `/auth/callback?next=/onboarding/verification`.
 5. The callback exchanges the Supabase code for a session.
 6. Confirmed users continue into Lovesathi onboarding.
+
+If a member tries to log in before confirming email, the app stores their email locally and sends them to `/auth/verify-email?reason=unconfirmed` so they can request a fresh confirmation link. If an old confirmation link is expired or invalid, the callback sends them to `/auth/verify-email?reason=expired` with the same resend action.

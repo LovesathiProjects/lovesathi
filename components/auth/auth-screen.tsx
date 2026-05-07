@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import {
   EMAIL_VERIFICATION_STORAGE_KEY,
   getEmailVerificationRedirectUrl,
+  isEmailNotConfirmedError,
   normalizeEmail,
 } from "@/lib/authRedirects"
 import { supabase } from "@/lib/supabaseClient"
@@ -160,7 +161,8 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
       } = await supabase.auth.getUser()
 
       if (user && !user.email_confirmed_at) {
-        router.push("/auth/verify-email")
+        window.sessionStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, normalizeEmail(user.email || ""))
+        router.push("/auth/verify-email?reason=unconfirmed")
         return
       }
 
@@ -193,8 +195,9 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
     setIsLoading(true)
     setError(null)
     try {
+      const email = normalizeEmail(formData.email)
       const { data, error: loginError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
+        email,
         password: formData.password,
       })
       if (loginError) throw loginError
@@ -205,6 +208,13 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
         router.push("/onboarding/verification")
       }
     } catch (err: any) {
+      if (isEmailNotConfirmedError(err)) {
+        const email = normalizeEmail(formData.email)
+        window.sessionStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, email)
+        router.push("/auth/verify-email?reason=unconfirmed")
+        return
+      }
+
       setError(err.message || "Invalid credentials")
     } finally {
       setIsLoading(false)

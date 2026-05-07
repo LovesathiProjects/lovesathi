@@ -18,6 +18,8 @@ interface EmailVerificationScreenProps {
   onVerified?: () => void
 }
 
+type VerificationReason = "unconfirmed" | "expired" | null
+
 export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -27,6 +29,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [emailInput, setEmailInput] = useState("")
   const [isVerified, setIsVerified] = useState(false)
+  const [verificationReason, setVerificationReason] = useState<VerificationReason>(null)
 
   const rememberEmail = useCallback((email: string | null | undefined) => {
     if (!email) return
@@ -44,15 +47,24 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
     )
   }, [])
 
+  const getVerificationReason = useCallback((): VerificationReason => {
+    const reason = new URLSearchParams(window.location.search).get("reason")
+    return reason === "unconfirmed" || reason === "expired" ? reason : null
+  }, [])
+
   // Check email verification status on mount and periodically
   useEffect(() => {
     let mounted = true
     let subscription: { unsubscribe: () => void } | null = null
     let interval: NodeJS.Timeout | null = null
     const rememberedEmail = getRememberedEmail()
+    const reason = getVerificationReason()
 
     if (rememberedEmail) {
       rememberEmail(rememberedEmail)
+    }
+    if (reason) {
+      setVerificationReason(reason)
     }
 
     const checkEmailVerification = async (retryCount = 0) => {
@@ -206,7 +218,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
         clearInterval(interval)
       }
     }
-  }, [router, onVerified, isVerified, getRememberedEmail, rememberEmail])
+  }, [router, onVerified, isVerified, getRememberedEmail, getVerificationReason, rememberEmail])
 
   const handleResendEmail = async () => {
     const email = normalizeEmail(userEmail || emailInput)
@@ -335,15 +347,23 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
             </div>
             
             <h1 className="text-2xl sm:text-3xl font-bold text-black">
-              {isVerified ? "Email Verified!" : "Verify Your Email"}
+              {isVerified
+                ? "Email Verified!"
+                : verificationReason === "expired"
+                  ? "Verification Link Expired"
+                  : "Verify Your Email"}
             </h1>
             
             <p className="text-base sm:text-lg text-black/70 leading-relaxed">
-              {isVerified 
-                ? "Your email has been verified successfully. Redirecting you to continue..." 
-                : emailInput
-                  ? `We've sent a verification email to ${emailInput}. Please check your inbox and click the verification link.`
-                  : "We've sent a verification email. Please check your inbox and click the verification link to continue."}
+              {isVerified
+                ? "Your email has been verified successfully. Redirecting you to continue..."
+                : verificationReason === "expired"
+                  ? "That email link is expired or no longer valid. Send yourself a fresh Lovesathi verification email below."
+                  : verificationReason === "unconfirmed"
+                    ? "Your account exists, but the email is not confirmed yet. Send yourself a fresh verification email below."
+                    : emailInput
+                      ? `We've sent a verification email to ${emailInput}. Please check your inbox and click the verification link.`
+                      : "We've sent a verification email. Please check your inbox and click the verification link to continue."}
             </p>
           </div>
 

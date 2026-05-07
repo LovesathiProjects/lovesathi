@@ -30,15 +30,30 @@ function getSafeNextPath(requestUrl: URL) {
   return `${nextUrl.pathname}${nextUrl.search}`
 }
 
+function getVerifyEmailUrl(redirectOrigin: string, reason: 'expired' | 'unconfirmed' = 'expired') {
+  const verifyEmailUrl = new URL('/auth/verify-email', redirectOrigin)
+  verifyEmailUrl.searchParams.set('reason', reason)
+  return verifyEmailUrl
+}
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const redirectOrigin = getRedirectOrigin(requestUrl.origin)
   const code = requestUrl.searchParams.get('code')
   const safeNextPath = getSafeNextPath(requestUrl)
+  const authError = requestUrl.searchParams.get('error') || requestUrl.searchParams.get('error_code')
+
+  if (authError) {
+    return NextResponse.redirect(getVerifyEmailUrl(redirectOrigin))
+  }
 
   if (code) {
     const supabase = createRouteHandlerClient({ cookies })
-    await supabase.auth.exchangeCodeForSession(code)
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (exchangeError) {
+      return NextResponse.redirect(getVerifyEmailUrl(redirectOrigin))
+    }
     
     // Get the current user
     const { data: { user } } = await supabase.auth.getUser()
