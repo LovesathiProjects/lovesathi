@@ -62,6 +62,12 @@ If a member tries to log in before confirming email, the app stores their email 
 
 The admin portal reads a guarded Supabase RPC named `get_lovesathi_auth_email_events` to summarize recent Auth audit events from `auth.audit_log_entries`.
 
+The top admin counters separate lifetime totals from the last 30 days:
+
+- Overall email and email in the last 30 days.
+- Overall OTP and OTP in the last 30 days.
+- Overall magic link and magic link in the last 30 days.
+
 Tracked actions:
 
 - `user_confirmation_requested`: signup confirmation and resend-verification emails.

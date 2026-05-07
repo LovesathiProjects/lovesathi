@@ -98,6 +98,16 @@ type AuthEmailCount = {
   label: string
   description: string
   total: number
+  last30Days: number
+  lastSeen: string | null
+}
+
+type AuthEmailSummaryItem = {
+  category: "email" | "otp" | "magic_link"
+  label: string
+  description: string
+  overall: number
+  last30Days: number
   lastSeen: string | null
 }
 
@@ -116,7 +126,9 @@ type AuthEmailTelemetry = {
   status: "ok" | "warning"
   detail?: string
   since: string | null
+  last30Since: string | null
   until: string | null
+  summary: AuthEmailSummaryItem[]
   counts: AuthEmailCount[]
   events: AuthEmailEvent[]
 }
@@ -196,8 +208,12 @@ export function AdminPortal() {
 
   const generatedAt = overview?.generatedAt ? formatDate(overview.generatedAt) : null
   const refreshing = loading && Boolean(sessionToken)
-  const authEmailTotal =
-    overview?.authEmailTelemetry.counts.reduce((total, item) => total + item.total, 0) || 0
+  const authEmailOverall =
+    overview?.authEmailTelemetry.summary.find((item) => item.category === "email")?.overall ||
+    overview?.authEmailTelemetry.counts.reduce((total, item) => total + item.total, 0) ||
+    0
+  const authEmailLast30 =
+    overview?.authEmailTelemetry.summary.find((item) => item.category === "email")?.last30Days || 0
 
   useEffect(() => {
     let mounted = true
@@ -484,14 +500,17 @@ export function AdminPortal() {
                     Auth email telemetry
                   </CardTitle>
                   <p className="mt-3 max-w-3xl text-sm leading-6 text-[#6c5a4a]">
-                    Tracks Supabase Auth audit events for verification emails, password recovery links, repeated signups,
-                    and invitations from the last 7 days.
+                    Tracks Supabase Auth audit events with separate lifetime and last-30-day counters for email, OTP,
+                    and magic-link activity.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={overview?.authEmailTelemetry.status || "pending"} />
                   <Badge variant="outline" className="rounded-full border-[#d9b978]/30 bg-[#fffaf2] px-4 py-2 text-[#8f001c]">
-                    {authEmailTotal.toLocaleString("en-IN")} events
+                    {authEmailOverall.toLocaleString("en-IN")} emails all time
+                  </Badge>
+                  <Badge variant="outline" className="rounded-full border-[#d9b978]/30 bg-[#fffaf2] px-4 py-2 text-[#8f001c]">
+                    {authEmailLast30.toLocaleString("en-IN")} emails in 30d
                   </Badge>
                 </div>
               </div>
@@ -503,21 +522,62 @@ export function AdminPortal() {
                 </div>
               )}
 
+              <div className="grid gap-3 lg:grid-cols-3">
+                {overview?.authEmailTelemetry.summary.length ? (
+                  overview.authEmailTelemetry.summary.map((item) => (
+                    <div key={item.category} className="rounded-[1.6rem] border border-[#482b1a]/10 bg-white/72 p-5 shadow-[0_18px_48px_rgba(24,17,13,0.05)]">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8f001c]">{item.label}</p>
+                      <div className="mt-4 grid grid-cols-2 gap-3">
+                        <div className="rounded-[1.2rem] border border-[#d9b978]/24 bg-[#fffaf2] p-4">
+                          <p className="text-[0.66rem] font-bold uppercase tracking-[0.16em] text-[#9d7a55]">All time</p>
+                          <p className="mt-2 font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d]">
+                            {item.overall.toLocaleString("en-IN")}
+                          </p>
+                        </div>
+                        <div className="rounded-[1.2rem] border border-[#8f001c]/14 bg-[#8f001c]/6 p-4">
+                          <p className="text-[0.66rem] font-bold uppercase tracking-[0.16em] text-[#8f001c]">Last 30 days</p>
+                          <p className="mt-2 font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d]">
+                            {item.last30Days.toLocaleString("en-IN")}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="mt-4 min-h-12 text-xs leading-5 text-[#6c5a4a]">{item.description}</p>
+                      <p className="mt-3 text-xs font-semibold text-[#9d7a55]">Last seen {formatDate(item.lastSeen)}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="lg:col-span-3">
+                    <EmptyState copy="No Supabase auth email counters are available yet." />
+                  </div>
+                )}
+              </div>
+
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
                 {overview?.authEmailTelemetry.counts.length ? (
                   overview.authEmailTelemetry.counts.map((item) => (
-                    <div key={item.action} className="rounded-[1.35rem] border border-[#482b1a]/10 bg-white/66 p-4">
+                    <div key={item.action} className="rounded-[1.35rem] border border-[#482b1a]/10 bg-white/58 p-4">
                       <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8f001c]">{item.label}</p>
-                      <p className="mt-3 font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d]">
-                        {item.total.toLocaleString("en-IN")}
-                      </p>
+                      <div className="mt-3 flex items-end justify-between gap-3">
+                        <div>
+                          <p className="text-[0.66rem] font-bold uppercase tracking-[0.14em] text-[#9d7a55]">All time</p>
+                          <p className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#18110d]">
+                            {item.total.toLocaleString("en-IN")}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[0.66rem] font-bold uppercase tracking-[0.14em] text-[#9d7a55]">30d</p>
+                          <p className="font-serif text-2xl font-bold tracking-[-0.05em] text-[#8f001c]">
+                            {item.last30Days.toLocaleString("en-IN")}
+                          </p>
+                        </div>
+                      </div>
                       <p className="mt-3 min-h-12 text-xs leading-5 text-[#6c5a4a]">{item.description}</p>
                       <p className="mt-3 text-xs font-semibold text-[#9d7a55]">Last seen {formatDate(item.lastSeen)}</p>
                     </div>
                   ))
                 ) : (
                   <div className="md:col-span-2 xl:col-span-5">
-                    <EmptyState copy="No Supabase auth email events found in the last 7 days." />
+                    <EmptyState copy="No detailed Supabase auth email actions found yet." />
                   </div>
                 )}
               </div>

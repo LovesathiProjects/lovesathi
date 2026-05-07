@@ -62,6 +62,16 @@ type AuthEmailCount = {
   label: string
   description: string
   total: number
+  last30Days: number
+  lastSeen: string | null
+}
+
+type AuthEmailSummaryItem = {
+  category: "email" | "otp" | "magic_link"
+  label: string
+  description: string
+  overall: number
+  last30Days: number
   lastSeen: string | null
 }
 
@@ -80,7 +90,9 @@ type AuthEmailTelemetry = {
   status: "ok" | "warning"
   detail?: string
   since: string | null
+  last30Since: string | null
   until: string | null
+  summary: AuthEmailSummaryItem[]
   counts: AuthEmailCount[]
   events: AuthEmailEvent[]
 }
@@ -256,13 +268,31 @@ function statusLabel(value: string) {
 }
 
 function mapAuthEmailTelemetry(payload: any): AuthEmailTelemetry {
+  const summary = Array.isArray(payload?.summary) ? payload.summary : []
   const counts = Array.isArray(payload?.counts) ? payload.counts : []
   const events = Array.isArray(payload?.events) ? payload.events : []
 
   return {
     status: "ok",
     since: typeof payload?.since === "string" ? payload.since : null,
+    last30Since: typeof payload?.last30Since === "string" ? payload.last30Since : null,
     until: typeof payload?.until === "string" ? payload.until : null,
+    summary: summary.map((item: any) => {
+      const category =
+        item?.category === "otp" || item?.category === "magic_link" || item?.category === "email"
+          ? item.category
+          : "email"
+
+      return {
+        category,
+        label: typeof item?.label === "string" ? item.label : statusLabel(category),
+        description:
+          typeof item?.description === "string" ? item.description : "Supabase Auth email telemetry counter.",
+        overall: typeof item?.overall === "number" ? item.overall : Number(item?.overall) || 0,
+        last30Days: typeof item?.last30Days === "number" ? item.last30Days : Number(item?.last30Days) || 0,
+        lastSeen: typeof item?.lastSeen === "string" ? item.lastSeen : null,
+      }
+    }),
     counts: counts.map((count: any) => {
       const action = typeof count?.action === "string" ? count.action : "unknown"
       const meta = getAuthEmailActionMeta(action)
@@ -271,6 +301,7 @@ function mapAuthEmailTelemetry(payload: any): AuthEmailTelemetry {
         label: meta.label,
         description: meta.description,
         total: typeof count?.total === "number" ? count.total : Number(count?.total) || 0,
+        last30Days: typeof count?.last30Days === "number" ? count.last30Days : Number(count?.last30Days) || 0,
         lastSeen: typeof count?.lastSeen === "string" ? count.lastSeen : null,
       }
     }),
@@ -304,7 +335,9 @@ async function loadAuthEmailTelemetry(supabase: any): Promise<AuthEmailTelemetry
         status: "warning",
         detail: error.message,
         since,
+        last30Since: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
         until: new Date().toISOString(),
+        summary: [],
         counts: [],
         events: [],
       }
@@ -316,7 +349,9 @@ async function loadAuthEmailTelemetry(supabase: any): Promise<AuthEmailTelemetry
       status: "warning",
       detail: error?.message || "Unable to load Supabase auth email logs.",
       since,
+      last30Since: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
       until: new Date().toISOString(),
+      summary: [],
       counts: [],
       events: [],
     }
