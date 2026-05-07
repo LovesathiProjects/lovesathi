@@ -322,7 +322,7 @@ export function MatrimonySwipeCard({
       <motion.div
         className={cn(
           "w-full max-w-[min(92vw,470px)] cursor-grab active:cursor-grabbing select-none touch-none",
-          "relative",
+          "relative rounded-[2.65rem] will-change-transform",
           // 3D perspective container
           "perspective-[1200px]",
           // Base height for card expansion calculation
@@ -336,7 +336,7 @@ export function MatrimonySwipeCard({
           stackIndex === 2 && "shadow-[0_12px_38px_-14px_rgba(24,17,13,0.34),0_6px_20px_-6px_rgba(0,0,0,0.2)]",
           stackIndex > 2 && "shadow-[0_8px_25px_-8px_rgba(0,0,0,0.25),0_4px_15px_-4px_rgba(0,0,0,0.15)]",
           // Smooth transition for shadow changes
-          "transition-shadow duration-300 ease-in-out",
+          "transition-shadow duration-500 ease-out",
         )}
         style={{
           x,
@@ -363,18 +363,24 @@ export function MatrimonySwipeCard({
       >
         {/* 3D Flip Container */}
         <motion.div
-          className="relative w-full h-full"
+          className="relative h-full w-full rounded-[2.65rem]"
           style={{
             rotateY: rotateY,
             scale: stackIndex === 0 ? scaleValue : depthStyles.scale,
             transformStyle: "preserve-3d",
           }}
+          animate={stackIndex === 0 && !isFlipped ? { y: [0, -4, 0] } : { y: 0 }}
+          transition={{
+            duration: 6,
+            repeat: stackIndex === 0 && !isFlipped ? Infinity : 0,
+            ease: "easeInOut",
+          }}
         >
           {/* Front Side */}
           <motion.div
             className={cn(
-              "absolute inset-0 w-full h-full overflow-hidden rounded-[2.2rem] border border-[#f2dfbd]/45 bg-[#18110d]",
-              "ring-1 ring-white/20",
+              "absolute inset-0 h-full w-full overflow-hidden rounded-[2.65rem] border border-[#f2dfbd]/52 bg-[#18110d]",
+              "ring-1 ring-white/30",
               "backface-hidden"
             )}
             style={{
@@ -406,18 +412,28 @@ export function MatrimonySwipeCard({
           </div>
           <div className="absolute left-1/2 top-[58%] flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/24 bg-[#18110d]/24 px-4 py-2 text-xs font-bold text-[#fffaf2] shadow-[0_18px_48px_rgba(24,17,13,0.18)] backdrop-blur-xl">
             <ImageIcon className="h-4 w-4" />
-            Portrait pending
+            Private portrait
           </div>
           <Sparkles className="absolute right-8 top-24 h-5 w-5 text-white/60" />
         </div>
       )}
 
       {/* Frosted glass overlay with gradient */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,250,242,0.22),transparent_17rem),linear-gradient(to_bottom,rgba(24,17,13,0.08),rgba(24,17,13,0.08)_35%,rgba(24,17,13,0.86))]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,250,242,0.26),transparent_17rem),linear-gradient(to_bottom,rgba(24,17,13,0.06),rgba(24,17,13,0.10)_34%,rgba(24,17,13,0.88))]" />
       
       {/* Subtle frosted glass effect on top portion */}
       {stackIndex === 0 && (
-        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] via-transparent to-transparent backdrop-blur-[0.5px]" />
+        <>
+          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] via-transparent to-transparent backdrop-blur-[0.35px]" />
+          <div className="pointer-events-none absolute inset-[1px] z-10 rounded-[2.58rem] border border-white/18 shadow-[inset_0_1px_0_rgba(255,250,242,0.32),inset_0_-18px_55px_rgba(143,0,28,0.10)]" />
+          <div className="pointer-events-none absolute inset-x-10 top-0 z-10 h-px bg-gradient-to-r from-transparent via-[#fffaf2]/80 to-transparent" />
+          <motion.div
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-1/2 top-0 z-10 h-full w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/18 to-transparent blur-sm"
+            animate={{ x: ["0%", "430%"] }}
+            transition={{ duration: 7.5, repeat: Infinity, repeatDelay: 2.5, ease: "easeInOut" }}
+          />
+        </>
       )}
 
       {/* Top-right controls */}
@@ -483,12 +499,22 @@ export function MatrimonySwipeCard({
       {stackIndex === 0 && !isFlipped && (
         <div className="absolute bottom-0 left-0 right-0 z-20">
           {/* Dark gradient overlay - strengthened for better text readability */}
-          <div className="h-56 rounded-b-[2.2rem] bg-[linear-gradient(to_top,rgba(24,17,13,0.93)_0%,rgba(24,17,13,0.68)_42%,rgba(24,17,13,0.22)_76%,transparent_100%)]" />
+          <div className="h-60 rounded-b-[2.65rem] bg-[linear-gradient(to_top,rgba(24,17,13,0.95)_0%,rgba(24,17,13,0.72)_42%,rgba(24,17,13,0.22)_78%,transparent_100%)]" />
           
           {/* Profile information - positioned above the buttons */}
-          <div className="absolute bottom-20 left-5 right-5 z-10 matrimony-card-overlay-text">
+          <div className="absolute bottom-20 left-5 right-5 z-10 matrimony-card-overlay-text sm:left-6 sm:right-6">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="rounded-full border border-[#d9b978]/28 bg-[#fffaf2]/12 px-3 py-1 text-[0.58rem] font-bold uppercase tracking-[0.24em] text-[#f2dfbd] backdrop-blur-xl">
+                private dossier
+              </span>
+              {premium && (
+                <span className="rounded-full border border-[#d9b978]/36 bg-[#d9b978]/20 px-3 py-1 text-[0.58rem] font-bold uppercase tracking-[0.22em] text-[#fffaf2] backdrop-blur-xl">
+                  premium
+                </span>
+              )}
+            </div>
             <h2 
-              className="matrimony-card-name mb-1 truncate font-serif text-4xl font-bold tracking-[-0.06em] sm:text-5xl"
+              className="matrimony-card-name mb-1 truncate font-serif text-4xl font-bold leading-[0.92] tracking-[-0.07em] sm:text-5xl"
               style={{ 
                 color: '#FFFFFF',
                 textShadow: '0 2px 10px rgba(0,0,0,0.5)'
@@ -558,8 +584,11 @@ export function MatrimonySwipeCard({
       {/* Glass circle with X mark in bottom left corner */}
       {stackIndex === 0 && (
         <div className="absolute bottom-4 left-4 z-30">
-          <div 
-            className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full border border-[#f2dfbd]/35 bg-[#18110d]/46 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur-xl transition-all duration-200 hover:bg-[#18110d]/62"
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.92 }}
+            className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full border border-[#f2dfbd]/40 bg-[#18110d]/48 shadow-[0_18px_42px_rgba(0,0,0,0.24),inset_0_1px_0_rgba(255,250,242,0.18)] backdrop-blur-xl transition-colors duration-200 hover:bg-[#18110d]/64"
             onClick={(e) => {
               e.stopPropagation()
               // Swipe out (no X animation)
@@ -575,15 +604,18 @@ export function MatrimonySwipeCard({
             }}
           >
             <X className="h-7 w-7 text-[#fffaf2] drop-shadow-sm" />
-          </div>
+          </motion.button>
         </div>
       )}
 
       {/* Glass circle with tick mark in bottom right corner */}
       {stackIndex === 0 && (
         <div className="absolute bottom-4 right-4 z-30">
-          <div 
-            className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full border border-[#d9b978]/55 bg-[linear-gradient(135deg,#8f001c,#b9904d)] shadow-[0_20px_48px_rgba(143,0,28,0.34)] backdrop-blur-xl transition-all duration-200 hover:brightness-110"
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.06, y: -3 }}
+            whileTap={{ scale: 0.92 }}
+            className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full border border-[#d9b978]/60 bg-[linear-gradient(135deg,#8f001c_0%,#b0182f_42%,#c89645_100%)] shadow-[0_24px_56px_rgba(143,0,28,0.36),inset_0_1px_0_rgba(255,250,242,0.24)] backdrop-blur-xl transition-all duration-200 hover:brightness-110"
             onClick={(e) => {
               e.stopPropagation()
               // Trigger heart animation and swipe out
@@ -595,7 +627,7 @@ export function MatrimonySwipeCard({
             }}
           >
             <Check className="h-7 w-7 text-[#fffaf2] drop-shadow-sm" />
-          </div>
+          </motion.button>
         </div>
       )}
 
@@ -611,7 +643,7 @@ export function MatrimonySwipeCard({
             )}
 
             {/* Dim overlay for behind cards to hide details */}
-            {stackIndex > 0 && <div className="absolute inset-0 bg-white/30" />}
+            {stackIndex > 0 && <div className="absolute inset-0 rounded-[2.65rem] bg-white/30" />}
           </motion.div>
 
           {/* Back Side - Full Profile */}
@@ -619,7 +651,7 @@ export function MatrimonySwipeCard({
             <motion.div
               className={cn(
                 "absolute inset-0 w-full h-full overflow-y-auto overflow-x-hidden",
-                "rounded-[2.2rem] border border-[#d9b978]/30 bg-[#fffdf8]",
+                "rounded-[2.65rem] border border-[#d9b978]/30 bg-[#fffdf8]",
                 "backface-hidden",
                 "hide-scrollbar"
               )}
@@ -639,7 +671,7 @@ export function MatrimonySwipeCard({
               ) : (
                 <>
                   {/* White Header with Name and Age */}
-                  <div className="sticky top-0 z-40 rounded-t-[2.2rem] border-b border-[#d9b978]/22 bg-[#fffdf8]/88 shadow-[0_18px_45px_rgba(24,17,13,0.08)] backdrop-blur-xl">
+                  <div className="sticky top-0 z-40 rounded-t-[2.65rem] border-b border-[#d9b978]/22 bg-[#fffdf8]/88 shadow-[0_18px_45px_rgba(24,17,13,0.08)] backdrop-blur-xl">
                     <div className="flex items-start justify-between gap-3 px-4 py-4 sm:px-6">
                       <div className="min-w-0">
                         <p className="luxe-kicker text-[0.58rem] text-[#8f001c]">full profile dossier</p>
