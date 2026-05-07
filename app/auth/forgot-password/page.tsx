@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
 
       if (error) throw error
 
-      toast.success("If an account exists, Supabase has sent a password reset link.")
+      toast.success("If an account exists, Lovesathi has sent a password reset link.")
       setStep("sent")
     } catch (error: any) {
       toast.error(error?.message || "Could not send password reset email")
@@ -52,8 +52,8 @@ export default function ForgotPasswordPage() {
   const title = step === "sent" ? "Check your email" : "Forgot password"
   const subtitle =
     step === "sent"
-        ? "Open the Supabase recovery email and follow the secure link."
-        : "Enter your email and Supabase will send a secure recovery link if the account exists."
+        ? "Open the Lovesathi recovery email and follow the secure link."
+        : "Enter your email and Lovesathi will send a secure recovery link if the account exists."
 
   return (
     <div className="luxe-light-page flex min-h-screen flex-col overflow-x-hidden px-4 py-5 sm:px-6">
@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
       <div className="flex flex-1 items-center justify-center py-10">
         <div className="luxe-card mx-auto w-full max-w-lg space-y-6 rounded-[2rem] p-6 sm:p-8">
           <div className="space-y-2 text-center">
-            <p className="luxe-kicker text-[#8f001c]">Supabase recovery</p>
+            <p className="luxe-kicker text-[#8f001c]">Lovesathi recovery</p>
             <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">{title}</h1>
             <p className="text-base text-[#6c5a4a]">{subtitle}</p>
           </div>
@@ -102,7 +102,7 @@ export default function ForgotPasswordPage() {
                 <Mail className="h-8 w-8" />
               </div>
               <div className="rounded-[1.5rem] border border-[#d9b978]/24 bg-white/62 p-4 text-sm font-semibold leading-6 text-[#6c5a4a]">
-                Check your inbox and spam folder. The recovery link opens a secure Supabase session where you can set a new password.
+                Check your inbox and spam folder. The recovery link opens a secure Lovesathi session where you can set a new password.
               </div>
               <Button
                 variant="outline"

@@ -10,6 +10,11 @@ import GoogleLoginButton from "@/components/auth/GoogleLoginButton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  EMAIL_VERIFICATION_STORAGE_KEY,
+  getEmailVerificationRedirectUrl,
+  normalizeEmail,
+} from "@/lib/authRedirects"
 import { supabase } from "@/lib/supabaseClient"
 
 interface AuthScreenProps {
@@ -23,14 +28,6 @@ const trustSignals = [
   { icon: Crown, label: "Premium discovery" },
   { icon: Users, label: "Family-ready context" },
 ]
-
-function getClientSiteUrl() {
-  const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL
-  if (configuredUrl?.startsWith("http")) {
-    return configuredUrl.replace(/\/$/, "")
-  }
-  return window.location.origin
-}
 
 function LegalLinks({ action }: { action: "continuing" | "signing up" }) {
   return (
@@ -134,18 +131,20 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
     setIsLoading(true)
     setError(null)
     try {
+      const email = normalizeEmail(formData.email)
       const { error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
+        email,
         password: formData.password,
         options: {
           data: {
             full_name: formData.name,
             phone: formData.phone,
           },
-          emailRedirectTo: `${getClientSiteUrl()}/onboarding/verification`,
+          emailRedirectTo: getEmailVerificationRedirectUrl(),
         },
       })
       if (signUpError) throw signUpError
+      window.sessionStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, email)
       router.push("/auth/verify-email")
     } catch (err: any) {
       setError(err.message || "Something went wrong")

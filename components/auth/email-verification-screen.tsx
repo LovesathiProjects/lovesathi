@@ -1,11 +1,18 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Mail, CheckCircle, Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
 import { useToast } from "@/components/ui/use-toast"
+import {
+  EMAIL_VERIFICATION_STORAGE_KEY,
+  getEmailVerificationRedirectUrl,
+  normalizeEmail,
+} from "@/lib/authRedirects"
 
 interface EmailVerificationScreenProps {
   onVerified?: () => void
@@ -18,13 +25,35 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
   const [isChecking, setIsChecking] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [emailInput, setEmailInput] = useState("")
   const [isVerified, setIsVerified] = useState(false)
+
+  const rememberEmail = useCallback((email: string | null | undefined) => {
+    if (!email) return
+    const normalizedEmail = normalizeEmail(email)
+    if (!normalizedEmail) return
+    setUserEmail(normalizedEmail)
+    setEmailInput(normalizedEmail)
+    window.sessionStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, normalizedEmail)
+  }, [])
+
+  const getRememberedEmail = useCallback(() => {
+    const params = new URLSearchParams(window.location.search)
+    return normalizeEmail(
+      params.get("email") || window.sessionStorage.getItem(EMAIL_VERIFICATION_STORAGE_KEY) || "",
+    )
+  }, [])
 
   // Check email verification status on mount and periodically
   useEffect(() => {
     let mounted = true
     let subscription: { unsubscribe: () => void } | null = null
     let interval: NodeJS.Timeout | null = null
+    const rememberedEmail = getRememberedEmail()
+
+    if (rememberedEmail) {
+      rememberEmail(rememberedEmail)
+    }
 
     const checkEmailVerification = async (retryCount = 0) => {
       try {
@@ -46,16 +75,20 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
           const { data: { user } } = await supabase.auth.getUser()
           if (!user) {
             // No user found - stay on page, don't redirect
-            // This allows users who just signed up to see the verification page
+            // This allows users who just signed up to resend without an active session.
             if (mounted) {
-              setUserEmail(null)
+              if (rememberedEmail) {
+                rememberEmail(rememberedEmail)
+              } else {
+                setUserEmail(null)
+              }
               setIsLoading(false)
             }
             return
           }
           // User found via getUser, use it
           if (mounted) {
-            setUserEmail(user.email || null)
+            rememberEmail(user.email || rememberedEmail)
             setIsLoading(false)
             if (user.email_confirmed_at) {
               setIsVerified(true)
@@ -78,14 +111,18 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
         if (!user) {
           // No user in session - stay on page
           if (mounted) {
-            setUserEmail(null)
+            if (rememberedEmail) {
+              rememberEmail(rememberedEmail)
+            } else {
+              setUserEmail(null)
+            }
             setIsLoading(false)
           }
           return
         }
 
         if (mounted) {
-          setUserEmail(user.email || null)
+          rememberEmail(user.email || rememberedEmail)
           setIsLoading(false)
           
           // Check if email is already verified
@@ -139,6 +176,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
         try {
           const { data: { user } } = await supabase.auth.getUser()
           if (user?.email_confirmed_at) {
+            rememberEmail(user.email)
             setIsVerified(true)
             setTimeout(() => {
               if (mounted) {
@@ -151,7 +189,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
             }, 1500)
           } else if (user?.email) {
             // Update email if we got it
-            setUserEmail(user.email)
+            rememberEmail(user.email)
           }
         } catch (error) {
           console.error("Error polling verification:", error)
@@ -168,13 +206,15 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
         clearInterval(interval)
       }
     }
-  }, [router, onVerified, isVerified])
+  }, [router, onVerified, isVerified, getRememberedEmail, rememberEmail])
 
   const handleResendEmail = async () => {
-    if (!userEmail) {
+    const email = normalizeEmail(userEmail || emailInput)
+
+    if (!email) {
       toast({
-        title: "Error",
-        description: "No email address found. Please try signing in again.",
+        title: "Email required",
+        description: "Enter the email you used to create your Lovesathi account.",
         variant: "destructive",
       })
       return
@@ -184,10 +224,14 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
     try {
       const { error } = await supabase.auth.resend({
         type: 'signup',
-        email: userEmail,
+        email,
+        options: {
+          emailRedirectTo: getEmailVerificationRedirectUrl(),
+        },
       })
 
       if (error) throw error
+      rememberEmail(email)
 
       toast({
         title: "Email sent!",
@@ -297,14 +341,31 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
             <p className="text-base sm:text-lg text-black/70 leading-relaxed">
               {isVerified 
                 ? "Your email has been verified successfully. Redirecting you to continue..." 
-                : userEmail 
-                  ? `We've sent a verification email to ${userEmail}. Please check your inbox and click the verification link.`
+                : emailInput
+                  ? `We've sent a verification email to ${emailInput}. Please check your inbox and click the verification link.`
                   : "We've sent a verification email. Please check your inbox and click the verification link to continue."}
             </p>
           </div>
 
           {!isVerified && (
             <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="verification-email">Email address</Label>
+                <Input
+                  id="verification-email"
+                  type="email"
+                  value={emailInput}
+                  onChange={(e) => {
+                    const nextEmail = e.target.value
+                    setEmailInput(nextEmail)
+                    setUserEmail(normalizeEmail(nextEmail) || null)
+                  }}
+                  placeholder="you@email.com"
+                  autoComplete="email"
+                  className="h-12 rounded-2xl"
+                />
+              </div>
+
               <Button
                 onClick={handleContinue}
                 className="w-full font-semibold"
@@ -326,7 +387,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
                 variant="outline"
                 className="w-full font-semibold"
                 size="lg"
-                disabled={isResending || !userEmail}
+                disabled={isResending || !normalizeEmail(userEmail || emailInput)}
               >
                 {isResending ? (
                   <>
