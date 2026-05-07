@@ -8,6 +8,7 @@ import {
   AlertTriangle,
   ArrowUpRight,
   BadgeCheck,
+  Ban,
   CheckCircle2,
   Clock3,
   Crown,
@@ -21,8 +22,10 @@ import {
   Search,
   ShieldCheck,
   Sparkles,
+  UserCheck,
   UserRoundCheck,
   Users,
+  UserX,
   XCircle,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -54,6 +57,7 @@ type QueueResult<T> = {
 type AdminProfileItem = {
   id: string
   userId: string
+  email: string | null
   name: string
   age: number | null
   gender: string | null
@@ -61,9 +65,30 @@ type AdminProfileItem = {
   city: string | null
   education: string | null
   jobTitle: string | null
+  bio: string | null
   photoCount: number
   completionSteps: number
   profileCompleted: boolean
+  reviewStatus: string
+  reviewNotes: string | null
+  reviewedAt: string | null
+  isSeededProfile: boolean
+  flags: string[]
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+type AdminUserItem = {
+  id: string
+  email: string | null
+  status: string
+  provider: string | null
+  emailConfirmedAt: string | null
+  lastSignInAt: string | null
+  suspendedUntil: string | null
+  profileName: string | null
+  profileCompleted: boolean
+  profileReviewStatus: string | null
   createdAt: string | null
   updatedAt: string | null
 }
@@ -154,6 +179,7 @@ type AdminOverview = {
   generatedAt: string
   metrics: AdminMetric[]
   queues: {
+    users: QueueResult<AdminUserItem>
     profiles: QueueResult<AdminProfileItem>
     verifications: QueueResult<AdminVerificationItem>
     reports: QueueResult<AdminReportItem>
@@ -187,8 +213,8 @@ function statusLabel(value: string) {
 
 function StatusBadge({ status }: { status: string }) {
   const safeStatus = status.toLowerCase()
-  const isGood = ["ok", "approved", "resolved"].includes(safeStatus)
-  const isWarning = ["pending", "in_review", "reviewed", "warning"].includes(safeStatus)
+  const isGood = ["ok", "approved", "resolved", "active"].includes(safeStatus)
+  const isWarning = ["pending", "in_review", "reviewed", "warning", "unconfirmed"].includes(safeStatus)
 
   return (
     <Badge
@@ -235,13 +261,32 @@ export function AdminPortal() {
     0
   const authEmailLast30 =
     overview?.authEmailTelemetry.summary.find((item) => item.category === "email")?.last30Days || 0
+  const userItems = overview?.queues.users.items || []
   const profileItems = overview?.queues.profiles.items || []
+  const profileReviewActionsReady = overview?.queues.profiles.status === "ok"
   const verificationItems = overview?.queues.verifications.items || []
   const reportItems = overview?.queues.reports.items || []
   const auditItems = overview?.queues.audit.items || []
+  const filteredUsers = userItems.filter((item) =>
+    matchesSearch(
+      [item.email, item.id, item.status, item.provider, item.profileName, item.profileReviewStatus],
+      searchTerm,
+    ),
+  )
   const filteredProfiles = profileItems.filter((profile) =>
     matchesSearch(
-      [profile.name, profile.userId, profile.gender, profile.city, profile.education, profile.jobTitle, profile.createdBy],
+      [
+        profile.name,
+        profile.email,
+        profile.userId,
+        profile.gender,
+        profile.city,
+        profile.education,
+        profile.jobTitle,
+        profile.createdBy,
+        profile.reviewStatus,
+        profile.flags.join(" "),
+      ],
       searchTerm,
     ),
   )
@@ -355,7 +400,7 @@ export function AdminPortal() {
     setOverview(null)
   }
 
-  async function handleAction(resource: "verification" | "report", id: string, status: string) {
+  async function handleAction(resource: "verification" | "report" | "profile" | "user", id: string, status: string) {
     if (!sessionToken) return
     const label = `${resource} as ${statusLabel(status)}`
     if (!window.confirm(`Mark this ${label}?`)) return
@@ -367,9 +412,19 @@ export function AdminPortal() {
           ? "Approved by Lovesathi admin review."
           : resource === "verification"
             ? "Moved to in-review by Lovesathi admin."
-            : `Report marked ${statusLabel(status)} by Lovesathi admin.`
+            : resource === "profile" && status === "approved"
+              ? "Profile approved by Lovesathi admin review."
+              : resource === "profile" && status === "rejected"
+                ? "Profile rejected by Lovesathi admin review."
+                : resource === "profile"
+                  ? `Profile marked ${statusLabel(status)} by Lovesathi admin.`
+                  : resource === "user" && status === "suspended"
+                    ? "User access suspended by Lovesathi admin review."
+                    : resource === "user"
+                      ? "User access restored by Lovesathi admin review."
+                      : `Report marked ${statusLabel(status)} by Lovesathi admin.`
     const shouldAskForNote =
-      resource === "report" || status === "rejected" || status === "in_review"
+      resource === "report" || resource === "user" || status === "rejected" || status === "in_review"
     const noteInput = shouldAskForNote
       ? window.prompt("Add an admin note for the audit trail:", defaultNote)
       : defaultNote
@@ -502,7 +557,7 @@ export function AdminPortal() {
             <Input
               value={adminSearch}
               onChange={(event) => setAdminSearch(event.target.value)}
-              placeholder="Search profiles, reports, audit..."
+              placeholder="Search users, profiles, reports..."
               className="h-10 rounded-full border-[#482b1a]/15 bg-white pl-10 text-sm"
             />
           </div>
@@ -553,6 +608,90 @@ export function AdminPortal() {
               </Card>
             )
           })}
+        </section>
+
+        <section>
+          <Card className="luxe-card overflow-hidden rounded-[2rem] border-[#d8c79f]/24">
+            <CardHeader className="border-b border-[#482b1a]/10 bg-white/55">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="luxe-kicker mb-2 text-[#8f001c]">member operations</p>
+                  <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#18110d] sm:text-4xl">
+                    User management
+                  </CardTitle>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-[#685f58]">
+                    Inspect recent Supabase Auth users, email confirmation state, profile completion, review status,
+                    and suspend or restore access with an audit note.
+                  </p>
+                </div>
+                <StatusBadge status={overview?.queues.users.status || "pending"} />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 p-5 sm:p-6">
+              {overview?.queues.users.detail && (
+                <p className="rounded-2xl border border-[#b79b62]/20 bg-[#b79b62]/10 p-3 text-sm font-semibold text-[#8a641f]">
+                  {overview.queues.users.detail}
+                </p>
+              )}
+              {filteredUsers.length ? (
+                <div className="grid gap-3 xl:grid-cols-2">
+                  {filteredUsers.map((item) => (
+                    <div key={item.id} className="rounded-[1.35rem] border border-[#482b1a]/10 bg-white/64 p-4 shadow-[0_16px_42px_rgba(24,17,13,0.04)]">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-bold text-[#18110d]">{item.email || "Email unavailable"}</p>
+                          <p className="mt-1 truncate text-sm text-[#685f58]">
+                            {item.profileName || "No matrimony profile yet"}
+                          </p>
+                        </div>
+                        <StatusBadge status={item.status} />
+                      </div>
+                      <div className="mt-4 grid gap-2 text-xs font-semibold text-[#685f58] sm:grid-cols-2">
+                        <span>Provider: {item.provider || "email"}</span>
+                        <span>Profile: {item.profileCompleted ? "Complete" : "Draft or missing"}</span>
+                        <span>Email: {item.emailConfirmedAt ? "Confirmed" : "Not confirmed"}</span>
+                        <span>Last sign-in: {formatDate(item.lastSignInAt)}</span>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {item.profileReviewStatus && <StatusBadge status={item.profileReviewStatus} />}
+                        {item.suspendedUntil && (
+                          <Badge variant="outline" className="border-[#8f001c]/20 bg-[#8f001c]/10 text-[#8f001c]">
+                            Suspended until {formatDate(item.suspendedUntil)}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {item.status === "suspended" ? (
+                          <Button
+                            size="sm"
+                            className="rounded-full bg-[#1b6b43] text-white hover:bg-[#155333]"
+                            disabled={Boolean(actionKey)}
+                            onClick={() => handleAction("user", item.id, "active")}
+                          >
+                            <UserCheck className="mr-2 h-4 w-4" />
+                            Restore access
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="rounded-full border-[#8f001c]/20 bg-[#8f001c]/10 text-[#8f001c]"
+                            disabled={Boolean(actionKey)}
+                            onClick={() => handleAction("user", item.id, "suspended")}
+                          >
+                            <Ban className="mr-2 h-4 w-4" />
+                            Suspend
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState copy={searchTerm ? "No users match this admin search." : "No auth users were returned yet."} />
+              )}
+            </CardContent>
+          </Card>
         </section>
 
         <section>
@@ -698,7 +837,7 @@ export function AdminPortal() {
                 <div>
                   <p className="luxe-kicker mb-2 text-[#8f001c]">member quality</p>
                   <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#18110d]">
-                    Latest profiles
+                    Profile review
                   </CardTitle>
                 </div>
                 <StatusBadge status={overview?.queues.profiles.status || "pending"} />
@@ -720,8 +859,12 @@ export function AdminPortal() {
                           {[profile.age ? `${profile.age} yrs` : null, profile.gender, profile.city].filter(Boolean).join(" - ") ||
                             "Profile details pending"}
                         </p>
+                        {profile.email && <p className="mt-1 text-xs font-semibold text-[#9d7a55]">{profile.email}</p>}
                       </div>
-                      <StatusBadge status={profile.profileCompleted ? "approved" : "pending"} />
+                      <div className="flex flex-wrap gap-2">
+                        <StatusBadge status={profile.reviewStatus} />
+                        <StatusBadge status={profile.profileCompleted ? "active" : "pending"} />
+                      </div>
                     </div>
                     <div className="mt-4 grid gap-2 text-xs font-semibold text-[#685f58] sm:grid-cols-3">
                       <span>{profile.completionSteps}/7 steps complete</span>
@@ -731,7 +874,56 @@ export function AdminPortal() {
                     <p className="mt-3 text-sm text-[#685f58]">
                       {[profile.education, profile.jobTitle].filter(Boolean).join(" - ") || "Career and education pending"}
                     </p>
-                    <p className="mt-2 text-xs text-[#9d7a55]">Updated {formatDate(profile.updatedAt)}</p>
+                    {profile.bio && <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#685f58]">{profile.bio}</p>}
+                    {profile.flags.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {profile.flags.map((flag) => (
+                          <Badge key={flag} variant="outline" className="border-[#b79b62]/24 bg-[#b79b62]/10 text-[#8a641f]">
+                            {flag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    {profile.reviewNotes && (
+                      <p className="mt-3 rounded-2xl border border-[#482b1a]/10 bg-white/60 p-3 text-xs leading-5 text-[#685f58]">
+                        Admin note: {profile.reviewNotes}
+                      </p>
+                    )}
+                    <p className="mt-2 text-xs text-[#9d7a55]">
+                      Updated {formatDate(profile.updatedAt)}
+                      {profile.reviewedAt ? ` | Reviewed ${formatDate(profile.reviewedAt)}` : ""}
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        className="rounded-full bg-[#1b6b43] text-white hover:bg-[#155333]"
+                        disabled={Boolean(actionKey) || !profileReviewActionsReady}
+                        onClick={() => handleAction("profile", profile.id, "approved")}
+                      >
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full border-[#482b1a]/15 bg-white"
+                        disabled={Boolean(actionKey) || !profileReviewActionsReady}
+                        onClick={() => handleAction("profile", profile.id, "in_review")}
+                      >
+                        <UserRoundCheck className="mr-2 h-4 w-4" />
+                        In review
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full border-[#8f001c]/20 bg-[#8f001c]/10 text-[#8f001c]"
+                        disabled={Boolean(actionKey) || !profileReviewActionsReady}
+                        onClick={() => handleAction("profile", profile.id, "rejected")}
+                      >
+                        <UserX className="mr-2 h-4 w-4" />
+                        Reject
+                      </Button>
+                    </div>
                   </div>
                 ))
               ) : (
@@ -957,13 +1149,13 @@ export function AdminPortal() {
                 <div className="flex gap-3 rounded-2xl border border-white/10 bg-white/8 p-4">
                   <Activity className="mt-1 h-5 w-5 shrink-0 text-[#d8c79f]" />
                   <p>
-                    This portal can update verification and report statuses only after Supabase login and ADMIN_EMAILS allowlist checks.
+                    This portal can update user access, profile review, verification, and report statuses only after Supabase login and ADMIN_EMAILS allowlist checks.
                   </p>
                 </div>
                 <div className="flex gap-3 rounded-2xl border border-white/10 bg-white/8 p-4">
                   <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-[#d8c79f]" />
                   <p>
-                    Account deletion, bulk edits, refunds, and subscription changes should stay locked until we add audit logs, roles, and confirmation workflows.
+                    Account deletion, bulk edits, refunds, and subscription changes stay locked until those workflows get separate role gates and stronger confirmations.
                   </p>
                 </div>
               </CardContent>

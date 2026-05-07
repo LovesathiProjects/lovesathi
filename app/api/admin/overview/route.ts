@@ -17,6 +17,7 @@ type QueueResult<T> = {
 type AdminProfileItem = {
   id: string
   userId: string
+  email: string | null
   name: string
   age: number | null
   gender: string | null
@@ -24,9 +25,30 @@ type AdminProfileItem = {
   city: string | null
   education: string | null
   jobTitle: string | null
+  bio: string | null
   photoCount: number
   completionSteps: number
   profileCompleted: boolean
+  reviewStatus: string
+  reviewNotes: string | null
+  reviewedAt: string | null
+  isSeededProfile: boolean
+  flags: string[]
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+type AdminUserItem = {
+  id: string
+  email: string | null
+  status: string
+  provider: string | null
+  emailConfirmedAt: string | null
+  lastSignInAt: string | null
+  suspendedUntil: string | null
+  profileName: string | null
+  profileCompleted: boolean
+  profileReviewStatus: string | null
   createdAt: string | null
   updatedAt: string | null
 }
@@ -167,7 +189,23 @@ function countCompletedSteps(row: any) {
   ].filter(Boolean).length
 }
 
-function mapProfile(row: any): AdminProfileItem {
+function getProfileFlags(row: any) {
+  const flags: string[] = []
+  const photos = Array.isArray(row.photos) ? row.photos : []
+
+  if (!row.profile_completed) flags.push("Profile incomplete")
+  if (photos.length < 2) flags.push("Needs photos")
+  if (!row.bio || String(row.bio).trim().length < 40) flags.push("Thin bio")
+  if (!row.career?.highest_education) flags.push("Education missing")
+  if (!row.career?.job_title) flags.push("Career missing")
+  if (!row.cultural?.religion || !row.cultural?.community) flags.push("Cultural details missing")
+  if (row.is_seeded_profile) flags.push("Seeded profile")
+  if (row.admin_review_status === "rejected") flags.push("Hidden from discovery")
+
+  return flags
+}
+
+function mapProfile(row: any, userEmailMap = new Map<string, string | null>()): AdminProfileItem {
   const photos = Array.isArray(row.photos) ? row.photos : []
   const city =
     getJsonText(row.career?.work_location, ["city", "state", "country"]) ||
@@ -177,6 +215,7 @@ function mapProfile(row: any): AdminProfileItem {
   return {
     id: row.id,
     userId: row.user_id,
+    email: userEmailMap.get(row.user_id) || null,
     name: row.name || "Unnamed profile",
     age: typeof row.age === "number" ? row.age : null,
     gender: row.gender || null,
@@ -184,9 +223,15 @@ function mapProfile(row: any): AdminProfileItem {
     city,
     education: getJsonText(row.career, ["highest_education", "college"]),
     jobTitle: getJsonText(row.career, ["job_title", "company"]),
+    bio: typeof row.bio === "string" ? row.bio : null,
     photoCount: photos.length,
     completionSteps: countCompletedSteps(row),
     profileCompleted: Boolean(row.profile_completed),
+    reviewStatus: row.admin_review_status || "pending",
+    reviewNotes: row.admin_review_notes || null,
+    reviewedAt: row.admin_reviewed_at || null,
+    isSeededProfile: Boolean(row.is_seeded_profile),
+    flags: getProfileFlags(row),
     createdAt: row.created_at || null,
     updatedAt: row.updated_at || null,
   }
@@ -253,6 +298,115 @@ async function safeRows<T>(run: () => PromiseLike<{ data: T[] | null; error: any
   }
 }
 
+async function safeAuthUsers(supabase: any): Promise<QueueResult<any>> {
+  try {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page: 1,
+      perPage: 50,
+    })
+
+    if (error) {
+      return {
+        status: "warning",
+        detail: error.message,
+        items: [],
+      }
+    }
+
+    return {
+      status: "ok",
+      detail: "Showing the latest 50 Supabase Auth users.",
+      items: data?.users || [],
+    }
+  } catch (error: any) {
+    return {
+      status: "warning",
+      detail: error?.message || "Unable to load auth users.",
+      items: [],
+    }
+  }
+}
+
+function isMissingAdminReviewColumn(error: any) {
+  const message = String(error?.message || error?.details || "")
+  return ["admin_review_status", "admin_review_notes", "admin_reviewed_at"].some((column) =>
+    message.includes(column),
+  )
+}
+
+async function loadAdminProfileRows(supabase: any): Promise<QueueResult<any>> {
+  const enhancedSelect =
+    "id,user_id,name,age,gender,created_by,photos,bio,personal,career,cultural,profile_completed,step1_completed,step2_completed,step3_completed,step4_completed,step5_completed,step6_completed,step7_completed,is_seeded_profile,admin_review_status,admin_review_notes,admin_reviewed_at,created_at,updated_at"
+  const legacySelect =
+    "id,user_id,name,age,gender,created_by,photos,bio,personal,career,cultural,profile_completed,step1_completed,step2_completed,step3_completed,step4_completed,step5_completed,step6_completed,step7_completed,created_at,updated_at"
+
+  try {
+    const enhanced = await supabase
+      .from("matrimony_profile_full")
+      .select(enhancedSelect)
+      .order("updated_at", { ascending: false })
+      .limit(14)
+
+    if (!enhanced.error) {
+      return { status: "ok", items: enhanced.data || [] }
+    }
+
+    if (!isMissingAdminReviewColumn(enhanced.error)) {
+      return {
+        status: "warning",
+        detail: enhanced.error.message,
+        items: [],
+      }
+    }
+
+    const legacy = await supabase
+      .from("matrimony_profile_full")
+      .select(legacySelect)
+      .order("updated_at", { ascending: false })
+      .limit(14)
+
+    return {
+      status: "warning",
+      detail:
+        legacy.error?.message ||
+        "Profile review migration is pending. Showing profiles in read-only moderation mode until the DB migration is applied.",
+      items: legacy.data || [],
+    }
+  } catch (error: any) {
+    return {
+      status: "warning",
+      detail: error?.message || "Unable to load profile review queue.",
+      items: [],
+    }
+  }
+}
+
+async function loadAuthUserProfileRows(supabase: any, userIds: string[]): Promise<QueueResult<any>> {
+  if (userIds.length === 0) {
+    return { status: "ok", items: [] }
+  }
+
+  const enhanced = await supabase
+    .from("matrimony_profile_full")
+    .select("user_id,name,profile_completed,admin_review_status,updated_at")
+    .in("user_id", userIds)
+
+  if (!enhanced.error) {
+    return { status: "ok", items: enhanced.data || [] }
+  }
+
+  const legacy = await supabase
+    .from("matrimony_profile_full")
+    .select("user_id,name,profile_completed,updated_at")
+    .in("user_id", userIds)
+
+  return {
+    status: legacy.error ? "warning" : "ok",
+    detail: legacy.error?.message,
+    items: legacy.data || [],
+  }
+}
+
 async function loadNameMap(supabase: any, userIds: string[]) {
   if (userIds.length === 0) {
     return new Map<string, string>()
@@ -261,6 +415,32 @@ async function loadNameMap(supabase: any, userIds: string[]) {
   const { data } = await supabase.from("matrimony_profile_full").select("user_id,name").in("user_id", userIds)
   const rows = (data || []) as Array<{ user_id: string; name: string | null }>
   return new Map<string, string>(rows.map((row) => [row.user_id, row.name || "Unnamed profile"]))
+}
+
+function mapAuthUser(user: any, profile?: any): AdminUserItem {
+  const providers = Array.isArray(user?.app_metadata?.providers)
+    ? user.app_metadata.providers.join(", ")
+    : typeof user?.app_metadata?.provider === "string"
+      ? user.app_metadata.provider
+      : null
+  const suspendedUntil = typeof user?.banned_until === "string" ? user.banned_until : null
+  const isSuspended = suspendedUntil ? new Date(suspendedUntil).getTime() > Date.now() : false
+  const status = isSuspended ? "suspended" : user?.email_confirmed_at ? "active" : "unconfirmed"
+
+  return {
+    id: String(user?.id || ""),
+    email: typeof user?.email === "string" ? user.email : null,
+    status,
+    provider: providers,
+    emailConfirmedAt: typeof user?.email_confirmed_at === "string" ? user.email_confirmed_at : null,
+    lastSignInAt: typeof user?.last_sign_in_at === "string" ? user.last_sign_in_at : null,
+    suspendedUntil,
+    profileName: profile?.name || null,
+    profileCompleted: Boolean(profile?.profile_completed),
+    profileReviewStatus: profile?.admin_review_status || null,
+    createdAt: typeof user?.created_at === "string" ? user.created_at : null,
+    updatedAt: typeof user?.updated_at === "string" ? user.updated_at : null,
+  }
 }
 
 function getAuthEmailActionMeta(action: string) {
@@ -380,11 +560,17 @@ export async function GET(request: Request) {
   const host = getHost(request)
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  const [metrics, authEmailTelemetry] = await Promise.all([
+  const [metrics, authEmailTelemetry, authUserRows] = await Promise.all([
     Promise.all([
       safeCount(supabase, "Registered users", "user_profiles"),
       safeCount(supabase, "Completed profiles", "matrimony_profile_full", (query) => query.eq("profile_completed", true)),
       safeCount(supabase, "Draft profiles", "matrimony_profile_full", (query) => query.eq("profile_completed", false)),
+      safeCount(supabase, "Profiles needing review", "matrimony_profile_full", (query) =>
+        query.in("admin_review_status", ["pending", "in_review"]),
+      ),
+      safeCount(supabase, "Rejected profiles", "matrimony_profile_full", (query) =>
+        query.eq("admin_review_status", "rejected"),
+      ),
       safeCount(supabase, "Pending verifications", "id_verifications", (query) =>
         query.in("verification_status", ["pending", "in_review"]),
       ),
@@ -396,18 +582,13 @@ export async function GET(request: Request) {
       safeCount(supabase, "Admin actions 7d", "admin_audit_logs", (query) => query.gte("created_at", sevenDaysAgo)),
     ]),
     loadAuthEmailTelemetry(supabase),
+    safeAuthUsers(supabase),
   ])
 
-  const [profileRows, verificationRows, reportRows, auditRows] = await Promise.all([
-    safeRows<any>(() =>
-      supabase
-        .from("matrimony_profile_full")
-        .select(
-          "id,user_id,name,age,gender,created_by,photos,personal,career,cultural,profile_completed,step1_completed,step2_completed,step3_completed,step4_completed,step5_completed,step6_completed,step7_completed,created_at,updated_at",
-        )
-        .order("updated_at", { ascending: false })
-        .limit(8),
-    ),
+  const authUserIds = unique(authUserRows.items.map((item) => item.id))
+
+  const [profileRows, verificationRows, reportRows, auditRows, userProfileRows] = await Promise.all([
+    loadAdminProfileRows(supabase),
     safeRows<any>(() =>
       supabase
         .from("id_verifications")
@@ -433,7 +614,36 @@ export async function GET(request: Request) {
         .order("created_at", { ascending: false })
         .limit(10),
     ),
+    loadAuthUserProfileRows(supabase, authUserIds),
   ])
+
+  const userProfileMap = new Map(userProfileRows.items.map((item) => [item.user_id, item]))
+  const userEmailMap = new Map<string, string | null>(
+    authUserRows.items.map((item) => [item.id, typeof item.email === "string" ? item.email : null]),
+  )
+  const authUsers = authUserRows.items.map((item) => mapAuthUser(item, userProfileMap.get(item.id)))
+  const unconfirmedUserCount = authUsers.filter((item) => item.status === "unconfirmed").length
+  const suspendedUserCount = authUsers.filter((item) => item.status === "suspended").length
+  const userMetrics: CountResult[] = [
+    {
+      label: "Auth users visible",
+      value: authUsers.length,
+      status: authUserRows.status,
+      detail: authUserRows.detail,
+    },
+    {
+      label: "Unconfirmed users",
+      value: unconfirmedUserCount,
+      status: unconfirmedUserCount > 0 ? "warning" : "ok",
+      detail: authUserRows.status === "ok" ? "Latest 50 auth users sample." : authUserRows.detail,
+    },
+    {
+      label: "Suspended users",
+      value: suspendedUserCount,
+      status: suspendedUserCount > 0 ? "warning" : "ok",
+      detail: authUserRows.status === "ok" ? "Latest 50 auth users sample." : authUserRows.detail,
+    },
+  ]
 
   const nameMap = await loadNameMap(
     supabase,
@@ -484,12 +694,17 @@ export async function GET(request: Request) {
     },
     host,
     generatedAt: new Date().toISOString(),
-    metrics,
+    metrics: [...metrics, ...userMetrics],
     queues: {
+      users: {
+        status: authUserRows.status,
+        detail: authUserRows.detail,
+        items: authUsers,
+      } satisfies QueueResult<AdminUserItem>,
       profiles: {
         status: profileRows.status,
         detail: profileRows.detail,
-        items: profileRows.items.map(mapProfile),
+        items: profileRows.items.map((item) => mapProfile(item, userEmailMap)),
       } satisfies QueueResult<AdminProfileItem>,
       verifications,
       reports,
@@ -527,7 +742,15 @@ export async function GET(request: Request) {
       {
         label: "Moderation actions",
         status: "ok",
-        detail: "Verification and report status actions are guarded by Supabase login plus ADMIN_EMAILS.",
+        detail: "User, profile, verification, and report actions are guarded by Supabase login plus ADMIN_EMAILS.",
+      },
+      {
+        label: "User management",
+        status: authUserRows.status,
+        detail:
+          authUserRows.status === "ok"
+            ? "Admins can inspect recent auth users and suspend or restore access with audit notes."
+            : authUserRows.detail || "Supabase Auth user management is not currently reachable.",
       },
       {
         label: "Audit trail",

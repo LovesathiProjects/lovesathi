@@ -4,6 +4,8 @@ import { requireAdmin } from "@/lib/adminAuth"
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const verificationStatuses = new Set(["approved", "rejected", "in_review"])
 const reportStatuses = new Set(["reviewed", "resolved", "dismissed"])
+const profileReviewStatuses = new Set(["approved", "rejected", "in_review", "pending"])
+const userStatuses = new Set(["suspended", "active"])
 
 function cleanText(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim().slice(0, 500) : null
@@ -27,7 +29,7 @@ async function writeAdminAuditLog(
   }: {
     actorId: string
     actorEmail: string | null
-    resource: "verification" | "report"
+    resource: "verification" | "report" | "profile" | "user"
     recordId: string
     previousStatus: string | null
     nextStatus: string
@@ -167,6 +169,93 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json({ ok: true, record: data })
+  }
+
+  if (resource === "profile") {
+    if (!profileReviewStatuses.has(status)) {
+      return NextResponse.json({ error: "Invalid profile review status." }, { status: 400 })
+    }
+
+    const notes = cleanText(body.notes)
+    const { data: previousRecord } = await supabase
+      .from("matrimony_profile_full")
+      .select("id,user_id,name,admin_review_status,is_seeded_profile")
+      .eq("id", id)
+      .maybeSingle()
+
+    const { data, error } = await supabase
+      .from("matrimony_profile_full")
+      .update({
+        admin_review_status: status,
+        admin_review_notes: notes,
+        admin_reviewed_at: new Date().toISOString(),
+        admin_reviewed_by: user.id,
+      })
+      .eq("id", id)
+      .select("id,user_id,name,admin_review_status,admin_review_notes,admin_reviewed_at,admin_reviewed_by")
+      .single()
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    await writeAdminAuditLog(supabase, {
+      actorId: user.id,
+      actorEmail: user.email || null,
+      resource: "profile",
+      recordId: id,
+      previousStatus: previousRecord?.admin_review_status || null,
+      nextStatus: status,
+      notes,
+      metadata: {
+        userId: previousRecord?.user_id || null,
+        profileName: previousRecord?.name || null,
+        isSeededProfile: Boolean(previousRecord?.is_seeded_profile),
+      },
+    })
+
+    return NextResponse.json({ ok: true, record: data })
+  }
+
+  if (resource === "user") {
+    if (!userStatuses.has(status)) {
+      return NextResponse.json({ error: "Invalid user status." }, { status: 400 })
+    }
+
+    if (id === user.id && status === "suspended") {
+      return NextResponse.json({ error: "You cannot suspend your own active admin account." }, { status: 400 })
+    }
+
+    const notes = cleanText(body.notes)
+    const { data: previousUserData } = await supabase.auth.admin.getUserById(id)
+    const previousUser = previousUserData?.user as any
+    const previousStatus =
+      previousUser?.banned_until && new Date(previousUser.banned_until).getTime() > Date.now()
+        ? "suspended"
+        : "active"
+
+    const { data, error } = await supabase.auth.admin.updateUserById(id, {
+      ban_duration: status === "suspended" ? "876000h" : "none",
+    })
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    await writeAdminAuditLog(supabase, {
+      actorId: user.id,
+      actorEmail: user.email || null,
+      resource: "user",
+      recordId: id,
+      previousStatus,
+      nextStatus: status,
+      notes,
+      metadata: {
+        email: previousUser?.email || data.user?.email || null,
+      },
+    })
+
+    return NextResponse.json({ ok: true, record: { id: data.user?.id, email: data.user?.email } })
   }
 
   return NextResponse.json({ error: "Unknown admin action." }, { status: 400 })
