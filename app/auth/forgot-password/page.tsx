@@ -42,7 +42,7 @@ export default function ForgotPasswordPage() {
 
     if (!res.ok) return toast.error(data.error)
 
-    toast.success("OTP sent to your email")
+    toast.success(data.message || "If an account exists, we sent an OTP to that email.")
     setStep("verify")
     setTimeout(() => otpInputs.current[0]?.focus(), 200)
   }
@@ -145,7 +145,7 @@ export default function ForgotPasswordPage() {
   const title = step === "request" ? "Forgot password" : step === "verify" ? "Verify OTP" : "Reset password"
   const subtitle =
     step === "request"
-      ? "Enter your email to receive a secure OTP."
+      ? "Enter your email and we will send a secure OTP if the account exists."
       : step === "verify"
         ? "Enter the 4-digit OTP sent to your email."
         : "Set a new password for your Lovesathi account."

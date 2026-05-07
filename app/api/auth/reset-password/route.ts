@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
     }
 
-    // ✅ Verify that OTP was verified before allowing password reset
+    // Require a verified, unexpired OTP before allowing password reset.
     const { data: otpData, error: otpError } = await supabaseAdmin
       .from("otp_codes")
       .select("*")
@@ -31,13 +31,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Please verify OTP first" }, { status: 400 });
     }
 
-    // Check if OTP is still valid (within 10 minutes)
-    const otpAge = Date.now() - new Date(otpData.created_at).getTime();
-    if (otpAge > 10 * 60 * 1000) {
+    if (new Date(otpData.expires_at) < new Date()) {
+      await supabaseAdmin.from("otp_codes").delete().eq("id", otpData.id);
       return NextResponse.json({ error: "OTP verification expired, please request a new one" }, { status: 400 });
     }
 
-    // ✅ Find the user by email
+    // Find the user by email.
     const { data: userData, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
     if (usersError) throw new Error(usersError.message);
 
@@ -47,7 +46,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // ✅ Update password using Supabase Auth Admin API
+    // Update password using Supabase Auth Admin API.
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
       user.id,
       { password }
@@ -58,10 +57,10 @@ export async function POST(req: Request) {
       throw new Error(updateError.message);
     }
 
-    // ✅ Invalidate the OTP after successful password reset
+    // Invalidate the OTP after successful password reset.
     await supabaseAdmin
       .from("otp_codes")
-      .update({ verified: false })
+      .delete()
       .eq("id", otpData.id);
 
     return NextResponse.json({ 
