@@ -41,6 +41,10 @@ function demoSwipeStorageKey(userId: string) {
   return `lovesathi_demo_swipes:${userId}`
 }
 
+function demoActedStorageKey(userId: string) {
+  return `lovesathi_demo_acted_profiles:${userId}`
+}
+
 function getDemoSwipeRows(userId: string) {
   if (typeof window === "undefined") return []
 
@@ -58,11 +62,31 @@ function getDemoSwipeRows(userId: string) {
   }
 }
 
+function getDemoActedProfileIds(userId: string) {
+  if (typeof window === "undefined") return []
+
+  try {
+    const raw = localStorage.getItem(demoActedStorageKey(userId))
+    const ids = raw ? (JSON.parse(raw) as string[]) : []
+    return Array.isArray(ids) ? ids.filter((id) => typeof id === "string") : []
+  } catch {
+    return []
+  }
+}
+
+function recordDemoActedProfile(userId: string, targetId: string) {
+  if (typeof window === "undefined") return
+  const ids = new Set(getDemoActedProfileIds(userId))
+  ids.add(targetId)
+  localStorage.setItem(demoActedStorageKey(userId), JSON.stringify(Array.from(ids)))
+}
+
 function recordDemoSwipe(userId: string, targetId: string, action: "like" | "pass" | "connect") {
   if (typeof window === "undefined") return
   const rows = getDemoSwipeRows(userId)
   rows.push({ targetId, action, createdAt: new Date().toISOString() })
   localStorage.setItem(demoSwipeStorageKey(userId), JSON.stringify(rows))
+  recordDemoActedProfile(userId, targetId)
 }
 
 export async function getMatrimonyDiscoverySwipeStatus(userId: string): Promise<UsageLimitStatus> {
@@ -182,11 +206,25 @@ export async function getMatrimonyMatches(userId: string): Promise<Match[]> {
 
 export async function getMatrimonyLikedProfiles(userId: string): Promise<string[]> {
   try {
-    const { data, error } = await supabase.from("matrimony_likes").select("liked_id").eq("liker_id", userId)
-    if (error) throw error
-    const realLikedIds = data?.map((item) => item.liked_id) || []
-    const demoLikedIds = getDemoSwipeRows(userId).map((row) => row.targetId)
-    return [...realLikedIds, ...demoLikedIds]
+    const [{ data: likes, error: likesError }, { data: matches, error: matchesError }] = await Promise.all([
+      supabase.from("matrimony_likes").select("liked_id").eq("liker_id", userId),
+      supabase
+        .from("matrimony_matches")
+        .select("user1_id,user2_id")
+        .eq("is_active", true)
+        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`),
+    ])
+
+    if (likesError) throw likesError
+    if (matchesError) console.warn("[getMatrimonyLikedProfiles] Unable to read matches:", matchesError.message)
+
+    const realLikedIds = likes?.map((item) => item.liked_id) || []
+    const matchedIds =
+      matchesError ? [] : matches?.map((match) => (match.user1_id === userId ? match.user2_id : match.user1_id)) || []
+    const demoRecentIds = getDemoSwipeRows(userId).map((row) => row.targetId)
+    const demoActedIds = getDemoActedProfileIds(userId)
+
+    return Array.from(new Set([...realLikedIds, ...matchedIds, ...demoRecentIds, ...demoActedIds]))
   } catch (error: any) {
     console.error("Error getting matrimony liked profiles:", error)
     return []

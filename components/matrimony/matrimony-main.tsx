@@ -23,7 +23,8 @@ import { PaymentScreen } from "@/components/premium/payment-screen"
 import { PremiumFeatures } from "@/components/premium/premium-features"
 import { VerificationStatus } from "@/components/profile/verification-status"
 import { EditProfile } from "@/components/profile/edit-profile"
-import { MOCK_MATRIMONY_PROFILES, type MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
+import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
+import { buildSupplementalMatrimonyProfiles } from "@/lib/matrimonySupplementalProfiles"
 import { withUniqueDiscoveryPhotos } from "@/lib/discoveryPhotos"
 import { supabase } from "@/lib/supabaseClient"
 import { handleLogout } from "@/lib/logout"
@@ -296,33 +297,30 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           return
         }
 
-        if (!matrimonyProfiles || matrimonyProfiles.length === 0) {
-          setProfiles([])
-          setLoading(false)
-          return
-        }
+        const profileRows = matrimonyProfiles || []
 
         // Get user IDs for verifications
-        const userIds = matrimonyProfiles.map((p) => p.user_id)
+        const userIds = profileRows.map((p) => p.user_id)
         // Fetch ID verifications (for verified status)
-        const { data: verifications, error: verificationsError } = await supabase
-          .from("id_verifications")
-          .select("user_id, verification_status")
-          .in("user_id", userIds)
+        const { data: verifications, error: verificationsError } =
+          userIds.length > 0
+            ? await supabase
+                .from("id_verifications")
+                .select("user_id, verification_status")
+                .in("user_id", userIds)
+            : { data: [], error: null }
 
-        if (verificationsError) {
-          console.error("Error fetching verifications:", verificationsError)
-        }
+        if (verificationsError) console.error("Error fetching verifications:", verificationsError)
 
         // Get current user's gender for filtering
-        const currentUserGender = currentUserProfile?.gender
+        const currentUserGender = currentUserProfile?.gender?.toLowerCase()
 
         // Hide profiles the user has already liked, passed, or connected with.
         const actedProfileIds = await getMatrimonyLikedProfiles(user.id)
         const actedProfileIdSet = new Set(actedProfileIds)
 
         // Combine all data from consolidated table
-        const combinedProfiles = matrimonyProfiles
+        const combinedProfiles = profileRows
           .map((matrimonyProfile) => {
             // Extract data from JSONB fields
             const photosData = (matrimonyProfile.photos as string[]) || []
@@ -350,10 +348,11 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             // If current user is male, show only female profiles
             // If current user is female, show only male profiles
             // If current user gender is not set or is 'prefer_not_to_say', show all profiles
-            if (currentUserGender === 'male' && matrimonyProfile.gender !== 'Female') {
+            const profileGender = String(matrimonyProfile.gender || "").toLowerCase()
+            if (currentUserGender === 'male' && profileGender !== 'female') {
               return null
             }
-            if (currentUserGender === 'female' && matrimonyProfile.gender !== 'Male') {
+            if (currentUserGender === 'female' && profileGender !== 'male') {
               return null
             }
             // If currentUserGender is null or 'prefer_not_to_say', show all profiles
@@ -532,23 +531,13 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           })
           .filter((profile): profile is NonNullable<typeof profile> => profile !== null) as MatrimonyProfile[]
 
-        const femaleSupplementNames = ["Aditi", "Priya", "Sneha", "Kavya", "Ananya", "Divya", "Shruti", "Meera", "Riya", "Pooja"]
         const realProfileNames = new Set(combinedProfiles.map((profile) => profile.name.toLowerCase()))
-        const supplementalProfiles = MOCK_MATRIMONY_PROFILES.filter((mockProfile) => {
-          const id = `demo-${mockProfile.id}`
-          if (actedProfileIdSet.has(id)) return false
-          if (realProfileNames.has(mockProfile.name.toLowerCase())) return false
-
-          const isFemaleSupplement = femaleSupplementNames.some((name) => mockProfile.name.startsWith(name))
-          if (currentUserGender === "male") return isFemaleSupplement
-          if (currentUserGender === "female") return !isFemaleSupplement
-          return true
-        }).map((mockProfile) => ({
-          ...mockProfile,
-          id: `demo-${mockProfile.id}`,
-          demo: true,
-          visibilityLabel: undefined,
-        }))
+        const supplementalProfiles = buildSupplementalMatrimonyProfiles({
+          currentUserGender,
+          excludedIds: actedProfileIdSet,
+          excludedNames: realProfileNames,
+          targetCount: 240,
+        })
 
         setProfiles(withUniqueDiscoveryPhotos([...combinedProfiles, ...supplementalProfiles]))
       } catch (error) {
