@@ -23,12 +23,16 @@ import { PaymentScreen } from "@/components/premium/payment-screen"
 import { PremiumFeatures } from "@/components/premium/premium-features"
 import { VerificationStatus } from "@/components/profile/verification-status"
 import { EditProfile } from "@/components/profile/edit-profile"
-import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
+import { MOCK_MATRIMONY_PROFILES, type MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
 import { withUniqueDiscoveryPhotos } from "@/lib/discoveryPhotos"
 import { supabase } from "@/lib/supabaseClient"
 import { handleLogout } from "@/lib/logout"
-import { recordMatrimonyLike } from "@/lib/matchmakingService"
-import { getSwipeLimitStatus, type UsageLimitStatus } from "@/lib/planLimits"
+import {
+  getMatrimonyDiscoverySwipeStatus,
+  getMatrimonyLikedProfiles,
+  recordMatrimonyLike,
+} from "@/lib/matchmakingService"
+import type { UsageLimitStatus } from "@/lib/planLimits"
 import { MatchNotification } from "@/components/chat/match-notification"
 import type { FilterState } from "@/components/matrimony/matrimony-filter-sheet"
 import { useToast } from "@/hooks/use-toast"
@@ -124,7 +128,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
   }, [toast])
 
   const refreshSwipeLimitStatus = useCallback(async (userId: string) => {
-    const status = await getSwipeLimitStatus(userId)
+    const status = await getMatrimonyDiscoverySwipeStatus(userId)
     setSwipeLimitStatus(status)
     return status
   }, [])
@@ -313,6 +317,10 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         // Get current user's gender for filtering
         const currentUserGender = currentUserProfile?.gender
 
+        // Hide profiles the user has already liked, passed, or connected with.
+        const actedProfileIds = await getMatrimonyLikedProfiles(user.id)
+        const actedProfileIdSet = new Set(actedProfileIds)
+
         // Combine all data from consolidated table
         const combinedProfiles = matrimonyProfiles
           .map((matrimonyProfile) => {
@@ -331,6 +339,10 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
             // Exclude current user's profile
             if (user && matrimonyProfile.user_id === user.id) {
+              return null
+            }
+
+            if (actedProfileIdSet.has(matrimonyProfile.user_id)) {
               return null
             }
 
@@ -520,7 +532,25 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           })
           .filter((profile): profile is NonNullable<typeof profile> => profile !== null) as MatrimonyProfile[]
 
-        setProfiles(withUniqueDiscoveryPhotos(combinedProfiles))
+        const femaleSupplementNames = ["Aditi", "Priya", "Sneha", "Kavya", "Ananya", "Divya", "Shruti", "Meera", "Riya", "Pooja"]
+        const realProfileNames = new Set(combinedProfiles.map((profile) => profile.name.toLowerCase()))
+        const supplementalProfiles = MOCK_MATRIMONY_PROFILES.filter((mockProfile) => {
+          const id = `demo-${mockProfile.id}`
+          if (actedProfileIdSet.has(id)) return false
+          if (realProfileNames.has(mockProfile.name.toLowerCase())) return false
+
+          const isFemaleSupplement = femaleSupplementNames.some((name) => mockProfile.name.startsWith(name))
+          if (currentUserGender === "male") return isFemaleSupplement
+          if (currentUserGender === "female") return !isFemaleSupplement
+          return true
+        }).map((mockProfile) => ({
+          ...mockProfile,
+          id: `demo-${mockProfile.id}`,
+          demo: true,
+          visibilityLabel: undefined,
+        }))
+
+        setProfiles(withUniqueDiscoveryPhotos([...combinedProfiles, ...supplementalProfiles]))
       } catch (error) {
         console.error("Unexpected error fetching matrimony profiles:", error)
         setProfiles([])
@@ -565,9 +595,13 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
   )
   const swipeLocked = Boolean(swipeLimitStatus && !swipeLimitStatus.allowed)
 
-  const advanceToNextProfile = useCallback(() => {
-    setCurrentCardIndex((previous) => (profiles.length > 0 ? (previous + 1) % profiles.length : 0))
-  }, [profiles.length])
+  const removeProfileFromDeck = useCallback((profileId: string) => {
+    setProfiles((previousProfiles) => {
+      const nextProfiles = previousProfiles.filter((profile) => profile.id !== profileId)
+      setCurrentCardIndex((previousIndex) => (nextProfiles.length > 0 ? previousIndex % nextProfiles.length : 0))
+      return nextProfiles
+    })
+  }, [])
 
   const handleLike = async () => {
     try {
@@ -619,7 +653,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         setShowMatchNotification(true)
       }
 
-      advanceToNextProfile()
+      removeProfileFromDeck(currentProfile.id)
       return true
     } catch (error) {
       console.error('[handleLike] Unexpected error:', error)
@@ -670,7 +704,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       }
       await refreshSwipeLimitStatus(user.id)
 
-      advanceToNextProfile()
+      removeProfileFromDeck(currentProfile.id)
       return true
     } catch (error) {
       console.error('[handlePass] Unexpected error:', error)
