@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -23,10 +23,12 @@ import { PaymentScreen } from "@/components/premium/payment-screen"
 import { PremiumFeatures } from "@/components/premium/premium-features"
 import { VerificationStatus } from "@/components/profile/verification-status"
 import { EditProfile } from "@/components/profile/edit-profile"
-import { MOCK_MATRIMONY_PROFILES, type MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
+import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
+import { withUniqueDiscoveryPhotos } from "@/lib/discoveryPhotos"
 import { supabase } from "@/lib/supabaseClient"
 import { handleLogout } from "@/lib/logout"
-import { recordMatrimonyLike, getMatrimonyLikedProfiles } from "@/lib/matchmakingService"
+import { recordMatrimonyLike } from "@/lib/matchmakingService"
+import { getSwipeLimitStatus, type UsageLimitStatus } from "@/lib/planLimits"
 import { MatchNotification } from "@/components/chat/match-notification"
 import type { FilterState } from "@/components/matrimony/matrimony-filter-sheet"
 import { useToast } from "@/hooks/use-toast"
@@ -87,6 +89,8 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
   const [matchedMatchId, setMatchedMatchId] = useState<string | null>(null)
   const [appliedFilters, setAppliedFilters] = useState<FilterState | null>(null)
   const [shortlistModalProfile, setShortlistModalProfile] = useState<MatrimonyProfile | null>(null)
+  const [swipeLimitStatus, setSwipeLimitStatus] = useState<UsageLimitStatus | null>(null)
+  const [premiumBackTarget, setPremiumBackTarget] = useState<"discover" | "profile">("profile")
   const { toast } = useToast()
   const {
     shortlistedProfiles,
@@ -110,16 +114,35 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     router.push("/matrimony/discovery")
   }, [router])
 
+  const showSwipePaywall = useCallback(() => {
+    toast({
+      title: "Unlock unlimited discovery",
+      description: "Free members can swipe 15 times every 12 hours. Choose a paid plan to keep sending interests and passes.",
+    })
+    setPremiumBackTarget("discover")
+    setCurrentScreen("premium")
+  }, [toast])
+
+  const refreshSwipeLimitStatus = useCallback(async (userId: string) => {
+    const status = await getSwipeLimitStatus(userId)
+    setSwipeLimitStatus(status)
+    return status
+  }, [])
+
+  const ensureSwipeAllowed = useCallback(
+    async (userId: string) => {
+      const status = await refreshSwipeLimitStatus(userId)
+      if (!status.allowed) {
+        showSwipePaywall()
+        return false
+      }
+      return true
+    },
+    [refreshSwipeLimitStatus, showSwipePaywall],
+  )
+
   const handleShortlistToggle = useCallback(
     async (profile: MatrimonyProfile) => {
-      if (profile.demo) {
-        toast({
-          title: "Preview profile",
-          description: "Shortlisting is available for real member profiles. Preview cards are here to keep discovery full while Lovesathi grows.",
-        })
-        return { success: false }
-      }
-
       const wasShortlisted = shortlistedIds.has(profile.id)
       const result = await toggleShortlist(profile)
 
@@ -167,14 +190,6 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
   const handleShortlistConnect = useCallback(
     async (profile: MatrimonyProfile) => {
-      if (profile.demo) {
-        toast({
-          title: "Preview profile",
-          description: "Messaging opens after matching with a real member profile.",
-        })
-        return
-      }
-
       try {
         const {
           data: { user },
@@ -183,6 +198,9 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         if (authError || !user) {
           throw new Error("Please sign in to continue.")
         }
+
+        const allowed = await ensureSwipeAllowed(user.id)
+        if (!allowed) return
 
         const result = await recordMatrimonyLike(user.id, profile.id, "like")
         if (!result.success) {
@@ -201,7 +219,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         })
       }
     },
-    [toast],
+    [ensureSwipeAllowed, toast],
   )
 
   // Fetch profiles from Supabase
@@ -221,9 +239,12 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
         if (!user) {
           setProfiles([])
+          setSwipeLimitStatus(null)
           setLoading(false)
           return
         }
+
+        await refreshSwipeLimitStatus(user.id)
 
         // Fetch current user's gender from user_profiles
         const { data: currentUserProfile, error: currentUserError } = await supabase
@@ -251,8 +272,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             cultural,
             family,
             bio,
-            is_seeded_profile,
-            profile_visibility_label
+            is_seeded_profile
           `)
           .eq("profile_completed", true)
 
@@ -293,9 +313,6 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         // Get current user's gender for filtering
         const currentUserGender = currentUserProfile?.gender
 
-        // Get already liked/passed profiles to exclude from discovery
-        const likedProfileIds = await getMatrimonyLikedProfiles(user.id)
-
         // Combine all data from consolidated table
         const combinedProfiles = matrimonyProfiles
           .map((matrimonyProfile) => {
@@ -314,11 +331,6 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
             // Exclude current user's profile
             if (user && matrimonyProfile.user_id === user.id) {
-              return null
-            }
-
-            // Exclude already liked/passed profiles
-            if (likedProfileIds.includes(matrimonyProfile.user_id)) {
               return null
             }
 
@@ -503,29 +515,12 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
               interests: [], // Not in current schema, can be added later
               verified: verification?.verification_status === "approved",
               premium: false, // Not in current schema, can be added later
-              demo: Boolean((matrimonyProfile as any).is_seeded_profile),
-              visibilityLabel: (matrimonyProfile as any).profile_visibility_label || undefined,
               height, // Add height to profile
             }
           })
           .filter((profile): profile is NonNullable<typeof profile> => profile !== null) as MatrimonyProfile[]
 
-        const femalePreviewNames = ["Aditi", "Priya", "Sneha", "Kavya", "Ananya", "Divya", "Shruti", "Meera", "Riya", "Pooja"]
-        const previewProfiles = MOCK_MATRIMONY_PROFILES.filter((mockProfile) => {
-          const isFemalePreview = femalePreviewNames.some((name) => mockProfile.name.startsWith(name))
-          if (currentUserGender === "male") return isFemalePreview
-          if (currentUserGender === "female") return !isFemalePreview
-          return true
-        }).map((mockProfile) => ({
-          ...mockProfile,
-          id: `demo-${mockProfile.id}`,
-          demo: true,
-          visibilityLabel: "Preview",
-        }))
-
-        const profileIds = new Set(combinedProfiles.map((profile) => profile.id))
-        const supplementProfiles = previewProfiles.filter((profile) => !profileIds.has(profile.id) && !likedProfileIds.includes(profile.id))
-        setProfiles([...combinedProfiles, ...supplementProfiles])
+        setProfiles(withUniqueDiscoveryPhotos(combinedProfiles))
       } catch (error) {
         console.error("Unexpected error fetching matrimony profiles:", error)
         setProfiles([])
@@ -535,7 +530,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     }
 
     fetchProfiles()
-  }, [appliedFilters])
+  }, [appliedFilters, refreshSwipeLimitStatus])
 
   // Prevent body scroll when on discover screen
   useEffect(() => {
@@ -552,12 +547,31 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     }
   }, [currentScreen])
 
-  const currentProfile = profiles[currentCardIndex]
-  const hasMoreProfiles = currentCardIndex < profiles.length
+  const activeProfileIndex = profiles.length > 0 ? currentCardIndex % profiles.length : 0
+  const currentProfile = profiles[activeProfileIndex]
+  const hasMoreProfiles = profiles.length > 0
+  const visibleProfileStack = useMemo(
+    () =>
+      profiles.length === 0
+        ? []
+        : Array.from({ length: Math.min(4, profiles.length) }, (_, stackIndex) => {
+            const profileIndex = (activeProfileIndex + stackIndex) % profiles.length
+            return {
+              profile: profiles[profileIndex],
+              key: `${profiles[profileIndex].id}-${currentCardIndex}-${stackIndex}`,
+            }
+          }),
+    [activeProfileIndex, currentCardIndex, profiles],
+  )
+  const swipeLocked = Boolean(swipeLimitStatus && !swipeLimitStatus.allowed)
+
+  const advanceToNextProfile = useCallback(() => {
+    setCurrentCardIndex((previous) => (profiles.length > 0 ? (previous + 1) % profiles.length : 0))
+  }, [profiles.length])
 
   const handleLike = async () => {
     try {
-      const currentProfile = profiles[currentCardIndex]
+      const currentProfile = profiles[activeProfileIndex]
       if (!currentProfile) {
         toast({
           title: "No profile selected",
@@ -577,10 +591,18 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         return
       }
 
+      const allowed = await ensureSwipeAllowed(user.id)
+      if (!allowed) return
+
       // Record the like in database
       const result = await recordMatrimonyLike(user.id, currentProfile.id, 'like')
 
       if (!result.success) {
+        if (result.error?.toLowerCase().includes("swipe limit")) {
+          await refreshSwipeLimitStatus(user.id)
+          showSwipePaywall()
+          return
+        }
         toast({
           title: "Could not send interest",
           description: result.error || "Please try again.",
@@ -588,6 +610,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         })
         return
       }
+      await refreshSwipeLimitStatus(user.id)
       
       if (result.success && result.isMatch) {
         // Show match notification
@@ -596,8 +619,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         setShowMatchNotification(true)
       }
 
-      if (currentCardIndex < profiles.length - 1) setCurrentCardIndex((p) => p + 1)
-      else setCurrentCardIndex(profiles.length)
+      advanceToNextProfile()
     } catch (error) {
       console.error('[handleLike] Unexpected error:', error)
     }
@@ -605,7 +627,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
   const handlePass = async () => {
     try {
-      const currentProfile = profiles[currentCardIndex]
+      const currentProfile = profiles[activeProfileIndex]
       if (!currentProfile) {
         toast({
           title: "No profile selected",
@@ -625,10 +647,18 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         return
       }
 
+      const allowed = await ensureSwipeAllowed(user.id)
+      if (!allowed) return
+
       // Record the pass in database
       const result = await recordMatrimonyLike(user.id, currentProfile.id, 'pass')
 
       if (!result.success) {
+        if (result.error?.toLowerCase().includes("swipe limit")) {
+          await refreshSwipeLimitStatus(user.id)
+          showSwipePaywall()
+          return
+        }
         toast({
           title: "Could not update profile",
           description: result.error || "Please try again.",
@@ -636,9 +666,9 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         })
         return
       }
+      await refreshSwipeLimitStatus(user.id)
 
-      if (currentCardIndex < profiles.length - 1) setCurrentCardIndex((p) => p + 1)
-      else setCurrentCardIndex(profiles.length)
+      advanceToNextProfile()
     } catch (error) {
       console.error('[handlePass] Unexpected error:', error)
     }
@@ -727,10 +757,8 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                   <div className="pointer-events-none absolute inset-x-7 -bottom-4 h-5 rounded-full bg-[#685f58]/18 blur-md" />
                   {hasMoreProfiles && profiles.length > 0 ? (
                     <div className="relative w-full h-full overflow-visible">
-                      {profiles
-                        .slice(currentCardIndex, Math.min(currentCardIndex + 4, profiles.length))
-                        .map((profile, index) => (
-                          <div key={profile.id} className="absolute inset-0 flex items-center justify-center">
+                      {visibleProfileStack.map(({ profile, key }, index) => (
+                          <div key={key} className="absolute inset-0 flex items-center justify-center">
                             <MatrimonySwipeCard
                               profileId={profile.id}
                               name={profile.name}
@@ -751,6 +779,8 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                               onNotNow={index === 0 ? () => handlePass() : () => {}}
                               isShortlisted={shortlistedIds.has(profile.id)}
                               onToggleShortlist={() => handleShortlistToggle(profile)}
+                              swipeLocked={swipeLocked}
+                              onSwipeLocked={showSwipePaywall}
                               onProfileClick={() => {
                                 setShortlistModalProfile(profile)
                               }}
@@ -917,7 +947,10 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           mode="matrimony"
           onNavigate={(id) => {
             if (id === "profile") setCurrentScreen("edit-profile")
-            else if (id === "premium") setCurrentScreen("premium")
+            else if (id === "premium") {
+              setPremiumBackTarget("profile")
+              setCurrentScreen("premium")
+            }
             else if (id === "verification") setCurrentScreen("verification-status")
             else if (id === "app_settings") setCurrentScreen("app-settings")
             else if (id === "help_safety") router.push("/safety")
@@ -951,7 +984,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
               setSelectedPlanId(planId)
               setCurrentScreen("payment")
             }}
-            onBack={() => setCurrentScreen("profile")}
+            onBack={() => setCurrentScreen(premiumBackTarget)}
           />
         </div>
       )}

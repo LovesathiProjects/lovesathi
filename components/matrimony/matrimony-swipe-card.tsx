@@ -36,6 +36,8 @@ interface MatrimonySwipeCardProps {
   stackIndex?: number // 0 is top, then 1,2 for depth visuals
   isShortlisted?: boolean
   onToggleShortlist?: () => Promise<any> | void
+  swipeLocked?: boolean
+  onSwipeLocked?: () => void
 }
 
 export function MatrimonySwipeCard({
@@ -60,6 +62,8 @@ export function MatrimonySwipeCard({
   stackIndex = 0,
   isShortlisted = false,
   onToggleShortlist,
+  swipeLocked = false,
+  onSwipeLocked,
 }: MatrimonySwipeCardProps) {
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
@@ -186,6 +190,26 @@ export function MatrimonySwipeCard({
     }
   }
 
+  const resetSwipePosition = () => {
+    animate(x, 0, {
+      type: "spring",
+      stiffness: 400,
+      damping: 35,
+      mass: 0.6,
+    })
+    animate(y, 0, {
+      type: "spring",
+      stiffness: 400,
+      damping: 35,
+      mass: 0.6,
+    })
+  }
+
+  const handleLockedSwipeAttempt = () => {
+    resetSwipePosition()
+    onSwipeLocked?.()
+  }
+
   const handleDragEnd = (event: any, info: any) => {
     // Lower threshold for easier swiping, better velocity detection
     const threshold = 80
@@ -195,6 +219,11 @@ export function MatrimonySwipeCard({
     // Use both distance and velocity for more natural feel
     const shouldConnect = info.offset.x > threshold || velocity > velocityThreshold
     const shouldNotNow = info.offset.x < -threshold || velocity < -velocityThreshold
+
+    if ((shouldConnect || shouldNotNow) && swipeLocked) {
+      handleLockedSwipeAttempt()
+      return
+    }
     
     if (shouldConnect) {
       // Connect - trigger heart animation and swipe out with smooth spring
@@ -455,11 +484,6 @@ export function MatrimonySwipeCard({
                 Premium
               </Badge>
             )}
-            {demo && (
-              <Badge className="border-[#d8c79f]/50 bg-[#18110d]/36 px-3 py-1 text-[#ffffff] shadow-lg backdrop-blur-xl">
-                {visibilityLabel || "Preview"}
-              </Badge>
-            )}
           </div>
           <div className="flex items-center gap-2">
           {onToggleShortlist && (
@@ -600,6 +624,10 @@ export function MatrimonySwipeCard({
             className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full border border-[#d8c79f]/40 bg-[#18110d]/48 shadow-[0_18px_42px_rgba(0,0,0,0.24),inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-xl transition-colors duration-200 hover:bg-[#18110d]/64"
             onClick={(e) => {
               e.stopPropagation()
+              if (swipeLocked) {
+                handleLockedSwipeAttempt()
+                return
+              }
               // Swipe out (no X animation)
               animate(x, -1000, { 
                 type: "spring",
@@ -627,6 +655,10 @@ export function MatrimonySwipeCard({
             className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full border border-[#d8c79f]/60 bg-[linear-gradient(135deg,#8f001c_0%,#b0182f_42%,#c89645_100%)] shadow-[0_24px_56px_rgba(143,0,28,0.36),inset_0_1px_0_rgba(255,255,255,0.24)] backdrop-blur-xl transition-all duration-200 hover:brightness-110"
             onClick={(e) => {
               e.stopPropagation()
+              if (swipeLocked) {
+                handleLockedSwipeAttempt()
+                return
+              }
               // Trigger heart animation and swipe out
               showHeartBurst()
               animate(x, 1000, { duration: 0.4, ease: "easeInOut" })
@@ -1039,6 +1071,10 @@ export function MatrimonySwipeCard({
                           className="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-0 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground bg-transparent border-2"
                           onClick={(e) => {
                             e.stopPropagation()
+                            if (swipeLocked) {
+                              handleLockedSwipeAttempt()
+                              return
+                            }
                             handleInfoClick(e)
                             setTimeout(() => onNotNow(), 300)
                           }}
@@ -1051,6 +1087,10 @@ export function MatrimonySwipeCard({
                           className="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-0 bg-gradient-to-r from-[#97011A] to-[#7A0115] hover:from-[#7A0115] hover:to-[#97011A] text-white shadow-lg"
                           onClick={(e) => {
                             e.stopPropagation()
+                            if (swipeLocked) {
+                              handleLockedSwipeAttempt()
+                              return
+                            }
                             handleInfoClick(e)
                             setTimeout(() => onConnect(), 300)
                           }}
@@ -1090,10 +1130,18 @@ export function MatrimonySwipeCard({
       open={showProfileModal}
       onOpenChange={setShowProfileModal}
       onConnect={() => {
+        if (swipeLocked) {
+          onSwipeLocked?.()
+          return
+        }
         setShowProfileModal(false)
         onConnect()
       }}
       onNotNow={() => {
+        if (swipeLocked) {
+          onSwipeLocked?.()
+          return
+        }
         setShowProfileModal(false)
         onNotNow()
       }}
