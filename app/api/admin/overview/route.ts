@@ -57,6 +57,57 @@ type AdminReportItem = {
   reviewedAt: string | null
 }
 
+type AuthEmailCount = {
+  action: string
+  label: string
+  description: string
+  total: number
+  lastSeen: string | null
+}
+
+type AuthEmailEvent = {
+  id: string
+  action: string
+  label: string
+  email: string | null
+  userId: string | null
+  ipAddress: string | null
+  userAgent: string | null
+  createdAt: string | null
+}
+
+type AuthEmailTelemetry = {
+  status: "ok" | "warning"
+  detail?: string
+  since: string | null
+  until: string | null
+  counts: AuthEmailCount[]
+  events: AuthEmailEvent[]
+}
+
+const authEmailActions: Record<string, { label: string; description: string }> = {
+  user_confirmation_requested: {
+    label: "Verification emails",
+    description: "Signup confirmations and resend-verification emails requested through Supabase Auth.",
+  },
+  user_recovery_requested: {
+    label: "Password reset emails",
+    description: "Forgot-password recovery links requested through Supabase Auth.",
+  },
+  user_repeated_signup: {
+    label: "Repeated signup attempts",
+    description: "Duplicate signup requests for accounts that already exist or are waiting for confirmation.",
+  },
+  user_invited: {
+    label: "Invitations",
+    description: "Supabase user invitation emails sent from admin flows.",
+  },
+  user_signedup: {
+    label: "Email signups",
+    description: "New auth users created. This is not always a separate email send, but helps compare conversion.",
+  },
+}
+
 function unique(values: Array<string | null | undefined>) {
   return Array.from(new Set(values.filter(Boolean))) as string[]
 }
@@ -188,6 +239,90 @@ async function loadNameMap(supabase: any, userIds: string[]) {
   return new Map<string, string>(rows.map((row) => [row.user_id, row.name || "Unnamed profile"]))
 }
 
+function getAuthEmailActionMeta(action: string) {
+  return (
+    authEmailActions[action] || {
+      label: statusLabel(action),
+      description: "Supabase Auth email-related event.",
+    }
+  )
+}
+
+function statusLabel(value: string) {
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
+function mapAuthEmailTelemetry(payload: any): AuthEmailTelemetry {
+  const counts = Array.isArray(payload?.counts) ? payload.counts : []
+  const events = Array.isArray(payload?.events) ? payload.events : []
+
+  return {
+    status: "ok",
+    since: typeof payload?.since === "string" ? payload.since : null,
+    until: typeof payload?.until === "string" ? payload.until : null,
+    counts: counts.map((count: any) => {
+      const action = typeof count?.action === "string" ? count.action : "unknown"
+      const meta = getAuthEmailActionMeta(action)
+      return {
+        action,
+        label: meta.label,
+        description: meta.description,
+        total: typeof count?.total === "number" ? count.total : Number(count?.total) || 0,
+        lastSeen: typeof count?.lastSeen === "string" ? count.lastSeen : null,
+      }
+    }),
+    events: events.map((event: any) => {
+      const action = typeof event?.action === "string" ? event.action : "unknown"
+      return {
+        id: String(event?.id || `${action}:${event?.createdAt || Math.random()}`),
+        action,
+        label: getAuthEmailActionMeta(action).label,
+        email: typeof event?.email === "string" ? event.email : null,
+        userId: typeof event?.userId === "string" ? event.userId : null,
+        ipAddress: typeof event?.ipAddress === "string" ? event.ipAddress : null,
+        userAgent: typeof event?.userAgent === "string" ? event.userAgent : null,
+        createdAt: typeof event?.createdAt === "string" ? event.createdAt : null,
+      }
+    }),
+  }
+}
+
+async function loadAuthEmailTelemetry(supabase: any): Promise<AuthEmailTelemetry> {
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
+  try {
+    const { data, error } = await supabase.rpc("get_lovesathi_auth_email_events", {
+      p_since: since,
+      p_limit: 25,
+    })
+
+    if (error) {
+      return {
+        status: "warning",
+        detail: error.message,
+        since,
+        until: new Date().toISOString(),
+        counts: [],
+        events: [],
+      }
+    }
+
+    return mapAuthEmailTelemetry(data)
+  } catch (error: any) {
+    return {
+      status: "warning",
+      detail: error?.message || "Unable to load Supabase auth email logs.",
+      since,
+      until: new Date().toISOString(),
+      counts: [],
+      events: [],
+    }
+  }
+}
+
 export async function GET(request: Request) {
   const auth = await requireAdmin(request)
   if (auth.response) {
@@ -198,18 +333,21 @@ export async function GET(request: Request) {
   const host = getHost(request)
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  const metrics = await Promise.all([
-    safeCount(supabase, "Registered users", "user_profiles"),
-    safeCount(supabase, "Completed profiles", "matrimony_profile_full", (query) => query.eq("profile_completed", true)),
-    safeCount(supabase, "Draft profiles", "matrimony_profile_full", (query) => query.eq("profile_completed", false)),
-    safeCount(supabase, "Pending verifications", "id_verifications", (query) =>
-      query.in("verification_status", ["pending", "in_review"]),
-    ),
-    safeCount(supabase, "Open reports", "user_reports", (query) => query.in("status", ["pending", "reviewed"])),
-    safeCount(supabase, "Active matches", "matrimony_matches", (query) => query.eq("is_active", true)),
-    safeCount(supabase, "Messages", "messages"),
-    safeCount(supabase, "Shortlists", "shortlists"),
-    safeCount(supabase, "New profiles 7d", "matrimony_profile_full", (query) => query.gte("created_at", sevenDaysAgo)),
+  const [metrics, authEmailTelemetry] = await Promise.all([
+    Promise.all([
+      safeCount(supabase, "Registered users", "user_profiles"),
+      safeCount(supabase, "Completed profiles", "matrimony_profile_full", (query) => query.eq("profile_completed", true)),
+      safeCount(supabase, "Draft profiles", "matrimony_profile_full", (query) => query.eq("profile_completed", false)),
+      safeCount(supabase, "Pending verifications", "id_verifications", (query) =>
+        query.in("verification_status", ["pending", "in_review"]),
+      ),
+      safeCount(supabase, "Open reports", "user_reports", (query) => query.in("status", ["pending", "reviewed"])),
+      safeCount(supabase, "Active matches", "matrimony_matches", (query) => query.eq("is_active", true)),
+      safeCount(supabase, "Messages", "messages"),
+      safeCount(supabase, "Shortlists", "shortlists"),
+      safeCount(supabase, "New profiles 7d", "matrimony_profile_full", (query) => query.gte("created_at", sevenDaysAgo)),
+    ]),
+    loadAuthEmailTelemetry(supabase),
   ])
 
   const [profileRows, verificationRows, reportRows] = await Promise.all([
@@ -301,6 +439,7 @@ export async function GET(request: Request) {
       verifications,
       reports,
     },
+    authEmailTelemetry,
     readiness: [
       {
         label: "Admin allowlist",

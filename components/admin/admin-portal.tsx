@@ -15,6 +15,7 @@ import {
   FileWarning,
   Lock,
   LogOut,
+  Mail,
   MessageCircle,
   RefreshCw,
   ShieldCheck,
@@ -92,6 +93,34 @@ type AdminReportItem = {
   reviewedAt: string | null
 }
 
+type AuthEmailCount = {
+  action: string
+  label: string
+  description: string
+  total: number
+  lastSeen: string | null
+}
+
+type AuthEmailEvent = {
+  id: string
+  action: string
+  label: string
+  email: string | null
+  userId: string | null
+  ipAddress: string | null
+  userAgent: string | null
+  createdAt: string | null
+}
+
+type AuthEmailTelemetry = {
+  status: "ok" | "warning"
+  detail?: string
+  since: string | null
+  until: string | null
+  counts: AuthEmailCount[]
+  events: AuthEmailEvent[]
+}
+
 type AdminOverview = {
   admin: {
     email: string
@@ -104,6 +133,7 @@ type AdminOverview = {
     verifications: QueueResult<AdminVerificationItem>
     reports: QueueResult<AdminReportItem>
   }
+  authEmailTelemetry: AuthEmailTelemetry
   readiness: ReadinessItem[]
 }
 
@@ -166,6 +196,8 @@ export function AdminPortal() {
 
   const generatedAt = overview?.generatedAt ? formatDate(overview.generatedAt) : null
   const refreshing = loading && Boolean(sessionToken)
+  const authEmailTotal =
+    overview?.authEmailTelemetry.counts.reduce((total, item) => total + item.total, 0) || 0
 
   useEffect(() => {
     let mounted = true
@@ -437,6 +469,98 @@ export function AdminPortal() {
               </Card>
             )
           })}
+        </section>
+
+        <section>
+          <Card className="luxe-card overflow-hidden rounded-[2rem] border-[#d9b978]/24">
+            <CardHeader className="border-b border-[#482b1a]/10 bg-white/50">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="luxe-kicker mb-2 text-[#8f001c]">supabase email watch</p>
+                  <CardTitle className="flex items-center gap-3 font-serif text-3xl tracking-[-0.04em] text-[#18110d] sm:text-4xl">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#8f001c] text-[#fffaf2]">
+                      <Mail className="h-5 w-5" />
+                    </span>
+                    Auth email telemetry
+                  </CardTitle>
+                  <p className="mt-3 max-w-3xl text-sm leading-6 text-[#6c5a4a]">
+                    Tracks Supabase Auth audit events for verification emails, password recovery links, repeated signups,
+                    and invitations from the last 7 days.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge status={overview?.authEmailTelemetry.status || "pending"} />
+                  <Badge variant="outline" className="rounded-full border-[#d9b978]/30 bg-[#fffaf2] px-4 py-2 text-[#8f001c]">
+                    {authEmailTotal.toLocaleString("en-IN")} events
+                  </Badge>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-5 p-5 sm:p-6">
+              {overview?.authEmailTelemetry.detail && (
+                <div className="rounded-[1.35rem] border border-[#b9904d]/20 bg-[#b9904d]/10 p-4 text-sm font-semibold leading-6 text-[#8a641f]">
+                  {overview.authEmailTelemetry.detail}
+                </div>
+              )}
+
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                {overview?.authEmailTelemetry.counts.length ? (
+                  overview.authEmailTelemetry.counts.map((item) => (
+                    <div key={item.action} className="rounded-[1.35rem] border border-[#482b1a]/10 bg-white/66 p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8f001c]">{item.label}</p>
+                      <p className="mt-3 font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d]">
+                        {item.total.toLocaleString("en-IN")}
+                      </p>
+                      <p className="mt-3 min-h-12 text-xs leading-5 text-[#6c5a4a]">{item.description}</p>
+                      <p className="mt-3 text-xs font-semibold text-[#9d7a55]">Last seen {formatDate(item.lastSeen)}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="md:col-span-2 xl:col-span-5">
+                    <EmptyState copy="No Supabase auth email events found in the last 7 days." />
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-[1.5rem] border border-[#482b1a]/10 bg-[#fffaf2]/70">
+                <div className="flex flex-col gap-2 border-b border-[#482b1a]/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">Recent email events</p>
+                    <p className="text-xs font-semibold text-[#9d7a55]">
+                      Since {formatDate(overview?.authEmailTelemetry.since)}
+                    </p>
+                  </div>
+                  <p className="text-xs font-semibold text-[#6c5a4a]">
+                    Source: Supabase `auth.audit_log_entries`
+                  </p>
+                </div>
+                <div className="divide-y divide-[#482b1a]/10">
+                  {overview?.authEmailTelemetry.events.length ? (
+                    overview.authEmailTelemetry.events.map((event) => (
+                      <div key={event.id} className="grid gap-3 p-4 text-sm sm:grid-cols-[1.1fr_1fr_0.9fr] sm:items-center">
+                        <div>
+                          <p className="font-bold text-[#18110d]">{event.label}</p>
+                          <p className="mt-1 text-xs text-[#6c5a4a]">{event.action}</p>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-[#18110d]">{event.email || "Email not exposed in audit payload"}</p>
+                          <p className="mt-1 truncate text-xs text-[#6c5a4a]">{event.userId || "User ID unavailable"}</p>
+                        </div>
+                        <div className="sm:text-right">
+                          <p className="font-semibold text-[#18110d]">{formatDate(event.createdAt)}</p>
+                          <p className="mt-1 text-xs text-[#6c5a4a]">{event.ipAddress || "IP unavailable"}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-4">
+                      <EmptyState copy="No recent email event rows are available yet." />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </section>
 
         <section className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">

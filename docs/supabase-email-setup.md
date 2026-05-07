@@ -57,3 +57,17 @@ This lets Supabase exchange the email confirmation code, establish the browser s
 6. Confirmed users continue into Lovesathi onboarding.
 
 If a member tries to log in before confirming email, the app stores their email locally and sends them to `/auth/verify-email?reason=unconfirmed` so they can request a fresh confirmation link. If an old confirmation link is expired or invalid, the callback sends them to `/auth/verify-email?reason=expired` with the same resend action.
+
+## Admin Email Telemetry
+
+The admin portal reads a guarded Supabase RPC named `get_lovesathi_auth_email_events` to summarize recent Auth audit events from `auth.audit_log_entries`.
+
+Tracked actions:
+
+- `user_confirmation_requested`: signup confirmation and resend-verification emails.
+- `user_recovery_requested`: forgot-password recovery emails.
+- `user_repeated_signup`: duplicate signup attempts.
+- `user_invited`: Supabase invitation emails.
+- `user_signedup`: new email signups for conversion context.
+
+The RPC is granted only to the Supabase `service_role`, and the app exposes it only through the existing `ADMIN_EMAILS`-protected admin overview API.
