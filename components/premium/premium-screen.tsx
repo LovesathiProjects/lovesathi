@@ -137,7 +137,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
       <div className="overflow-y-auto">
         {/* Hero Section */}
         <div className={cn(
-          "bg-gradient-to-br from-[#18110d] via-[#5f0012] to-[#8f001c] p-8 text-[#fffaf2] shadow-[0_26px_80px_rgba(24,17,13,0.28)]",
+          "bg-gradient-to-br from-[#18110d] via-[#5f0012] to-[#8f001c] p-8 text-[#ffffff] shadow-[0_26px_80px_rgba(24,17,13,0.28)]",
           isMatrimony ? "" : "glass-apple"
         )}>
           <div className="text-center space-y-4">
@@ -145,9 +145,9 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
               <Crown className="w-16 h-16 fill-current" />
             </div>
             <div>
-              <p className="luxe-kicker mb-3 text-[#d9b978]">premium matrimony</p>
-              <h1 className="font-serif text-5xl font-bold tracking-[-0.05em] text-[#fffaf2]">A more intentional path to the right family.</h1>
-              <p className="mx-auto mt-4 max-w-xl text-[#f2dfbd]">Unlock refined discovery, richer signals, and priority trust features without turning matrimony into noise.</p>
+              <p className="luxe-kicker mb-3 text-[#d8c79f]">premium matrimony</p>
+              <h1 className="font-serif text-5xl font-bold tracking-[-0.05em] text-[#ffffff]">A more intentional path to the right family.</h1>
+              <p className="mx-auto mt-4 max-w-xl text-[#d8c79f]">Unlock refined discovery, richer signals, and priority trust features without turning matrimony into noise.</p>
             </div>
           </div>
         </div>
@@ -192,7 +192,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
                     isMatrimony
                       ? selectedPlan === plan.id
                         ? "luxe-card ring-2 ring-[#97011A] border-[#97011A]"
-                        : "luxe-card border-[#d9b978]/24 hover:border-[#97011A]/50"
+                        : "luxe-card border-[#d8c79f]/24 hover:border-[#97011A]/50"
                       : selectedPlan === plan.id
                         ? "ring-2 ring-[#97011A] border-[#97011A] bg-[#14161B]/50"
                         : "border-white/20 bg-[#14161B]/50 hover:border-[#97011A]/50",

@@ -118,26 +118,26 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="matrimony-filter-sheet flex w-full min-w-0 flex-col overflow-hidden border-l border-[#d9b978]/24 bg-[linear-gradient(145deg,#fffdf8,#fffaf1_48%,#f8eddc)] sm:w-[520px]">
+      <SheetContent side="right" className="matrimony-filter-sheet flex w-full min-w-0 flex-col overflow-hidden border-l border-[#d8c79f]/24 bg-[linear-gradient(145deg,#fdfdfb,#fdfdfb_48%,#f6f3ee)] sm:w-[520px]">
         <SheetHeader className="shrink-0 space-y-3 px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6">
           <div className="flex min-w-0 items-center justify-between gap-3 pr-16 sm:pr-12">
             <SheetTitle className="matrimony-filter-title min-w-0 flex-1 truncate font-serif text-[1.8rem] leading-none tracking-[-0.05em] text-[#18110d] sm:text-3xl">Refine Matches</SheetTitle>
-            <Button variant="ghost" size="sm" onClick={handleReset} className="h-11 shrink-0 rounded-full border border-[#d9b978]/30 bg-white/78 px-5 text-[#18110d] shadow-[0_10px_24px_rgba(24,17,13,0.06)] hover:bg-white sm:h-12 sm:px-6">
+            <Button variant="ghost" size="sm" onClick={handleReset} className="h-11 shrink-0 rounded-full border border-[#d8c79f]/30 bg-white/78 px-5 text-[#18110d] shadow-[0_10px_24px_rgba(24,17,13,0.06)] hover:bg-white sm:h-12 sm:px-6">
               Reset
             </Button>
           </div>
-          <SheetDescription className="text-[#6c5a4a]">Tune discovery by age, height, location, family context, and lifestyle.</SheetDescription>
+          <SheetDescription className="text-[#685f58]">Tune discovery by age, height, location, family context, and lifestyle.</SheetDescription>
         </SheetHeader>
 
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 pb-28 pt-2 sm:px-6">
-          <div className="rounded-[1.7rem] border border-[#d9b978]/28 bg-white/72 p-4 shadow-[0_18px_52px_rgba(24,17,13,0.08)] backdrop-blur-xl">
+          <div className="rounded-[1.7rem] border border-[#d8c79f]/28 bg-white/72 p-4 shadow-[0_18px_52px_rgba(24,17,13,0.08)] backdrop-blur-xl">
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#d9b978]/36 bg-[#fff7e8] text-[#8f001c] shadow-inner">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#d8c79f]/36 bg-[#f7f5f1] text-[#8f001c] shadow-inner">
                 <Sparkles className="h-5 w-5" />
               </div>
               <div>
                 <p className="luxe-kicker text-[0.62rem] text-[#8f001c]">premium discovery suite</p>
-                <p className="mt-1 text-sm leading-6 text-[#6c5a4a]">Filter with intention, then keep the experience calm and family-ready.</p>
+                <p className="mt-1 text-sm leading-6 text-[#685f58]">Filter with intention, then keep the experience calm and family-ready.</p>
               </div>
             </div>
           </div>
@@ -292,7 +292,7 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
           <div className="space-y-4">
             <h3 className="font-serif text-2xl font-bold tracking-[-0.05em] text-[#18110d]">Account Type</h3>
             <div className="space-y-3">
-              <div className="rounded-[1.6rem] border border-[#d9b978]/30 bg-white/78 p-4 shadow-[0_18px_48px_rgba(24,17,13,0.07)]">
+              <div className="rounded-[1.6rem] border border-[#d8c79f]/30 bg-white/78 p-4 shadow-[0_18px_48px_rgba(24,17,13,0.07)]">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex min-w-0 gap-3">
                     <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#8f001c]/10 text-[#8f001c]">
@@ -301,14 +301,14 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <Label htmlFor="verified-only" className="text-base font-bold text-[#18110d]">Verified profiles only</Label>
-                        {isPremium && <Badge className="border-[#d9b978]/40 bg-[#fff7e8] text-[#8f001c]">Premium</Badge>}
+                        {isPremium && <Badge className="border-[#d8c79f]/40 bg-[#f7f5f1] text-[#8f001c]">Premium</Badge>}
                       </div>
-                      <p className="mt-1 text-xs leading-5 text-[#6c5a4a]">{verifiedFilterDescription}</p>
+                      <p className="mt-1 text-xs leading-5 text-[#685f58]">{verifiedFilterDescription}</p>
                     </div>
                   </div>
                   <Switch
                     id="verified-only"
-                    className="h-7 w-12 data-[state=checked]:bg-[linear-gradient(135deg,#8f001c,#b9904d)]"
+                    className="h-7 w-12 data-[state=checked]:bg-[linear-gradient(135deg,#8f001c,#b79b62)]"
                     checked={filters.verifiedOnly}
                     disabled={verifiedFilterLoading || !canUseVerifiedFilter}
                     onCheckedChange={(checked) => setFilters((prev) => ({ ...prev, verifiedOnly: checked }))}
@@ -318,12 +318,12 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
               <div className="rounded-[1.6rem] border border-[#482b1a]/10 bg-white/52 p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex min-w-0 gap-3">
-                    <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#d9b978]/18 text-[#8a641f]">
+                    <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#d8c79f]/18 text-[#8a641f]">
                       <Crown className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
                       <Label htmlFor="premium-only" className="text-base font-bold text-[#18110d]">Premium members only</Label>
-                      <p className="mt-1 text-xs leading-5 text-[#6c5a4a]">Queued until member entitlement display is connected.</p>
+                      <p className="mt-1 text-xs leading-5 text-[#685f58]">Queued until member entitlement display is connected.</p>
                     </div>
                   </div>
                   <Switch
@@ -339,7 +339,7 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
         </div>
 
         {/* Apply Button */}
-        <div className="shrink-0 border-t border-[#482b1a]/10 bg-[#fffdf8]/94 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl sm:px-6 sm:py-5">
+        <div className="shrink-0 border-t border-[#482b1a]/10 bg-[#fdfdfb]/94 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl sm:px-6 sm:py-5">
           <Button onClick={handleApply} className="luxe-button w-full rounded-full" size="lg">
             Apply Matrimony Filters
           </Button>

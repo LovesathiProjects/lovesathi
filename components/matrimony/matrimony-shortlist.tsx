@@ -47,7 +47,7 @@ export function MatrimonyShortlistView({
         </div>
         <div className="space-y-2">
           <h3 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#18110d]">No shortlisted profiles yet</h3>
-          <p className="max-w-sm text-sm leading-6 text-[#6c5a4a]">
+          <p className="max-w-sm text-sm leading-6 text-[#685f58]">
             Tap the star icon on profiles that deserve a second look and build a calmer family-ready shortlist.
           </p>
         </div>
@@ -60,7 +60,7 @@ export function MatrimonyShortlistView({
       {profiles.map((profile) => (
         <div
           key={profile.id}
-          className="luxe-card cursor-pointer rounded-[1.5rem] border-[#d9b978]/24 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(24,17,13,0.14)]"
+          className="luxe-card cursor-pointer rounded-[1.5rem] border-[#d8c79f]/24 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(24,17,13,0.14)]"
           onClick={() => onOpenProfile?.(profile)}
           role="button"
           tabIndex={0}

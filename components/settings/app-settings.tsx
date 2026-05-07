@@ -290,7 +290,7 @@ export function AppSettings({ onNavigate, onLogout, onBack, mode = 'matrimony' }
               <Card className={cn(
                 "overflow-hidden shadow-sm",
                 isMatrimony 
-                  ? "luxe-card border-[#d9b978]/24"
+                  ? "luxe-card border-[#d8c79f]/24"
                   : "bg-[#14161B]/50 border border-white/20"
               )}>
                 <CardContent className="p-0">

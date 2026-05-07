@@ -169,7 +169,7 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
       {/* Header with Back Button */}
       <div className={cn(
         "flex-shrink-0 p-4 border-b backdrop-blur-xl shadow-lg",
-        isMatrimony ? "border-[#482b1a]/10 bg-[#fffaf2]/84" : "border-white/20 bg-[#14161B]/50"
+        isMatrimony ? "border-[#482b1a]/10 bg-[#ffffff]/84" : "border-white/20 bg-[#14161B]/50"
       )}>
         <div className="space-y-4">
           <div className="flex items-center space-x-4">
@@ -201,9 +201,9 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
                 className={cn(
                   "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
                   activeTab === tab.id
-                    ? "bg-[#8f001c] text-[#fffaf2] shadow-[0_12px_28px_rgba(143,0,28,0.22)]"
+                    ? "bg-[#8f001c] text-[#ffffff] shadow-[0_12px_28px_rgba(143,0,28,0.22)]"
                     : isMatrimony 
-                      ? "border border-[#482b1a]/10 bg-white/70 text-[#6c5a4a] hover:bg-white"
+                      ? "border border-[#482b1a]/10 bg-white/70 text-[#685f58] hover:bg-white"
                       : "bg-white/10 hover:bg-white/20 text-[#A1A1AA]"
                 )}
               >
@@ -280,7 +280,7 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
                 className={cn(
                   "border backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer",
                   isMatrimony 
-                    ? "luxe-card border-[#d9b978]/24 hover:bg-[#fffaf2]"
+                    ? "luxe-card border-[#d8c79f]/24 hover:bg-[#ffffff]"
                     : "bg-[#14161B] border-white/20 hover:bg-white/10"
                 )}
                 onClick={() => {

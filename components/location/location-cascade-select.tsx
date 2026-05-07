@@ -272,7 +272,7 @@ export function LocationPreferencePicker({
       {selected.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {selected.map((location) => (
-            <Badge key={location} variant="outline" className="gap-2 rounded-full border-[#d9b978]/40 bg-[#fffaf2] px-3 py-1 text-[#18110d]">
+            <Badge key={location} variant="outline" className="gap-2 rounded-full border-[#d8c79f]/40 bg-[#ffffff] px-3 py-1 text-[#18110d]">
               {location}
               <button
                 type="button"

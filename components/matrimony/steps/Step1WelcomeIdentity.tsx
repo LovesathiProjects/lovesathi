@@ -149,7 +149,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
         <div className="flex-1 space-y-6">
           <div className="space-y-2">
             <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">Welcome</h1>
-            <p className="text-base leading-7 text-[#6c5a4a]">Tell us whose profile we are preparing. Age is derived from your verified birth date.</p>
+            <p className="text-base leading-7 text-[#685f58]">Tell us whose profile we are preparing. Age is derived from your verified birth date.</p>
           </div>
           
           <div className="flex items-center gap-3 sm:gap-4">
@@ -225,12 +225,12 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
           />
 
           {verifiedDob ? (
-            <div className="rounded-3xl border border-[#b9904d]/24 bg-[#fffaf2]/76 p-4">
+            <div className="rounded-3xl border border-[#b79b62]/24 bg-[#ffffff]/76 p-4">
               <p className="luxe-kicker text-[#8f001c]">verified age</p>
               <p className="mt-1 font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">
                 {form.watch("age")} years
               </p>
-              <p className="mt-1 text-sm text-[#6c5a4a]">
+              <p className="mt-1 text-sm text-[#685f58]">
                 Based on {formatDateForDisplay(verifiedDob)}. You will not need to enter age again.
               </p>
             </div>
@@ -258,12 +258,12 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
           )}
 
           {verifiedGender ? (
-            <div className="rounded-3xl border border-[#b9904d]/24 bg-[#fffaf2]/76 p-4">
+            <div className="rounded-3xl border border-[#b79b62]/24 bg-[#ffffff]/76 p-4">
               <p className="luxe-kicker text-[#8f001c]">verified gender</p>
               <p className="mt-1 font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">
                 {verifiedGender}
               </p>
-              <p className="mt-1 text-sm text-[#6c5a4a]">
+              <p className="mt-1 text-sm text-[#685f58]">
                 This was already captured during verification, so we will not ask again here.
               </p>
             </div>

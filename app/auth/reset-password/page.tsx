@@ -121,7 +121,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="luxe-light-page flex min-h-screen flex-col overflow-x-hidden px-4 py-5 sm:px-6">
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-full border border-[#482b1a]/10 bg-[#fffaf2]/74 px-4 py-3 shadow-sm backdrop-blur-xl">
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-full border border-[#482b1a]/10 bg-[#ffffff]/74 px-4 py-3 shadow-sm backdrop-blur-xl">
         <Button variant="ghost" size="sm" className="rounded-full text-[#18110d]" onClick={() => router.push("/auth")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
@@ -137,15 +137,15 @@ export default function ResetPasswordPage() {
             <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">
               Set new password
             </h1>
-            <p className="text-base text-[#6c5a4a]">
+            <p className="text-base text-[#685f58]">
               Choose a new password for your Lovesathi account.
             </p>
           </div>
 
           {status === "checking" && (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-[1.5rem] border border-[#d9b978]/24 bg-white/62 p-6 text-center">
+            <div className="flex flex-col items-center justify-center gap-4 rounded-[1.5rem] border border-[#d8c79f]/24 bg-white/62 p-6 text-center">
               <Loader2 className="h-8 w-8 animate-spin text-[#8f001c]" />
-              <p className="text-sm font-semibold text-[#6c5a4a]">Opening your secure Supabase recovery session...</p>
+              <p className="text-sm font-semibold text-[#685f58]">Opening your secure Supabase recovery session...</p>
             </div>
           )}
 
@@ -177,13 +177,13 @@ export default function ResetPasswordPage() {
                     placeholder="Enter new password"
                     required
                     autoComplete="new-password"
-                    className="h-12 rounded-2xl border-[#482b1a]/20 bg-[#fffaf2] pr-12"
+                    className="h-12 rounded-2xl border-[#482b1a]/20 bg-[#ffffff] pr-12"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-1 top-1 h-10 rounded-xl px-3 text-[#6c5a4a] hover:bg-transparent"
+                    className="absolute right-1 top-1 h-10 rounded-xl px-3 text-[#685f58] hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -202,13 +202,13 @@ export default function ResetPasswordPage() {
                     placeholder="Confirm new password"
                     required
                     autoComplete="new-password"
-                    className="h-12 rounded-2xl border-[#482b1a]/20 bg-[#fffaf2] pr-12"
+                    className="h-12 rounded-2xl border-[#482b1a]/20 bg-[#ffffff] pr-12"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-1 top-1 h-10 rounded-xl px-3 text-[#6c5a4a] hover:bg-transparent"
+                    className="absolute right-1 top-1 h-10 rounded-xl px-3 text-[#685f58] hover:bg-transparent"
                     onClick={() => setShowConfirm(!showConfirm)}
                   >
                     {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

@@ -383,7 +383,7 @@ export function MatrimonySwipeCard({
           {/* Front Side */}
           <motion.div
             className={cn(
-              "absolute inset-0 h-full w-full overflow-hidden rounded-[2.65rem] border border-[#f2dfbd]/52 bg-[#18110d]",
+              "absolute inset-0 h-full w-full overflow-hidden rounded-[2.65rem] border border-[#d8c79f]/52 bg-[#18110d]",
               "ring-1 ring-white/30",
               "backface-hidden"
             )}
@@ -409,12 +409,12 @@ export function MatrimonySwipeCard({
           crossOrigin="anonymous"
         />
       ) : (
-        <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_28%_14%,rgba(255,250,242,0.84),transparent_18rem),radial-gradient(circle_at_76%_0%,rgba(217,185,120,0.34),transparent_20rem),linear-gradient(145deg,#ece3d7,#cdbfAD_48%,#6c5a4a_100%)]">
+        <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_28%_14%,rgba(255,255,255,0.84),transparent_18rem),radial-gradient(circle_at_76%_0%,rgba(216,199,159,0.34),transparent_20rem),linear-gradient(145deg,#eceae5,#c8c3ba_48%,#685f58_100%)]">
           <div className="absolute inset-0 opacity-45 [background-image:linear-gradient(rgba(255,255,255,0.28)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.20)_1px,transparent_1px)] [background-size:54px_54px]" />
-          <div className="absolute left-1/2 top-[38%] flex h-28 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/28 bg-white/18 text-[#fffaf2] shadow-[0_24px_70px_rgba(24,17,13,0.22)] backdrop-blur-xl">
+          <div className="absolute left-1/2 top-[38%] flex h-28 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/28 bg-white/18 text-[#ffffff] shadow-[0_24px_70px_rgba(24,17,13,0.22)] backdrop-blur-xl">
             <span className="font-serif text-6xl font-bold tracking-[-0.08em] drop-shadow-lg">{cardInitial}</span>
           </div>
-          <div className="absolute left-1/2 top-[58%] flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/24 bg-[#18110d]/24 px-4 py-2 text-xs font-bold text-[#fffaf2] shadow-[0_18px_48px_rgba(24,17,13,0.18)] backdrop-blur-xl">
+          <div className="absolute left-1/2 top-[58%] flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/24 bg-[#18110d]/24 px-4 py-2 text-xs font-bold text-[#ffffff] shadow-[0_18px_48px_rgba(24,17,13,0.18)] backdrop-blur-xl">
             <ImageIcon className="h-4 w-4" />
             Private portrait
           </div>
@@ -423,14 +423,14 @@ export function MatrimonySwipeCard({
       )}
 
       {/* Frosted glass overlay with gradient */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,250,242,0.26),transparent_17rem),linear-gradient(to_bottom,rgba(24,17,13,0.06),rgba(24,17,13,0.10)_34%,rgba(24,17,13,0.88))]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.26),transparent_17rem),linear-gradient(to_bottom,rgba(24,17,13,0.06),rgba(24,17,13,0.10)_34%,rgba(24,17,13,0.88))]" />
       
       {/* Subtle frosted glass effect on top portion */}
       {stackIndex === 0 && (
         <>
           <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] via-transparent to-transparent backdrop-blur-[0.35px]" />
-          <div className="pointer-events-none absolute inset-[1px] z-10 rounded-[2.58rem] border border-white/18 shadow-[inset_0_1px_0_rgba(255,250,242,0.32),inset_0_-18px_55px_rgba(143,0,28,0.10)]" />
-          <div className="pointer-events-none absolute inset-x-10 top-0 z-10 h-px bg-gradient-to-r from-transparent via-[#fffaf2]/80 to-transparent" />
+          <div className="pointer-events-none absolute inset-[1px] z-10 rounded-[2.58rem] border border-white/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.32),inset_0_-18px_55px_rgba(143,0,28,0.10)]" />
+          <div className="pointer-events-none absolute inset-x-10 top-0 z-10 h-px bg-gradient-to-r from-transparent via-[#ffffff]/80 to-transparent" />
           <motion.div
             aria-hidden="true"
             className="pointer-events-none absolute -left-1/2 top-0 z-10 h-full w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/18 to-transparent blur-sm"
@@ -445,18 +445,18 @@ export function MatrimonySwipeCard({
         <div className="absolute left-4 right-4 top-4 z-20 flex items-start justify-between gap-3">
           <div className="flex flex-wrap gap-2">
             {verified && (
-              <Badge className="border-white/20 bg-white/18 px-3 py-1 text-[#fffaf2] shadow-lg backdrop-blur-xl">
+              <Badge className="border-white/20 bg-white/18 px-3 py-1 text-[#ffffff] shadow-lg backdrop-blur-xl">
                 <Check className="h-3 w-3" />
                 Verified
               </Badge>
             )}
             {premium && (
-              <Badge className="border-[#d9b978]/50 bg-[#d9b978]/24 px-3 py-1 text-[#fffaf2] shadow-lg backdrop-blur-xl">
+              <Badge className="border-[#d8c79f]/50 bg-[#d8c79f]/24 px-3 py-1 text-[#ffffff] shadow-lg backdrop-blur-xl">
                 Premium
               </Badge>
             )}
             {demo && (
-              <Badge className="border-[#d9b978]/50 bg-[#18110d]/36 px-3 py-1 text-[#fffaf2] shadow-lg backdrop-blur-xl">
+              <Badge className="border-[#d8c79f]/50 bg-[#18110d]/36 px-3 py-1 text-[#ffffff] shadow-lg backdrop-blur-xl">
                 {visibilityLabel || "Preview"}
               </Badge>
             )}
@@ -470,8 +470,8 @@ export function MatrimonySwipeCard({
               aria-pressed={isShortlisted}
               onClick={handleShortlistClick}
               className={cn(
-                "flex h-11 w-11 items-center justify-center rounded-full border border-[#f2dfbd]/40 bg-[#18110d]/38 text-[#fffaf2] shadow-[0_12px_34px_rgba(0,0,0,0.2)] backdrop-blur-xl transition-colors",
-                isShortlisted ? "border-[#d9b978] bg-[#8f001c]/72 text-[#f2dfbd]" : "hover:bg-[#18110d]/62",
+                "flex h-11 w-11 items-center justify-center rounded-full border border-[#d8c79f]/40 bg-[#18110d]/38 text-[#ffffff] shadow-[0_12px_34px_rgba(0,0,0,0.2)] backdrop-blur-xl transition-colors",
+                isShortlisted ? "border-[#d8c79f] bg-[#8f001c]/72 text-[#d8c79f]" : "hover:bg-[#18110d]/62",
                 shortlistBusy && "opacity-60 pointer-events-none",
               )}
             >
@@ -481,10 +481,10 @@ export function MatrimonySwipeCard({
           <Button
             variant="ghost"
             size="sm"
-            className="h-11 w-11 rounded-full border border-[#f2dfbd]/40 bg-[#18110d]/38 p-0 shadow-[0_12px_34px_rgba(0,0,0,0.2)] backdrop-blur-xl hover:bg-[#18110d]/62"
+            className="h-11 w-11 rounded-full border border-[#d8c79f]/40 bg-[#18110d]/38 p-0 shadow-[0_12px_34px_rgba(0,0,0,0.2)] backdrop-blur-xl hover:bg-[#18110d]/62"
             onClick={handleInfoClick}
           >
-            <MoreHorizontal className="h-4 w-4 text-[#fffaf2]" />
+            <MoreHorizontal className="h-4 w-4 text-[#ffffff]" />
           </Button>
           </div>
         </div>
@@ -497,7 +497,7 @@ export function MatrimonySwipeCard({
               key={index}
               className={cn(
                 "h-1 flex-1 rounded-full bg-white/34 shadow-[0_1px_8px_rgba(0,0,0,0.18)]",
-                index === currentPhotoIndex && "bg-[#fffaf2]",
+                index === currentPhotoIndex && "bg-[#ffffff]",
               )}
             />
           ))}
@@ -513,11 +513,11 @@ export function MatrimonySwipeCard({
           {/* Profile information - positioned above the buttons */}
           <div className="absolute bottom-20 left-5 right-5 z-10 matrimony-card-overlay-text sm:left-6 sm:right-6">
             <div className="mb-2 flex items-center gap-2">
-              <span className="rounded-full border border-[#d9b978]/28 bg-[#fffaf2]/12 px-3 py-1 text-[0.58rem] font-bold uppercase tracking-[0.24em] text-[#f2dfbd] backdrop-blur-xl">
+              <span className="rounded-full border border-[#d8c79f]/28 bg-[#ffffff]/12 px-3 py-1 text-[0.58rem] font-bold uppercase tracking-[0.24em] text-[#d8c79f] backdrop-blur-xl">
                 private dossier
               </span>
               {premium && (
-                <span className="rounded-full border border-[#d9b978]/36 bg-[#d9b978]/20 px-3 py-1 text-[0.58rem] font-bold uppercase tracking-[0.22em] text-[#fffaf2] backdrop-blur-xl">
+                <span className="rounded-full border border-[#d8c79f]/36 bg-[#d8c79f]/20 px-3 py-1 text-[0.58rem] font-bold uppercase tracking-[0.22em] text-[#ffffff] backdrop-blur-xl">
                   premium
                 </span>
               )}
@@ -552,7 +552,7 @@ export function MatrimonySwipeCard({
             {/* Religion/Caste and Profession */}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {height && (
-                <span className="rounded-full border border-white/18 bg-white/14 px-3 py-1 text-xs font-bold text-[#fffaf2] backdrop-blur">
+                <span className="rounded-full border border-white/18 bg-white/14 px-3 py-1 text-xs font-bold text-[#ffffff] backdrop-blur">
                   {height}
                 </span>
               )}
@@ -597,7 +597,7 @@ export function MatrimonySwipeCard({
             type="button"
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.92 }}
-            className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full border border-[#f2dfbd]/40 bg-[#18110d]/48 shadow-[0_18px_42px_rgba(0,0,0,0.24),inset_0_1px_0_rgba(255,250,242,0.18)] backdrop-blur-xl transition-colors duration-200 hover:bg-[#18110d]/64"
+            className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full border border-[#d8c79f]/40 bg-[#18110d]/48 shadow-[0_18px_42px_rgba(0,0,0,0.24),inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-xl transition-colors duration-200 hover:bg-[#18110d]/64"
             onClick={(e) => {
               e.stopPropagation()
               // Swipe out (no X animation)
@@ -612,7 +612,7 @@ export function MatrimonySwipeCard({
               }, 300)
             }}
           >
-            <X className="h-7 w-7 text-[#fffaf2] drop-shadow-sm" />
+            <X className="h-7 w-7 text-[#ffffff] drop-shadow-sm" />
           </motion.button>
         </div>
       )}
@@ -624,7 +624,7 @@ export function MatrimonySwipeCard({
             type="button"
             whileHover={{ scale: 1.06, y: -3 }}
             whileTap={{ scale: 0.92 }}
-            className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full border border-[#d9b978]/60 bg-[linear-gradient(135deg,#8f001c_0%,#b0182f_42%,#c89645_100%)] shadow-[0_24px_56px_rgba(143,0,28,0.36),inset_0_1px_0_rgba(255,250,242,0.24)] backdrop-blur-xl transition-all duration-200 hover:brightness-110"
+            className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full border border-[#d8c79f]/60 bg-[linear-gradient(135deg,#8f001c_0%,#b0182f_42%,#c89645_100%)] shadow-[0_24px_56px_rgba(143,0,28,0.36),inset_0_1px_0_rgba(255,255,255,0.24)] backdrop-blur-xl transition-all duration-200 hover:brightness-110"
             onClick={(e) => {
               e.stopPropagation()
               // Trigger heart animation and swipe out
@@ -635,7 +635,7 @@ export function MatrimonySwipeCard({
               }, 400)
             }}
           >
-            <Check className="h-7 w-7 text-[#fffaf2] drop-shadow-sm" />
+            <Check className="h-7 w-7 text-[#ffffff] drop-shadow-sm" />
           </motion.button>
         </div>
       )}
@@ -645,9 +645,9 @@ export function MatrimonySwipeCard({
             {stackIndex > 0 && (
               <>
                 {/* Right edge highlight */}
-                <div className="absolute -right-1 top-2 bottom-2 w-2 rounded-r-full bg-gradient-to-b from-[#d9b978]/60 via-[#8f001c]/70 to-[#d9b978]/60 shadow-lg" />
+                <div className="absolute -right-1 top-2 bottom-2 w-2 rounded-r-full bg-gradient-to-b from-[#d8c79f]/60 via-[#8f001c]/70 to-[#d8c79f]/60 shadow-lg" />
                 {/* Bottom edge highlight */}
-                <div className="absolute -bottom-1 left-2 right-2 h-2 rounded-b-full bg-gradient-to-r from-[#d9b978]/36 via-[#8f001c]/50 to-[#d9b978]/36 shadow-lg" />
+                <div className="absolute -bottom-1 left-2 right-2 h-2 rounded-b-full bg-gradient-to-r from-[#d8c79f]/36 via-[#8f001c]/50 to-[#d8c79f]/36 shadow-lg" />
               </>
             )}
 
@@ -660,7 +660,7 @@ export function MatrimonySwipeCard({
             <motion.div
               className={cn(
                 "absolute inset-0 w-full h-full overflow-y-auto overflow-x-hidden",
-                "rounded-[2.65rem] border border-[#d9b978]/30 bg-[#fffdf8]",
+                "rounded-[2.65rem] border border-[#d8c79f]/30 bg-[#fdfdfb]",
                 "backface-hidden",
                 "hide-scrollbar"
               )}
@@ -671,16 +671,16 @@ export function MatrimonySwipeCard({
               }}
             >
               {loadingProfile ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-[#fffdf8]">
-                  <div className="rounded-[1.5rem] border border-[#d9b978]/30 bg-white/78 p-6 text-center shadow-[0_18px_48px_rgba(24,17,13,0.1)]">
-                    <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#d9b978] border-t-[#8f001c]" />
+                <div className="absolute inset-0 flex items-center justify-center bg-[#fdfdfb]">
+                  <div className="rounded-[1.5rem] border border-[#d8c79f]/30 bg-white/78 p-6 text-center shadow-[0_18px_48px_rgba(24,17,13,0.1)]">
+                    <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#d8c79f] border-t-[#8f001c]" />
                     <p className="mt-3 text-sm font-bold text-[#18110d]">Opening profile dossier...</p>
                   </div>
                 </div>
               ) : (
                 <>
                   {/* White Header with Name and Age */}
-                  <div className="sticky top-0 z-40 rounded-t-[2.65rem] border-b border-[#d9b978]/22 bg-[#fffdf8]/88 shadow-[0_18px_45px_rgba(24,17,13,0.08)] backdrop-blur-xl">
+                  <div className="sticky top-0 z-40 rounded-t-[2.65rem] border-b border-[#d8c79f]/22 bg-[#fdfdfb]/88 shadow-[0_18px_45px_rgba(24,17,13,0.08)] backdrop-blur-xl">
                     <div className="flex items-start justify-between gap-3 px-4 py-4 sm:px-6">
                       <div className="min-w-0">
                         <p className="luxe-kicker text-[0.58rem] text-[#8f001c]">full profile dossier</p>
@@ -688,7 +688,7 @@ export function MatrimonySwipeCard({
                           {fullProfile?.name || name}, {fullProfile?.age || age}
                         </h1>
                         {location && (
-                          <div className="mt-1 flex items-center space-x-1 text-sm text-[#6c5a4a]">
+                          <div className="mt-1 flex items-center space-x-1 text-sm text-[#685f58]">
                             <MapPin className="w-3 h-3" />
                             <span>{location}</span>
                           </div>
@@ -696,7 +696,7 @@ export function MatrimonySwipeCard({
                         {/* Religion/Caste and Profession */}
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
                           {(fullProfile?.cultural?.religion || fullProfile?.cultural?.community || community) && (
-                            <div className="rounded-full border border-[#d9b978]/24 bg-white/72 px-3 py-1 text-xs font-bold text-[#6c5a4a]">
+                            <div className="rounded-full border border-[#d8c79f]/24 bg-white/72 px-3 py-1 text-xs font-bold text-[#685f58]">
                               {fullProfile?.cultural?.religion 
                                 ? (fullProfile?.cultural?.community 
                                     ? `${fullProfile.cultural.religion} / ${fullProfile.cultural.community}`
@@ -708,7 +708,7 @@ export function MatrimonySwipeCard({
                             </div>
                           )}
                           {!(fullProfile?.cultural?.religion || fullProfile?.cultural?.community || community) && (profession || fullProfile?.career?.job_title) && (
-                            <div className="rounded-full border border-[#d9b978]/24 bg-white/72 px-3 py-1 text-xs font-bold text-[#6c5a4a]">
+                            <div className="rounded-full border border-[#d8c79f]/24 bg-white/72 px-3 py-1 text-xs font-bold text-[#685f58]">
                               {fullProfile?.career?.job_title || profession}
                             </div>
                           )}
@@ -723,7 +723,7 @@ export function MatrimonySwipeCard({
                               type="button"
                               className={cn(
                                 "h-9 w-9 rounded-full p-0 sm:h-10 sm:w-10",
-                                "border border-[#d9b978]/28 bg-white/78",
+                                "border border-[#d8c79f]/28 bg-white/78",
                                 "hover:border-red-500 hover:bg-red-50 hover:scale-105",
                                 "transition-all duration-200",
                                 "shadow-lg"
@@ -744,8 +744,8 @@ export function MatrimonySwipeCard({
                           type="button"
                           className={cn(
                             "h-9 w-9 rounded-full p-0 sm:h-10 sm:w-10",
-                            "border border-[#d9b978]/28 bg-white/78",
-                            "hover:bg-[#fff7e8] hover:scale-105",
+                            "border border-[#d8c79f]/28 bg-white/78",
+                            "hover:bg-[#f7f5f1] hover:scale-105",
                             "transition-all duration-200",
                             "shadow-lg"
                           )}
@@ -759,10 +759,10 @@ export function MatrimonySwipeCard({
                   </div>
 
                   {/* Scrollable Content */}
-                  <div className="relative overflow-hidden bg-[linear-gradient(180deg,#fffdf8,#fff7e8_55%,#fffdf8)]">
+                  <div className="relative overflow-hidden bg-[linear-gradient(180deg,#fdfdfb,#f7f5f1_55%,#fdfdfb)]">
                     {/* Photo Gallery Section */}
                     <div className="relative w-full px-4 pt-6 sm:px-6">
-                      <div className="relative mx-auto aspect-square w-full overflow-hidden rounded-[1.5rem] border border-[#d9b978]/24 shadow-[0_18px_48px_rgba(24,17,13,0.12)] sm:rounded-[1.8rem]">
+                      <div className="relative mx-auto aspect-square w-full overflow-hidden rounded-[1.5rem] border border-[#d8c79f]/24 shadow-[0_18px_48px_rgba(24,17,13,0.12)] sm:rounded-[1.8rem]">
                         {(() => {
                           const profilePhotos = fullProfile?.photos || photos
                           const currentPhoto = profilePhotos[expandedPhotoIndex] || "/placeholder.svg"
@@ -782,7 +782,7 @@ export function MatrimonySwipeCard({
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="absolute left-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full border border-[#d9b978]/30 bg-white/90 shadow-md hover:bg-white"
+                                    className="absolute left-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full border border-[#d8c79f]/30 bg-white/90 shadow-md hover:bg-white"
                                     onClick={(e) => handlePhotoNavigation('prev', e)}
                                   >
                                     <ChevronLeft className="w-5 h-5 text-black" />
@@ -792,7 +792,7 @@ export function MatrimonySwipeCard({
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="absolute right-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full border border-[#d9b978]/30 bg-white/90 shadow-md hover:bg-white"
+                                    className="absolute right-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full border border-[#d8c79f]/30 bg-white/90 shadow-md hover:bg-white"
                                     onClick={(e) => handlePhotoNavigation('next', e)}
                                   >
                                     <ChevronRight className="w-5 h-5 text-black" />
@@ -800,7 +800,7 @@ export function MatrimonySwipeCard({
                                 )}
                                 
                                 {/* Photo Counter */}
-                                <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-[#d9b978]/30 bg-white/90 px-3 py-1 text-xs font-bold text-[#18110d] shadow-md backdrop-blur-sm">
+                                <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-[#d8c79f]/30 bg-white/90 px-3 py-1 text-xs font-bold text-[#18110d] shadow-md backdrop-blur-sm">
                                   {expandedPhotoIndex + 1} / {profilePhotos.length}
                                 </div>
                               </>

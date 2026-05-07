@@ -106,7 +106,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
         <div className="flex-1 space-y-6">
           <div className="space-y-2">
             <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">About You</h1>
-            <p className="text-base leading-7 text-[#6c5a4a]">Tell us more about your personal details in a clean, family-ready format.</p>
+            <p className="text-base leading-7 text-[#685f58]">Tell us more about your personal details in a clean, family-ready format.</p>
           </div>
           
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

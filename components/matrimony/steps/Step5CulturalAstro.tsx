@@ -231,18 +231,18 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
             <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">
               Cultural & Birth Details
             </h1>
-            <p className="text-base leading-7 text-[#6c5a4a]">
+            <p className="text-base leading-7 text-[#685f58]">
               We use your verified date of birth once, then collect the extra cultural details families expect in matrimony.
             </p>
           </div>
 
           {verifiedDob && (
-            <div className="rounded-3xl border border-[#b9904d]/24 bg-[#fffaf2]/76 p-4">
+            <div className="rounded-3xl border border-[#b79b62]/24 bg-[#ffffff]/76 p-4">
               <p className="luxe-kicker text-[#8f001c]">verified birth date</p>
               <p className="mt-1 font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">
                 {formatDateForDisplay(verifiedDob)}
               </p>
-              <p className="mt-1 text-sm text-[#6c5a4a]">
+              <p className="mt-1 text-sm text-[#685f58]">
                 This comes from the age verification step, so we will not ask for it again.
               </p>
             </div>
@@ -355,7 +355,7 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
             />
           </div>
 
-          <div className="rounded-3xl border border-[#d9b978]/24 bg-white/58 p-4">
+          <div className="rounded-3xl border border-[#d8c79f]/24 bg-white/58 p-4">
             <FormField
               control={form.control}
               name="pob"

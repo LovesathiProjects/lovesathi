@@ -57,7 +57,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="luxe-light-page flex min-h-screen flex-col overflow-x-hidden px-4 py-5 sm:px-6">
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-full border border-[#482b1a]/10 bg-[#fffaf2]/74 px-4 py-3 shadow-sm backdrop-blur-xl">
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-full border border-[#482b1a]/10 bg-[#ffffff]/74 px-4 py-3 shadow-sm backdrop-blur-xl">
         <Button variant="ghost" size="sm" className="rounded-full text-[#18110d]" onClick={() => router.push("/auth")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
           <div className="space-y-2 text-center">
             <p className="luxe-kicker text-[#8f001c]">Lovesathi recovery</p>
             <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">{title}</h1>
-            <p className="text-base text-[#6c5a4a]">{subtitle}</p>
+            <p className="text-base text-[#685f58]">{subtitle}</p>
           </div>
 
           {step === "request" && (
@@ -86,7 +86,7 @@ export default function ForgotPasswordPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@email.com"
                   autoComplete="email"
-                  className="h-12 rounded-2xl border-[#482b1a]/20 bg-[#fffaf2]"
+                  className="h-12 rounded-2xl border-[#482b1a]/20 bg-[#ffffff]"
                 />
               </div>
 
@@ -98,15 +98,15 @@ export default function ForgotPasswordPage() {
 
           {step === "sent" && (
             <div className="space-y-5 pt-4 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#d9b978]/28 bg-[#fff7e8] text-[#8f001c] shadow-[0_18px_48px_rgba(24,17,13,0.08)]">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#d8c79f]/28 bg-[#f7f5f1] text-[#8f001c] shadow-[0_18px_48px_rgba(24,17,13,0.08)]">
                 <Mail className="h-8 w-8" />
               </div>
-              <div className="rounded-[1.5rem] border border-[#d9b978]/24 bg-white/62 p-4 text-sm font-semibold leading-6 text-[#6c5a4a]">
+              <div className="rounded-[1.5rem] border border-[#d8c79f]/24 bg-white/62 p-4 text-sm font-semibold leading-6 text-[#685f58]">
                 Check your inbox and spam folder. The recovery link opens a secure Lovesathi session where you can set a new password.
               </div>
               <Button
                 variant="outline"
-                className="h-12 w-full rounded-2xl border-[#482b1a]/16 bg-[#fffaf2] font-bold text-[#18110d]"
+                className="h-12 w-full rounded-2xl border-[#482b1a]/16 bg-[#ffffff] font-bold text-[#18110d]"
                 onClick={() => setStep("request")}
               >
                 Use a different email

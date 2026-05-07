@@ -309,7 +309,7 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
       {/* Header */}
       <div className={cn(
         "flex-shrink-0 p-6 border-b backdrop-blur-xl relative z-10",
-        isMatrimony ? "border-[#482b1a]/10 bg-[#fffaf2]/84 shadow-[0_18px_55px_rgba(24,17,13,0.08)]" : "border-white/20 bg-[#14161B]/50"
+        isMatrimony ? "border-[#482b1a]/10 bg-[#ffffff]/84 shadow-[0_18px_55px_rgba(24,17,13,0.08)]" : "border-white/20 bg-[#14161B]/50"
       )}>
         <div className="flex items-center space-x-4">
           {onBack && (
@@ -325,7 +325,7 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
               <ArrowLeft className={cn("w-5 h-5", isMatrimony ? "text-black" : "text-white")} />
             </Button>
           )}
-          <Avatar className={cn("h-16 w-16 border-2 shadow-lg", isMatrimony ? "border-[#d9b978]/50" : "border-white/30")}>
+          <Avatar className={cn("h-16 w-16 border-2 shadow-lg", isMatrimony ? "border-[#d8c79f]/50" : "border-white/30")}>
             <AvatarImage src={userInfo.photo || "/placeholder-user.jpg"} alt="Profile" />
             <AvatarFallback className={cn("font-semibold", isMatrimony ? "bg-gray-100 text-black" : "bg-white/20 text-white")}>
               {getInitials(userInfo.name)}
@@ -337,7 +337,7 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
             <Badge variant="secondary" className={cn(
               "text-xs font-semibold",
               isMatrimony 
-                ? "border-[#d9b978]/35 bg-[#fffaf2] text-[#8f001c]"
+                ? "border-[#d8c79f]/35 bg-[#ffffff] text-[#8f001c]"
                 : "bg-white/20 text-white border-white/30"
             )}>
               {userInfo.accountType}
@@ -358,7 +358,7 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
               <Card className={cn(
                 "overflow-hidden backdrop-blur-sm",
                 isMatrimony 
-                  ? "luxe-card border-[#d9b978]/24"
+                  ? "luxe-card border-[#d8c79f]/24"
                   : "bg-[#14161B] border-white/20"
               )}>
                 <CardContent className="p-0">

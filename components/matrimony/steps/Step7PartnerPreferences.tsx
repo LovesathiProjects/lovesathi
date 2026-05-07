@@ -158,14 +158,14 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
   return (
     <div className="space-y-7">
       <div className="space-y-3">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[#d9b978]/35 bg-[#fffaf2]/74 px-4 py-2 text-[#8f001c] shadow-sm">
+        <div className="inline-flex items-center gap-2 rounded-full border border-[#d8c79f]/35 bg-[#ffffff]/74 px-4 py-2 text-[#8f001c] shadow-sm">
           <Sparkles className="h-4 w-4" />
           <span className="luxe-kicker">curated matching</span>
         </div>
         <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">
           Tell us what a good match should feel like.
         </h1>
-        <p className="max-w-2xl text-base leading-7 text-[#6c5a4a]">
+        <p className="max-w-2xl text-base leading-7 text-[#685f58]">
           These preferences help Lovesathi move from simple browsing to refined matrimony recommendations.
           You can edit them anytime.
         </p>
@@ -173,12 +173,12 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
 
       <section className="luxe-card rounded-[2rem] p-5 sm:p-6">
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#8f001c] text-[#fffaf2]">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#8f001c] text-[#ffffff]">
             <HeartHandshake className="h-5 w-5" />
           </div>
           <div>
             <h2 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">Core range</h2>
-            <p className="text-sm text-[#6c5a4a]">Start broad; we can refine later.</p>
+            <p className="text-sm text-[#685f58]">Start broad; we can refine later.</p>
           </div>
         </div>
 
@@ -229,14 +229,14 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
         </div>
       </section>
 
-      <section className="rounded-[1.75rem] border border-[#d9b978]/24 bg-[#fffaf2]/76 p-5 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur">
+      <section className="rounded-[1.75rem] border border-[#d8c79f]/24 bg-[#ffffff]/76 p-5 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur">
         <div className="mb-4 flex items-start gap-3">
           <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#8f001c]/10 text-[#8f001c]">
             <MapPin className="h-4 w-4" />
           </div>
           <div>
             <h3 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">Location</h3>
-            <p className="text-sm leading-6 text-[#6c5a4a]">
+            <p className="text-sm leading-6 text-[#685f58]">
               Add preferred cities by choosing country, state, then city.
             </p>
           </div>
@@ -244,14 +244,14 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
         <LocationPreferencePicker value={values.locations} onChange={setLocations} label="Preferred Cities" />
       </section>
 
-      <section className="rounded-[1.75rem] border border-[#d9b978]/24 bg-[#fffaf2]/76 p-5 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur">
+      <section className="rounded-[1.75rem] border border-[#d8c79f]/24 bg-[#ffffff]/76 p-5 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur">
         <div className="mb-4 flex items-start gap-3">
           <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#8f001c]/10 text-[#8f001c]">
             <BadgeCheck className="h-4 w-4" />
           </div>
           <div>
             <h3 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">Community</h3>
-            <p className="text-sm leading-6 text-[#6c5a4a]">
+            <p className="text-sm leading-6 text-[#685f58]">
               Search a broad community list instead of scrolling through dozens of chips.
             </p>
           </div>
@@ -268,14 +268,14 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
 
       <div className="grid gap-4">
         {preferenceGroups.map((group) => (
-          <section key={group.key} className="rounded-[1.75rem] border border-[#d9b978]/24 bg-[#fffaf2]/76 p-5 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur">
+          <section key={group.key} className="rounded-[1.75rem] border border-[#d8c79f]/24 bg-[#ffffff]/76 p-5 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur">
             <div className="mb-4 flex items-start gap-3">
               <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#8f001c]/10 text-[#8f001c]">
                 {group.key === "locations" ? <MapPin className="h-4 w-4" /> : <BadgeCheck className="h-4 w-4" />}
               </div>
               <div>
                 <h3 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">{group.title}</h3>
-                <p className="text-sm leading-6 text-[#6c5a4a]">{group.description}</p>
+                <p className="text-sm leading-6 text-[#685f58]">{group.description}</p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -289,8 +289,8 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
                     className={cn(
                       "rounded-full border px-4 py-2 text-sm font-bold transition",
                       selected
-                        ? "border-[#8f001c] bg-[#8f001c] text-[#fffaf2] shadow-[0_12px_30px_rgba(143,0,28,0.22)]"
-                        : "border-[#482b1a]/12 bg-white/70 text-[#6c5a4a] hover:border-[#b9904d] hover:text-[#18110d]",
+                        ? "border-[#8f001c] bg-[#8f001c] text-[#ffffff] shadow-[0_12px_30px_rgba(143,0,28,0.22)]"
+                        : "border-[#482b1a]/12 bg-white/70 text-[#685f58] hover:border-[#b79b62] hover:text-[#18110d]",
                     )}
                   >
                     {option}

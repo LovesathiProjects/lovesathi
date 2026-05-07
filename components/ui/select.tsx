@@ -37,7 +37,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "data-[placeholder]:text-[#6c5a4a]/65 [&_svg:not([class*='text-'])]:text-[#6c5a4a] focus-visible:border-[#b9904d] focus-visible:ring-[#d9b978]/18 aria-invalid:ring-[#97011A]/20 aria-invalid:border-[#97011A] flex w-full min-w-0 items-center justify-between gap-2 rounded-2xl border border-[#482b1a]/15 bg-white/95 px-4 py-3 text-sm font-semibold text-[#18110d] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_24px_rgba(24,17,13,0.04)] transition-all outline-none focus-visible:ring-[4px] disabled:cursor-not-allowed disabled:bg-[#f6ead8]/60 disabled:opacity-60 data-[size=default]:h-12 data-[size=sm]:h-10 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:min-w-0 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "data-[placeholder]:text-[#685f58]/65 [&_svg:not([class*='text-'])]:text-[#685f58] focus-visible:border-[#b79b62] focus-visible:ring-[#d8c79f]/18 aria-invalid:ring-[#97011A]/20 aria-invalid:border-[#97011A] flex w-full min-w-0 items-center justify-between gap-2 rounded-2xl border border-[#482b1a]/15 bg-white/95 px-4 py-3 text-sm font-semibold text-[#18110d] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_24px_rgba(24,17,13,0.04)] transition-all outline-none focus-visible:ring-[4px] disabled:cursor-not-allowed disabled:bg-[#f4f2ee]/60 disabled:opacity-60 data-[size=default]:h-12 data-[size=sm]:h-10 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:min-w-0 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
@@ -61,7 +61,7 @@ function SelectContent({
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
-          'z-50 max-h-[min(24rem,var(--radix-select-content-available-height))] min-w-[8rem] overflow-x-hidden overflow-y-auto rounded-2xl border border-[#d9b978]/35 bg-white text-[#18110d] shadow-[0_24px_70px_rgba(24,17,13,0.16)] backdrop-blur-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative origin-(--radix-select-content-transform-origin)',
+          'z-50 max-h-[min(24rem,var(--radix-select-content-available-height))] min-w-[8rem] overflow-x-hidden overflow-y-auto rounded-2xl border border-[#d8c79f]/35 bg-white text-[#18110d] shadow-[0_24px_70px_rgba(24,17,13,0.16)] backdrop-blur-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative origin-(--radix-select-content-transform-origin)',
           position === 'popper' &&
             'data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1',
           className,

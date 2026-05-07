@@ -54,7 +54,7 @@ export function QuickActions({
       )}
     >
       <div className={cn(
-        "flex items-center gap-3 rounded-[2rem] border border-[#d9b978]/34 bg-[#fffaf2]/88 px-5 py-3 shadow-[0_22px_70px_rgba(24,17,13,0.2)] ring-1 ring-white/60 backdrop-blur-2xl sm:gap-4 sm:px-8",
+        "flex items-center gap-3 rounded-[2rem] border border-[#d8c79f]/34 bg-[#ffffff]/88 px-5 py-3 shadow-[0_22px_70px_rgba(24,17,13,0.2)] ring-1 ring-white/60 backdrop-blur-2xl sm:gap-4 sm:px-8",
       )}>
         {tabs.map((tab) => {
           const Icon = tab.icon
@@ -77,12 +77,12 @@ export function QuickActions({
                   className={cn(
                     "w-5 h-5 transition-all duration-150 ease-in-out"
                   )} 
-                  stroke={isActive ? "#fffaf2" : "#6c5a4a"}
+                  stroke={isActive ? "#ffffff" : "#685f58"}
                   strokeWidth={isActive ? 2.5 : 2}
                   fill="none"
                   style={{
-                    color: isActive ? '#fffaf2' : '#6c5a4a',
-                    stroke: isActive ? '#fffaf2' : '#6c5a4a',
+                    color: isActive ? '#ffffff' : '#685f58',
+                    stroke: isActive ? '#ffffff' : '#685f58',
                     fill: 'none',
                     opacity: isActive ? 1 : 0.9
                   }}

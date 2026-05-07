@@ -84,7 +84,7 @@ export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () =>
         <div className="flex-1 space-y-6">
           <div className="space-y-2">
             <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">A Few Words About You</h1>
-            <p className="text-base leading-7 text-[#6c5a4a]">Write a warm introduction that helps families and serious matches understand your personality.</p>
+            <p className="text-base leading-7 text-[#685f58]">Write a warm introduction that helps families and serious matches understand your personality.</p>
           </div>
           
           <FormField control={form.control} name="bio" render={({ field }) => (
@@ -123,7 +123,7 @@ export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () =>
             </FormItem>
           )} />
 
-          <div className="rounded-[1.75rem] border border-[#d9b978]/24 bg-[#fffaf2]/78 p-4 shadow-[0_16px_45px_rgba(24,17,13,0.06)]">
+          <div className="rounded-[1.75rem] border border-[#d8c79f]/24 bg-[#ffffff]/78 p-4 shadow-[0_16px_45px_rgba(24,17,13,0.06)]">
             <div className="mb-3 flex items-center gap-2 text-[#8f001c]">
               <Sparkles className="h-4 w-4" />
               <p className="luxe-kicker">bio suggestions from your details</p>
@@ -134,7 +134,7 @@ export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () =>
                   key={suggestion}
                   type="button"
                   onClick={() => applySuggestion(suggestion)}
-                  className="rounded-2xl border border-[#482b1a]/10 bg-white/70 p-3 text-left text-sm leading-6 text-[#6c5a4a] transition hover:border-[#8f001c]/30 hover:text-[#18110d]"
+                  className="rounded-2xl border border-[#482b1a]/10 bg-white/70 p-3 text-left text-sm leading-6 text-[#685f58] transition hover:border-[#8f001c]/30 hover:text-[#18110d]"
                 >
                   <span className="mb-1 block text-xs font-bold uppercase tracking-[0.16em] text-[#8f001c]">
                     Option {index + 1}

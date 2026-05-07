@@ -37,10 +37,10 @@ export function MatrimonySetup() {
 
   return (
     <div className="luxe-light-page relative flex min-h-screen flex-col overflow-hidden">
-      <div className="luxe-orb left-[-8rem] top-20 h-80 w-80 bg-[#b9904d]/18" />
+      <div className="luxe-orb left-[-8rem] top-20 h-80 w-80 bg-[#b79b62]/18" />
       <div className="luxe-orb right-[-10rem] top-10 h-96 w-96 bg-[#8f001c]/14" style={{ animationDelay: "1.2s" }} />
       {/* Header with exit button and progress */}
-      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[#d9b978]/24 bg-white/82 px-4 py-4 shadow-[0_16px_60px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:px-6">
+      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[#d8c79f]/24 bg-white/82 px-4 py-4 shadow-[0_16px_60px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:px-6">
         <button
           onClick={onExit}
           className="-ml-2 rounded-full border border-[#482b1a]/10 bg-white/70 p-2 text-[#18110d] transition-colors hover:border-[#8f001c]/30 hover:bg-white"
@@ -55,7 +55,7 @@ export function MatrimonySetup() {
                 index === step
                   ? "w-9 bg-[#8f001c]"
                   : index < step
-                  ? "w-3 bg-[#b9904d]"
+                  ? "w-3 bg-[#b79b62]"
                   : "w-2 bg-[#482b1a]/18"
               }`}
             />
@@ -68,26 +68,26 @@ export function MatrimonySetup() {
       <div className="relative z-10 mx-auto grid w-full max-w-7xl flex-1 gap-8 px-3 py-5 sm:px-6 sm:py-8 lg:grid-cols-[0.72fr_1.28fr] lg:px-8 lg:py-12">
         <aside className="hidden lg:block">
           <div className="sticky top-28 space-y-5">
-            <div className="luxe-dark-card rounded-[2rem] p-7 text-[#fffaf2]">
-              <p className="luxe-kicker mb-4 text-[#d9b978]">profile atelier</p>
-              <h1 className="font-serif text-5xl font-bold leading-[0.92] tracking-[-0.055em] text-[#fffaf2]">
+            <div className="luxe-dark-card rounded-[2rem] p-7 text-[#ffffff]">
+              <p className="luxe-kicker mb-4 text-[#d8c79f]">profile atelier</p>
+              <h1 className="font-serif text-5xl font-bold leading-[0.92] tracking-[-0.055em] text-[#ffffff]">
                 Build a profile worthy of a serious introduction.
               </h1>
-              <p className="mt-5 text-sm leading-7 text-[#f2dfbd]">
+              <p className="mt-5 text-sm leading-7 text-[#d8c79f]">
                 We collect family, culture, career, and preference signals so discovery can feel calm,
                 intentional, and premium.
               </p>
             </div>
-            <div className="rounded-[2rem] border border-[#482b1a]/10 bg-[#fffaf2]/76 p-4 shadow-[0_20px_70px_rgba(24,17,13,0.08)] backdrop-blur">
+            <div className="rounded-[2rem] border border-[#482b1a]/10 bg-[#ffffff]/76 p-4 shadow-[0_20px_70px_rgba(24,17,13,0.08)] backdrop-blur">
               {stepTitles.map((title, index) => (
                 <div
                   key={title}
                   className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold ${
-                    index === step ? "bg-[#8f001c] text-[#fffaf2]" : index < step ? "text-[#8f001c]" : "text-[#6c5a4a]"
+                    index === step ? "bg-[#8f001c] text-[#ffffff]" : index < step ? "text-[#8f001c]" : "text-[#685f58]"
                   }`}
                 >
                   <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs ${
-                    index === step ? "bg-[#fffaf2] text-[#8f001c]" : "bg-[#f2dfbd] text-[#18110d]"
+                    index === step ? "bg-[#ffffff] text-[#8f001c]" : "bg-[#d8c79f] text-[#18110d]"
                   }`}>
                     {index + 1}
                   </span>

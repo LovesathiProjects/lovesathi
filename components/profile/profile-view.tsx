@@ -176,7 +176,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId }: ProfileVie
 
   return (
     <div className="luxe-light-page min-h-screen">
-      <div className="sticky top-0 z-20 border-b border-[#482b1a]/10 bg-[#fffaf2]/84 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur-xl">
+      <div className="sticky top-0 z-20 border-b border-[#482b1a]/10 bg-[#ffffff]/84 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur-xl">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-4">
             {!isOwnProfile && onBack && (
@@ -215,7 +215,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId }: ProfileVie
 
       <div className="mx-auto max-w-5xl space-y-5 p-4 pb-28 sm:p-6">
         {photos.length > 0 && (
-          <div className="luxe-card overflow-hidden rounded-[2rem] border-[#d9b978]/24 p-3">
+          <div className="luxe-card overflow-hidden rounded-[2rem] border-[#d8c79f]/24 p-3">
             <div className="relative h-96 overflow-hidden rounded-[1.5rem] bg-[#18110d]">
               <img src={photos[currentPhotoIndex] || "/placeholder.svg"} alt={profile?.name || "Profile photo"} className="h-full w-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#18110d]/42 via-transparent to-transparent" />
@@ -243,14 +243,14 @@ export function ProfileView({ isOwnProfile = false, onBack, userId }: ProfileVie
         )}
 
         {photos.length === 0 && (
-          <div className="luxe-card rounded-[2rem] border-[#d9b978]/24 p-8 text-center">
+          <div className="luxe-card rounded-[2rem] border-[#d8c79f]/24 p-8 text-center">
             <Sparkles className="mx-auto mb-3 h-8 w-8 text-[#8f001c]" />
             <h2 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#18110d]">Photos pending</h2>
-            <p className="mt-2 text-sm leading-6 text-[#6c5a4a]">Add clear profile photos to make this dossier feel complete.</p>
+            <p className="mt-2 text-sm leading-6 text-[#685f58]">Add clear profile photos to make this dossier feel complete.</p>
           </div>
         )}
 
-        <Card className="luxe-card rounded-[2rem] border-[#d9b978]/24">
+        <Card className="luxe-card rounded-[2rem] border-[#d8c79f]/24">
           <CardContent className="p-6 space-y-5">
             <div className="flex items-center gap-2">
               <h2 className="text-3xl font-bold text-black">
@@ -281,7 +281,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId }: ProfileVie
           </CardContent>
         </Card>
 
-        <Card className="luxe-card rounded-[2rem] border-[#d9b978]/24">
+        <Card className="luxe-card rounded-[2rem] border-[#d8c79f]/24">
           <CardContent className="p-6 space-y-4">
             <h3 className="font-semibold text-lg flex items-center gap-2 text-black">
               <Briefcase className="w-5 h-5 text-[#97011A]" />
@@ -302,7 +302,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId }: ProfileVie
           </CardContent>
         </Card>
 
-        <Card className="luxe-card rounded-[2rem] border-[#d9b978]/24">
+        <Card className="luxe-card rounded-[2rem] border-[#d8c79f]/24">
           <CardContent className="p-6 space-y-4">
             <h3 className="font-semibold text-lg flex items-center gap-2 text-black">
               <Users className="w-5 h-5 text-[#97011A]" />
@@ -324,7 +324,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId }: ProfileVie
           </CardContent>
         </Card>
 
-        <Card className="luxe-card rounded-[2rem] border-[#d9b978]/24">
+        <Card className="luxe-card rounded-[2rem] border-[#d8c79f]/24">
           <CardContent className="p-6 space-y-4">
             <h3 className="font-semibold text-lg text-black">Partner Preferences</h3>
             <div className="grid sm:grid-cols-2 gap-4 text-sm text-[#666666]">
