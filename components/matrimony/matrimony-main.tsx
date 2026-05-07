@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { AppLayout } from "@/components/layout/app-layout"
 import { QuickActions } from "@/components/navigation/quick-actions"
 // Removed TopBackButton usage
-import { Filter, Check, X, ArrowLeft, Heart } from "lucide-react"
+import { Filter, ArrowLeft, Heart, ShieldCheck, Sparkles, Crown } from "lucide-react"
 import { MatrimonySwipeCard } from "@/components/matrimony/matrimony-swipe-card"
 import { MatrimonyChatList } from "@/components/matrimony/matrimony-chat-list"
 import { ChatScreen } from "@/components/chat/chat-screen"
@@ -642,13 +642,15 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {currentScreen === "discover" && (
-        <div className="fixed inset-0 h-screen w-screen overflow-hidden flex flex-col relative bg-[#fbf6ed]">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_16%_12%,rgba(217,185,120,0.28),transparent_24rem),radial-gradient(circle_at_88%_16%,rgba(143,0,28,0.18),transparent_25rem),radial-gradient(circle_at_50%_110%,rgba(185,144,77,0.22),transparent_28rem),linear-gradient(135deg,#fffdf8,#fbf3e5_48%,#f2dfbd)]" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-[linear-gradient(to_bottom,rgba(255,253,248,0.92),rgba(255,253,248,0))]" />
-          <div className="pointer-events-none absolute left-1/2 top-20 hidden h-[72vh] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[#d9b978]/32 to-transparent sm:block" />
+        <div className="fixed inset-0 flex h-[100dvh] min-h-[100dvh] w-screen flex-col overflow-hidden bg-[#fbf6ed]">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_14%,rgba(217,185,120,0.34),transparent_25rem),radial-gradient(circle_at_82%_12%,rgba(143,0,28,0.18),transparent_28rem),radial-gradient(circle_at_50%_104%,rgba(185,144,77,0.30),transparent_32rem),linear-gradient(135deg,#fffdf8_0%,#fbf3e5_46%,#f1d9aa_100%)]" />
+          <div className="pointer-events-none absolute inset-0 opacity-[0.34] [background-image:linear-gradient(rgba(185,144,77,0.14)_1px,transparent_1px),linear-gradient(90deg,rgba(185,144,77,0.10)_1px,transparent_1px)] [background-size:88px_88px] [mask-image:radial-gradient(circle_at_center,black,transparent_76%)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[linear-gradient(to_bottom,rgba(255,253,248,0.96),rgba(255,253,248,0))]" />
+          <div className="pointer-events-none absolute left-1/2 top-20 hidden h-[78vh] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[#d9b978]/30 to-transparent lg:block" />
+          <div className="pointer-events-none absolute bottom-[-9rem] left-1/2 h-72 w-[52rem] -translate-x-1/2 rounded-full bg-[#b9904d]/20 blur-3xl" />
           <DynamicBackground imageUrl={currentProfile?.photos?.[0] || null} />
           
-          <div className="relative flex-1 overflow-hidden flex items-center justify-center px-4 pb-24 pt-28 sm:px-6 sm:pb-20 sm:pt-32">
+          <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center overflow-hidden px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(7.5rem+env(safe-area-inset-top))] sm:px-6 sm:pb-[calc(6.25rem+env(safe-area-inset-bottom))] lg:px-10 lg:pt-28">
             {loading ? (
               <div className="flex items-center justify-center h-full w-full">
                 <div className="luxe-card rounded-[2rem] border-[#d9b978]/30 p-8 text-center shadow-[0_28px_90px_rgba(24,17,13,0.14)]">
@@ -658,9 +660,36 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                 </div>
               </div>
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
+              <div className="grid w-full max-w-[1240px] items-center gap-5 lg:grid-cols-[minmax(230px,0.78fr)_minmax(420px,500px)_minmax(230px,0.78fr)] xl:gap-8">
+                <aside className="hidden lg:block">
+                  <div className="luxe-card space-y-5 rounded-[2rem] border-[#d9b978]/28 p-6 shadow-[0_30px_90px_rgba(24,17,13,0.12)]">
+                    <div>
+                      <p className="luxe-kicker text-[0.62rem] text-[#8f001c]">today's salon</p>
+                      <h2 className="mt-2 font-serif text-4xl font-bold leading-[0.95] tracking-[-0.07em] text-[#18110d]">
+                        Serious introductions, beautifully curated.
+                      </h2>
+                    </div>
+                    <p className="text-sm font-semibold leading-6 text-[#6c5a4a]">
+                      Every card should feel like a private profile dossier, not a casual swipe tile.
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl border border-[#d9b978]/24 bg-white/62 p-4">
+                        <p className="font-serif text-3xl font-bold tracking-[-0.06em] text-[#8f001c]">{profiles.length}</p>
+                        <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#6c5a4a]">profiles</p>
+                      </div>
+                      <div className="rounded-2xl border border-[#d9b978]/24 bg-white/62 p-4">
+                        <ShieldCheck className="h-6 w-6 text-[#8f001c]" />
+                        <p className="mt-3 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#6c5a4a]">trust first</p>
+                      </div>
+                    </div>
+                  </div>
+                </aside>
+
                 {/* Card Stack */}
-                <div className="relative w-full max-w-[420px] h-full flex items-center justify-center overflow-visible">
+                <div className="relative mx-auto flex h-[min(64svh,610px)] w-full max-w-[min(92vw,470px)] items-center justify-center overflow-visible md:h-[min(72dvh,680px)]">
+                  <div className="pointer-events-none absolute -inset-8 rounded-[3rem] bg-[radial-gradient(circle_at_50%_50%,rgba(255,250,242,0.78),rgba(217,185,120,0.22)_42%,transparent_70%)] blur-xl" />
+                  <div className="pointer-events-none absolute -bottom-8 h-20 w-[82%] rounded-full bg-[#18110d]/20 blur-2xl" />
+                  <div className="pointer-events-none absolute inset-x-7 -bottom-4 h-5 rounded-full bg-[#6c5a4a]/18 blur-md" />
                   {hasMoreProfiles && profiles.length > 0 ? (
                     <div className="relative w-full h-full overflow-visible">
                       {profiles
@@ -728,6 +757,27 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                     </Card>
                   )}
                 </div>
+
+                <aside className="hidden lg:block">
+                  <div className="space-y-4">
+                    <div className="rounded-[1.75rem] border border-[#d9b978]/28 bg-[#fffaf2]/76 p-5 shadow-[0_24px_70px_rgba(24,17,13,0.10)] backdrop-blur-2xl">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#8f001c] text-[#fffaf2] shadow-[0_18px_42px_rgba(143,0,28,0.22)]">
+                        <Sparkles className="h-5 w-5" />
+                      </div>
+                      <h3 className="mt-4 font-serif text-2xl font-bold tracking-[-0.05em] text-[#18110d]">Refined discovery</h3>
+                      <p className="mt-2 text-sm font-semibold leading-6 text-[#6c5a4a]">
+                        Tune age, height, location, family context, lifestyle, and verified-only visibility.
+                      </p>
+                    </div>
+                    <div className="rounded-[1.75rem] border border-[#d9b978]/28 bg-[#18110d]/88 p-5 text-[#fffaf2] shadow-[0_28px_90px_rgba(24,17,13,0.18)] backdrop-blur-2xl">
+                      <Crown className="h-6 w-6 text-[#d9b978]" />
+                      <p className="mt-4 luxe-kicker text-[0.58rem] text-[#d9b978]">premium signal</p>
+                      <p className="mt-2 text-sm font-semibold leading-6 text-[#fffaf2]/78">
+                        Verified filters reopen after the free allowance when a paid membership is active.
+                      </p>
+                    </div>
+                  </div>
+                </aside>
               </div>
             )}
           </div>
@@ -740,7 +790,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {currentScreen === "messages" && (
-        <div className="fixed inset-0 flex h-screen flex-col overflow-hidden bg-[#fbf6ed]">
+        <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#fbf6ed]">
           <MatrimonyChatList onChatClick={(chatId) => {
             setSelectedChatId(chatId)
             setCurrentScreen("chat")
@@ -749,7 +799,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {currentScreen === "activity" && (
-        <div className="fixed inset-0 flex h-screen flex-col overflow-hidden bg-[#fbf6ed]">
+        <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#fbf6ed]">
           <ActivityScreen
             mode="matrimony"
             onProfileClick={(userId) => {
@@ -766,7 +816,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {currentScreen === "shortlist" && (
-        <div className="fixed inset-0 flex h-screen flex-col overflow-hidden bg-[#fbf6ed]">
+        <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#fbf6ed]">
           <div className="flex flex-col h-full relative">
             {/* Static Background */}
             <StaticBackground />
@@ -812,7 +862,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {currentScreen === "chat" && selectedChatId && (
-        <div className="fixed inset-0 z-50 bg-background">
+        <div className="fixed inset-0 z-50 h-[100dvh] max-h-[100dvh] overflow-hidden bg-background">
           <ChatScreen 
             matchId={selectedChatId} 
             onBack={() => setCurrentScreen("messages")} 

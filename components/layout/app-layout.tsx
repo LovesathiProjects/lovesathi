@@ -31,9 +31,9 @@ export function AppLayout({
   
   return (
     <div className={cn(
-      "min-h-screen", 
+      "min-h-[100dvh]",
       "luxe-light-page",
-      isDiscoverScreen && "h-screen overflow-hidden"
+      isDiscoverScreen && "h-[100dvh] overflow-hidden"
     )}>
       {/* Settings Icon - Only show on profile page */}
       {showSettingsButton && onSettingsClick && currentScreen === "profile" && (

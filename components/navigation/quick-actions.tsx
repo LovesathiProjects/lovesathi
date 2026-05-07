@@ -49,12 +49,12 @@ export function QuickActions({
   return (
     <div
       className={cn(
-        "fixed bottom-4 left-1/2 -translate-x-1/2 z-50",
+        "fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 z-50 -translate-x-1/2",
         className,
       )}
     >
       <div className={cn(
-        "flex items-center gap-3 rounded-[2rem] border border-[#d9b978]/32 bg-[#fffaf2]/86 px-5 py-3 shadow-[0_22px_70px_rgba(24,17,13,0.2)] backdrop-blur-2xl sm:gap-4 sm:px-8",
+        "flex items-center gap-3 rounded-[2rem] border border-[#d9b978]/34 bg-[#fffaf2]/88 px-5 py-3 shadow-[0_22px_70px_rgba(24,17,13,0.2)] ring-1 ring-white/60 backdrop-blur-2xl sm:gap-4 sm:px-8",
       )}>
         {tabs.map((tab) => {
           const Icon = tab.icon

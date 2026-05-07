@@ -5,7 +5,7 @@ import { motion, useMotionValue, useTransform, animate } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { Check, X, Info, MoreHorizontal, MapPin, Briefcase, GraduationCap, Users, ChevronLeft, ChevronRight, Flag, Star } from "lucide-react"
+import { Check, X, Info, MoreHorizontal, MapPin, Briefcase, GraduationCap, Users, ChevronLeft, ChevronRight, Flag, Star, ImageIcon, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SwipeAnimations, useSwipeAnimation } from "../discovery/swipe-animations"
 import { MatrimonyProfileModal } from "./matrimony-profile-modal"
@@ -59,6 +59,7 @@ export function MatrimonySwipeCard({
 }: MatrimonySwipeCardProps) {
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
+  const [imageLoadFailed, setImageLoadFailed] = useState(false)
   const [expandedPhotoIndex, setExpandedPhotoIndex] = useState(0)
   const [showInfo, setShowInfo] = useState(false)
   const [isFlipped, setIsFlipped] = useState(false)
@@ -68,6 +69,22 @@ export function MatrimonySwipeCard({
   const [showReportDialog, setShowReportDialog] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const { toast } = useToast()
+  const safePhotos = useMemo(
+    () => photos.filter((photo) => typeof photo === "string" && photo.trim().length > 0),
+    [photos],
+  )
+  const activePhoto = safePhotos[currentPhotoIndex] || null
+
+  useEffect(() => {
+    if (safePhotos.length > 0 && currentPhotoIndex > safePhotos.length - 1) {
+      setCurrentPhotoIndex(0)
+    }
+  }, [currentPhotoIndex, safePhotos.length])
+
+  useEffect(() => {
+    setImageLoadFailed(false)
+  }, [activePhoto])
+
   // Get current user on component mount
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -154,7 +171,7 @@ export function MatrimonySwipeCard({
 
     if (clickX > cardWidth / 2) {
       // Right side - next photo
-      if (currentPhotoIndex < photos.length - 1) {
+      if (currentPhotoIndex < safePhotos.length - 1) {
         setCurrentPhotoIndex((prev) => prev + 1)
       }
     } else {
@@ -250,7 +267,7 @@ export function MatrimonySwipeCard({
   
   const handlePhotoNavigation = (direction: 'prev' | 'next', e?: React.MouseEvent) => {
     e?.stopPropagation()
-    const profilePhotos = fullProfile?.photos || photos
+    const profilePhotos = fullProfile?.photos || safePhotos
     if (direction === 'next' && expandedPhotoIndex < profilePhotos.length - 1) {
       setExpandedPhotoIndex(prev => prev + 1)
     } else if (direction === 'prev' && expandedPhotoIndex > 0) {
@@ -304,12 +321,12 @@ export function MatrimonySwipeCard({
 
       <motion.div
         className={cn(
-          "w-full max-w-sm cursor-grab active:cursor-grabbing select-none touch-none",
+          "w-full max-w-[min(92vw,470px)] cursor-grab active:cursor-grabbing select-none touch-none",
           "relative",
           // 3D perspective container
           "perspective-[1200px]",
           // Base height for card expansion calculation
-          stackIndex === 0 && isFlipped ? "h-[77vh] sm:h-[84vh] md:h-[672px]" : "h-[60vh] md:h-[480px]",
+          stackIndex === 0 && isFlipped ? "h-[min(78dvh,720px)] sm:h-[min(84dvh,760px)] md:h-[min(84dvh,760px)]" : "h-[min(64svh,610px)] md:h-[min(72dvh,680px)]",
           // Enhanced shadows for realistic depth
           // Full-view shadow for Matrimony: soft grey shadow when flipped (elevated card appearance)
           stackIndex === 0 && isFlipped && "shadow-[0_8px_32px_rgba(0,0,0,0.15),0_4px_16px_rgba(0,0,0,0.1)]",
@@ -368,23 +385,32 @@ export function MatrimonySwipeCard({
             onClick={handlePhotoClick}
           >
       {/* Background photo fills the card */}
-      <img
-        src={photos[currentPhotoIndex] || "/placeholder.svg"}
-        alt=""
-        className={cn(
-          "absolute inset-0 w-full h-full object-cover transition-all duration-300",
-          stackIndex === 1 && "blur-[2px] brightness-75 contrast-90",
-          stackIndex === 2 && "blur-[4px] brightness-65 contrast-80",
-          stackIndex > 2 && "blur-[6px] brightness-60 contrast-75",
-        )}
-        onError={(e) => {
-          const target = e.target as HTMLImageElement
-          if (target.src !== "/placeholder.svg") {
-            target.src = "/placeholder.svg"
-          }
-        }}
-        crossOrigin="anonymous"
-      />
+      {activePhoto && !imageLoadFailed ? (
+        <img
+          src={activePhoto}
+          alt=""
+          className={cn(
+            "absolute inset-0 h-full w-full object-cover transition-all duration-500",
+            stackIndex === 1 && "blur-[2px] brightness-75 contrast-90",
+            stackIndex === 2 && "blur-[4px] brightness-65 contrast-80",
+            stackIndex > 2 && "blur-[6px] brightness-60 contrast-75",
+          )}
+          onError={() => setImageLoadFailed(true)}
+          crossOrigin="anonymous"
+        />
+      ) : (
+        <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_28%_14%,rgba(255,250,242,0.84),transparent_18rem),radial-gradient(circle_at_76%_0%,rgba(217,185,120,0.34),transparent_20rem),linear-gradient(145deg,#ece3d7,#cdbfAD_48%,#6c5a4a_100%)]">
+          <div className="absolute inset-0 opacity-45 [background-image:linear-gradient(rgba(255,255,255,0.28)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.20)_1px,transparent_1px)] [background-size:54px_54px]" />
+          <div className="absolute left-1/2 top-[38%] flex h-28 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/28 bg-white/18 text-[#fffaf2] shadow-[0_24px_70px_rgba(24,17,13,0.22)] backdrop-blur-xl">
+            <span className="font-serif text-6xl font-bold tracking-[-0.08em] drop-shadow-lg">{cardInitial}</span>
+          </div>
+          <div className="absolute left-1/2 top-[58%] flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/24 bg-[#18110d]/24 px-4 py-2 text-xs font-bold text-[#fffaf2] shadow-[0_18px_48px_rgba(24,17,13,0.18)] backdrop-blur-xl">
+            <ImageIcon className="h-4 w-4" />
+            Portrait pending
+          </div>
+          <Sparkles className="absolute right-8 top-24 h-5 w-5 text-white/60" />
+        </div>
+      )}
 
       {/* Frosted glass overlay with gradient */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,250,242,0.22),transparent_17rem),linear-gradient(to_bottom,rgba(24,17,13,0.08),rgba(24,17,13,0.08)_35%,rgba(24,17,13,0.86))]" />
@@ -439,9 +465,9 @@ export function MatrimonySwipeCard({
         </div>
       )}
 
-      {stackIndex === 0 && photos.length > 1 && (
+      {stackIndex === 0 && safePhotos.length > 1 && (
         <div className="absolute left-5 right-5 top-[4.7rem] z-20 flex gap-1.5">
-          {photos.map((_, index) => (
+          {safePhotos.map((_, index) => (
             <span
               key={index}
               className={cn(
