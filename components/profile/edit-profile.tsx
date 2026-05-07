@@ -18,6 +18,7 @@ import { LocationCascadeSelect, LocationPreferencePicker } from "@/components/lo
 import { formatLocationValue, parseLocationValue, type LocationValue } from "@/lib/location"
 import {
   BODY_TYPE_OPTIONS,
+  COMPLEXION_OPTIONS,
   COMMUNITY_PREFERENCE_OPTIONS,
   DIET_OPTIONS,
   EDUCATION_OPTIONS,
@@ -25,11 +26,14 @@ import {
   FAMILY_VALUES_OPTIONS,
   getCommunityOptionsForReligion,
   getSubCommunityOptions,
+  INCOME_OPTIONS,
   MARITAL_STATUS_OPTIONS,
   MOTHER_TONGUE_OPTIONS,
   normalizeReligionOption,
   PROFESSION_OPTIONS,
   RELIGION_OPTIONS,
+  SIBLINGS_MARRIED_OPTIONS,
+  STAR_RAASHI_OPTIONS,
 } from "@/lib/matrimonyOptions"
 import { SearchableMultiSelect, SearchableSelect } from "@/components/ui/searchable-select"
 
@@ -57,18 +61,14 @@ function SelectField({
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      <Select value={value || undefined} onValueChange={onValueChange}>
-        <SelectTrigger>
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((option) => (
-            <SelectItem key={option} value={option}>
-              {option}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <SearchableSelect
+        value={value || undefined}
+        onValueChange={onValueChange}
+        options={options.map((option) => ({ value: option, label: option }))}
+        placeholder={placeholder}
+        searchPlaceholder={`Search ${label.toLowerCase()}...`}
+        emptyMessage={`No ${label.toLowerCase()} found.`}
+      />
     </div>
   )
 }
@@ -215,14 +215,20 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
         }
       }
 
+      if (!name.trim()) throw new Error("Please enter a profile name.")
+      if (uploadedPhotoUrls.length < 2) throw new Error("Please keep at least 2 profile photos.")
+      if (bio.trim().length > 0 && bio.trim().length < 20) {
+        throw new Error("About Me should be at least 20 characters.")
+      }
+
       const updateData: any = {
         user_id: user.id,
-        name,
+        name: name.trim(),
         age: dateOfBirth ? calculateAgeFromDate(dateOfBirth) : age ? Number(age) : null,
         gender: gender || null,
         created_by: createdBy || null,
         photos: uploadedPhotoUrls,
-        bio,
+        bio: bio.trim(),
         personal,
         career,
         family,
@@ -410,6 +416,13 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                   onValueChange={(value) => setNested("personal", "marital_status", value)}
                 />
                 <SelectField
+                  label="Complexion / Skin Tone"
+                  value={personal.complexion || ""}
+                  placeholder="Select complexion"
+                  options={COMPLEXION_OPTIONS}
+                  onValueChange={(value) => setNested("personal", "complexion", value)}
+                />
+                <SelectField
                   label="Diet"
                   value={personal.diet || ""}
                   placeholder="Select diet"
@@ -423,6 +436,31 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                   options={BODY_TYPE_OPTIONS}
                   onValueChange={(value) => setNested("personal", "body_type", value)}
                 />
+                <div className="grid grid-cols-2 gap-3 sm:col-span-2">
+                  {[
+                    { key: "smoker", label: "Smoker" },
+                    { key: "drinker", label: "Drinker" },
+                  ].map((item) => {
+                    const active = Boolean(personal[item.key])
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => setNested("personal", item.key, !active)}
+                        className={`rounded-2xl border p-4 text-left transition ${
+                          active
+                            ? "border-[#8f001c] bg-[#8f001c] text-white shadow-[0_14px_35px_rgba(143,0,28,0.18)]"
+                            : "border-[#482b1a]/12 bg-white/70 text-[#685f58] hover:border-[#b79b62] hover:text-[#18110d]"
+                        }`}
+                      >
+                        <p className="font-bold">{item.label}</p>
+                        <p className={active ? "text-xs text-white/78" : "text-xs text-[#9d7a55]"}>
+                          {active ? "Yes" : "No"}
+                        </p>
+                      </button>
+                    )
+                  })}
+                </div>
               </CardContent>
             </Card>
 
@@ -495,10 +533,13 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                   <Label>Company</Label>
                   <Input value={career.company || ""} onChange={(e) => setNested("career", "company", e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Annual Income</Label>
-                  <Input value={career.annual_income || ""} onChange={(e) => setNested("career", "annual_income", e.target.value)} />
-                </div>
+                <SelectField
+                  label="Annual Income"
+                  value={career.annual_income || ""}
+                  placeholder="Select annual income"
+                  options={INCOME_OPTIONS}
+                  onValueChange={(value) => setNested("career", "annual_income", value)}
+                />
                 <div className="space-y-2 sm:col-span-2">
                   <LocationCascadeSelect
                     value={career.work_location || {}}
@@ -604,6 +645,37 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                     cityLabel="Birth City"
                   />
                 </div>
+                {dateOfBirth && (
+                  <div className="rounded-2xl border border-[#b79b62]/24 bg-[#ffffff]/76 p-3 sm:col-span-2">
+                    <p className="luxe-kicker text-[#8f001c]">verified birth date</p>
+                    <p className="mt-1 font-bold text-[#18110d]">{formatDateForDisplay(dateOfBirth)}</p>
+                  </div>
+                )}
+                {!dateOfBirth && (
+                  <div className="space-y-2">
+                    <Label>Date of Birth</Label>
+                    <Input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label>Time of Birth</Label>
+                  <Input
+                    type="time"
+                    value={cultural.time_of_birth || "00:00"}
+                    onChange={(event) => setNested("cultural", "time_of_birth", event.target.value)}
+                  />
+                </div>
+                <SelectField
+                  label="Star / Raashi"
+                  value={cultural.star_raashi || ""}
+                  placeholder="Select star / raashi"
+                  options={STAR_RAASHI_OPTIONS}
+                  onValueChange={(value) => setNested("cultural", "star_raashi", value)}
+                />
+                <div className="space-y-2">
+                  <Label>Gotra</Label>
+                  <Input value={cultural.gotra || ""} onChange={(e) => setNested("cultural", "gotra", e.target.value)} />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -650,6 +722,27 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                   <Label>Sisters</Label>
                   <Input type="number" value={family.sisters || ""} onChange={(e) => setNested("family", "sisters", e.target.value ? Number(e.target.value) : null)} />
                 </div>
+                <SelectField
+                  label="Marital Status of Siblings"
+                  value={family.siblings_married || ""}
+                  placeholder="Select sibling status"
+                  options={SIBLINGS_MARRIED_OPTIONS}
+                  onValueChange={(value) => setNested("family", "siblings_married", value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setNested("family", "show_on_profile", !family.show_on_profile)}
+                  className={`rounded-2xl border p-4 text-left transition ${
+                    family.show_on_profile
+                      ? "border-[#8f001c] bg-[#8f001c] text-white shadow-[0_14px_35px_rgba(143,0,28,0.18)]"
+                      : "border-[#482b1a]/12 bg-white/70 text-[#685f58] hover:border-[#b79b62] hover:text-[#18110d]"
+                  }`}
+                >
+                  <p className="font-bold">Show family information on profile</p>
+                  <p className={family.show_on_profile ? "text-xs text-white/78" : "text-xs text-[#9d7a55]"}>
+                    {family.show_on_profile ? "Visible" : "Hidden"}
+                  </p>
+                </button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -676,10 +769,76 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                     onChange={(e) => setNested("partner", "max_age", e.target.value ? Number(e.target.value) : null)}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label>Minimum Height (cm)</Label>
+                  <Input
+                    type="number"
+                    value={partnerPreferences.min_height_cm || ""}
+                    onChange={(e) => setNested("partner", "min_height_cm", e.target.value ? Number(e.target.value) : null)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Maximum Height (cm)</Label>
+                  <Input
+                    type="number"
+                    value={partnerPreferences.max_height_cm || ""}
+                    onChange={(e) => setNested("partner", "max_height_cm", e.target.value ? Number(e.target.value) : null)}
+                  />
+                </div>
                 <div className="sm:col-span-2">
                   <LocationPreferencePicker
                     value={partnerPreferences.locations || []}
                     onChange={(locations) => setNested("partner", "locations", locations)}
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Preferred Education</Label>
+                  <SearchableMultiSelect
+                    values={Array.isArray(partnerPreferences.education_prefs) ? partnerPreferences.education_prefs : []}
+                    onValuesChange={(values) => setNested("partner", "education_prefs", values)}
+                    options={["Any", ...EDUCATION_OPTIONS].map((option) => ({ value: option, label: option }))}
+                    placeholder="Select preferred education"
+                    searchPlaceholder="Search education..."
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Preferred Professions</Label>
+                  <SearchableMultiSelect
+                    values={Array.isArray(partnerPreferences.profession_prefs) ? partnerPreferences.profession_prefs : []}
+                    onValuesChange={(values) => setNested("partner", "profession_prefs", values)}
+                    options={["Any", ...PROFESSION_OPTIONS].map((option) => ({ value: option, label: option }))}
+                    placeholder="Select preferred professions"
+                    searchPlaceholder="Search profession..."
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Diet Preferences</Label>
+                  <SearchableMultiSelect
+                    values={Array.isArray(partnerPreferences.diet_prefs) ? partnerPreferences.diet_prefs : []}
+                    onValuesChange={(values) => setNested("partner", "diet_prefs", values)}
+                    options={["Any", ...DIET_OPTIONS].map((option) => ({ value: option, label: option }))}
+                    placeholder="Select diet preferences"
+                    searchPlaceholder="Search diet..."
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Lifestyle Preferences</Label>
+                  <SearchableMultiSelect
+                    values={Array.isArray(partnerPreferences.lifestyle_prefs) ? partnerPreferences.lifestyle_prefs : []}
+                    onValuesChange={(values) => setNested("partner", "lifestyle_prefs", values)}
+                    options={["Any", "Non-smoker", "Non-drinker", "Open to both"].map((option) => ({ value: option, label: option }))}
+                    placeholder="Select lifestyle preferences"
+                    searchPlaceholder="Search lifestyle..."
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Family Type Preferences</Label>
+                  <SearchableMultiSelect
+                    values={Array.isArray(partnerPreferences.family_type_prefs) ? partnerPreferences.family_type_prefs : []}
+                    onValuesChange={(values) => setNested("partner", "family_type_prefs", values)}
+                    options={["Any", ...FAMILY_TYPE_OPTIONS].map((option) => ({ value: option, label: option }))}
+                    placeholder="Select family type preferences"
+                    searchPlaceholder="Search family type..."
                   />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
