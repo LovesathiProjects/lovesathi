@@ -9,7 +9,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
-import { X } from "lucide-react"
+import { BadgeCheck, Crown, Sparkles, X } from "lucide-react"
 import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
 import { COMMUNITY_PREFERENCE_OPTIONS } from "@/lib/matrimonyOptions"
 import { FREE_VERIFIED_FILTER_MATCH_LIMIT, useVerifiedFilterAllowance } from "@/hooks/useVerifiedFilterAllowance"
@@ -35,7 +35,7 @@ interface MatrimonyFilterSheetProps {
 }
 
 export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: MatrimonyFilterSheetProps) {
-  const { canUseVerifiedFilter, loading: verifiedFilterLoading, matchCount } = useVerifiedFilterAllowance()
+  const { canUseVerifiedFilter, loading: verifiedFilterLoading, matchCount, isPremium } = useVerifiedFilterAllowance()
   const [filters, setFilters] = useState<FilterState>({
     ageRange: [21, 35],
     heightRange: [150, 190], // in cm
@@ -110,9 +110,15 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
     onOpenChange(false)
   }
 
+  const verifiedFilterDescription = isPremium
+    ? "Premium active. Verified-only discovery is unlocked without the free-match limit."
+    : canUseVerifiedFilter
+      ? `Included for your first ${FREE_VERIFIED_FILTER_MATCH_LIMIT} active matches. Current: ${matchCount}/${FREE_VERIFIED_FILTER_MATCH_LIMIT}.`
+      : `Upgrade to keep verified-only discovery after ${matchCount} active matches.`
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="matrimony-filter-sheet flex w-full min-w-0 flex-col overflow-hidden border-l border-[#d9b978]/24 bg-[#fffdf8] sm:w-[520px]">
+      <SheetContent side="right" className="matrimony-filter-sheet flex w-full min-w-0 flex-col overflow-hidden border-l border-[#d9b978]/24 bg-[linear-gradient(145deg,#fffdf8,#fffaf1_48%,#f8eddc)] sm:w-[520px]">
         <SheetHeader className="shrink-0 space-y-3 px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6">
           <div className="flex min-w-0 items-center justify-between gap-3 pr-16 sm:pr-12">
             <SheetTitle className="matrimony-filter-title min-w-0 flex-1 truncate font-serif text-[1.8rem] leading-none tracking-[-0.05em] text-[#18110d] sm:text-3xl">Refine Matches</SheetTitle>
@@ -124,6 +130,18 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
         </SheetHeader>
 
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 pb-28 pt-2 sm:px-6">
+          <div className="rounded-[1.7rem] border border-[#d9b978]/28 bg-white/72 p-4 shadow-[0_18px_52px_rgba(24,17,13,0.08)] backdrop-blur-xl">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#d9b978]/36 bg-[#fff7e8] text-[#8f001c] shadow-inner">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="luxe-kicker text-[0.62rem] text-[#8f001c]">premium discovery suite</p>
+                <p className="mt-1 text-sm leading-6 text-[#6c5a4a]">Filter with intention, then keep the experience calm and family-ready.</p>
+              </div>
+            </div>
+          </div>
+
           {/* Age Range */}
           <div className="space-y-4">
             <Label className="text-black">
@@ -279,34 +297,49 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
 
           {/* Account Type */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-black">Account Type</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between gap-4 py-1">
-                <div className="min-w-0">
-                  <Label htmlFor="verified-only" className="text-black">Verified profiles only</Label>
-                  <p className="text-xs leading-5 text-[#6c5a4a]">
-                    {canUseVerifiedFilter
-                      ? `Free until ${FREE_VERIFIED_FILTER_MATCH_LIMIT} active matches. Current: ${matchCount}/${FREE_VERIFIED_FILTER_MATCH_LIMIT}.`
-                      : `Premium unlock required after ${matchCount} active matches.`}
-                  </p>
+            <h3 className="font-serif text-2xl font-bold tracking-[-0.05em] text-[#18110d]">Account Type</h3>
+            <div className="space-y-3">
+              <div className="rounded-[1.6rem] border border-[#d9b978]/30 bg-white/78 p-4 shadow-[0_18px_48px_rgba(24,17,13,0.07)]">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex min-w-0 gap-3">
+                    <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#8f001c]/10 text-[#8f001c]">
+                      <BadgeCheck className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Label htmlFor="verified-only" className="text-base font-bold text-[#18110d]">Verified profiles only</Label>
+                        {isPremium && <Badge className="border-[#d9b978]/40 bg-[#fff7e8] text-[#8f001c]">Premium</Badge>}
+                      </div>
+                      <p className="mt-1 text-xs leading-5 text-[#6c5a4a]">{verifiedFilterDescription}</p>
+                    </div>
+                  </div>
+                  <Switch
+                    id="verified-only"
+                    className="h-7 w-12 data-[state=checked]:bg-[linear-gradient(135deg,#8f001c,#b9904d)]"
+                    checked={filters.verifiedOnly}
+                    disabled={verifiedFilterLoading || !canUseVerifiedFilter}
+                    onCheckedChange={(checked) => setFilters((prev) => ({ ...prev, verifiedOnly: checked }))}
+                  />
                 </div>
-                <Switch
-                  id="verified-only"
-                  checked={filters.verifiedOnly}
-                  disabled={verifiedFilterLoading || !canUseVerifiedFilter}
-                  onCheckedChange={(checked) => setFilters((prev) => ({ ...prev, verifiedOnly: checked }))}
-                />
               </div>
-              <div className="flex items-center justify-between gap-4 py-1">
-                <div className="min-w-0">
-                  <Label htmlFor="premium-only" className="text-black">Premium members only</Label>
-                  <p className="text-xs text-[#6c5a4a]">Queued until subscription entitlements are connected.</p>
+              <div className="rounded-[1.6rem] border border-[#482b1a]/10 bg-white/52 p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex min-w-0 gap-3">
+                    <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#d9b978]/18 text-[#8a641f]">
+                      <Crown className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <Label htmlFor="premium-only" className="text-base font-bold text-[#18110d]">Premium members only</Label>
+                      <p className="mt-1 text-xs leading-5 text-[#6c5a4a]">Queued until member entitlement display is connected.</p>
+                    </div>
+                  </div>
+                  <Switch
+                    id="premium-only"
+                    className="h-7 w-12"
+                    checked={false}
+                    disabled
+                  />
                 </div>
-                <Switch
-                  id="premium-only"
-                  checked={false}
-                  disabled
-                />
               </div>
             </div>
           </div>

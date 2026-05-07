@@ -622,18 +622,20 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       {/* Floating header elements */}
       {currentScreen === "discover" && (
         <>
-          <div className="fixed top-3 left-4 z-40 rounded-full border border-[#d9b978]/30 bg-[#fffaf2]/82 px-4 py-2 shadow-[0_18px_45px_rgba(24,17,13,0.14)] backdrop-blur-xl">
-            <p className="luxe-kicker text-[0.62rem] text-[#8f001c]">Lovesathi</p>
-            <p className="font-serif text-xl font-bold leading-none tracking-[-0.04em] text-[#18110d]">Find your match</p>
+          <div className="fixed left-4 top-[calc(0.75rem+env(safe-area-inset-top))] z-40 max-w-[70vw] rounded-[1.35rem] border border-[#d9b978]/36 bg-[#fffaf2]/78 px-4 py-3 shadow-[0_24px_60px_rgba(24,17,13,0.16)] backdrop-blur-2xl sm:left-6 sm:px-5">
+            <p className="luxe-kicker text-[0.58rem] text-[#8f001c] sm:text-[0.65rem]">Lovesathi private salon</p>
+            <p className="truncate font-serif text-xl font-bold leading-none tracking-[-0.05em] text-[#18110d] sm:text-2xl">Curated discovery</p>
+            <p className="mt-1 hidden text-xs font-semibold text-[#6c5a4a] sm:block">{profiles.length} profile dossiers prepared</p>
           </div>
-          <div className="fixed top-3 right-3 z-40">
+          <div className="fixed right-3 top-[calc(0.75rem+env(safe-area-inset-top))] z-40 sm:right-6">
             <Button
               variant="secondary"
               size="default"
-              className="rounded-full border border-[#d9b978]/40 bg-[#fffaf2]/86 px-5 py-4 text-[#18110d] shadow-[0_18px_45px_rgba(24,17,13,0.14)] backdrop-blur-xl hover:bg-white"
+              className="rounded-full border border-[#d9b978]/40 bg-[#fffaf2]/86 px-4 py-5 text-[#18110d] shadow-[0_24px_60px_rgba(24,17,13,0.16)] backdrop-blur-2xl hover:bg-white sm:px-5"
               onClick={() => setShowFilters(true)}
             >
               <Filter className="h-5 w-5 text-[#8f001c]" />
+              <span className="hidden font-bold sm:inline">Refine</span>
             </Button>
           </div>
         </>
@@ -641,21 +643,24 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
       {currentScreen === "discover" && (
         <div className="fixed inset-0 h-screen w-screen overflow-hidden flex flex-col relative bg-[#fbf6ed]">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(185,144,77,0.22),transparent_26rem),radial-gradient(circle_at_90%_10%,rgba(143,0,28,0.18),transparent_26rem),linear-gradient(135deg,#fffaf2,#fbf6ed_52%,#f0ddba)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_16%_12%,rgba(217,185,120,0.28),transparent_24rem),radial-gradient(circle_at_88%_16%,rgba(143,0,28,0.18),transparent_25rem),radial-gradient(circle_at_50%_110%,rgba(185,144,77,0.22),transparent_28rem),linear-gradient(135deg,#fffdf8,#fbf3e5_48%,#f2dfbd)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-[linear-gradient(to_bottom,rgba(255,253,248,0.92),rgba(255,253,248,0))]" />
+          <div className="pointer-events-none absolute left-1/2 top-20 hidden h-[72vh] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[#d9b978]/32 to-transparent sm:block" />
           <DynamicBackground imageUrl={currentProfile?.photos?.[0] || null} />
           
-          <div className="relative flex-1 overflow-hidden flex items-center justify-center p-4 pt-24">
+          <div className="relative flex-1 overflow-hidden flex items-center justify-center px-4 pb-24 pt-28 sm:px-6 sm:pb-20 sm:pt-32">
             {loading ? (
               <div className="flex items-center justify-center h-full w-full">
-                <div className="luxe-card rounded-[2rem] p-7 text-center">
-                  <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#8f001c] border-t-transparent" />
-                  <p className="mt-4 text-sm font-bold text-[#18110d]">Curating profiles...</p>
+                <div className="luxe-card rounded-[2rem] border-[#d9b978]/30 p-8 text-center shadow-[0_28px_90px_rgba(24,17,13,0.14)]">
+                  <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#d9b978] border-t-[#8f001c]" />
+                  <p className="mt-4 luxe-kicker text-[0.62rem] text-[#8f001c]">private curation</p>
+                  <p className="mt-2 text-sm font-bold text-[#18110d]">Preparing premium profile dossiers...</p>
                 </div>
               </div>
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 {/* Card Stack */}
-                <div className="relative w-full max-w-sm h-full flex items-center justify-center overflow-hidden">
+                <div className="relative w-full max-w-[420px] h-full flex items-center justify-center overflow-visible">
                   {hasMoreProfiles && profiles.length > 0 ? (
                     <div className="relative w-full h-full overflow-visible">
                       {profiles
@@ -689,7 +694,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                         ))}
                     </div>
                   ) : (
-                    <Card className="luxe-card flex h-96 w-full max-w-sm items-center justify-center rounded-[2rem] border-[#d9b978]/30">
+                    <Card className="luxe-card flex h-96 w-full max-w-sm items-center justify-center rounded-[2rem] border-[#d9b978]/30 shadow-[0_28px_90px_rgba(24,17,13,0.12)]">
                       <CardContent className="text-center space-y-4">
                         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#8f001c]/10">
                           <Heart className="h-8 w-8 text-[#8f001c]" />
@@ -726,6 +731,11 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
               </div>
             )}
           </div>
+          {hasMoreProfiles && profiles.length > 0 && (
+            <div className="pointer-events-none fixed bottom-[calc(5.35rem+env(safe-area-inset-bottom))] left-1/2 z-30 hidden -translate-x-1/2 rounded-full border border-[#d9b978]/24 bg-[#fffaf2]/70 px-4 py-2 text-xs font-bold text-[#6c5a4a] shadow-[0_18px_48px_rgba(24,17,13,0.12)] backdrop-blur-xl sm:block">
+              Swipe with intention. Tap the card for the full dossier.
+            </div>
+          )}
         </div>
       )}
 
