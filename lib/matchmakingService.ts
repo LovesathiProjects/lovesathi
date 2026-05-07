@@ -1,5 +1,5 @@
 import { supabase } from "./supabaseClient"
-import { getSwipeLimitStatus, normalizeLimitError } from "@/lib/planLimits"
+import { FREE_PLAN_LIMITS, getLimitMessage, getSwipeLimitStatus, normalizeLimitError } from "@/lib/planLimits"
 
 export interface LikeAction {
   success: boolean
@@ -27,6 +27,38 @@ export interface ActivityItem {
   userId: string
 }
 
+function isDemoProfileId(profileId: string) {
+  return profileId.startsWith("demo-")
+}
+
+function demoSwipeStorageKey(userId: string) {
+  return `lovesathi_demo_swipes:${userId}`
+}
+
+function getDemoSwipeRows(userId: string) {
+  if (typeof window === "undefined") return []
+
+  try {
+    const raw = localStorage.getItem(demoSwipeStorageKey(userId))
+    const rows = raw ? (JSON.parse(raw) as Array<{ targetId: string; action: string; createdAt: string }>) : []
+    const windowStart = Date.now() - FREE_PLAN_LIMITS.windowHours * 60 * 60 * 1000
+    const recentRows = rows.filter((row) => new Date(row.createdAt).getTime() >= windowStart)
+    if (recentRows.length !== rows.length) {
+      localStorage.setItem(demoSwipeStorageKey(userId), JSON.stringify(recentRows))
+    }
+    return recentRows
+  } catch {
+    return []
+  }
+}
+
+function recordDemoSwipe(userId: string, targetId: string, action: "like" | "pass" | "connect") {
+  if (typeof window === "undefined") return
+  const rows = getDemoSwipeRows(userId)
+  rows.push({ targetId, action, createdAt: new Date().toISOString() })
+  localStorage.setItem(demoSwipeStorageKey(userId), JSON.stringify(rows))
+}
+
 export async function recordMatrimonyLike(
   likerId: string,
   likedId: string,
@@ -36,6 +68,16 @@ export async function recordMatrimonyLike(
     const limitStatus = await getSwipeLimitStatus(likerId)
     if (!limitStatus.allowed) {
       return { success: false, error: limitStatus.error }
+    }
+
+    if (isDemoProfileId(likedId)) {
+      const demoRows = getDemoSwipeRows(likerId)
+      if (!limitStatus.isPremium && demoRows.length >= (limitStatus.remaining ?? FREE_PLAN_LIMITS.swipeActions)) {
+        return { success: false, error: getLimitMessage("swipe") }
+      }
+
+      recordDemoSwipe(likerId, likedId, action)
+      return { success: true }
     }
 
     let data
@@ -136,7 +178,9 @@ export async function getMatrimonyLikedProfiles(userId: string): Promise<string[
   try {
     const { data, error } = await supabase.from("matrimony_likes").select("liked_id").eq("liker_id", userId)
     if (error) throw error
-    return data?.map((item) => item.liked_id) || []
+    const realLikedIds = data?.map((item) => item.liked_id) || []
+    const demoLikedIds = getDemoSwipeRows(userId).map((row) => row.targetId)
+    return [...realLikedIds, ...demoLikedIds]
   } catch (error: any) {
     console.error("Error getting matrimony liked profiles:", error)
     return []

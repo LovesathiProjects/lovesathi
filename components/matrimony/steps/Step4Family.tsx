@@ -38,9 +38,7 @@ export function Step4Family({ onNext, onBack }: { onNext: () => void; onBack: ()
       familyType: family.familyType,
       familyValues: family.familyValues,
       fatherOccupation: family.fatherOccupation,
-      fatherCompany: family.fatherCompany,
       motherOccupation: family.motherOccupation,
-      motherCompany: family.motherCompany,
       brothers: family.brothers,
       sisters: family.sisters,
       siblingsMarried: family.siblingsMarried,
@@ -205,18 +203,6 @@ export function Step4Family({ onNext, onBack }: { onNext: () => void; onBack: ()
                 <FormMessage />
               </FormItem>
             )} />
-            <FormField control={form.control} name="fatherCompany" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black">Father's Company</FormLabel>
-                <FormControl>
-                  <Input 
-                    {...field}
-                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
             <FormField control={form.control} name="motherOccupation" render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-black">Mother's Occupation</FormLabel>
@@ -259,18 +245,6 @@ export function Step4Family({ onNext, onBack }: { onNext: () => void; onBack: ()
                     className="mt-2 h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white"
                   />
                 )}
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="motherCompany" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black">Mother's Company</FormLabel>
-                <FormControl>
-                  <Input 
-                    {...field}
-                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
-                  />
-                </FormControl>
                 <FormMessage />
               </FormItem>
             )} />

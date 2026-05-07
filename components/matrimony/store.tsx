@@ -38,9 +38,7 @@ export interface FamilyState {
   familyType?: "Joint" | "Nuclear" | "Extended" | "Single Parent"
   familyValues?: "Traditional" | "Moderate" | "Modern" | "Progressive"
   fatherOccupation?: string
-  fatherCompany?: string
   motherOccupation?: string
-  motherCompany?: string
   brothers?: number
   sisters?: number
   siblingsMarried?: "None" | "Some" | "All" | "Mostly Married" | "Mostly Single"
@@ -127,4 +125,3 @@ export function useMatrimonySetupStore() {
   if (!ctx) throw new Error("useMatrimonySetupStore must be used within MatrimonySetupProvider")
   return ctx
 }
-

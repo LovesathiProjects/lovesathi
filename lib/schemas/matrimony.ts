@@ -32,9 +32,7 @@ export const familySchema = z.object({
   familyType: z.enum(["Joint", "Nuclear", "Extended", "Single Parent"]).optional(),
   familyValues: z.enum(["Traditional", "Moderate", "Modern", "Progressive"]).optional(),
   fatherOccupation: z.string().optional(),
-  fatherCompany: z.string().optional(),
   motherOccupation: z.string().optional(),
-  motherCompany: z.string().optional(),
   brothers: z.number().int().min(0).max(10).optional(),
   sisters: z.number().int().min(0).max(10).optional(),
   siblingsMarried: z.enum(["None", "Some", "All", "Mostly Married", "Mostly Single"]).optional(),
@@ -87,4 +85,3 @@ export const fullMatrimonySchema = z.object({
   preferences: partnerPreferencesSchema,
   verification: verificationSchema,
 })
-

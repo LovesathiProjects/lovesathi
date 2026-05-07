@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Users, Home } from "lucide-react"
+import { SearchableSelect } from "@/components/ui/searchable-select"
 import {
   getCommunityOptionsForReligion,
   MOTHER_TONGUE_OPTIONS,
@@ -53,61 +54,40 @@ export function MatrimonyPreferences() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Religion</Label>
-                  <Select
+                  <SearchableSelect
                     value={preferences.religion || undefined}
                     onValueChange={(value) => setPreferences((prev) => ({ ...prev, religion: value, caste: "" }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select religion" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {RELIGION_OPTIONS.map((religion) => (
-                        <SelectItem key={religion} value={religion}>
-                          {religion}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    options={RELIGION_OPTIONS.map((religion) => ({ value: religion, label: religion }))}
+                    placeholder="Select religion"
+                    searchPlaceholder="Search religion..."
+                    emptyMessage="No religion found."
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Mother Tongue</Label>
-                  <Select
+                  <SearchableSelect
                     value={preferences.motherTongue || undefined}
                     onValueChange={(value) => setPreferences((prev) => ({ ...prev, motherTongue: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MOTHER_TONGUE_OPTIONS.map((language) => (
-                        <SelectItem key={language} value={language}>
-                          {language}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    options={MOTHER_TONGUE_OPTIONS.map((language) => ({ value: language, label: language }))}
+                    placeholder="Select language"
+                    searchPlaceholder="Search language..."
+                    emptyMessage="No language found."
+                  />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label>Community / Caste / Denomination (Optional)</Label>
-                <Select
+                <SearchableSelect
                   value={preferences.caste || undefined}
                   onValueChange={(value) => setPreferences((prev) => ({ ...prev, caste: value }))}
                   disabled={!preferences.religion}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={preferences.religion ? "Select community" : "Select religion first"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {communityOptions.map((community) => (
-                      <SelectItem key={community} value={community}>
-                        {community}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={communityOptions.map((community) => ({ value: community, label: community }))}
+                  placeholder={preferences.religion ? "Select community" : "Select religion first"}
+                  searchPlaceholder="Search community, caste, or denomination..."
+                  emptyMessage="No community found."
+                />
               </div>
             </div>
           )}

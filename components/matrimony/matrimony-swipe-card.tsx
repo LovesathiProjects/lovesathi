@@ -25,6 +25,8 @@ interface MatrimonySwipeCardProps {
   photos: string[] // Changed from avatar to photos array
   verified?: boolean
   premium?: boolean
+  demo?: boolean
+  visibilityLabel?: string
   bio?: string
   interests?: string[]
   education?: string
@@ -47,6 +49,8 @@ export function MatrimonySwipeCard({
   photos,
   verified,
   premium,
+  demo,
+  visibilityLabel,
   bio,
   interests,
   education,
@@ -449,6 +453,11 @@ export function MatrimonySwipeCard({
             {premium && (
               <Badge className="border-[#d9b978]/50 bg-[#d9b978]/24 px-3 py-1 text-[#fffaf2] shadow-lg backdrop-blur-xl">
                 Premium
+              </Badge>
+            )}
+            {demo && (
+              <Badge className="border-[#d9b978]/50 bg-[#18110d]/36 px-3 py-1 text-[#fffaf2] shadow-lg backdrop-blur-xl">
+                {visibilityLabel || "Preview"}
               </Badge>
             )}
           </div>
@@ -941,8 +950,8 @@ export function MatrimonySwipeCard({
                               <div className="text-black text-sm sm:text-base">
                                 <span className="text-[#444444]">Parents: </span>
                                 {[
-                                  fullProfile.family.father_occupation && `Father - ${fullProfile.family.father_occupation}${fullProfile.family.father_company ? ` (${fullProfile.family.father_company})` : ''}`,
-                                  fullProfile.family.mother_occupation && `Mother - ${fullProfile.family.mother_occupation}${fullProfile.family.mother_company ? ` (${fullProfile.family.mother_company})` : ''}`
+                                  fullProfile.family.father_occupation && `Father - ${fullProfile.family.father_occupation}`,
+                                  fullProfile.family.mother_occupation && `Mother - ${fullProfile.family.mother_occupation}`
                                 ].filter(Boolean).join(', ')}
                               </div>
                             )}
@@ -1075,6 +1084,8 @@ export function MatrimonySwipeCard({
         religion: community, // Using community as religion for now
         verified,
         premium,
+        demo,
+        visibilityLabel,
       }}
       open={showProfileModal}
       onOpenChange={setShowProfileModal}

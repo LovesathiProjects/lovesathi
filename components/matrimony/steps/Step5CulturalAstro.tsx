@@ -7,7 +7,7 @@ import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SearchableSelect } from "@/components/ui/searchable-select"
 import { useMatrimonySetupStore } from "@/components/matrimony/store"
 import { culturalAstroSchema } from "@/lib/schemas/matrimony"
 import { saveStep5 } from "@/lib/matrimonyService"
@@ -17,6 +17,7 @@ import { LocationCascadeSelect } from "@/components/location/location-cascade-se
 import { formatLocationValue, parseLocationValue } from "@/lib/location"
 import {
   getCommunityOptionsForReligion,
+  getSubCommunityOptions,
   MOTHER_TONGUE_OPTIONS,
   normalizeReligionOption,
   RELIGION_OPTIONS,
@@ -77,7 +78,7 @@ function OtherSelect({
     <FormItem>
       <FormLabel className="text-black">{label}</FormLabel>
       <FormControl>
-        <Select
+        <SearchableSelect
           onValueChange={(nextValue) => {
             if (nextValue === "Other") {
               setCustomMode(true)
@@ -91,18 +92,11 @@ function OtherSelect({
           }}
           value={selectValue}
           disabled={disabled}
-        >
-          <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white">
-            <SelectValue placeholder={placeholder} />
-          </SelectTrigger>
-          <SelectContent position="popper" className="z-50 border border-black/20 bg-white text-black">
-            {options.map((option) => (
-              <SelectItem key={option} value={option} className="text-black">
-                {option}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          options={options.map((option) => ({ value: option, label: option }))}
+          placeholder={placeholder}
+          searchPlaceholder={`Search ${label.toLowerCase()}...`}
+          emptyMessage={`No ${label.toLowerCase()} found.`}
+        />
       </FormControl>
       {selectValue === "Other" && (
         <Input
@@ -143,7 +137,12 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
   })
 
   const selectedReligion = form.watch("religion")
+  const selectedCommunity = form.watch("community")
   const communityOptions = React.useMemo(() => getCommunityOptionsForReligion(selectedReligion), [selectedReligion])
+  const subCommunityOptions = React.useMemo(
+    () => getSubCommunityOptions(selectedReligion, selectedCommunity),
+    [selectedReligion, selectedCommunity],
+  )
 
   useEffect(() => {
     let mounted = true
@@ -293,7 +292,10 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
                   options={communityOptions}
                   otherPlaceholder="Enter community, caste, or denomination"
                   disabled={!selectedReligion}
-                  onChange={field.onChange}
+                  onChange={(value) => {
+                    field.onChange(value)
+                    form.setValue("subCaste", "", { shouldDirty: true, shouldValidate: true })
+                  }}
                 />
               )}
             />
@@ -301,16 +303,15 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
               control={form.control}
               name="subCaste"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black">Sub-caste / sub-community (optional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      className="h-12 rounded-xl border-black/20 text-base text-[#111] focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                <OtherSelect
+                  label="Sub-caste / sub-community (optional)"
+                  value={field.value}
+                  placeholder={selectedCommunity ? "Select sub-community" : "Select community first"}
+                  options={subCommunityOptions}
+                  otherPlaceholder="Enter sub-caste or sub-community"
+                  disabled={!selectedCommunity}
+                  onChange={field.onChange}
+                />
               )}
             />
           </div>

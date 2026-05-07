@@ -23,7 +23,7 @@ import { PaymentScreen } from "@/components/premium/payment-screen"
 import { PremiumFeatures } from "@/components/premium/premium-features"
 import { VerificationStatus } from "@/components/profile/verification-status"
 import { EditProfile } from "@/components/profile/edit-profile"
-import { type MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
+import { MOCK_MATRIMONY_PROFILES, type MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
 import { supabase } from "@/lib/supabaseClient"
 import { handleLogout } from "@/lib/logout"
 import { recordMatrimonyLike, getMatrimonyLikedProfiles } from "@/lib/matchmakingService"
@@ -112,6 +112,14 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
   const handleShortlistToggle = useCallback(
     async (profile: MatrimonyProfile) => {
+      if (profile.demo) {
+        toast({
+          title: "Preview profile",
+          description: "Shortlisting is available for real member profiles. Preview cards are here to keep discovery full while Lovesathi grows.",
+        })
+        return { success: false }
+      }
+
       const wasShortlisted = shortlistedIds.has(profile.id)
       const result = await toggleShortlist(profile)
 
@@ -159,6 +167,14 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
   const handleShortlistConnect = useCallback(
     async (profile: MatrimonyProfile) => {
+      if (profile.demo) {
+        toast({
+          title: "Preview profile",
+          description: "Messaging opens after matching with a real member profile.",
+        })
+        return
+      }
+
       try {
         const {
           data: { user },
@@ -234,7 +250,9 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             career,
             cultural,
             family,
-            bio
+            bio,
+            is_seeded_profile,
+            profile_visibility_label
           `)
           .eq("profile_completed", true)
 
@@ -485,12 +503,29 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
               interests: [], // Not in current schema, can be added later
               verified: verification?.verification_status === "approved",
               premium: false, // Not in current schema, can be added later
+              demo: Boolean((matrimonyProfile as any).is_seeded_profile),
+              visibilityLabel: (matrimonyProfile as any).profile_visibility_label || undefined,
               height, // Add height to profile
             }
           })
           .filter((profile): profile is NonNullable<typeof profile> => profile !== null) as MatrimonyProfile[]
 
-        setProfiles(combinedProfiles)
+        const femalePreviewNames = ["Aditi", "Priya", "Sneha", "Kavya", "Ananya", "Divya", "Shruti", "Meera", "Riya", "Pooja"]
+        const previewProfiles = MOCK_MATRIMONY_PROFILES.filter((mockProfile) => {
+          const isFemalePreview = femalePreviewNames.some((name) => mockProfile.name.startsWith(name))
+          if (currentUserGender === "male") return isFemalePreview
+          if (currentUserGender === "female") return !isFemalePreview
+          return true
+        }).map((mockProfile) => ({
+          ...mockProfile,
+          id: `demo-${mockProfile.id}`,
+          demo: true,
+          visibilityLabel: "Preview",
+        }))
+
+        const profileIds = new Set(combinedProfiles.map((profile) => profile.id))
+        const supplementProfiles = previewProfiles.filter((profile) => !profileIds.has(profile.id) && !likedProfileIds.includes(profile.id))
+        setProfiles([...combinedProfiles, ...supplementProfiles])
       } catch (error) {
         console.error("Unexpected error fetching matrimony profiles:", error)
         setProfiles([])
@@ -707,6 +742,8 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                               photos={profile.photos}
                               verified={profile.verified}
                               premium={profile.premium}
+                              demo={profile.demo}
+                              visibilityLabel={profile.visibilityLabel}
                               bio={profile.bio}
                               interests={profile.interests}
                               education={profile.education}

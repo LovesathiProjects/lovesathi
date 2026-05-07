@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabaseClient"
 import { uploadAsset, type MatrimonyProfileFull } from "@/lib/matrimonyService"
 import { generateSmartBioSuggestions } from "@/lib/matrimonyBio"
@@ -25,12 +24,14 @@ import {
   FAMILY_TYPE_OPTIONS,
   FAMILY_VALUES_OPTIONS,
   getCommunityOptionsForReligion,
+  getSubCommunityOptions,
   MARITAL_STATUS_OPTIONS,
   MOTHER_TONGUE_OPTIONS,
   normalizeReligionOption,
   PROFESSION_OPTIONS,
   RELIGION_OPTIONS,
 } from "@/lib/matrimonyOptions"
+import { SearchableMultiSelect, SearchableSelect } from "@/components/ui/searchable-select"
 
 interface EditProfileProps {
   onBack: () => void
@@ -90,6 +91,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
   const [cultural, setCultural] = useState<any>({})
   const [partnerPreferences, setPartnerPreferences] = useState<any>({})
   const [customCommunityEntry, setCustomCommunityEntry] = useState(false)
+  const [customSubCommunityEntry, setCustomSubCommunityEntry] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
@@ -180,20 +182,6 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
     } as const
 
     map[section]({ ...stateMap[section], [key]: value })
-  }
-
-  function togglePartnerCommunity(community: string) {
-    const current = Array.isArray(partnerPreferences.communities) ? partnerPreferences.communities : []
-    const next =
-      community === "Any"
-        ? current.includes("Any")
-          ? []
-          : ["Any"]
-        : current.includes(community)
-          ? current.filter((item: string) => item !== community)
-          : [...current.filter((item: string) => item !== "Any"), community]
-
-    setNested("partner", "communities", next)
   }
 
   function updateWorkLocation(location: LocationValue) {
@@ -292,6 +280,11 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
   const communityValue = cultural.community || ""
   const shouldShowCustomCommunity = customCommunityEntry || Boolean(communityValue && !communityOptions.includes(communityValue))
   const communitySelectValue = shouldShowCustomCommunity ? "Other" : communityValue || undefined
+  const subCommunityOptions = getSubCommunityOptions(cultural.religion, cultural.community)
+  const subCommunityValue = cultural.sub_caste || ""
+  const shouldShowCustomSubCommunity =
+    customSubCommunityEntry || Boolean(subCommunityValue && !subCommunityOptions.includes(subCommunityValue))
+  const subCommunitySelectValue = shouldShowCustomSubCommunity ? "Other" : subCommunityValue || undefined
   const partnerCommunityOptions = ["Any", ...COMMUNITY_PREFERENCE_OPTIONS]
   const selectedPartnerCommunities = Array.isArray(partnerPreferences.communities) ? partnerPreferences.communities : []
   const bioSuggestions = generateSmartBioSuggestions({ name, career, cultural, family, personal })
@@ -539,31 +532,27 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                 />
                 <div className="space-y-2">
                   <Label>Community / Caste / Denomination</Label>
-                  <Select
+                  <SearchableSelect
                     value={communitySelectValue}
                     onValueChange={(value) => {
                       if (value === "Other") {
                         setCustomCommunityEntry(true)
                         setNested("cultural", "community", "")
+                        setNested("cultural", "sub_caste", "")
                         return
                       }
 
                       setCustomCommunityEntry(false)
                       setNested("cultural", "community", value)
+                      setNested("cultural", "sub_caste", "")
+                      setCustomSubCommunityEntry(false)
                     }}
                     disabled={!cultural.religion}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={cultural.religion ? "Select community" : "Select religion first"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {communityOptions.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    options={communityOptions.map((option) => ({ value: option, label: option }))}
+                    placeholder={cultural.religion ? "Select community" : "Select religion first"}
+                    searchPlaceholder="Search community, caste, or denomination..."
+                    emptyMessage="No community found."
+                  />
                   {shouldShowCustomCommunity && (
                     <Input
                       value={communityValue}
@@ -572,6 +561,37 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                         setNested("cultural", "community", event.target.value)
                       }}
                       placeholder="Enter community, caste, or denomination"
+                    />
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label>Sub-caste / sub-community</Label>
+                  <SearchableSelect
+                    value={subCommunitySelectValue}
+                    onValueChange={(value) => {
+                      if (value === "Other") {
+                        setCustomSubCommunityEntry(true)
+                        setNested("cultural", "sub_caste", "")
+                        return
+                      }
+
+                      setCustomSubCommunityEntry(false)
+                      setNested("cultural", "sub_caste", value)
+                    }}
+                    disabled={!cultural.community}
+                    options={subCommunityOptions.map((option) => ({ value: option, label: option }))}
+                    placeholder={cultural.community ? "Select sub-community" : "Select community first"}
+                    searchPlaceholder="Search sub-caste or sub-community..."
+                    emptyMessage="No sub-community found."
+                  />
+                  {shouldShowCustomSubCommunity && (
+                    <Input
+                      value={subCommunityValue}
+                      onChange={(event) => {
+                        setCustomSubCommunityEntry(true)
+                        setNested("cultural", "sub_caste", event.target.value)
+                      }}
+                      placeholder="Enter sub-caste or sub-community"
                     />
                   )}
                 </div>
@@ -664,25 +684,14 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                 </div>
                 <div className="space-y-2 sm:col-span-2">
                   <Label>Preferred Communities</Label>
-                  <div className="flex flex-wrap gap-2 rounded-3xl border border-[#482b1a]/10 bg-white/58 p-3">
-                    {partnerCommunityOptions.map((community) => (
-                      <Button
-                        key={community}
-                        type="button"
-                        size="sm"
-                        variant={selectedPartnerCommunities.includes(community) ? "default" : "outline"}
-                        className={cn(
-                          "rounded-full",
-                          selectedPartnerCommunities.includes(community)
-                            ? "bg-[#8f001c] text-[#fffaf2] hover:bg-[#740016]"
-                            : "border-[#482b1a]/12 bg-white/70 text-[#6c5a4a] hover:border-[#b9904d] hover:text-[#18110d]",
-                        )}
-                        onClick={() => togglePartnerCommunity(community)}
-                      >
-                        {community}
-                      </Button>
-                    ))}
-                  </div>
+                  <SearchableMultiSelect
+                    values={selectedPartnerCommunities}
+                    onValuesChange={(communities) => setNested("partner", "communities", communities)}
+                    options={partnerCommunityOptions.map((community) => ({ value: community, label: community }))}
+                    placeholder="Select preferred communities"
+                    searchPlaceholder="Search community, caste, or denomination..."
+                    emptyMessage="No community found."
+                  />
                 </div>
               </CardContent>
             </Card>

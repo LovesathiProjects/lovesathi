@@ -12,6 +12,7 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
 import { COMMUNITY_PREFERENCE_OPTIONS } from "@/lib/matrimonyOptions"
+import { SearchableMultiSelect } from "@/components/ui/searchable-select"
 
 type PreferenceKey =
   | "dietPrefs"
@@ -39,12 +40,6 @@ const preferenceGroups: Array<{
     title: "Profession",
     description: "Career paths that feel compatible with your expectations.",
     options: ["Any", "Software Engineer", "Doctor", "Business Owner", "Civil Servant", "Teacher", "Finance"],
-  },
-  {
-    key: "communities",
-    title: "Community",
-    description: "Keep this broad if you are open to wider matches.",
-    options: ["Any", ...COMMUNITY_PREFERENCE_OPTIONS],
   },
   {
     key: "dietPrefs",
@@ -109,6 +104,14 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
   const setLocations = (locations: string[]) => {
     setValues((prev) => {
       const next = { ...prev, locations }
+      setPartial("preferences", next)
+      return next
+    })
+  }
+
+  const setCommunities = (communities: string[]) => {
+    setValues((prev) => {
+      const next = { ...prev, communities }
       setPartial("preferences", next)
       return next
     })
@@ -239,6 +242,28 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
           </div>
         </div>
         <LocationPreferencePicker value={values.locations} onChange={setLocations} label="Preferred Cities" />
+      </section>
+
+      <section className="rounded-[1.75rem] border border-[#d9b978]/24 bg-[#fffaf2]/76 p-5 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur">
+        <div className="mb-4 flex items-start gap-3">
+          <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#8f001c]/10 text-[#8f001c]">
+            <BadgeCheck className="h-4 w-4" />
+          </div>
+          <div>
+            <h3 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">Community</h3>
+            <p className="text-sm leading-6 text-[#6c5a4a]">
+              Search a broad community list instead of scrolling through dozens of chips.
+            </p>
+          </div>
+        </div>
+        <SearchableMultiSelect
+          values={values.communities}
+          onValuesChange={setCommunities}
+          options={["Any", ...COMMUNITY_PREFERENCE_OPTIONS].map((option) => ({ value: option, label: option }))}
+          placeholder="Select preferred communities"
+          searchPlaceholder="Search community, caste, or denomination..."
+          emptyMessage="No community found."
+        />
       </section>
 
       <div className="grid gap-4">

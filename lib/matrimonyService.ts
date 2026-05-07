@@ -42,9 +42,7 @@ export interface MatrimonyProfileFull {
     family_type?: string
     family_values?: string
     father_occupation?: string
-    father_company?: string
     mother_occupation?: string
-    mother_company?: string
     brothers?: number
     sisters?: number
     siblings_married?: string
@@ -83,6 +81,8 @@ export interface MatrimonyProfileFull {
   step6_completed?: boolean
   step7_completed?: boolean
   profile_completed?: boolean
+  is_seeded_profile?: boolean
+  profile_visibility_label?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -415,9 +415,7 @@ export async function saveStep4(
     familyType?: string
     familyValues?: string
     fatherOccupation?: string
-    fatherCompany?: string
     motherOccupation?: string
-    motherCompany?: string
     brothers?: number
     sisters?: number
     siblingsMarried?: string
@@ -436,9 +434,7 @@ export async function saveStep4(
       family_type: data.familyType,
       family_values: data.familyValues,
       father_occupation: data.fatherOccupation,
-      father_company: data.fatherCompany,
       mother_occupation: data.motherOccupation,
-      mother_company: data.motherCompany,
       brothers: data.brothers || 0,
       sisters: data.sisters || 0,
       siblings_married: data.siblingsMarried,

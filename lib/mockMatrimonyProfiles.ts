@@ -12,6 +12,8 @@ export interface MatrimonyProfile {
   interests?: string[]
   verified?: boolean
   premium?: boolean
+  demo?: boolean
+  visibilityLabel?: string
   height?: string // Height in format like "5'6""
 }
 

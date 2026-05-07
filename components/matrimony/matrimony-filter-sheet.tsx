@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
@@ -13,6 +12,7 @@ import { BadgeCheck, Crown, Sparkles, X } from "lucide-react"
 import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
 import { COMMUNITY_PREFERENCE_OPTIONS } from "@/lib/matrimonyOptions"
 import { FREE_VERIFIED_FILTER_MATCH_LIMIT, useVerifiedFilterAllowance } from "@/hooks/useVerifiedFilterAllowance"
+import { SearchableMultiSelect } from "@/components/ui/searchable-select"
 
 export interface FilterState {
   ageRange: [number, number]
@@ -200,21 +200,14 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
                 <h4 className="font-medium text-sm text-black">Community/Caste Preferences</h4>
                 <span className="text-sm text-[#444444]">{filters.communities.length} selected</span>
               </div>
-              <div className="flex flex-wrap gap-2.5">
-                {communityOptions.map((community) => (
-                  <Badge
-                    key={community}
-                    variant={filters.communities.includes(community) ? "default" : "outline"}
-                    className={filters.communities.includes(community) 
-                      ? "cursor-pointer bg-[#97011A] text-white border-[#97011A]/50 hover:bg-[#7A0115]" 
-                      : "cursor-pointer bg-gray-100 border-[#E5E5E5] text-black hover:bg-gray-200"}
-                    onClick={() => handleArrayToggle(filters.communities, community, (value) => setFilters(prev => ({ ...prev, communities: value })))}
-                  >
-                    {community}
-                    {filters.communities.includes(community) && <X className="w-3 h-3 ml-1" />}
-                  </Badge>
-                ))}
-              </div>
+              <SearchableMultiSelect
+                values={filters.communities}
+                onValuesChange={(communities) => setFilters((prev) => ({ ...prev, communities }))}
+                options={communityOptions.map((community) => ({ value: community, label: community }))}
+                placeholder="Select preferred communities"
+                searchPlaceholder="Search community, caste, or denomination..."
+                emptyMessage="No community found."
+              />
             </div>
 
             <Separator className="bg-[#E5E5E5]" />

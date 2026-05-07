@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast"
 import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
 import { COMMUNITY_PREFERENCE_OPTIONS } from "@/lib/matrimonyOptions"
 import { FREE_VERIFIED_FILTER_MATCH_LIMIT, useVerifiedFilterAllowance } from "@/hooks/useVerifiedFilterAllowance"
+import { SearchableMultiSelect } from "@/components/ui/searchable-select"
 
 interface MatrimonyPreferences {
   ageRange: [number, number]
@@ -331,18 +332,14 @@ export function MatrimonyPreferencesSettings({ onBack }: MatrimonyPreferencesSet
             <CardTitle>Community/Caste Preferences</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {communityOptions.map((community) => (
-                <Button
-                  key={community}
-                  variant={settings.communities.includes(community) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleArrayToggle("communities", community)}
-                >
-                  {community}
-                </Button>
-              ))}
-            </div>
+            <SearchableMultiSelect
+              values={settings.communities}
+              onValuesChange={(communities) => setSettings((prev) => ({ ...prev, communities }))}
+              options={communityOptions.map((community) => ({ value: community, label: community }))}
+              placeholder="Select preferred communities"
+              searchPlaceholder="Search community, caste, or denomination..."
+              emptyMessage="No community found."
+            />
           </CardContent>
         </Card>
 

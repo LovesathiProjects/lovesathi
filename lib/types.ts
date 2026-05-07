@@ -29,9 +29,7 @@ export interface MatrimonyProfile {
     familyType?: string
     familyValues?: string
     fatherOccupation?: string
-    fatherCompany?: string
     motherOccupation?: string
-    motherCompany?: string
     brothers?: number
     sisters?: number
     siblingsMarried?: string

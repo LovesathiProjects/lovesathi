@@ -5,7 +5,7 @@ import { X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SearchableSelect, type SearchableOption } from "@/components/ui/searchable-select"
 import { formatLocationValue, type LocationValue } from "@/lib/location"
 
 type LocationOption = {
@@ -26,6 +26,14 @@ function findByName(options: LocationOption[], name?: string) {
   if (!name) return undefined
   const normalized = name.trim().toLowerCase()
   return options.find((option) => option.name.trim().toLowerCase() === normalized)
+}
+
+function toSearchableOptions(options: LocationOption[]): SearchableOption[] {
+  return options.map((option) => ({
+    value: String(option.id),
+    label: option.name,
+    keywords: option.code ? [option.code] : undefined,
+  }))
 }
 
 interface LocationCascadeSelectProps {
@@ -166,78 +174,57 @@ export function LocationCascadeSelect({
     <div className={className}>
       <div className="space-y-2">
         <Label className="text-black">{countryLabel}</Label>
-        <Select value={countryId || undefined} onValueChange={handleCountryChange} disabled={loadingCountries}>
-          <SelectTrigger className="h-12 rounded-xl border-black/20 bg-white text-base text-[#111] focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20">
-            <SelectValue placeholder={loadingCountries ? "Loading countries..." : countryPlaceholder} />
-          </SelectTrigger>
-          <SelectContent position="popper" className="z-50 max-h-80 border border-black/20 bg-white text-black">
-            {countries.map((country) => (
-              <SelectItem key={country.id} value={String(country.id)} className="text-black">
-                {country.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SearchableSelect
+          value={countryId || undefined}
+          onValueChange={handleCountryChange}
+          disabled={loadingCountries}
+          options={toSearchableOptions(countries)}
+          placeholder={loadingCountries ? "Loading countries..." : countryPlaceholder}
+          searchPlaceholder="Search country..."
+          emptyMessage="No country found."
+        />
       </div>
 
       <div className="space-y-2">
         <Label className="text-black">{stateLabel}</Label>
-        <Select
+        <SearchableSelect
           value={stateId || undefined}
           onValueChange={handleStateChange}
           disabled={!countryId || loadingStates || states.length === 0}
-        >
-          <SelectTrigger className="h-12 rounded-xl border-black/20 bg-white text-base text-[#111] focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20">
-            <SelectValue
-              placeholder={
-                !countryId
-                  ? "Select country first"
-                  : loadingStates
-                    ? "Loading states..."
-                    : states.length === 0
-                      ? "No states listed"
-                      : statePlaceholder
-              }
-            />
-          </SelectTrigger>
-          <SelectContent position="popper" className="z-50 max-h-80 border border-black/20 bg-white text-black">
-            {states.map((state) => (
-              <SelectItem key={state.id} value={String(state.id)} className="text-black">
-                {state.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          options={toSearchableOptions(states)}
+          placeholder={
+            !countryId
+              ? "Select country first"
+              : loadingStates
+                ? "Loading states..."
+                : states.length === 0
+                  ? "No states listed"
+                  : statePlaceholder
+          }
+          searchPlaceholder="Search state..."
+          emptyMessage="No state found."
+        />
       </div>
 
       <div className="space-y-2">
         <Label className="text-black">{cityLabel}</Label>
-        <Select
+        <SearchableSelect
           value={cityValue ? String(cityValue.id) : undefined}
           onValueChange={handleCityChange}
           disabled={!stateId || loadingCities || cities.length === 0}
-        >
-          <SelectTrigger className="h-12 rounded-xl border-black/20 bg-white text-base text-[#111] focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20">
-            <SelectValue
-              placeholder={
-                !stateId
-                  ? "Select state first"
-                  : loadingCities
-                    ? "Loading cities..."
-                    : cities.length === 0
-                      ? "No cities listed"
-                      : cityPlaceholder
-              }
-            />
-          </SelectTrigger>
-          <SelectContent position="popper" className="z-50 max-h-80 border border-black/20 bg-white text-black">
-            {cities.map((city) => (
-              <SelectItem key={city.id} value={String(city.id)} className="text-black">
-                {city.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          options={toSearchableOptions(cities)}
+          placeholder={
+            !stateId
+              ? "Select state first"
+              : loadingCities
+                ? "Loading cities..."
+                : cities.length === 0
+                  ? "No cities listed"
+                  : cityPlaceholder
+          }
+          searchPlaceholder="Search city..."
+          emptyMessage="No city found."
+        />
       </div>
     </div>
   )
