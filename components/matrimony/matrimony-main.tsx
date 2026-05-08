@@ -277,9 +277,11 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             cultural,
             family,
             bio,
-            is_seeded_profile
+            is_seeded_profile,
+            admin_review_status
           `)
           .eq("profile_completed", true)
+          .neq("admin_review_status", "rejected")
 
         // Apply age filter at database level if available
         if (appliedFilters?.ageRange) {
