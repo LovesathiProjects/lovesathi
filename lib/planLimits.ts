@@ -18,6 +18,14 @@ export interface UsageLimitStatus {
   error?: string
 }
 
+export interface EntitlementStatus {
+  isPremium: boolean
+  planId: string | null
+  status: string | null
+  activeUntil: string | null
+  daysRemaining: number | null
+}
+
 const LIMIT_COPY: Record<LimitKind, string> = {
   swipe: `Free plan swipe limit reached. You can review ${FREE_PLAN_LIMITS.swipeActions} profiles every ${FREE_PLAN_LIMITS.windowHours} hours. Upgrade for unlimited discovery.`,
   messagePeople: `Free plan message limit reached. You can text ${FREE_PLAN_LIMITS.messagePeople} people every ${FREE_PLAN_LIMITS.windowHours} hours. Upgrade for unlimited conversations.`,
@@ -61,6 +69,40 @@ export async function isPremiumUser(userId: string): Promise<boolean> {
   }
 
   return false
+}
+
+export async function getUserEntitlementStatus(userId: string): Promise<EntitlementStatus> {
+  const { data, error } = await supabase
+    .from("user_entitlements")
+    .select("plan_id,status,active_until,updated_at")
+    .eq("user_id", userId)
+    .in("status", ["active", "trialing", "past_due"])
+    .order("updated_at", { ascending: false })
+    .limit(5)
+
+  if (error) {
+    if (!tableMissing(error)) {
+      console.warn("[getUserEntitlementStatus] Unable to read entitlement:", error.message)
+    }
+    return { isPremium: false, planId: null, status: null, activeUntil: null, daysRemaining: null }
+  }
+
+  const now = Date.now()
+  const active = (data || []).find((row) => {
+    const validStatus = row.status === "active" || row.status === "trialing"
+    const activeUntil = row.active_until ? new Date(row.active_until).getTime() : null
+    return validStatus && (!activeUntil || activeUntil > now)
+  })
+  const fallback = active || data?.[0]
+  const activeUntilMs = fallback?.active_until ? new Date(fallback.active_until).getTime() : null
+
+  return {
+    isPremium: Boolean(active),
+    planId: fallback?.plan_id || null,
+    status: fallback?.status || null,
+    activeUntil: fallback?.active_until || null,
+    daysRemaining: activeUntilMs ? Math.max(0, Math.ceil((activeUntilMs - now) / 86400000)) : active ? null : 0,
+  }
 }
 
 export async function getSwipeLimitStatus(userId: string): Promise<UsageLimitStatus> {

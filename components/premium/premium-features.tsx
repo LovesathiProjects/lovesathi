@@ -7,9 +7,11 @@ import { StaticBackground } from "@/components/discovery/static-background"
 
 export function PremiumFeatures({ onBack }: { onBack?: () => void }) {
   const features = [
-    "Message Before Matching",
-    "Rematch with Expired Connections",
-    "Unlimited Likes/Swipes",
+    "Unlimited discovery swipes and interests",
+    "Unlimited shortlist saves",
+    "Verified-only filter after the free allowance",
+    "Unlimited conversations within matches",
+    "Premium-only discovery filter",
   ]
 
   return (

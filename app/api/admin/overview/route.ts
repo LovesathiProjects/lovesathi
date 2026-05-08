@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/adminAuth"
+import { getSubscriptionPlan } from "@/lib/subscriptionPlans"
 
 type CountResult = {
   label: string
@@ -46,6 +47,14 @@ type AdminUserItem = {
   emailConfirmedAt: string | null
   lastSignInAt: string | null
   suspendedUntil: string | null
+  premium: {
+    isPremium: boolean
+    planId: string | null
+    planName: string | null
+    status: string | null
+    activeUntil: string | null
+    source: string | null
+  }
   profileName: string | null
   profileCompleted: boolean
   profileReviewStatus: string | null
@@ -407,6 +416,20 @@ async function loadAuthUserProfileRows(supabase: any, userIds: string[]): Promis
   }
 }
 
+async function loadEntitlementRows(supabase: any, userIds: string[]): Promise<QueueResult<any>> {
+  if (userIds.length === 0) {
+    return { status: "ok", items: [] }
+  }
+
+  return safeRows<any>(() =>
+    supabase
+      .from("user_entitlements")
+      .select("id,user_id,plan_id,status,active_until,source,updated_at")
+      .in("user_id", userIds)
+      .order("updated_at", { ascending: false }),
+  )
+}
+
 async function loadNameMap(supabase: any, userIds: string[]) {
   if (userIds.length === 0) {
     return new Map<string, string>()
@@ -417,7 +440,7 @@ async function loadNameMap(supabase: any, userIds: string[]) {
   return new Map<string, string>(rows.map((row) => [row.user_id, row.name || "Unnamed profile"]))
 }
 
-function mapAuthUser(user: any, profile?: any): AdminUserItem {
+function mapAuthUser(user: any, profile?: any, entitlement?: any): AdminUserItem {
   const providers = Array.isArray(user?.app_metadata?.providers)
     ? user.app_metadata.providers.join(", ")
     : typeof user?.app_metadata?.provider === "string"
@@ -426,6 +449,11 @@ function mapAuthUser(user: any, profile?: any): AdminUserItem {
   const suspendedUntil = typeof user?.banned_until === "string" ? user.banned_until : null
   const isSuspended = suspendedUntil ? new Date(suspendedUntil).getTime() > Date.now() : false
   const status = isSuspended ? "suspended" : user?.email_confirmed_at ? "active" : "unconfirmed"
+  const isPremium =
+    Boolean(entitlement) &&
+    ["active", "trialing"].includes(entitlement.status) &&
+    (!entitlement.active_until || new Date(entitlement.active_until).getTime() > Date.now())
+  const plan = entitlement?.plan_id ? getSubscriptionPlan(entitlement.plan_id) : null
 
   return {
     id: String(user?.id || ""),
@@ -435,6 +463,14 @@ function mapAuthUser(user: any, profile?: any): AdminUserItem {
     emailConfirmedAt: typeof user?.email_confirmed_at === "string" ? user.email_confirmed_at : null,
     lastSignInAt: typeof user?.last_sign_in_at === "string" ? user.last_sign_in_at : null,
     suspendedUntil,
+    premium: {
+      isPremium,
+      planId: entitlement?.plan_id || null,
+      planName: plan?.name || null,
+      status: entitlement?.status || null,
+      activeUntil: entitlement?.active_until || null,
+      source: entitlement?.source || null,
+    },
     profileName: profile?.name || null,
     profileCompleted: Boolean(profile?.profile_completed),
     profileReviewStatus: profile?.admin_review_status || null,
@@ -578,6 +614,9 @@ export async function GET(request: Request) {
       safeCount(supabase, "Active matches", "matrimony_matches", (query) => query.eq("is_active", true)),
       safeCount(supabase, "Messages", "messages"),
       safeCount(supabase, "Shortlists", "shortlists"),
+      safeCount(supabase, "Active premium", "user_entitlements", (query) =>
+        query.in("status", ["active", "trialing"]),
+      ),
       safeCount(supabase, "New profiles 7d", "matrimony_profile_full", (query) => query.gte("created_at", sevenDaysAgo)),
       safeCount(supabase, "Admin actions 7d", "admin_audit_logs", (query) => query.gte("created_at", sevenDaysAgo)),
     ]),
@@ -587,7 +626,7 @@ export async function GET(request: Request) {
 
   const authUserIds = unique(authUserRows.items.map((item) => item.id))
 
-  const [profileRows, verificationRows, reportRows, auditRows, userProfileRows] = await Promise.all([
+  const [profileRows, verificationRows, reportRows, auditRows, userProfileRows, entitlementRows] = await Promise.all([
     loadAdminProfileRows(supabase),
     safeRows<any>(() =>
       supabase
@@ -615,15 +654,31 @@ export async function GET(request: Request) {
         .limit(10),
     ),
     loadAuthUserProfileRows(supabase, authUserIds),
+    loadEntitlementRows(supabase, authUserIds),
   ])
 
   const userProfileMap = new Map(userProfileRows.items.map((item) => [item.user_id, item]))
+  const entitlementMap = new Map<string, any>()
+  entitlementRows.items.forEach((item) => {
+    const isActive =
+      ["active", "trialing"].includes(item.status) &&
+      (!item.active_until || new Date(item.active_until).getTime() > Date.now())
+    const current = entitlementMap.get(item.user_id)
+    const currentIsActive =
+      current &&
+      ["active", "trialing"].includes(current.status) &&
+      (!current.active_until || new Date(current.active_until).getTime() > Date.now())
+    if (!current || (isActive && !currentIsActive)) {
+      entitlementMap.set(item.user_id, item)
+    }
+  })
   const userEmailMap = new Map<string, string | null>(
     authUserRows.items.map((item) => [item.id, typeof item.email === "string" ? item.email : null]),
   )
-  const authUsers = authUserRows.items.map((item) => mapAuthUser(item, userProfileMap.get(item.id)))
+  const authUsers = authUserRows.items.map((item) => mapAuthUser(item, userProfileMap.get(item.id), entitlementMap.get(item.id)))
   const unconfirmedUserCount = authUsers.filter((item) => item.status === "unconfirmed").length
   const suspendedUserCount = authUsers.filter((item) => item.status === "suspended").length
+  const premiumUserCount = authUsers.filter((item) => item.premium.isPremium).length
   const userMetrics: CountResult[] = [
     {
       label: "Auth users visible",
@@ -642,6 +697,12 @@ export async function GET(request: Request) {
       value: suspendedUserCount,
       status: suspendedUserCount > 0 ? "warning" : "ok",
       detail: authUserRows.status === "ok" ? "Latest 50 auth users sample." : authUserRows.detail,
+    },
+    {
+      label: "Premium users visible",
+      value: premiumUserCount,
+      status: entitlementRows.status,
+      detail: entitlementRows.status === "ok" ? "Latest 50 auth users sample." : entitlementRows.detail,
     },
   ]
 
@@ -751,6 +812,14 @@ export async function GET(request: Request) {
           authUserRows.status === "ok"
             ? "Admins can inspect recent auth users and suspend or restore access with audit notes."
             : authUserRows.detail || "Supabase Auth user management is not currently reachable.",
+      },
+      {
+        label: "Subscription entitlements",
+        status: entitlementRows.status,
+        detail:
+          entitlementRows.status === "ok"
+            ? "Premium state is driven by user_entitlements and can be granted or revoked by admin until payment webhooks are connected."
+            : entitlementRows.detail || "Run the latest migration so premium entitlement controls can load.",
       },
       {
         label: "Audit trail",

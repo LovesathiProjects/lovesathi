@@ -304,15 +304,23 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         // Get user IDs for verifications
         const userIds = profileRows.map((p) => p.user_id)
         // Fetch ID verifications (for verified status)
-        const { data: verifications, error: verificationsError } =
+        const [{ data: verifications, error: verificationsError }, { data: premiumIds, error: premiumIdsError }] =
           userIds.length > 0
-            ? await supabase
-                .from("id_verifications")
-                .select("user_id, verification_status")
-                .in("user_id", userIds)
-            : { data: [], error: null }
+            ? await Promise.all([
+                supabase
+                  .from("id_verifications")
+                  .select("user_id, verification_status")
+                  .in("user_id", userIds),
+                supabase.rpc("get_lovesathi_premium_profile_ids", { p_user_ids: userIds }),
+              ])
+            : [
+                { data: [], error: null },
+                { data: [], error: null },
+              ]
 
         if (verificationsError) console.error("Error fetching verifications:", verificationsError)
+        if (premiumIdsError) console.warn("Unable to fetch premium profile ids:", premiumIdsError.message)
+        const premiumUserIds = new Set<string>((premiumIds as string[] | null) || [])
 
         // Get current user's gender for filtering
         const currentUserGender = currentUserProfile?.gender?.toLowerCase()
@@ -512,7 +520,9 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                 }
               }
 
-              // Premium-only filtering remains disabled in the UI until entitlement data exists.
+              if (appliedFilters.premiumOnly && !premiumUserIds.has(matrimonyProfile.user_id)) {
+                return null
+              }
             }
 
             return {
@@ -527,7 +537,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
               bio: bioText || undefined,
               interests: [], // Not in current schema, can be added later
               verified: verification?.verification_status === "approved",
-              premium: false, // Not in current schema, can be added later
+              premium: premiumUserIds.has(matrimonyProfile.user_id),
               height, // Add height to profile
             }
           })

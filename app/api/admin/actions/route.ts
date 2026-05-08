@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/adminAuth"
+import { getPlanActiveUntil, getSubscriptionPlan } from "@/lib/subscriptionPlans"
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const verificationStatuses = new Set(["approved", "rejected", "in_review"])
 const reportStatuses = new Set(["reviewed", "resolved", "dismissed"])
 const profileReviewStatuses = new Set(["approved", "rejected", "in_review", "pending"])
 const userStatuses = new Set(["suspended", "active"])
+const entitlementStatuses = new Set(["active", "canceled"])
 
 function cleanText(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim().slice(0, 500) : null
@@ -29,7 +31,7 @@ async function writeAdminAuditLog(
   }: {
     actorId: string
     actorEmail: string | null
-    resource: "verification" | "report" | "profile" | "user"
+    resource: "verification" | "report" | "profile" | "user" | "entitlement"
     recordId: string
     previousStatus: string | null
     nextStatus: string
@@ -256,6 +258,112 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json({ ok: true, record: { id: data.user?.id, email: data.user?.email } })
+  }
+
+  if (resource === "entitlement") {
+    if (!entitlementStatuses.has(status)) {
+      return NextResponse.json({ error: "Invalid entitlement status." }, { status: 400 })
+    }
+
+    const notes = cleanText(body.notes)
+    const planId = typeof body.planId === "string" ? body.planId : "quarterly"
+    const plan = getSubscriptionPlan(planId)
+    const { data: currentRows } = await supabase
+      .from("user_entitlements")
+      .select("id,plan_id,status,active_until")
+      .eq("user_id", id)
+      .in("status", ["active", "trialing"])
+      .order("updated_at", { ascending: false })
+
+    const currentActive = (currentRows || []).find(
+      (item: any) => !item.active_until || new Date(item.active_until).getTime() > Date.now(),
+    )
+
+    if (status === "canceled") {
+      const { error } = await supabase
+        .from("user_entitlements")
+        .update({
+          status: "canceled",
+          active_until: new Date().toISOString(),
+          notes,
+          metadata: {
+            canceledBy: user.email || user.id,
+            reason: notes,
+          },
+        })
+        .eq("user_id", id)
+        .in("status", ["active", "trialing"])
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 400 })
+      }
+
+      await writeAdminAuditLog(supabase, {
+        actorId: user.id,
+        actorEmail: user.email || null,
+        resource: "entitlement",
+        recordId: id,
+        previousStatus: currentActive?.status || null,
+        nextStatus: "canceled",
+        notes,
+        metadata: {
+          planId: currentActive?.plan_id || null,
+        },
+      })
+
+      return NextResponse.json({ ok: true })
+    }
+
+    await supabase
+      .from("user_entitlements")
+      .update({
+        status: "canceled",
+        active_until: new Date().toISOString(),
+        notes: "Superseded by a newer admin-granted entitlement.",
+      })
+      .eq("user_id", id)
+      .in("status", ["active", "trialing"])
+
+    const activeUntil = getPlanActiveUntil(plan.id).toISOString()
+    const { data, error } = await supabase
+      .from("user_entitlements")
+      .insert({
+        user_id: id,
+        plan_id: plan.id,
+        status: "active",
+        active_until: activeUntil,
+        source: "admin",
+        granted_by: user.id,
+        notes,
+        metadata: {
+          grantedByEmail: user.email || null,
+          planName: plan.name,
+          durationDays: plan.durationDays,
+        },
+      })
+      .select("id,user_id,plan_id,status,active_until")
+      .single()
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    await writeAdminAuditLog(supabase, {
+      actorId: user.id,
+      actorEmail: user.email || null,
+      resource: "entitlement",
+      recordId: id,
+      previousStatus: currentActive?.status || null,
+      nextStatus: "active",
+      notes,
+      metadata: {
+        planId: plan.id,
+        planName: plan.name,
+        activeUntil,
+      },
+    })
+
+    return NextResponse.json({ ok: true, record: data })
   }
 
   return NextResponse.json({ error: "Unknown admin action." }, { status: 400 })

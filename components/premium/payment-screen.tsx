@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StaticBackground } from "@/components/discovery/static-background"
 import { ArrowLeft, Crown, Lock, Sparkles } from "lucide-react"
+import { getSubscriptionPlan } from "@/lib/subscriptionPlans"
 
 export function PaymentScreen({ planId, onCancel }: { planId: string; onSuccess?: () => void; onCancel?: () => void }) {
+  const plan = getSubscriptionPlan(planId)
+
   return (
     <div className="luxe-light-page relative flex h-full min-h-screen flex-col">
       <StaticBackground />
@@ -17,13 +20,14 @@ export function PaymentScreen({ planId, onCancel }: { planId: string; onSuccess?
             </div>
             <p className="luxe-kicker mb-3 text-[#8f001c]">secure checkout</p>
             <CardTitle className="font-serif text-4xl tracking-[-0.05em] text-[#18110d] sm:text-5xl">
-              Premium checkout is queued for gateway connection.
+              {plan.name} checkout is ready for gateway connection.
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <p className="text-base leading-7 text-[#685f58]">
-              The selected plan is <span className="font-bold text-[#18110d]">{planId}</span>. Before launch, this screen should be connected to a real payment provider with subscriptions,
-              invoices, refunds, and entitlement checks. Until then, Lovesathi will not collect card details.
+              The selected plan is <span className="font-bold text-[#18110d]">{plan.name}</span> for{" "}
+              <span className="font-bold text-[#18110d]">{plan.priceLabel}</span>. Before launch, this screen should be connected to a real payment provider with subscriptions,
+              invoices, refunds, and webhook-based entitlement updates. Until then, Lovesathi will not collect card details.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-3xl border border-[#482b1a]/10 bg-white/62 p-4">

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,67 +8,9 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Crown, Eye, MessageCircle, Zap, Star, Check, ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-interface PremiumPlan {
-  id: string
-  name: string
-  duration: string
-  price: string
-  originalPrice?: string
-  discount?: string
-  features: string[]
-  isPopular?: boolean
-}
-
-const premiumPlans: PremiumPlan[] = [
-  {
-    id: "monthly",
-    name: "Essential",
-    duration: "1 Month",
-    price: "INR 999",
-    features: [
-      "Unlimited profile interests",
-      "See who shortlisted you",
-      "Advanced partner filters",
-      "Verified profile priority",
-      "Read receipts",
-      "Priority support queue",
-    ],
-  },
-  {
-    id: "quarterly",
-    name: "Signature",
-    duration: "3 Months",
-    price: "INR 2,499",
-    originalPrice: "INR 2,997",
-    discount: "Save 17%",
-    features: [
-      "Everything in Essential",
-      "Priority discovery placement",
-      "Private photo reveal controls",
-      "Contact intent insights",
-      "Family-ready profile prompts",
-      "VIP customer support",
-    ],
-    isPopular: true,
-  },
-  {
-    id: "yearly",
-    name: "Heritage",
-    duration: "12 Months",
-    price: "INR 7,999",
-    originalPrice: "INR 11,988",
-    discount: "Save 33%",
-    features: [
-      "Everything in Signature",
-      "Top Picks feature",
-      "Advanced compatibility signals",
-      "Priority verification review",
-      "Premium support concierge",
-      "Exclusive event readiness",
-    ],
-  },
-]
+import { getUserEntitlementStatus, type EntitlementStatus } from "@/lib/planLimits"
+import { supabase } from "@/lib/supabaseClient"
+import { getSubscriptionPlan, SUBSCRIPTION_PLANS } from "@/lib/subscriptionPlans"
 
 const premiumFeatures = [
   {
@@ -100,7 +42,29 @@ const premiumFeatures = [
 
 export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSelect?: (planId: string) => void; onSubscribe?: (planId: string) => void; onBack?: () => void; mode?: 'matrimony' }) {
   const [selectedPlan, setSelectedPlan] = useState<string>("quarterly")
+  const [entitlement, setEntitlement] = useState<EntitlementStatus | null>(null)
   const isMatrimony = true
+  const activePlan = entitlement?.planId ? getSubscriptionPlan(entitlement.planId) : null
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadEntitlement() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) return
+      const status = await getUserEntitlementStatus(user.id)
+      if (!cancelled) setEntitlement(status)
+    }
+
+    void loadEntitlement()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <div className={cn("relative min-h-screen", isMatrimony ? "luxe-light-page" : "bg-[#0E0F12]")}>
@@ -148,6 +112,17 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
               <p className="luxe-kicker mb-3 text-[#d8c79f]">premium matrimony</p>
               <h1 className="font-serif text-5xl font-bold tracking-[-0.05em] text-[#ffffff]">A more intentional path to the right family.</h1>
               <p className="mx-auto mt-4 max-w-xl text-[#d8c79f]">Unlock refined discovery, richer signals, and priority trust features without turning matrimony into noise.</p>
+              {entitlement?.isPremium && activePlan && (
+                <div className="mx-auto mt-5 max-w-xl rounded-[1.4rem] border border-[#d8c79f]/30 bg-white/12 p-4 text-left backdrop-blur-xl">
+                  <p className="luxe-kicker text-[#d8c79f]">currently active</p>
+                  <p className="mt-1 font-serif text-2xl font-bold tracking-[-0.04em] text-white">{activePlan.name}</p>
+                  <p className="mt-1 text-sm text-[#f2dfbd]">
+                    {entitlement.daysRemaining === null
+                      ? "Premium access is active."
+                      : `${entitlement.daysRemaining} day${entitlement.daysRemaining === 1 ? "" : "s"} remaining.`}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -184,7 +159,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
           <div className="space-y-4">
             <h2 className={cn("text-center font-serif text-4xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#18110d]" : "text-white")}>Choose Your Plan</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {premiumPlans.map((plan) => (
+              {SUBSCRIPTION_PLANS.map((plan) => (
                 <Card
                   key={plan.id}
                   className={cn(
@@ -196,11 +171,11 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
                       : selectedPlan === plan.id
                         ? "ring-2 ring-[#97011A] border-[#97011A] bg-[#14161B]/50"
                         : "border-white/20 bg-[#14161B]/50 hover:border-[#97011A]/50",
-                    plan.isPopular ? "relative" : ""
+                    plan.popular ? "relative" : ""
                   )}
                   onClick={() => setSelectedPlan(plan.id)}
                 >
-                  {plan.isPopular && (
+                  {plan.popular && (
                     <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-[#97011A] text-white">
                       Most Popular
                     </Badge>
@@ -210,15 +185,15 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle className={cn("text-lg", isMatrimony ? "text-black" : "text-white")}>{plan.name}</CardTitle>
-                        <p className={cn("text-sm", isMatrimony ? "text-[#666666]" : "text-[#A1A1AA]")}>{plan.duration}</p>
+                        <p className={cn("text-sm", isMatrimony ? "text-[#666666]" : "text-[#A1A1AA]")}>{plan.durationLabel}</p>
                       </div>
                       <div className="text-right">
-                        <div className={cn("text-2xl font-bold", isMatrimony ? "text-black" : "text-white")}>{plan.price}</div>
-                        {plan.originalPrice && (
+                        <div className={cn("text-2xl font-bold", isMatrimony ? "text-black" : "text-white")}>{plan.priceLabel}</div>
+                        {plan.originalPriceLabel && (
                           <div className="space-y-1">
-                            <div className={cn("text-sm line-through", isMatrimony ? "text-[#666666]" : "text-[#A1A1AA]")}>{plan.originalPrice}</div>
+                            <div className={cn("text-sm line-through", isMatrimony ? "text-[#666666]" : "text-[#A1A1AA]")}>{plan.originalPriceLabel}</div>
                             <Badge variant="secondary" className="text-xs bg-[#97011A]/10 text-[#97011A] border-[#97011A]/20">
-                              {plan.discount}
+                              {plan.discountLabel}
                             </Badge>
                           </div>
                         )}
@@ -277,11 +252,13 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
               onClick={() => onSubscribe?.(selectedPlan)}
             >
               <Crown className="w-5 h-5 mr-2" style={{ color: '#FFFFFF' }} />
-              Subscribe to {premiumPlans.find((p) => p.id === selectedPlan)?.name}
+              {entitlement?.isPremium ? "Manage premium plan" : `Subscribe to ${getSubscriptionPlan(selectedPlan).name}`}
             </Button>
 
             <div className="text-center space-y-2">
-              <p className={cn("text-xs", isMatrimony ? "text-[#666666]" : "text-[#A1A1AA]")}>Cancel anytime. Terms and conditions apply.</p>
+              <p className={cn("text-xs", isMatrimony ? "text-[#666666]" : "text-[#A1A1AA]")}>
+                Checkout is gateway-ready. No card details are collected until payment provider integration is connected.
+              </p>
               <div className={cn("flex items-center justify-center space-x-4 text-xs", isMatrimony ? "text-[#666666]" : "text-[#A1A1AA]")}>
                 <Link href="/terms" className={cn("underline transition-colors", isMatrimony ? "hover:text-black" : "hover:text-white")}>Terms of Service</Link>
                 <Link href="/privacy" className={cn("underline transition-colors", isMatrimony ? "hover:text-black" : "hover:text-white")}>Privacy Policy</Link>

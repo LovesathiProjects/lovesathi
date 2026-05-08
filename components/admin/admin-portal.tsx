@@ -86,6 +86,14 @@ type AdminUserItem = {
   emailConfirmedAt: string | null
   lastSignInAt: string | null
   suspendedUntil: string | null
+  premium: {
+    isPremium: boolean
+    planId: string | null
+    planName: string | null
+    status: string | null
+    activeUntil: string | null
+    source: string | null
+  }
   profileName: string | null
   profileCompleted: boolean
   profileReviewStatus: string | null
@@ -213,8 +221,8 @@ function statusLabel(value: string) {
 
 function StatusBadge({ status }: { status: string }) {
   const safeStatus = status.toLowerCase()
-  const isGood = ["ok", "approved", "resolved", "active"].includes(safeStatus)
-  const isWarning = ["pending", "in_review", "reviewed", "warning", "unconfirmed"].includes(safeStatus)
+  const isGood = ["ok", "approved", "resolved", "active", "premium"].includes(safeStatus)
+  const isWarning = ["pending", "in_review", "reviewed", "warning", "unconfirmed", "free"].includes(safeStatus)
 
   return (
     <Badge
@@ -269,7 +277,16 @@ export function AdminPortal() {
   const auditItems = overview?.queues.audit.items || []
   const filteredUsers = userItems.filter((item) =>
     matchesSearch(
-      [item.email, item.id, item.status, item.provider, item.profileName, item.profileReviewStatus],
+      [
+        item.email,
+        item.id,
+        item.status,
+        item.provider,
+        item.profileName,
+        item.profileReviewStatus,
+        item.premium.planName,
+        item.premium.status,
+      ],
       searchTerm,
     ),
   )
@@ -400,7 +417,12 @@ export function AdminPortal() {
     setOverview(null)
   }
 
-  async function handleAction(resource: "verification" | "report" | "profile" | "user", id: string, status: string) {
+  async function handleAction(
+    resource: "verification" | "report" | "profile" | "user" | "entitlement",
+    id: string,
+    status: string,
+    options?: Record<string, unknown>,
+  ) {
     if (!sessionToken) return
     const label = `${resource} as ${statusLabel(status)}`
     if (!window.confirm(`Mark this ${label}?`)) return
@@ -418,11 +440,15 @@ export function AdminPortal() {
                 ? "Profile rejected by Lovesathi admin review."
                 : resource === "profile"
                   ? `Profile marked ${statusLabel(status)} by Lovesathi admin.`
-                  : resource === "user" && status === "suspended"
-                    ? "User access suspended by Lovesathi admin review."
-                    : resource === "user"
-                      ? "User access restored by Lovesathi admin review."
-                      : `Report marked ${statusLabel(status)} by Lovesathi admin.`
+                    : resource === "user" && status === "suspended"
+                      ? "User access suspended by Lovesathi admin review."
+                      : resource === "user"
+                        ? "User access restored by Lovesathi admin review."
+                        : resource === "entitlement" && status === "active"
+                          ? "Premium access granted by Lovesathi admin."
+                          : resource === "entitlement"
+                            ? "Premium access revoked by Lovesathi admin."
+                            : `Report marked ${statusLabel(status)} by Lovesathi admin.`
     const shouldAskForNote =
       resource === "report" || resource === "user" || status === "rejected" || status === "in_review"
     const noteInput = shouldAskForNote
@@ -446,6 +472,7 @@ export function AdminPortal() {
           id,
           status,
           notes: noteInput.trim() || defaultNote,
+          ...options,
         }),
       })
       const payload = await response.json()
@@ -654,6 +681,13 @@ export function AdminPortal() {
                       </div>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {item.profileReviewStatus && <StatusBadge status={item.profileReviewStatus} />}
+                        <StatusBadge status={item.premium.isPremium ? "premium" : "free"} />
+                        {item.premium.planName && (
+                          <Badge variant="outline" className="border-[#d8c79f]/30 bg-[#f7f5f1] text-[#8f001c]">
+                            {item.premium.planName}
+                            {item.premium.activeUntil ? ` until ${formatDate(item.premium.activeUntil)}` : ""}
+                          </Badge>
+                        )}
                         {item.suspendedUntil && (
                           <Badge variant="outline" className="border-[#8f001c]/20 bg-[#8f001c]/10 text-[#8f001c]">
                             Suspended until {formatDate(item.suspendedUntil)}
@@ -681,6 +715,29 @@ export function AdminPortal() {
                           >
                             <Ban className="mr-2 h-4 w-4" />
                             Suspend
+                          </Button>
+                        )}
+                        {item.premium.isPremium ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="rounded-full border-[#8f001c]/20 bg-[#8f001c]/10 text-[#8f001c]"
+                            disabled={Boolean(actionKey)}
+                            onClick={() => handleAction("entitlement", item.id, "canceled")}
+                          >
+                            <UserX className="mr-2 h-4 w-4" />
+                            Revoke premium
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="rounded-full border-[#d8c79f]/30 bg-[#f7f5f1] text-[#8f001c]"
+                            disabled={Boolean(actionKey)}
+                            onClick={() => handleAction("entitlement", item.id, "active", { planId: "quarterly" })}
+                          >
+                            <Crown className="mr-2 h-4 w-4" />
+                            Grant Signature
                           </Button>
                         )}
                       </div>

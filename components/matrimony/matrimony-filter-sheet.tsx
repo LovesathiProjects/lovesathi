@@ -58,6 +58,12 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
     }
   }, [canUseVerifiedFilter, filters.verifiedOnly])
 
+  useEffect(() => {
+    if (!isPremium && filters.premiumOnly) {
+      setFilters((prev) => ({ ...prev, premiumOnly: false }))
+    }
+  }, [filters.premiumOnly, isPremium])
+
   // Family Type options from matrimony onboarding (matrimony-preferences.tsx)
   const familyTypeOptions = [
     "Any", "Nuclear Family", "Joint Family", "Extended Family"
@@ -115,6 +121,9 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
     : canUseVerifiedFilter
       ? `Included for your first ${FREE_VERIFIED_FILTER_MATCH_LIMIT} active matches. Current: ${matchCount}/${FREE_VERIFIED_FILTER_MATCH_LIMIT}.`
       : `Upgrade to keep verified-only discovery after ${matchCount} active matches.`
+  const premiumOnlyDescription = isPremium
+    ? "Premium active. Show profiles with an active Lovesathi premium membership."
+    : "Premium members can filter for other premium members once subscriptions are active."
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -323,14 +332,15 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
                     </div>
                     <div className="min-w-0">
                       <Label htmlFor="premium-only" className="text-base font-bold text-[#18110d]">Premium members only</Label>
-                      <p className="mt-1 text-xs leading-5 text-[#685f58]">Queued until member entitlement display is connected.</p>
+                      <p className="mt-1 text-xs leading-5 text-[#685f58]">{premiumOnlyDescription}</p>
                     </div>
                   </div>
                   <Switch
                     id="premium-only"
-                    className="h-7 w-12"
-                    checked={false}
-                    disabled
+                    className="h-7 w-12 data-[state=checked]:bg-[linear-gradient(135deg,#8f001c,#b79b62)]"
+                    checked={filters.premiumOnly}
+                    disabled={!isPremium}
+                    onCheckedChange={(checked) => setFilters((prev) => ({ ...prev, premiumOnly: checked }))}
                   />
                 </div>
               </div>
