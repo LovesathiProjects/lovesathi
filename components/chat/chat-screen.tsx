@@ -16,7 +16,6 @@ import { StaticBackground } from "@/components/discovery/static-background"
 import { supabase } from "@/lib/supabaseClient"
 import {
   getMessages,
-  containsShareableNumber,
   sendMessage as sendMessageService,
   markMessageDelivered,
   markMessageSeen,
@@ -24,6 +23,7 @@ import {
   deleteMessageForMe,
   deleteMessageForEveryone,
 } from "@/lib/chatService"
+import { CONTACT_SHARING_BLOCKED_MESSAGE, containsShareableNumber, getRecentOutgoingMessageContents } from "@/lib/contactSafety"
 import { blockUser } from "@/lib/blockService"
 import type { Message } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
@@ -585,10 +585,11 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
 
     try {
       setUploading(true)
-      if (containsShareableNumber(messageContent)) {
+      const recentOutgoingMessages = getRecentOutgoingMessageContents(messages, currentUserId)
+      if (containsShareableNumber(messageContent, recentOutgoingMessages)) {
         toast({
           title: "Contact sharing is blocked",
-          description: "For safety, phone numbers cannot be shared in chat. Use the premium contact reveal on profiles instead.",
+          description: CONTACT_SHARING_BLOCKED_MESSAGE,
           variant: "destructive",
         })
         return

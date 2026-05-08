@@ -2,39 +2,9 @@ import { supabase } from './supabaseClient'
 import type { Message } from './types'
 import { RealtimeChannel } from '@supabase/supabase-js'
 import { getMessageSendLimitStatus, normalizeLimitError } from '@/lib/planLimits'
+import { CONTACT_SHARING_BLOCKED_MESSAGE, containsShareableNumber } from '@/lib/contactSafety'
 
-const DIGIT_WORDS = new Set([
-  'zero',
-  'one',
-  'two',
-  'three',
-  'four',
-  'five',
-  'six',
-  'seven',
-  'eight',
-  'nine',
-  'oh',
-  'o',
-])
-
-export function containsShareableNumber(content: string): boolean {
-  const digits = content.replace(/\D/g, '')
-  if (digits.length >= 5) return true
-
-  const words = content.toLowerCase().match(/[a-z]+/g) || []
-  let consecutiveDigitWords = 0
-  for (const word of words) {
-    if (DIGIT_WORDS.has(word)) {
-      consecutiveDigitWords += 1
-      if (consecutiveDigitWords >= 4) return true
-    } else {
-      consecutiveDigitWords = 0
-    }
-  }
-
-  return false
-}
+export { containsShareableNumber } from '@/lib/contactSafety'
 
 /**
  * Get match_id from user IDs and match type
@@ -126,6 +96,27 @@ export async function getMessages(
   }
 }
 
+async function getRecentSenderMessageContents(matchId: string, senderId: string, receiverId: string) {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('content, created_at')
+    .eq('match_id', matchId)
+    .eq('sender_id', senderId)
+    .eq('receiver_id', receiverId)
+    .order('created_at', { ascending: false })
+    .limit(12)
+
+  if (error) {
+    console.warn('[getRecentSenderMessageContents] Unable to read recent messages:', error.message)
+    return []
+  }
+
+  return (data || [])
+    .slice()
+    .reverse()
+    .map((message) => message.content || '')
+}
+
 /**
  * Send a new message
  */
@@ -147,7 +138,14 @@ export async function sendMessage(
     // The database should allow empty content after running the fix script
     const messageContent = allowEmpty && !content.trim() ? '' : content.trim()
     if (messageContent && containsShareableNumber(messageContent)) {
-      throw new Error('For safety, phone numbers cannot be shared in chat. Use premium contact reveal instead.')
+      throw new Error(CONTACT_SHARING_BLOCKED_MESSAGE)
+    }
+
+    const recentSenderMessages = messageContent
+      ? await getRecentSenderMessageContents(matchId, senderId, receiverId)
+      : []
+    if (messageContent && containsShareableNumber(messageContent, recentSenderMessages)) {
+      throw new Error(CONTACT_SHARING_BLOCKED_MESSAGE)
     }
 
     const limitStatus = await getMessageSendLimitStatus(senderId, receiverId)
