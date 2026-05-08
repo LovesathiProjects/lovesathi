@@ -9,6 +9,13 @@ type CountResult = {
   detail?: string
 }
 
+type AdminRiskItem = {
+  label: string
+  value: number
+  severity: "clear" | "watch" | "urgent"
+  detail: string
+}
+
 type QueueResult<T> = {
   status: "ok" | "warning"
   detail?: string
@@ -495,6 +502,10 @@ function statusLabel(value: string) {
     .join(" ")
 }
 
+function getMetricValue(metrics: CountResult[], label: string) {
+  return metrics.find((metric) => metric.label === label)?.value || 0
+}
+
 function mapAuthEmailTelemetry(payload: any): AuthEmailTelemetry {
   const summary = Array.isArray(payload?.summary) ? payload.summary : []
   const counts = Array.isArray(payload?.counts) ? payload.counts : []
@@ -748,6 +759,69 @@ export async function GET(request: Request) {
       reviewedAt: item.reviewed_at || null,
     })),
   }
+  const allMetrics = [...metrics, ...userMetrics]
+  const profilesNeedingReview = getMetricValue(allMetrics, "Profiles needing review")
+  const pendingVerifications = getMetricValue(allMetrics, "Pending verifications")
+  const openReports = getMetricValue(allMetrics, "Open reports")
+  const unconfirmedUsers = getMetricValue(allMetrics, "Unconfirmed users")
+  const activePremium = getMetricValue(allMetrics, "Active premium")
+  const adminActions7d = getMetricValue(allMetrics, "Admin actions 7d")
+  const risk: AdminRiskItem[] = [
+    {
+      label: "Safety reports",
+      value: openReports,
+      severity: openReports > 0 ? "urgent" : "clear",
+      detail:
+        openReports > 0
+          ? "Open member reports should be reviewed before daily approval rounds."
+          : "No open safety reports are currently waiting on the trust desk.",
+    },
+    {
+      label: "Profile review backlog",
+      value: profilesNeedingReview,
+      severity: profilesNeedingReview > 10 ? "urgent" : profilesNeedingReview > 0 ? "watch" : "clear",
+      detail:
+        profilesNeedingReview > 0
+          ? "Approve serious profiles and reject incomplete or unsafe profiles before they enter discovery."
+          : "The profile review queue is clear.",
+    },
+    {
+      label: "ID checks pending",
+      value: pendingVerifications,
+      severity: pendingVerifications > 8 ? "urgent" : pendingVerifications > 0 ? "watch" : "clear",
+      detail:
+        pendingVerifications > 0
+          ? "Identity submissions are waiting for human verification decisions."
+          : "No ID verification submissions are currently pending.",
+    },
+    {
+      label: "Email confirmations",
+      value: unconfirmedUsers,
+      severity: unconfirmedUsers > 10 ? "watch" : "clear",
+      detail:
+        unconfirmedUsers > 0
+          ? "Unconfirmed users can be nudged from User management with a fresh verification email."
+          : "Recent auth users have confirmed email in the visible sample.",
+    },
+    {
+      label: "Premium controls",
+      value: activePremium,
+      severity: "clear",
+      detail:
+        activePremium > 0
+          ? "Active premium entitlements are visible and can be revoked from this portal."
+          : "No active premium entitlements are visible in the current sample.",
+    },
+    {
+      label: "Admin activity",
+      value: adminActions7d,
+      severity: adminActions7d > 0 ? "clear" : "watch",
+      detail:
+        adminActions7d > 0
+          ? "Recent admin decisions are being captured in the audit log."
+          : "No admin audit actions were recorded in the last 7 days.",
+    },
+  ]
 
   return NextResponse.json({
     admin: {
@@ -755,7 +829,8 @@ export async function GET(request: Request) {
     },
     host,
     generatedAt: new Date().toISOString(),
-    metrics: [...metrics, ...userMetrics],
+    metrics: allMetrics,
+    risk,
     queues: {
       users: {
         status: authUserRows.status,

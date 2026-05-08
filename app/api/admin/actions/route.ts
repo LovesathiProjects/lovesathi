@@ -8,6 +8,7 @@ const reportStatuses = new Set(["reviewed", "resolved", "dismissed"])
 const profileReviewStatuses = new Set(["approved", "rejected", "in_review", "pending"])
 const userStatuses = new Set(["suspended", "active"])
 const entitlementStatuses = new Set(["active", "canceled"])
+const authEmailStatuses = new Set(["resend_confirmation"])
 
 function cleanText(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim().slice(0, 500) : null
@@ -15,6 +16,21 @@ function cleanText(value: unknown) {
 
 function validateId(value: unknown) {
   return typeof value === "string" && uuidPattern.test(value)
+}
+
+function getSiteOrigin(request: Request) {
+  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  if (configuredSiteUrl?.startsWith("http")) {
+    return configuredSiteUrl.replace(/\/$/, "")
+  }
+
+  const forwardedHost = request.headers.get("x-forwarded-host") || request.headers.get("host")
+  const forwardedProto = request.headers.get("x-forwarded-proto") || "https"
+  if (forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`.replace(/\/$/, "")
+  }
+
+  return new URL(request.url).origin
 }
 
 async function writeAdminAuditLog(
@@ -31,7 +47,7 @@ async function writeAdminAuditLog(
   }: {
     actorId: string
     actorEmail: string | null
-    resource: "verification" | "report" | "profile" | "user" | "entitlement"
+    resource: "verification" | "report" | "profile" | "user" | "entitlement" | "auth_email"
     recordId: string
     previousStatus: string | null
     nextStatus: string
@@ -364,6 +380,57 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json({ ok: true, record: data })
+  }
+
+  if (resource === "auth_email") {
+    if (!authEmailStatuses.has(status)) {
+      return NextResponse.json({ error: "Invalid auth email action." }, { status: 400 })
+    }
+
+    const notes = cleanText(body.notes) || "Confirmation email resent by Lovesathi admin."
+    const { data: previousUserData, error: userLookupError } = await supabase.auth.admin.getUserById(id)
+    const previousUser = previousUserData?.user as any
+
+    if (userLookupError || !previousUser) {
+      return NextResponse.json({ error: userLookupError?.message || "User account not found." }, { status: 404 })
+    }
+
+    if (!previousUser.email) {
+      return NextResponse.json({ error: "This user does not have an email address." }, { status: 400 })
+    }
+
+    if (previousUser.email_confirmed_at) {
+      return NextResponse.json({ error: "This user's email is already confirmed." }, { status: 400 })
+    }
+
+    const redirectTo = new URL("/auth/callback", getSiteOrigin(request)).toString()
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: previousUser.email,
+      options: {
+        emailRedirectTo: redirectTo,
+      },
+    })
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    await writeAdminAuditLog(supabase, {
+      actorId: user.id,
+      actorEmail: user.email || null,
+      resource: "auth_email",
+      recordId: id,
+      previousStatus: "unconfirmed",
+      nextStatus: "confirmation_resent",
+      notes,
+      metadata: {
+        email: previousUser.email,
+        redirectTo,
+      },
+    })
+
+    return NextResponse.json({ ok: true })
   }
 
   return NextResponse.json({ error: "Unknown admin action." }, { status: 400 })

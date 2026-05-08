@@ -48,6 +48,13 @@ type ReadinessItem = {
   detail: string
 }
 
+type AdminRiskItem = {
+  label: string
+  value: number
+  severity: "clear" | "watch" | "urgent"
+  detail: string
+}
+
 type QueueResult<T> = {
   status: "ok" | "warning"
   detail?: string
@@ -186,6 +193,7 @@ type AdminOverview = {
   host: string
   generatedAt: string
   metrics: AdminMetric[]
+  risk: AdminRiskItem[]
   queues: {
     users: QueueResult<AdminUserItem>
     profiles: QueueResult<AdminProfileItem>
@@ -198,6 +206,7 @@ type AdminOverview = {
 }
 
 const metricIcons = [Users, BadgeCheck, Clock3, ShieldCheck, FileWarning, Crown, MessageCircle, Database, Sparkles]
+const riskIcons = [FileWarning, UserRoundCheck, ShieldCheck, Mail, Crown, Activity]
 
 function matchesSearch(parts: Array<string | number | null | undefined>, query: string) {
   if (!query) return true
@@ -418,14 +427,17 @@ export function AdminPortal() {
   }
 
   async function handleAction(
-    resource: "verification" | "report" | "profile" | "user" | "entitlement",
+    resource: "verification" | "report" | "profile" | "user" | "entitlement" | "auth_email",
     id: string,
     status: string,
     options?: Record<string, unknown>,
   ) {
     if (!sessionToken) return
-    const label = `${resource} as ${statusLabel(status)}`
-    if (!window.confirm(`Mark this ${label}?`)) return
+    const confirmCopy =
+      resource === "auth_email" && status === "resend_confirmation"
+        ? "Resend a fresh email verification link to this user?"
+        : `Mark this ${resource} as ${statusLabel(status)}?`
+    if (!window.confirm(confirmCopy)) return
 
     const defaultNote =
       resource === "verification" && status === "rejected"
@@ -448,7 +460,9 @@ export function AdminPortal() {
                           ? "Premium access granted by Lovesathi admin."
                           : resource === "entitlement"
                             ? "Premium access revoked by Lovesathi admin."
-                            : `Report marked ${statusLabel(status)} by Lovesathi admin.`
+                            : resource === "auth_email"
+                              ? "Confirmation email resent by Lovesathi admin."
+                              : `Report marked ${statusLabel(status)} by Lovesathi admin.`
     const shouldAskForNote =
       resource === "report" || resource === "user" || status === "rejected" || status === "in_review"
     const noteInput = shouldAskForNote
@@ -617,6 +631,68 @@ export function AdminPortal() {
           </div>
         )}
 
+        <section className="rounded-[2rem] border border-[#d8c79f]/24 bg-[#ffffff]/76 p-5 shadow-[0_24px_80px_rgba(24,17,13,0.08)] backdrop-blur-xl">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="luxe-kicker mb-2 text-[#8f001c]">command priorities</p>
+              <h2 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-4xl">
+                What needs admin attention today
+              </h2>
+            </div>
+            <p className="max-w-xl text-sm leading-6 text-[#685f58]">
+              A launch-safe queue view for reports, profile review, ID checks, email confirmation health, premium
+              controls, and recent admin activity.
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {(overview?.risk || []).map((item, index) => {
+              const Icon = riskIcons[index % riskIcons.length]
+              const isUrgent = item.severity === "urgent"
+              const isWatch = item.severity === "watch"
+              return (
+                <div
+                  key={item.label}
+                  className={
+                    isUrgent
+                      ? "rounded-[1.5rem] border border-[#8f001c]/18 bg-[#8f001c]/8 p-4"
+                      : isWatch
+                        ? "rounded-[1.5rem] border border-[#b79b62]/24 bg-[#b79b62]/10 p-4"
+                        : "rounded-[1.5rem] border border-[#1b6b43]/14 bg-[#1b6b43]/7 p-4"
+                  }
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <span
+                        className={
+                          isUrgent
+                            ? "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#8f001c] text-white"
+                            : isWatch
+                              ? "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#b79b62] text-white"
+                              : "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#1b6b43] text-white"
+                        }
+                      >
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <div>
+                        <p className="font-bold text-[#18110d]">{item.label}</p>
+                        <p className="mt-1 text-sm leading-6 text-[#685f58]">{item.detail}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-serif text-4xl font-bold tracking-[-0.06em] text-[#18110d]">
+                        {item.value.toLocaleString("en-IN")}
+                      </p>
+                      <p className="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#9d7a55]">
+                        {item.severity}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {(overview?.metrics || []).map((metric, index) => {
             const Icon = metricIcons[index % metricIcons.length]
@@ -682,6 +758,11 @@ export function AdminPortal() {
                       <div className="mt-3 flex flex-wrap gap-2">
                         {item.profileReviewStatus && <StatusBadge status={item.profileReviewStatus} />}
                         <StatusBadge status={item.premium.isPremium ? "premium" : "free"} />
+                        {!item.emailConfirmedAt && item.email && (
+                          <Badge variant="outline" className="border-[#b79b62]/24 bg-[#b79b62]/10 text-[#8a641f]">
+                            Verification email needed
+                          </Badge>
+                        )}
                         {item.premium.planName && (
                           <Badge variant="outline" className="border-[#d8c79f]/30 bg-[#f7f5f1] text-[#8f001c]">
                             {item.premium.planName}
@@ -715,6 +796,18 @@ export function AdminPortal() {
                           >
                             <Ban className="mr-2 h-4 w-4" />
                             Suspend
+                          </Button>
+                        )}
+                        {!item.emailConfirmedAt && item.email && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="rounded-full border-[#b79b62]/30 bg-[#b79b62]/10 text-[#8a641f]"
+                            disabled={Boolean(actionKey)}
+                            onClick={() => handleAction("auth_email", item.id, "resend_confirmation")}
+                          >
+                            <Mail className="mr-2 h-4 w-4" />
+                            Resend verification
                           </Button>
                         )}
                         {item.premium.isPremium ? (
