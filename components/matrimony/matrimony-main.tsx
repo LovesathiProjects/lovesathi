@@ -33,7 +33,8 @@ import {
   getMatrimonyLikedProfiles,
   recordMatrimonyLike,
 } from "@/lib/matchmakingService"
-import type { UsageLimitStatus } from "@/lib/planLimits"
+import { getSuperLikeLimitStatus, type UsageLimitStatus } from "@/lib/planLimits"
+import { getProfileContacts } from "@/lib/profileContacts"
 import { MatchNotification } from "@/components/chat/match-notification"
 import type { FilterState } from "@/components/matrimony/matrimony-filter-sheet"
 import { useToast } from "@/hooks/use-toast"
@@ -95,7 +96,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
   const [appliedFilters, setAppliedFilters] = useState<FilterState | null>(null)
   const [shortlistModalProfile, setShortlistModalProfile] = useState<MatrimonyProfile | null>(null)
   const [swipeLimitStatus, setSwipeLimitStatus] = useState<UsageLimitStatus | null>(null)
-  const [premiumBackTarget, setPremiumBackTarget] = useState<"discover" | "profile">("profile")
+  const [premiumBackTarget, setPremiumBackTarget] = useState<"discover" | "profile" | "activity">("profile")
   const { toast } = useToast()
   const {
     shortlistedProfiles,
@@ -127,6 +128,15 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     setPremiumBackTarget("discover")
     setCurrentScreen("premium")
   }, [toast])
+
+  const showPremiumUpsell = useCallback(
+    (title: string, description: string, backTarget: "discover" | "profile" | "activity" = "discover") => {
+      toast({ title, description })
+      setPremiumBackTarget(backTarget)
+      setCurrentScreen("premium")
+    },
+    [toast],
+  )
 
   const refreshSwipeLimitStatus = useCallback(async (userId: string) => {
     const status = await getMatrimonyDiscoverySwipeStatus(userId)
@@ -321,6 +331,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         if (verificationsError) console.error("Error fetching verifications:", verificationsError)
         if (premiumIdsError) console.warn("Unable to fetch premium profile ids:", premiumIdsError.message)
         const premiumUserIds = new Set<string>((premiumIds as string[] | null) || [])
+        const contactMap = await getProfileContacts(userIds)
 
         // Get current user's gender for filtering
         const currentUserGender = currentUserProfile?.gender?.toLowerCase()
@@ -339,6 +350,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             const culturalData = (matrimonyProfile.cultural as any) || {}
             const bioText = matrimonyProfile.bio || null
             const verification = verifications?.find((v) => v.user_id === matrimonyProfile.user_id)
+            const contact = contactMap.get(matrimonyProfile.user_id)
 
             // Skip if no essential data
             if (!matrimonyProfile.name) {
@@ -539,6 +551,9 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
               verified: verification?.verification_status === "approved",
               premium: premiumUserIds.has(matrimonyProfile.user_id),
               height, // Add height to profile
+              phoneMasked: contact?.phoneMasked || undefined,
+              phone: contact?.phoneRevealed || undefined,
+              canRevealPhone: contact?.canReveal,
             }
           })
           .filter((profile): profile is NonNullable<typeof profile> => profile !== null) as MatrimonyProfile[]
@@ -713,6 +728,77 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     }
   }
 
+  const handleSuperLike = async () => {
+    try {
+      const currentProfile = profiles[activeProfileIndex]
+      if (!currentProfile) {
+        toast({
+          title: "No profile selected",
+          description: "Please wait while we prepare the next profile.",
+          variant: "destructive",
+        })
+        return false
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        toast({
+          title: "Please sign in",
+          description: "You need to be signed in to send a Super Like.",
+          variant: "destructive",
+        })
+        return false
+      }
+
+      const superLikeStatus = await getSuperLikeLimitStatus(user.id)
+      if (!superLikeStatus.allowed) {
+        showPremiumUpsell(
+          "Unlock Super Likes",
+          superLikeStatus.error || "Choose a paid plan to send standout interest.",
+          "discover",
+        )
+        return false
+      }
+
+      const result = await recordMatrimonyLike(user.id, currentProfile.id, "super_like")
+      if (!result.success) {
+        toast({
+          title: "Could not send Super Like",
+          description: result.error || "Please try again.",
+          variant: "destructive",
+        })
+        return false
+      }
+
+      toast({
+        title: `Super Like sent to ${currentProfile.name}`,
+        description:
+          typeof superLikeStatus.remaining === "number"
+            ? `${Math.max(superLikeStatus.remaining - 1, 0)} Super Likes remaining this month.`
+            : "Your profile was placed above regular interests.",
+      })
+
+      if (result.isMatch) {
+        setMatchedProfile(currentProfile)
+        setMatchedMatchId(result.matchId || null)
+        setShowMatchNotification(true)
+      }
+
+      removeProfileFromDeck(currentProfile.id)
+      return true
+    } catch (error: any) {
+      console.error("[handleSuperLike] Unexpected error:", error)
+      toast({
+        title: "Could not send Super Like",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      })
+      return false
+    }
+  }
+
   return (
     <AppLayout 
       activeTab="discover" 
@@ -814,8 +900,19 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                               bio={profile.bio}
                               interests={profile.interests}
                               education={profile.education}
+                              phoneMasked={profile.phoneMasked}
+                              phone={profile.phone}
+                              canRevealPhone={profile.canRevealPhone}
                               onConnect={index === 0 ? () => handleLike() : () => {}}
                               onNotNow={index === 0 ? () => handlePass() : () => {}}
+                              onSuperLike={index === 0 ? () => handleSuperLike() : () => {}}
+                              onPhoneUpgrade={() =>
+                                showPremiumUpsell(
+                                  "Unlock contact details",
+                                  "Subscribe to reveal masked profile phone numbers safely inside Lovesathi.",
+                                  "discover",
+                                )
+                              }
                               isShortlisted={shortlistedIds.has(profile.id)}
                               onToggleShortlist={() => handleShortlistToggle(profile)}
                               swipeLocked={swipeLocked}
@@ -916,6 +1013,13 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
               setSelectedChatId(matchId)
               setCurrentScreen("chat")
             }}
+            onUpgrade={() =>
+              showPremiumUpsell(
+                "Unlock profile viewers",
+                "Premium members can see who recently viewed their profile.",
+                "activity",
+              )
+            }
             onBack={() => setCurrentScreen("discover")}
           />
         </div>
@@ -1056,6 +1160,13 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             mode="matrimony" 
             userId={viewedUserId}
             isOwnProfile={false}
+            onUpgrade={() =>
+              showPremiumUpsell(
+                "Unlock contact details",
+                "Subscribe to reveal masked profile phone numbers and keep contact sharing safe.",
+                "activity",
+              )
+            }
             onBack={() => {
               if (cameFromChat) {
                 setCameFromChat(false)
@@ -1110,6 +1221,13 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           onOpenChange={(open) => {
             if (!open) setShortlistModalProfile(null)
           }}
+          onPhoneUpgrade={() =>
+            showPremiumUpsell(
+              "Unlock contact details",
+              "Subscribe to reveal masked profile phone numbers safely inside Lovesathi.",
+              "discover",
+            )
+          }
           onConnect={() => {
             void handleShortlistConnect(shortlistModalProfile)
             setShortlistModalProfile(null)

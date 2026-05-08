@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label"
 import { Shield, Upload, Camera, X, FileText, ArrowLeft } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { FaceScanModal } from "@/components/kyc/FaceScanModal"
+import { supabase } from "@/lib/supabaseClient"
+import { getPhoneValidationMessage, normalizePhoneNumber } from "@/lib/phone"
 import { 
   saveDateOfBirth, 
   saveGender, 
@@ -23,6 +25,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
   const [step, setStep] = useState<"profile" | "gender" | "id">("profile")
   const [gender, setGender] = useState<"male" | "female" | "prefer_not_to_say" | null>(null)
   const [dob, setDob] = useState("")
+  const [phone, setPhone] = useState("")
   const [profileValid, setProfileValid] = useState(false)
   const [underageMessage, setUnderageMessage] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -35,10 +38,40 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
   const [showFaceScanModal, setShowFaceScanModal] = useState(false)
   const { toast } = useToast()
 
+  useEffect(() => {
+    async function hydratePhone() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+
+      const metadataPhone = String(user.user_metadata?.phone || user.phone || "")
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("phone")
+        .eq("user_id", user.id)
+        .maybeSingle()
+
+      setPhone(normalizePhoneNumber(profile?.phone || metadataPhone))
+    }
+
+    void hydratePhone()
+  }, [])
+
   // Live underage validation when DOB changes
   useEffect(() => {
     if (!dob) {
       setUnderageMessage(null)
+      return
+    }
+
+    const phoneError = getPhoneValidationMessage(phone)
+    if (phoneError) {
+      toast({
+        title: "Phone Required",
+        description: phoneError,
+        variant: "destructive",
+      })
       return
     }
     const age = calculateAgeFromDate(dob)
@@ -168,12 +201,12 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
     
     try {
       // Save DOB to Supabase
-      const result = await saveDateOfBirth(dob)
+      const result = await saveDateOfBirth(dob, phone)
       
       if (result.success) {
         toast({
-          title: "Date of Birth Saved",
-          description: "Your date of birth has been saved successfully.",
+          title: "Profile Details Saved",
+          description: "Your date of birth and phone number have been saved successfully.",
         })
         setProfileValid(true)
         setStep("gender")
@@ -284,8 +317,8 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
           <div className="mx-auto flex min-h-[calc(100dvh-6rem)] w-full max-w-md min-w-0 flex-1 flex-col">
             <div className="space-y-6 pt-6 sm:pt-8">
               <div className="space-y-2">
-                <h1 className="font-serif text-4xl font-bold leading-tight tracking-[-0.05em] text-[#111] sm:text-5xl">When were you born?</h1>
-                <p className="text-base leading-7 text-black/60">Select your date of birth. Minimum age is 18.</p>
+                <h1 className="font-serif text-4xl font-bold leading-tight tracking-[-0.05em] text-[#111] sm:text-5xl">Confirm your essentials</h1>
+                <p className="text-base leading-7 text-black/60">Add your verified birth date and phone number. Minimum age is 18.</p>
               </div>
 
               <div className="space-y-4 pt-3">
@@ -317,6 +350,25 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                     <p className="text-sm text-[#97011A] text-center font-medium">{underageMessage}</p>
                   </div>
                 )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-sm font-semibold text-[#111] uppercase tracking-wide">
+                    PHONE NUMBER
+                  </Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    onBlur={() => setPhone((value) => normalizePhoneNumber(value))}
+                    placeholder="+91 98765 43210"
+                    autoComplete="tel"
+                    className="block h-14 w-full max-w-full min-w-0 appearance-none rounded-2xl border-black/20 text-base text-[#111] focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20"
+                  />
+                  <p className="text-xs leading-5 text-black/50">
+                    Your number stays masked for free users and is revealed only through premium contact access.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -328,7 +380,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                   handleProfileContinue()
                 }}
                 className="h-14 w-full rounded-full bg-[#97011A] text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#7A010E] disabled:bg-[#d08190] disabled:text-white"
-                disabled={isLoading || !dob}
+                disabled={isLoading || !dob || !phone.trim()}
                 type="button"
               >
                 {isLoading ? "Saving..." : "Continue"}

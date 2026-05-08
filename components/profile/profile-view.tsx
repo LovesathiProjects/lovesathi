@@ -1,17 +1,18 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ArrowLeft, Briefcase, CheckCircle2, Edit, Heart, Home, MapPin, Share, Sparkles, Users } from "lucide-react"
+import { ArrowLeft, Briefcase, CheckCircle2, Edit, Heart, Home, MapPin, Phone, Share, Sparkles, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabaseClient"
-import { recordMatrimonyLike } from "@/lib/matchmakingService"
+import { recordMatrimonyLike, recordMatrimonyProfileView } from "@/lib/matchmakingService"
 import { EditProfile } from "./edit-profile"
 import type { MatrimonyProfileFull } from "@/lib/matrimonyService"
 import { useToast } from "@/hooks/use-toast"
+import { getProfileContact, type ProfileContactInfo } from "@/lib/profileContacts"
 
 interface ProfileViewProps {
   isOwnProfile?: boolean
@@ -19,9 +20,10 @@ interface ProfileViewProps {
   onBack?: () => void
   userId?: string
   mode?: "matrimony"
+  onUpgrade?: () => void
 }
 
-export function ProfileView({ isOwnProfile = false, onBack, userId }: ProfileViewProps) {
+export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }: ProfileViewProps) {
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [profile, setProfile] = useState<MatrimonyProfileFull | null>(null)
@@ -30,6 +32,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId }: ProfileVie
   const [isMatched, setIsMatched] = useState(false)
   const [canLikeBack, setCanLikeBack] = useState(false)
   const [isLiking, setIsLiking] = useState(false)
+  const [contact, setContact] = useState<ProfileContactInfo | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -63,6 +66,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId }: ProfileVie
 
       if (error) throw error
       setProfile(data as MatrimonyProfileFull)
+      setContact(await getProfileContact(targetUserId))
 
       const { data: verification } = await supabase
         .from("id_verifications")
@@ -74,6 +78,8 @@ export function ProfileView({ isOwnProfile = false, onBack, userId }: ProfileVie
       setVerified(!!verification)
 
       if (!isOwnProfile && userId) {
+        await recordMatrimonyProfileView(user.id, targetUserId)
+
         const { data: matches } = await supabase
           .from("matrimony_matches")
           .select("id,user1_id,user2_id")
@@ -93,7 +99,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId }: ProfileVie
             .select("id")
             .eq("liker_id", targetUserId)
             .eq("liked_id", user.id)
-            .in("action", ["like", "connect"])
+            .in("action", ["like", "connect", "super_like"])
             .maybeSingle()
 
           const { data: likeFromMe } = await supabase
@@ -101,7 +107,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId }: ProfileVie
             .select("id")
             .eq("liker_id", user.id)
             .eq("liked_id", targetUserId)
-            .in("action", ["like", "connect"])
+            .in("action", ["like", "connect", "super_like"])
             .maybeSingle()
 
           setCanLikeBack(!!likeFromThem && !likeFromMe)
@@ -173,6 +179,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId }: ProfileVie
   const cultural = profile?.cultural || {}
   const preferences = profile?.partner_preferences || {}
   const locationParts = [career.work_location?.city, career.work_location?.state, career.work_location?.country].filter(Boolean)
+  const displayPhone = contact?.canReveal ? contact.phoneRevealed || contact.phoneMasked : contact?.phoneMasked
 
   return (
     <div className="luxe-light-page min-h-screen">
@@ -280,6 +287,41 @@ export function ProfileView({ isOwnProfile = false, onBack, userId }: ProfileVie
             )}
           </CardContent>
         </Card>
+
+        {displayPhone && (
+          <Card className="luxe-card rounded-[2rem] border-[#d8c79f]/24">
+            <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#8f001c]/10 text-[#8f001c]">
+                  <Phone className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="luxe-kicker text-[0.62rem] text-[#8f001c]">premium contact</p>
+                  <h3 className="mt-1 text-lg font-bold text-[#18110d]">{displayPhone}</h3>
+                  <p className="mt-1 text-sm leading-6 text-[#685f58]">
+                    {contact?.canReveal
+                      ? "This phone number is revealed through your active plan."
+                      : "Masked for free users. Subscribe to reveal contact details safely."}
+                  </p>
+                </div>
+              </div>
+              {!contact?.canReveal && (
+                <Button
+                  className="luxe-button rounded-full"
+                  onClick={() => {
+                    onUpgrade?.()
+                    toast({
+                      title: "Unlock contact details",
+                      description: "Choose a paid plan to reveal masked phone numbers.",
+                    })
+                  }}
+                >
+                  Reveal with Premium
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="luxe-card rounded-[2rem] border-[#d8c79f]/24">
           <CardContent className="p-6 space-y-4">

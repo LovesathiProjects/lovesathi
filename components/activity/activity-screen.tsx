@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Heart, Sparkles, Loader2, ArrowLeft } from "lucide-react"
+import { CalendarDays, Crown, Eye, Gem, Heart, Sparkles, Loader2, ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { StaticBackground } from "@/components/discovery/static-background"
 import { supabase } from "@/lib/supabaseClient"
@@ -14,6 +14,7 @@ import {
   recordMatrimonyLike,
   type ActivityItem 
 } from "@/lib/matchmakingService"
+import { getUserEntitlementStatus } from "@/lib/planLimits"
 import { useToast } from "@/hooks/use-toast"
 
 interface ActivityScreenProps {
@@ -21,11 +22,15 @@ interface ActivityScreenProps {
   onMatchClick?: (matchId: string) => void
   mode?: 'matrimony'
   onBack?: () => void
+  onUpgrade?: () => void
 }
 
-export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: ActivityScreenProps) {
-  const [activeTab, setActiveTab] = useState<'all' | 'matches' | 'likes'>('all')
+type ActivityTab = 'all_matches' | 'today_matches' | 'super_liked' | 'recent_views'
+
+export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade }: ActivityScreenProps) {
+  const [activeTab, setActiveTab] = useState<ActivityTab>('all_matches')
   const [activities, setActivities] = useState<ActivityItem[]>([])
+  const [isPremium, setIsPremium] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [likedBack, setLikedBack] = useState<Set<string>>(new Set())
@@ -48,6 +53,8 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
         }
 
         const activityData = await getMatrimonyActivity(user.id)
+        const entitlement = await getUserEntitlementStatus(user.id)
+        setIsPremium(entitlement.isPremium)
         setActivities(activityData)
       } catch (err: any) {
         console.error("Error fetching activity:", err)
@@ -123,14 +130,20 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
   }
 
   const filteredActivities = activities.filter(activity => {
-    if (activeTab === 'all') return true
-    // Map tab IDs to activity types
-    const tabToTypeMap: Record<string, 'match' | 'like'> = {
-      'matches': 'match',
-      'likes': 'like',
+    if (activeTab === 'all_matches') return activity.type === 'match'
+    if (activeTab === 'today_matches') {
+      if (activity.type !== 'match') return false
+      const occurredAt = activity.occurredAt || activity.timestamp
+      const occurred = new Date(occurredAt)
+      const today = new Date()
+      return (
+        occurred.getFullYear() === today.getFullYear() &&
+        occurred.getMonth() === today.getMonth() &&
+        occurred.getDate() === today.getDate()
+      )
     }
-    
-    return activity.type === tabToTypeMap[activeTab]
+    if (activeTab === 'super_liked') return activity.type === 'super_like'
+    return activity.type === 'view'
   })
 
   const getActivityIcon = (type: string) => {
@@ -139,6 +152,10 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
         return <Sparkles className="w-4 h-4 text-[#97011A]" />
       case 'like':
         return <Heart className="w-4 h-4 text-red-500 fill-current" />
+      case 'super_like':
+        return <Gem className="w-4 h-4 text-[#b8892f] fill-current" />
+      case 'view':
+        return <Eye className="w-4 h-4 text-[#97011A]" />
       default:
         return null
     }
@@ -150,15 +167,25 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
         return 'You matched!'
       case 'like':
         return 'liked your profile'
+      case 'super_like':
+        return 'sent you a Super Like'
+      case 'view':
+        return 'viewed your profile'
       default:
         return ''
     }
   }
 
   const tabs = [
-    { id: 'all', label: 'All', count: activities.length },
-    { id: 'matches', label: 'Matches', count: activities.filter(a => a.type === 'match').length },
-    { id: 'likes', label: 'Likes', count: activities.filter(a => a.type === 'like').length },
+    { id: 'all_matches' as const, label: 'All time matched', count: activities.filter(a => a.type === 'match').length, icon: Sparkles },
+    { id: 'today_matches' as const, label: 'Matched today', count: activities.filter((a) => {
+      if (a.type !== 'match') return false
+      const occurred = new Date(a.occurredAt || a.timestamp)
+      const today = new Date()
+      return occurred.getFullYear() === today.getFullYear() && occurred.getMonth() === today.getMonth() && occurred.getDate() === today.getDate()
+    }).length, icon: CalendarDays },
+    { id: 'super_liked' as const, label: 'Super liked', count: activities.filter(a => a.type === 'super_like').length, icon: Gem },
+    { id: 'recent_views' as const, label: 'Recently viewed', count: activities.filter(a => a.type === 'view').length, icon: Eye },
   ]
 
   return (
@@ -197,9 +224,9 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
+                  "flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold whitespace-nowrap transition-colors",
                   activeTab === tab.id
                     ? "bg-[#8f001c] text-[#ffffff] shadow-[0_12px_28px_rgba(143,0,28,0.22)]"
                     : isMatrimony 
@@ -207,6 +234,7 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
                       : "bg-white/10 hover:bg-white/20 text-[#A1A1AA]"
                 )}
               >
+                <tab.icon className="h-4 w-4" />
                 {tab.label}
                 {tab.count > 0 && (
                   <Badge className={cn(
@@ -274,7 +302,9 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
           </div>
         ) : (
           <div className="space-y-3">
-            {filteredActivities.map((activity) => (
+              {filteredActivities.map((activity) => {
+                const maskedView = activity.type === 'view' && !isPremium
+                return (
               <div
                 key={activity.id}
                 className={cn(
@@ -284,7 +314,14 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
                     : "bg-[#14161B] border-white/20 hover:bg-white/10"
                 )}
                 onClick={() => {
-                  // Always open profile when clicking on the card
+                  if (maskedView) {
+                    onUpgrade?.()
+                    toast({
+                      title: "Unlock profile viewers",
+                      description: "Subscribe to see who recently viewed your profile.",
+                    })
+                    return
+                  }
                   onProfileClick?.(activity.userId)
                 }}
               >
@@ -292,11 +329,16 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
                   {/* Avatar */}
                   <div className="relative flex-shrink-0">
                     <Avatar className={cn("w-12 h-12 border-2", isMatrimony ? "border-[#E5E5E5]" : "border-white/30")}>
-                      <AvatarImage src={activity.avatar || "/placeholder.svg"} alt={activity.name} />
+                      <AvatarImage src={maskedView ? "" : activity.avatar || "/placeholder.svg"} alt={maskedView ? "Premium viewer" : activity.name} />
                       <AvatarFallback className={cn(isMatrimony ? "bg-gray-100 text-black" : "bg-white/20 text-white")}>
-                        {activity.name[0]}
+                        {maskedView ? "?" : activity.name[0]}
                       </AvatarFallback>
                     </Avatar>
+                    {maskedView && (
+                      <div className="absolute inset-0 flex items-center justify-center rounded-full bg-[#18110d]/20 backdrop-blur-sm">
+                        <Crown className="h-4 w-4 text-[#d8c79f]" />
+                      </div>
+                    )}
                   </div>
 
                   {/* Content */}
@@ -304,8 +346,8 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
                     <div className="flex items-center gap-2 mb-1">
                       {getActivityIcon(activity.type)}
                       <h3 className={cn("font-semibold text-sm truncate", isMatrimony ? "text-black" : "text-white")}>
-                        {activity.name}
-                        {activity.age && <span className={cn("ml-1", isMatrimony ? "text-[#444444]" : "text-[#A1A1AA]")}>, {activity.age}</span>}
+                        {maskedView ? "Premium viewer" : activity.name}
+                        {!maskedView && activity.age && <span className={cn("ml-1", isMatrimony ? "text-[#444444]" : "text-[#A1A1AA]")}>, {activity.age}</span>}
                       </h3>
                       {activity.isNew && (
                         <Badge className="bg-[#97011A] text-white text-xs px-1.5 py-0.5 border border-[#97011A]">
@@ -314,7 +356,7 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
                       )}
                     </div>
                     <p className={cn("text-sm", isMatrimony ? "text-[#444444]" : "text-[#A1A1AA]")}>
-                      {getActivityText(activity)}
+                      {maskedView ? "viewed your profile. Unlock to see who it was." : getActivityText(activity)}
                     </p>
                     <p className={cn("text-xs mt-1", isMatrimony ? "text-[#444444]" : "text-white/60")}>
                       {activity.timestamp}
@@ -345,7 +387,7 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
                     </Button>
                   )}
 
-                  {activity.type === 'like' && (
+                  {(activity.type === 'like' || activity.type === 'super_like') && (
                     <div className="flex flex-col items-center gap-1">
                       <button
                         onClick={(e) => handleLikeBack(activity, e)}
@@ -390,7 +432,8 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack }: Activit
                   )}
                 </div>
               </div>
-            ))}
+                )
+              })}
           </div>
         )}
       </div>

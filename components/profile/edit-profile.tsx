@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast"
 import { calculateAgeFromDate, formatDateForDisplay } from "@/lib/age"
 import { LocationCascadeSelect, LocationPreferencePicker } from "@/components/location/location-cascade-select"
 import { formatLocationValue, parseLocationValue, type LocationValue } from "@/lib/location"
+import { getPhoneValidationMessage, normalizePhoneNumber } from "@/lib/phone"
 import {
   BODY_TYPE_OPTIONS,
   COMPLEXION_OPTIONS,
@@ -82,6 +83,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
   const [name, setName] = useState("")
   const [age, setAge] = useState("")
   const [dateOfBirth, setDateOfBirth] = useState("")
+  const [phone, setPhone] = useState("")
   const [gender, setGender] = useState("")
   const [createdBy, setCreatedBy] = useState("")
   const [bio, setBio] = useState("")
@@ -114,6 +116,14 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
         .maybeSingle()
 
       if (error) throw error
+
+      const { data: userProfile } = await supabase
+        .from("user_profiles")
+        .select("phone")
+        .eq("user_id", user.id)
+        .maybeSingle()
+
+      setPhone(normalizePhoneNumber(userProfile?.phone || user.user_metadata?.phone || user.phone || ""))
 
       if (data) {
         const typed = data as MatrimonyProfileFull
@@ -216,6 +226,9 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
       }
 
       if (!name.trim()) throw new Error("Please enter a profile name.")
+      const normalizedPhone = normalizePhoneNumber(phone)
+      const phoneError = getPhoneValidationMessage(normalizedPhone)
+      if (phoneError) throw new Error(phoneError)
       if (uploadedPhotoUrls.length < 2) throw new Error("Please keep at least 2 profile photos.")
       if (bio.trim().length > 0 && bio.trim().length < 20) {
         throw new Error("About Me should be at least 20 characters.")
@@ -252,6 +265,16 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
         .upsert(updateData, { onConflict: "user_id" })
 
       if (error) throw error
+
+      const { error: profileError } = await supabase
+        .from("user_profiles")
+        .update({
+          phone: normalizedPhone,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user.id)
+
+      if (profileError) throw profileError
 
       toast({
         title: "Saved",
@@ -365,6 +388,18 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                 <div className="space-y-2">
                   <Label>Name</Label>
                   <Input value={name} onChange={(e) => setName(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Phone Number</Label>
+                  <Input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    onBlur={() => setPhone((value) => normalizePhoneNumber(value))}
+                    placeholder="+91 98765 43210"
+                    autoComplete="tel"
+                  />
+                  <p className="text-xs text-[#685f58]">Required. Free users see this masked until they subscribe.</p>
                 </div>
                 <div className="space-y-2">
                   <Label>{dateOfBirth ? "Verified Age" : "Age"}</Label>

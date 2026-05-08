@@ -16,6 +16,7 @@ import { StaticBackground } from "@/components/discovery/static-background"
 import { supabase } from "@/lib/supabaseClient"
 import {
   getMessages,
+  containsShareableNumber,
   sendMessage as sendMessageService,
   markMessageDelivered,
   markMessageSeen,
@@ -584,6 +585,15 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
 
     try {
       setUploading(true)
+      if (containsShareableNumber(messageContent)) {
+        toast({
+          title: "Contact sharing is blocked",
+          description: "For safety, phone numbers cannot be shared in chat. Use the premium contact reveal on profiles instead.",
+          variant: "destructive",
+        })
+        return
+      }
+
       const limitStatus = await getMessageSendLimitStatus(currentUserId, chatUser.id)
       if (!limitStatus.allowed) {
         toast({
@@ -1325,7 +1335,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
         <div className="flex items-end space-x-3">
           <div className="flex-1 relative">
             <Input
-              placeholder="Type a message..."
+              placeholder="Type a message... contact numbers are blocked"
               value={newMessage}
               onChange={(e) => {
                 setNewMessage(e.target.value)

@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabaseClient"
+import { getPlanMonthlySuperLikes } from "@/lib/subscriptionPlans"
 
 export const FREE_PLAN_LIMITS = {
   swipeActions: 15,
@@ -8,7 +9,7 @@ export const FREE_PLAN_LIMITS = {
   shortlists: 3,
 } as const
 
-export type LimitKind = "swipe" | "messagePeople" | "messagePerson" | "shortlist"
+export type LimitKind = "swipe" | "messagePeople" | "messagePerson" | "shortlist" | "superLike"
 
 export interface UsageLimitStatus {
   allowed: boolean
@@ -31,6 +32,7 @@ const LIMIT_COPY: Record<LimitKind, string> = {
   messagePeople: `Free plan message limit reached. You can text ${FREE_PLAN_LIMITS.messagePeople} people every ${FREE_PLAN_LIMITS.windowHours} hours. Upgrade for unlimited conversations.`,
   messagePerson: `Free plan conversation limit reached. You can send ${FREE_PLAN_LIMITS.messagesPerPerson} messages to each person every ${FREE_PLAN_LIMITS.windowHours} hours. Upgrade for unlimited conversations.`,
   shortlist: `Free plan shortlist limit reached. You can save ${FREE_PLAN_LIMITS.shortlists} profiles. Upgrade for unlimited shortlists.`,
+  superLike: "Super Likes are a premium feature. Choose a paid plan to send standout interest.",
 }
 
 function windowStartIso() {
@@ -53,6 +55,7 @@ export function normalizeLimitError(errorMessage?: string | null) {
   if (lower.includes("conversation limit")) return getLimitMessage("messagePerson")
   if (lower.includes("message limit")) return getLimitMessage("messagePeople")
   if (lower.includes("shortlist limit")) return getLimitMessage("shortlist")
+  if (lower.includes("super like")) return getLimitMessage("superLike")
 
   return errorMessage
 }
@@ -230,5 +233,50 @@ export async function getShortlistLimitStatus(userId: string, targetUserId?: str
     remaining,
     kind: used < FREE_PLAN_LIMITS.shortlists ? undefined : "shortlist",
     error: used < FREE_PLAN_LIMITS.shortlists ? undefined : getLimitMessage("shortlist"),
+  }
+}
+
+function monthStartIso() {
+  const now = new Date()
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString()
+}
+
+export async function getSuperLikeLimitStatus(userId: string): Promise<UsageLimitStatus> {
+  const entitlement = await getUserEntitlementStatus(userId)
+  if (!entitlement.isPremium) {
+    return {
+      allowed: false,
+      isPremium: false,
+      remaining: 0,
+      kind: "superLike",
+      error: getLimitMessage("superLike"),
+    }
+  }
+
+  const monthlyLimit = getPlanMonthlySuperLikes(entitlement.planId)
+  const { count, error } = await supabase
+    .from("matrimony_likes")
+    .select("*", { count: "exact", head: true })
+    .eq("liker_id", userId)
+    .eq("action", "super_like")
+    .gte("created_at", monthStartIso())
+
+  if (error) {
+    if (!tableMissing(error)) {
+      console.warn("[getSuperLikeLimitStatus] Unable to read Super Like usage:", error.message)
+    }
+    return { allowed: true, isPremium: true, remaining: monthlyLimit }
+  }
+
+  const used = count || 0
+  const remaining = Math.max(monthlyLimit - used, 0)
+  return {
+    allowed: used < monthlyLimit,
+    isPremium: true,
+    remaining,
+    kind: used < monthlyLimit ? undefined : "superLike",
+    error: used < monthlyLimit
+      ? undefined
+      : `Monthly Super Like allowance reached. Your plan includes ${monthlyLimit} Super Likes each month.`,
   }
 }

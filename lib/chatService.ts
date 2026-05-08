@@ -3,6 +3,39 @@ import type { Message } from './types'
 import { RealtimeChannel } from '@supabase/supabase-js'
 import { getMessageSendLimitStatus, normalizeLimitError } from '@/lib/planLimits'
 
+const DIGIT_WORDS = new Set([
+  'zero',
+  'one',
+  'two',
+  'three',
+  'four',
+  'five',
+  'six',
+  'seven',
+  'eight',
+  'nine',
+  'oh',
+  'o',
+])
+
+export function containsShareableNumber(content: string): boolean {
+  const digits = content.replace(/\D/g, '')
+  if (digits.length >= 5) return true
+
+  const words = content.toLowerCase().match(/[a-z]+/g) || []
+  let consecutiveDigitWords = 0
+  for (const word of words) {
+    if (DIGIT_WORDS.has(word)) {
+      consecutiveDigitWords += 1
+      if (consecutiveDigitWords >= 4) return true
+    } else {
+      consecutiveDigitWords = 0
+    }
+  }
+
+  return false
+}
+
 /**
  * Get match_id from user IDs and match type
  */
@@ -113,6 +146,10 @@ export async function sendMessage(
     // Use empty string if content is empty (for media-only messages)
     // The database should allow empty content after running the fix script
     const messageContent = allowEmpty && !content.trim() ? '' : content.trim()
+    if (messageContent && containsShareableNumber(messageContent)) {
+      throw new Error('For safety, phone numbers cannot be shared in chat. Use premium contact reveal instead.')
+    }
+
     const limitStatus = await getMessageSendLimitStatus(senderId, receiverId)
 
     if (!limitStatus.allowed) {

@@ -4,6 +4,7 @@
  */
 
 import { supabase } from './supabaseClient'
+import { getPhoneValidationMessage, normalizePhoneNumber } from '@/lib/phone'
 
 // ============================================
 // TYPES
@@ -14,6 +15,7 @@ export interface UserProfile {
   user_id: string
   date_of_birth: string
   gender: 'male' | 'female' | 'prefer_not_to_say'
+  phone: string
   created_at?: string
   updated_at?: string
 }
@@ -65,7 +67,11 @@ export interface VerificationStatus {
 /**
  * Save or update user's date of birth
  */
-export async function saveDateOfBirth(dob: string) {
+function getAuthMetadataPhone(user: any) {
+  return String(user?.user_metadata?.phone || user?.phone || "").trim()
+}
+
+export async function saveDateOfBirth(dob: string, phoneInput?: string) {
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
@@ -91,6 +97,12 @@ export async function saveDateOfBirth(dob: string) {
       throw new Error('You must be at least 18 years old to use Lovesathi')
     }
 
+    const normalizedPhone = normalizePhoneNumber(phoneInput || getAuthMetadataPhone(user))
+    const phoneError = getPhoneValidationMessage(normalizedPhone)
+    if (phoneError) {
+      throw new Error(phoneError)
+    }
+
     // First, try to get existing profile
     const { data: existingProfile, error: fetchError } = await supabase
       .from('user_profiles')
@@ -106,6 +118,7 @@ export async function saveDateOfBirth(dob: string) {
         .from('user_profiles')
         .update({ 
           date_of_birth: dob,
+          phone: normalizedPhone,
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id)
@@ -118,6 +131,7 @@ export async function saveDateOfBirth(dob: string) {
         .insert({ 
           user_id: user.id,
           date_of_birth: dob,
+          phone: normalizedPhone,
           gender: 'prefer_not_to_say' // temporary default
         })
         .select()
@@ -181,6 +195,12 @@ export async function saveGender(gender: 'male' | 'female' | 'prefer_not_to_say'
       .eq('user_id', user.id)
       .maybeSingle() // Use maybeSingle() to avoid error if no row exists
 
+    const profilePhone = normalizePhoneNumber(existingProfile?.phone || getAuthMetadataPhone(user))
+    const phoneError = getPhoneValidationMessage(profilePhone)
+    if (phoneError) {
+      throw new Error(phoneError)
+    }
+
     let result
 
     if (existingProfile) {
@@ -189,6 +209,7 @@ export async function saveGender(gender: 'male' | 'female' | 'prefer_not_to_say'
         .from('user_profiles')
         .update({ 
           gender,
+          phone: profilePhone,
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id)
@@ -205,6 +226,7 @@ export async function saveGender(gender: 'male' | 'female' | 'prefer_not_to_say'
         .insert({ 
           user_id: user.id,
           date_of_birth: defaultDob.toISOString().split('T')[0],
+          phone: profilePhone,
           gender
         })
         .select()
@@ -219,7 +241,7 @@ export async function saveGender(gender: 'male' | 'female' | 'prefer_not_to_say'
 
     const { data: userProfileForMatrimony } = await supabase
       .from('user_profiles')
-      .select('date_of_birth')
+      .select('date_of_birth, phone')
       .eq('user_id', user.id)
       .maybeSingle()
 

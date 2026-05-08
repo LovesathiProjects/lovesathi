@@ -16,6 +16,7 @@ import {
   isEmailNotConfirmedError,
   normalizeEmail,
 } from "@/lib/authRedirects"
+import { getPhoneValidationMessage, normalizePhoneNumber } from "@/lib/phone"
 import { supabase } from "@/lib/supabaseClient"
 
 interface AuthScreenProps {
@@ -133,13 +134,18 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
     setError(null)
     try {
       const email = normalizeEmail(formData.email)
+      const phoneError = getPhoneValidationMessage(formData.phone)
+      if (phoneError) {
+        throw new Error(phoneError)
+      }
+      const phone = normalizePhoneNumber(formData.phone)
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password: formData.password,
         options: {
           data: {
             full_name: formData.name,
-            phone: formData.phone,
+            phone,
           },
           emailRedirectTo: getEmailVerificationRedirectUrl(),
         },
@@ -446,11 +452,12 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="signup-phone">Phone</Label>
+              <Label htmlFor="signup-phone">Phone Number</Label>
               <Input
                 id="signup-phone"
                 type="tel"
-                placeholder="Optional"
+                placeholder="+91 98765 43210"
+                required
                 value={formData.phone}
                 onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                 autoComplete="tel"

@@ -15,6 +15,9 @@ export interface MatrimonyProfile {
   demo?: boolean
   visibilityLabel?: string
   height?: string // Height in format like "5'6""
+  phoneMasked?: string
+  phone?: string
+  canRevealPhone?: boolean
 }
 
 export const MOCK_MATRIMONY_PROFILES: MatrimonyProfile[] = [

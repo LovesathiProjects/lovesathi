@@ -9,6 +9,8 @@ export function PremiumFeatures({ onBack }: { onBack?: () => void }) {
   const features = [
     "Unlimited discovery swipes and interests",
     "Unlimited shortlist saves",
+    "Profile phone number reveal",
+    "Monthly Super Like allowance based on your plan",
     "Verified-only filter after the free allowance",
     "Unlimited conversations within matches",
     "Premium-only discovery filter",

@@ -5,7 +5,7 @@ import { motion, useMotionValue, useTransform, animate } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { Check, X, Info, MoreHorizontal, MapPin, Briefcase, GraduationCap, Users, ChevronLeft, ChevronRight, Flag, Star, ImageIcon, Sparkles } from "lucide-react"
+import { Check, X, Info, MoreHorizontal, MapPin, Briefcase, GraduationCap, Users, ChevronLeft, ChevronRight, Flag, Star, ImageIcon, Sparkles, Phone, Gem } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SwipeAnimations, useSwipeAnimation } from "../discovery/swipe-animations"
 import { MatrimonyProfileModal } from "./matrimony-profile-modal"
@@ -30,8 +30,13 @@ interface MatrimonySwipeCardProps {
   bio?: string
   interests?: string[]
   education?: string
+  phoneMasked?: string
+  phone?: string
+  canRevealPhone?: boolean
   onConnect: () => boolean | void | Promise<boolean | void>
   onNotNow: () => boolean | void | Promise<boolean | void>
+  onSuperLike?: () => boolean | void | Promise<boolean | void>
+  onPhoneUpgrade?: () => void
   onProfileClick?: () => void
   stackIndex?: number // 0 is top, then 1,2 for depth visuals
   isShortlisted?: boolean
@@ -56,8 +61,13 @@ export function MatrimonySwipeCard({
   bio,
   interests,
   education,
+  phoneMasked,
+  phone,
+  canRevealPhone = false,
   onConnect,
   onNotNow,
+  onSuperLike,
+  onPhoneUpgrade,
   onProfileClick,
   stackIndex = 0,
   isShortlisted = false,
@@ -345,6 +355,28 @@ export function MatrimonySwipeCard({
 
   const cardInitial = getInitial(name)
   const displayName = name?.trim() || cardInitial
+  const displayPhone = canRevealPhone ? phone || phoneMasked : phoneMasked
+
+  const handlePhoneClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (canRevealPhone) return
+    onPhoneUpgrade?.()
+    toast({
+      title: "Premium contact reveal",
+      description: "Subscribe to reveal phone numbers safely inside Lovesathi.",
+    })
+  }
+
+  const handleSuperLikeClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!onSuperLike) return
+    animate(y, -42, { duration: 0.22, ease: "easeOut" })
+    setTimeout(() => {
+      void Promise.resolve(onSuperLike()).then((result) => {
+        if (result === false) resetSwipePosition()
+      })
+    }, 120)
+  }
 
   return (
     <>
@@ -584,6 +616,21 @@ export function MatrimonySwipeCard({
                   {height}
                 </span>
               )}
+              {displayPhone && (
+                <button
+                  type="button"
+                  onClick={handlePhoneClick}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold text-[#ffffff] backdrop-blur sm:text-sm",
+                    canRevealPhone
+                      ? "border-[#d8c79f]/38 bg-[#d8c79f]/24"
+                      : "border-white/18 bg-white/14 hover:bg-white/22",
+                  )}
+                >
+                  <Phone className="h-3.5 w-3.5" />
+                  {displayPhone}
+                </button>
+              )}
               {(fullProfile?.cultural?.religion || fullProfile?.cultural?.community || community) && (
                 <div 
                   className="matrimony-card-profession rounded-full border border-white/18 bg-white/14 px-3 py-1 text-xs font-bold backdrop-blur sm:text-sm"
@@ -647,6 +694,22 @@ export function MatrimonySwipeCard({
             }}
           >
             <X className="h-7 w-7 text-[#ffffff] drop-shadow-sm" />
+          </motion.button>
+        </div>
+      )}
+
+      {/* Super Like action */}
+      {stackIndex === 0 && (
+        <div className="absolute bottom-8 left-1/2 z-30 -translate-x-1/2">
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.07, y: -4 }}
+            whileTap={{ scale: 0.9 }}
+            className="group flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border border-[#f3d48a]/80 bg-[radial-gradient(circle_at_28%_24%,#fff7d6,#d8a93d_48%,#8f001c_100%)] text-[#18110d] shadow-[0_24px_60px_rgba(216,169,61,0.36),inset_0_1px_0_rgba(255,255,255,0.72)] transition-all duration-200 hover:brightness-110 sm:h-16 sm:w-16"
+            onClick={handleSuperLikeClick}
+            aria-label="Send Super Like"
+          >
+            <Gem className="h-6 w-6 text-white drop-shadow-[0_2px_8px_rgba(24,17,13,0.38)] transition-transform group-hover:rotate-[-8deg] sm:h-7 sm:w-7" />
           </motion.button>
         </div>
       )}
@@ -732,6 +795,21 @@ export function MatrimonySwipeCard({
                             <MapPin className="w-3 h-3" />
                             <span>{location}</span>
                           </div>
+                        )}
+                        {displayPhone && (
+                          <button
+                            type="button"
+                            onClick={handlePhoneClick}
+                            className={cn(
+                              "mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold",
+                              canRevealPhone
+                                ? "border-[#d8c79f]/34 bg-[#fff7df] text-[#18110d]"
+                                : "border-[#d8c79f]/28 bg-white/72 text-[#685f58] hover:border-[#8f001c]/30",
+                            )}
+                          >
+                            <Phone className="h-3.5 w-3.5 text-[#8f001c]" />
+                            {displayPhone}
+                          </button>
                         )}
                         {/* Religion/Caste and Profession */}
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
@@ -875,6 +953,30 @@ export function MatrimonySwipeCard({
                               {fullProfile.cultural.religion}
                             </div>
                           )}
+                        </div>
+                      )}
+
+                      {/* Bio Section */}
+                      {displayPhone && (
+                        <div className="rounded-[1.5rem] border border-[#d8c79f]/24 bg-white/78 p-4 shadow-[0_14px_40px_rgba(24,17,13,0.06)]">
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <p className="luxe-kicker text-[0.58rem] text-[#8f001c]">premium contact</p>
+                              <p className="mt-1 font-bold text-[#18110d]">{displayPhone}</p>
+                              <p className="mt-1 text-xs leading-5 text-[#685f58]">
+                                {canRevealPhone
+                                  ? "This contact is revealed through your active plan."
+                                  : "Masked for free users. Tap to unlock contact reveal."}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handlePhoneClick}
+                              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#8f001c] text-white shadow-[0_14px_32px_rgba(143,0,28,0.22)]"
+                            >
+                              <Phone className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
                       )}
 
@@ -1095,6 +1197,15 @@ export function MatrimonySwipeCard({
                         </Button>
 
                         <Button
+                          variant="outline"
+                          size="lg"
+                          className="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-0 border-[#d8a93d] text-[#8f001c] hover:bg-[#fff7df] bg-white border-2 shadow-lg"
+                          onClick={handleSuperLikeClick}
+                        >
+                          <Gem className="w-7 h-7 sm:w-9 sm:h-9" />
+                        </Button>
+
+                        <Button
                           size="lg"
                           className="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-0 bg-gradient-to-r from-[#97011A] to-[#7A0115] hover:from-[#7A0115] hover:to-[#97011A] text-white shadow-lg"
                           onClick={(e) => {
@@ -1142,9 +1253,13 @@ export function MatrimonySwipeCard({
         premium,
         demo,
         visibilityLabel,
+        phoneMasked,
+        phone,
+        canRevealPhone,
       }}
       open={showProfileModal}
       onOpenChange={setShowProfileModal}
+      onPhoneUpgrade={onPhoneUpgrade}
       onConnect={() => {
         if (swipeLocked) {
           onSwipeLocked?.()

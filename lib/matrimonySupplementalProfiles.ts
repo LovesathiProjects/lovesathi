@@ -198,6 +198,8 @@ function buildProfile(gender: SupplementalGender, index: number): MatrimonyProfi
     premium: index % 4 === 0,
     demo: true,
     height: `${heightCm} cm`,
+    phoneMasked: `+** ******${String(3100 + (index * 37) % 6800).padStart(4, "0")}`,
+    canRevealPhone: false,
   }
 }
 

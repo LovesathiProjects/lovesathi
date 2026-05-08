@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
-import { X, MapPin, Briefcase, GraduationCap, Users, Share, Flag, Heart, ChevronLeft, ChevronRight } from "lucide-react"
+import { X, MapPin, Briefcase, GraduationCap, Users, Share, Flag, Heart, ChevronLeft, ChevronRight, Phone } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
 
@@ -16,10 +16,12 @@ interface MatrimonyProfileModalProps {
   onOpenChange: (open: boolean) => void
   onConnect: () => void
   onNotNow: () => void
+  onPhoneUpgrade?: () => void
 }
 
-export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, onNotNow }: MatrimonyProfileModalProps) {
+export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, onNotNow, onPhoneUpgrade }: MatrimonyProfileModalProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
+  const displayPhone = profile.canRevealPhone ? profile.phone || profile.phoneMasked : profile.phoneMasked
 
   const handlePhotoClick = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -183,6 +185,23 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                       <MapPin className="w-4 h-4 flex-shrink-0" />
                       <span className="text-sm sm:text-base">{profile.location}</span>
                     </div>
+                  )}
+                  {displayPhone && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!profile.canRevealPhone) onPhoneUpgrade?.()
+                      }}
+                      className={cn(
+                        "mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold",
+                        profile.canRevealPhone
+                          ? "border-[#97011A]/20 bg-[#97011A]/8 text-[#97011A]"
+                          : "border-gray-200 bg-gray-50 text-gray-700 hover:border-[#97011A]/30",
+                      )}
+                    >
+                      <Phone className="h-4 w-4" />
+                      {displayPhone}
+                    </button>
                   )}
                 </div>
 

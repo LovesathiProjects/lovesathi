@@ -24,13 +24,15 @@ export interface Match {
 
 export interface ActivityItem {
   id: string
-  type: "match" | "like" | "view"
+  type: "match" | "like" | "super_like" | "view"
   name: string
   avatar: string
   age?: number
   timestamp: string
+  occurredAt?: string
   isNew?: boolean
   userId: string
+  masked?: boolean
 }
 
 function isDemoProfileId(profileId: string) {
@@ -81,7 +83,7 @@ function recordDemoActedProfile(userId: string, targetId: string) {
   localStorage.setItem(demoActedStorageKey(userId), JSON.stringify(Array.from(ids)))
 }
 
-function recordDemoSwipe(userId: string, targetId: string, action: "like" | "pass" | "connect") {
+function recordDemoSwipe(userId: string, targetId: string, action: "like" | "pass" | "connect" | "super_like") {
   if (typeof window === "undefined") return
   const rows = getDemoSwipeRows(userId)
   rows.push({ targetId, action, createdAt: new Date().toISOString() })
@@ -108,7 +110,7 @@ export async function getMatrimonyDiscoverySwipeStatus(userId: string): Promise<
 export async function recordMatrimonyLike(
   likerId: string,
   likedId: string,
-  action: "like" | "pass" | "connect",
+  action: "like" | "pass" | "connect" | "super_like",
 ): Promise<LikeAction> {
   try {
     const limitStatus = await getMatrimonyDiscoverySwipeStatus(likerId)
@@ -138,7 +140,7 @@ export async function recordMatrimonyLike(
       throw insertError
     }
 
-    if (action === "like" || action === "connect") {
+    if (action === "like" || action === "connect" || action === "super_like") {
       await new Promise((resolve) => setTimeout(resolve, 200))
       const { data: matches, error: matchError } = await supabase
         .from("matrimony_matches")
@@ -237,7 +239,7 @@ export async function getMatrimonyLikesReceived(userId: string): Promise<Activit
       .from("matrimony_likes")
       .select("id, liker_id, action, created_at")
       .eq("liked_id", userId)
-      .in("action", ["like", "connect"])
+      .in("action", ["like", "connect", "super_like"])
       .order("created_at", { ascending: false })
 
     if (error) throw error
@@ -247,7 +249,7 @@ export async function getMatrimonyLikesReceived(userId: string): Promise<Activit
       .from("matrimony_likes")
       .select("liked_id")
       .eq("liker_id", userId)
-      .in("action", ["like", "connect"])
+      .in("action", ["like", "connect", "super_like"])
 
     const likedBackUserIds = new Set(userLikes?.map((item) => item.liked_id) || [])
     const likerIds = likes.map((like) => like.liker_id)
@@ -269,11 +271,12 @@ export async function getMatrimonyLikesReceived(userId: string): Promise<Activit
         if (!profile) return null
         return {
           id: like.id,
-          type: "like" as const,
+          type: like.action === "super_like" ? "super_like" as const : "like" as const,
           name: profile.name || "Unknown",
           avatar: (profile.photos as string[])?.[0] || "/placeholder-user.jpg",
           age: profile.age || undefined,
           timestamp: like.created_at,
+          occurredAt: like.created_at,
           isNew: new Date(like.created_at).getTime() > oneDayAgo,
           userId: like.liker_id,
         }
@@ -281,6 +284,72 @@ export async function getMatrimonyLikesReceived(userId: string): Promise<Activit
       .filter(Boolean) as ActivityItem[]
   } catch (error: any) {
     console.error("Error getting matrimony likes received:", error)
+    return []
+  }
+}
+
+export async function recordMatrimonyProfileView(viewerId: string, viewedUserId: string): Promise<void> {
+  if (!viewerId || !viewedUserId || viewerId === viewedUserId || isDemoProfileId(viewedUserId)) return
+
+  const now = new Date().toISOString()
+  const { error } = await supabase
+    .from("matrimony_profile_views")
+    .upsert(
+      {
+        viewer_id: viewerId,
+        viewed_user_id: viewedUserId,
+        viewed_at: now,
+      },
+      { onConflict: "viewer_id,viewed_user_id" },
+    )
+
+  if (error) {
+    console.warn("[recordMatrimonyProfileView] Unable to record profile view:", error.message)
+  }
+}
+
+export async function getMatrimonyProfileViewers(userId: string): Promise<ActivityItem[]> {
+  try {
+    const { data: views, error } = await supabase
+      .from("matrimony_profile_views")
+      .select("id, viewer_id, viewed_at")
+      .eq("viewed_user_id", userId)
+      .order("viewed_at", { ascending: false })
+      .limit(100)
+
+    if (error) throw error
+    if (!views?.length) return []
+
+    const viewerIds = views.map((view) => view.viewer_id)
+    const { data: profiles, error: profilesError } = await supabase
+      .from("matrimony_profile_full")
+      .select("user_id, name, photos, age")
+      .in("user_id", viewerIds)
+
+    if (profilesError) throw profilesError
+
+    const profileMap = new Map(profiles?.map((item) => [item.user_id, item]) || [])
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000
+
+    return views
+      .map((view) => {
+        const profile = profileMap.get(view.viewer_id)
+        if (!profile) return null
+        return {
+          id: view.id,
+          type: "view" as const,
+          name: profile.name || "Unknown",
+          avatar: (profile.photos as string[])?.[0] || "/placeholder-user.jpg",
+          age: profile.age || undefined,
+          timestamp: view.viewed_at,
+          occurredAt: view.viewed_at,
+          isNew: new Date(view.viewed_at).getTime() > oneDayAgo,
+          userId: view.viewer_id,
+        }
+      })
+      .filter(Boolean) as ActivityItem[]
+  } catch (error: any) {
+    console.error("Error getting matrimony profile viewers:", error)
     return []
   }
 }
@@ -304,7 +373,11 @@ function formatTimestamp(timestamp: string): string {
 
 export async function getMatrimonyActivity(userId: string): Promise<ActivityItem[]> {
   try {
-    const [matches, likesReceived] = await Promise.all([getMatrimonyMatches(userId), getMatrimonyLikesReceived(userId)])
+    const [matches, likesReceived, profileViewers] = await Promise.all([
+      getMatrimonyMatches(userId),
+      getMatrimonyLikesReceived(userId),
+      getMatrimonyProfileViewers(userId),
+    ])
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000
 
     const activities: (ActivityItem & { originalTimestamp: string })[] = matches.map((match) => ({
@@ -313,6 +386,7 @@ export async function getMatrimonyActivity(userId: string): Promise<ActivityItem
       name: match.matchedUserName,
       avatar: match.matchedUserPhoto || "/placeholder-user.jpg",
       timestamp: formatTimestamp(match.matchedAt),
+      occurredAt: match.matchedAt,
       isNew: new Date(match.matchedAt).getTime() > oneDayAgo,
       userId: match.matchedUserId,
       originalTimestamp: match.matchedAt,
@@ -322,7 +396,17 @@ export async function getMatrimonyActivity(userId: string): Promise<ActivityItem
       activities.push({
         ...like,
         timestamp: formatTimestamp(like.timestamp),
+        occurredAt: like.occurredAt || like.timestamp,
         originalTimestamp: like.timestamp,
+      })
+    })
+
+    profileViewers.forEach((view) => {
+      activities.push({
+        ...view,
+        timestamp: formatTimestamp(view.timestamp),
+        occurredAt: view.occurredAt || view.timestamp,
+        originalTimestamp: view.timestamp,
       })
     })
 

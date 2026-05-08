@@ -15,13 +15,13 @@ import { getSubscriptionPlan, SUBSCRIPTION_PLANS } from "@/lib/subscriptionPlans
 const premiumFeatures = [
   {
     icon: Star,
-    title: "Unlimited Interests",
-    description: "Express interest in serious profiles without daily limits",
+    title: "Super Likes",
+    description: "Send standout interest with monthly Super Like allowances by plan",
   },
   {
     icon: Eye,
-    title: "See Who Shortlisted You",
-    description: "Understand who is already considering your profile",
+    title: "Contact Reveal",
+    description: "Reveal masked phone numbers safely from premium profile cards",
   },
   {
     icon: Zap,

@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS matrimony_likes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   liker_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   liked_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  action VARCHAR(10) NOT NULL CHECK (action IN ('like', 'pass', 'connect')),
+  action VARCHAR(10) NOT NULL CHECK (action IN ('like', 'pass', 'connect', 'super_like')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
   CONSTRAINT unique_matrimony_like UNIQUE (liker_id, liked_id),
   CONSTRAINT no_self_like_matrimony CHECK (liker_id != liked_id)
@@ -38,13 +38,13 @@ RETURNS TRIGGER AS $$
 DECLARE
   mutual_like_exists BOOLEAN;
 BEGIN
-  IF NEW.action IN ('like', 'connect') THEN
+  IF NEW.action IN ('like', 'connect', 'super_like') THEN
     SELECT EXISTS(
       SELECT 1
       FROM matrimony_likes
       WHERE liker_id = NEW.liked_id
         AND liked_id = NEW.liker_id
-        AND action IN ('like', 'connect')
+        AND action IN ('like', 'connect', 'super_like')
     ) INTO mutual_like_exists;
 
     IF mutual_like_exists THEN
@@ -71,7 +71,7 @@ DROP TRIGGER IF EXISTS trigger_matrimony_match_update ON matrimony_likes;
 CREATE TRIGGER trigger_matrimony_match_update
   AFTER UPDATE ON matrimony_likes
   FOR EACH ROW
-  WHEN (OLD.action != NEW.action AND NEW.action IN ('like', 'connect'))
+  WHEN (OLD.action != NEW.action AND NEW.action IN ('like', 'connect', 'super_like'))
   EXECUTE FUNCTION create_matrimony_match();
 
 ALTER TABLE matrimony_likes ENABLE ROW LEVEL SECURITY;

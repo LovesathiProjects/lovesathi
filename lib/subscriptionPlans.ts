@@ -9,6 +9,7 @@ export type SubscriptionPlan = {
   originalPriceLabel?: string
   discountLabel?: string
   popular?: boolean
+  monthlySuperLikes: number
   features: string[]
 }
 
@@ -19,10 +20,13 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     durationLabel: "1 month",
     durationDays: 30,
     priceLabel: "INR 999",
+    monthlySuperLikes: 10,
     features: [
       "Unlimited swipes and interests",
       "Unlimited shortlist saves",
+      "10 Super Likes every month",
       "Verified-only discovery after free allowance",
+      "Reveal profile contact numbers",
       "Unlimited conversations within matches",
       "See who shortlisted you",
       "Priority support queue",
@@ -37,8 +41,10 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     originalPriceLabel: "INR 2,997",
     discountLabel: "Save 17%",
     popular: true,
+    monthlySuperLikes: 25,
     features: [
       "Everything in Essential",
+      "25 Super Likes every month",
       "Priority discovery placement ready",
       "Premium-only discovery filter",
       "Family-ready profile prompts",
@@ -54,8 +60,10 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     priceLabel: "INR 7,999",
     originalPriceLabel: "INR 11,988",
     discountLabel: "Save 33%",
+    monthlySuperLikes: 100,
     features: [
       "Everything in Signature",
+      "100 Super Likes every month",
       "Annual premium access",
       "Top Picks ready",
       "Advanced compatibility signals ready",
@@ -74,4 +82,8 @@ export function getPlanActiveUntil(planId?: string | null, from = new Date()) {
   const activeUntil = new Date(from)
   activeUntil.setDate(activeUntil.getDate() + plan.durationDays)
   return activeUntil
+}
+
+export function getPlanMonthlySuperLikes(planId?: string | null) {
+  return getSubscriptionPlan(planId).monthlySuperLikes
 }

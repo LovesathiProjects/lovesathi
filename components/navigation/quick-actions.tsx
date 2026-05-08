@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { MessageCircle, User, Search, Bell, Star } from "lucide-react"
+import { Compass, MessageCircle, User, Bell, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUnreadMessageCount } from "@/hooks/useUnreadMessageCount"
 import { useUnreadActivityCount } from "@/hooks/useUnreadActivityCount"
@@ -39,7 +39,7 @@ export function QuickActions({
     onClick?: () => void
     show: boolean
   }> = [
-    { id: "discover", icon: Search, onClick: onDiscover, show: !!onDiscover },
+    { id: "discover", icon: Compass, onClick: onDiscover, show: !!onDiscover },
     { id: "shortlist", icon: Star, onClick: onOpenShortlist, show: showShortlist && !!onOpenShortlist },
     { id: "messages", icon: MessageCircle, onClick: onOpenChat, show: true },
     { id: "activity", icon: Bell, onClick: onOpenActivity, show: !!onOpenActivity },
