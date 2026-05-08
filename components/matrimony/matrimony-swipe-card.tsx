@@ -700,17 +700,21 @@ export function MatrimonySwipeCard({
 
       {/* Super Like action */}
       {stackIndex === 0 && (
-        <div className="absolute bottom-8 left-1/2 z-30 -translate-x-1/2">
+        <div className="absolute bottom-8 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-1">
           <motion.button
             type="button"
             whileHover={{ scale: 1.07, y: -4 }}
             whileTap={{ scale: 0.9 }}
-            className="group flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border border-[#f3d48a]/80 bg-[radial-gradient(circle_at_28%_24%,#fff7d6,#d8a93d_48%,#8f001c_100%)] text-[#18110d] shadow-[0_24px_60px_rgba(216,169,61,0.36),inset_0_1px_0_rgba(255,255,255,0.72)] transition-all duration-200 hover:brightness-110 sm:h-16 sm:w-16"
+            className="group relative flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border border-[#f3d48a]/80 bg-[radial-gradient(circle_at_28%_24%,#fff7d6,#d8a93d_48%,#8f001c_100%)] text-[#18110d] shadow-[0_24px_60px_rgba(216,169,61,0.36),inset_0_1px_0_rgba(255,255,255,0.72)] transition-all duration-200 hover:brightness-110 sm:h-16 sm:w-16"
             onClick={handleSuperLikeClick}
             aria-label="Send Super Like"
           >
+            <span className="absolute -right-1 -top-1 h-4 w-4 rounded-full border border-white/80 bg-white shadow-[0_8px_18px_rgba(24,17,13,0.18)]" />
             <Gem className="h-6 w-6 text-white drop-shadow-[0_2px_8px_rgba(24,17,13,0.38)] transition-transform group-hover:rotate-[-8deg] sm:h-7 sm:w-7" />
           </motion.button>
+          <span className="rounded-full border border-[#d8c79f]/38 bg-[#ffffff]/78 px-2.5 py-0.5 text-[0.55rem] font-black uppercase tracking-[0.18em] text-[#8f001c] shadow-[0_12px_28px_rgba(24,17,13,0.14)] backdrop-blur-xl">
+            Super
+          </span>
         </div>
       )}
 
@@ -1199,9 +1203,13 @@ export function MatrimonySwipeCard({
                         <Button
                           variant="outline"
                           size="lg"
-                          className="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-0 border-[#d8a93d] text-[#8f001c] hover:bg-[#fff7df] bg-white border-2 shadow-lg"
+                          className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full p-0 border-[#d8a93d] text-[#8f001c] hover:bg-[#fff7df] bg-white border-2 shadow-lg"
                           onClick={handleSuperLikeClick}
+                          aria-label="Send Super Like"
                         >
+                          <span className="absolute -top-2 rounded-full bg-[#8f001c] px-2 py-0.5 text-[0.55rem] font-black uppercase tracking-[0.14em] text-white shadow-md">
+                            Super
+                          </span>
                           <Gem className="w-7 h-7 sm:w-9 sm:h-9" />
                         </Button>
 

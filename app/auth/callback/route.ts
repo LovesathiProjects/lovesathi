@@ -3,6 +3,10 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
+const SUPABASE_EMAIL_OTP_TYPES = new Set(['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'])
+
 function getRedirectOrigin(requestOrigin: string) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
   if (siteUrl?.startsWith('http')) {
@@ -40,11 +44,35 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const redirectOrigin = getRedirectOrigin(requestUrl.origin)
   const code = requestUrl.searchParams.get('code')
+  const tokenHash = requestUrl.searchParams.get('token_hash')
+  const otpType = requestUrl.searchParams.get('type')
   const safeNextPath = getSafeNextPath(requestUrl)
   const authError = requestUrl.searchParams.get('error') || requestUrl.searchParams.get('error_code')
 
   if (authError) {
     return NextResponse.redirect(getVerifyEmailUrl(redirectOrigin))
+  }
+
+  if (tokenHash && otpType && SUPABASE_EMAIL_OTP_TYPES.has(otpType)) {
+    const supabase = createRouteHandlerClient({ cookies })
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: otpType === 'email' ? 'signup' : (otpType as any),
+    })
+
+    if (verifyError) {
+      return NextResponse.redirect(getVerifyEmailUrl(redirectOrigin))
+    }
+
+    if (otpType === 'recovery') {
+      return NextResponse.redirect(new URL('/auth/reset-password', redirectOrigin))
+    }
+
+    if (safeNextPath) {
+      return NextResponse.redirect(new URL(safeNextPath, redirectOrigin))
+    }
+
+    return NextResponse.redirect(new URL('/onboarding/verification', redirectOrigin))
   }
 
   if (code) {
