@@ -154,7 +154,7 @@ type AuthEmailTelemetry = {
 const authEmailActions: Record<string, { label: string; description: string }> = {
   user_confirmation_requested: {
     label: "Verification emails",
-    description: "Signup confirmations and resend-verification emails requested through Supabase Auth.",
+    description: "Signup confirmations and resend-verification codes requested through Supabase Auth.",
   },
   user_recovery_requested: {
     label: "Password reset emails",
@@ -801,7 +801,7 @@ export async function GET(request: Request) {
       severity: unconfirmedUsers > 10 ? "watch" : "clear",
       detail:
         unconfirmedUsers > 0
-          ? "Unconfirmed users can be nudged from User management with a fresh verification email."
+          ? "Unconfirmed users can be nudged from User management with a fresh verification code."
           : "Recent auth users have confirmed email in the visible sample.",
     },
     {

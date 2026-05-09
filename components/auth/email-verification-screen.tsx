@@ -19,6 +19,13 @@ interface EmailVerificationScreenProps {
 }
 
 type VerificationReason = "unconfirmed" | "expired" | null
+type EmailOtpVerificationType = "email" | "signup"
+
+const EMAIL_OTP_LENGTH = 6
+
+function normalizeOtpCode(value: string) {
+  return value.replace(/\D/g, "").slice(0, EMAIL_OTP_LENGTH)
+}
 
 export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenProps) {
   const router = useRouter()
@@ -28,6 +35,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
   const [isLoading, setIsLoading] = useState(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [emailInput, setEmailInput] = useState("")
+  const [otpCode, setOtpCode] = useState("")
   const [isVerified, setIsVerified] = useState(false)
   const [verificationReason, setVerificationReason] = useState<VerificationReason>(null)
 
@@ -246,14 +254,14 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
       rememberEmail(email)
 
       toast({
-        title: "Email sent!",
-        description: "Verification email has been sent. Please check your inbox.",
+        title: "Verification code sent",
+        description: "A fresh Lovesathi email verification code has been sent to your inbox.",
       })
     } catch (error: any) {
       console.error("Error resending email:", error)
       toast({
         title: "Error",
-        description: error.message || "Failed to resend verification email. Please try again.",
+        description: error.message || "Failed to resend the verification code. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -261,47 +269,74 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
     }
   }
 
-  const handleContinue = async () => {
+  const verifyEmailOtp = async (email: string, token: string) => {
+    const verificationTypes: EmailOtpVerificationType[] = ["email", "signup"]
+    let lastError: any = null
+
+    for (const type of verificationTypes) {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type,
+        options: {
+          redirectTo: getEmailVerificationRedirectUrl(),
+        },
+      })
+
+      if (!error) {
+        return data
+      }
+
+      lastError = error
+    }
+
+    throw lastError || new Error("Unable to verify this code.")
+  }
+
+  const handleVerifyCode = async () => {
+    const email = normalizeEmail(userEmail || emailInput)
+    const token = normalizeOtpCode(otpCode)
+
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Enter the email you used to create your Lovesathi account.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (token.length !== EMAIL_OTP_LENGTH) {
+      toast({
+        title: "Enter the 6-digit code",
+        description: "Please enter the complete verification code from your email.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsChecking(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) {
-        toast({
-          title: "Session expired",
-          description: "Please sign in again to continue.",
-          variant: "destructive",
-        })
-        setIsChecking(false)
-        setTimeout(() => {
-          router.push("/auth")
-        }, 2000)
-        return
-      }
-
-      // Check if email is verified
-      if (!user.email_confirmed_at) {
-        toast({
-          title: "Email not verified",
-          description: "Please verify your email before continuing. Check your inbox for the verification link.",
-          variant: "destructive",
-        })
-        setIsChecking(false)
-        return
-      }
-
-      // Email is verified, proceed
+      const data = await verifyEmailOtp(email, token)
+      rememberEmail(data.user?.email || email)
+      window.sessionStorage.removeItem(EMAIL_VERIFICATION_STORAGE_KEY)
       setIsVerified(true)
-      if (onVerified) {
-        onVerified()
-      } else {
-        router.push("/onboarding/verification")
-      }
-    } catch (error: any) {
-      console.error("Error checking verification:", error)
       toast({
-        title: "Error",
-        description: "Failed to verify email status. Please try again.",
+        title: "Email verified",
+        description: "Your email has been confirmed. Redirecting you now.",
+      })
+      setTimeout(() => {
+        if (onVerified) {
+          onVerified()
+        } else {
+          router.push("/onboarding/verification")
+        }
+      }, 800)
+    } catch (error: any) {
+      console.error("Error verifying email code:", error)
+      toast({
+        title: "Could not verify code",
+        description: error.message || "This code is invalid or expired. Please request a fresh code.",
         variant: "destructive",
       })
     } finally {
@@ -350,20 +385,20 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
               {isVerified
                 ? "Email Verified!"
                 : verificationReason === "expired"
-                  ? "Verification Link Expired"
-                  : "Verify Your Email"}
+                  ? "Verification Code Expired"
+                  : "Enter Your Verification Code"}
             </h1>
             
             <p className="text-base sm:text-lg text-black/70 leading-relaxed">
               {isVerified
                 ? "Your email has been verified successfully. Redirecting you to continue..."
                 : verificationReason === "expired"
-                  ? "That email link is expired or no longer valid. Send yourself a fresh Lovesathi verification email below."
+                  ? "That verification code is expired or no longer valid. Send yourself a fresh Lovesathi code below."
                   : verificationReason === "unconfirmed"
-                    ? "Your account exists, but the email is not confirmed yet. Send yourself a fresh verification email below."
+                    ? "Your account exists, but the email is not confirmed yet. Send yourself a fresh verification code below."
                     : emailInput
-                      ? `We've sent a verification email to ${emailInput}. Please check your inbox and click the verification link.`
-                      : "We've sent a verification email. Please check your inbox and click the verification link to continue."}
+                      ? `We've sent a 6-digit verification code to ${emailInput}. Enter it below to continue.`
+                      : "We've sent a 6-digit verification code. Enter it below to continue."}
             </p>
           </div>
 
@@ -386,19 +421,35 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="verification-code">Verification code</Label>
+                <Input
+                  id="verification-code"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(normalizeOtpCode(e.target.value))}
+                  placeholder="Enter 6-digit code"
+                  autoComplete="one-time-code"
+                  className="h-14 rounded-2xl text-center text-2xl font-semibold tracking-[0.35em]"
+                  maxLength={EMAIL_OTP_LENGTH}
+                />
+              </div>
+
               <Button
-                onClick={handleContinue}
+                onClick={handleVerifyCode}
                 className="w-full font-semibold"
                 size="lg"
-                disabled={isChecking}
+                disabled={isChecking || !normalizeEmail(userEmail || emailInput) || otpCode.length !== EMAIL_OTP_LENGTH}
               >
                 {isChecking ? (
                   <>
                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Checking...
+                    Verifying...
                   </>
                 ) : (
-                  "I've Verified My Email"
+                  "Verify Email Code"
                 )}
               </Button>
 
@@ -417,14 +468,14 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
                 ) : (
                   <>
                     <Mail className="w-5 h-5 mr-2" />
-                    Resend Verification Email
+                    Resend Verification Code
                   </>
                 )}
               </Button>
 
               <div className="text-center pt-4">
                 <p className="text-sm text-black/60 leading-relaxed">
-                  Didn't receive the email? Check your spam folder or click "Resend" above.
+                  Didn't receive the code? Check your spam folder or click "Resend" above.
                 </p>
               </div>
             </div>

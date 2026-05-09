@@ -446,7 +446,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid auth email action." }, { status: 400 })
     }
 
-    const notes = cleanText(body.notes) || "Confirmation email resent by Lovesathi admin."
+    const notes = cleanText(body.notes) || "Confirmation code resent by Lovesathi admin."
     const { data: previousUserData, error: userLookupError } = await supabase.auth.admin.getUserById(id)
     const previousUser = previousUserData?.user as any
 

@@ -562,7 +562,7 @@ export function AdminPortal() {
     if (!sessionToken) return
     const confirmCopy =
       resource === "auth_email" && status === "resend_confirmation"
-        ? "Resend a fresh email verification link to this user?"
+        ? "Resend a fresh email verification code to this user?"
         : `Mark this ${resource} as ${statusLabel(status)}?`
     if (!window.confirm(confirmCopy)) return
 
@@ -588,7 +588,7 @@ export function AdminPortal() {
                           : resource === "entitlement"
                             ? "Premium access revoked by Lovesathi admin."
                             : resource === "auth_email"
-                              ? "Confirmation email resent by Lovesathi admin."
+                              ? "Confirmation code resent by Lovesathi admin."
                               : `Report marked ${statusLabel(status)} by Lovesathi admin.`
     const shouldAskForNote =
       resource === "report" || resource === "user" || status === "rejected" || status === "in_review"
