@@ -9,6 +9,12 @@
     "typecheck": "tsc --noEmit",
     "start": "next start",
     "server": "node server.js",
+    "native:sync": "cap sync",
+    "native:add:android": "cap add android",
+    "native:add:ios": "cap add ios",
+    "native:open:android": "cap open android",
+    "native:open:ios": "cap open ios",
+    "native:build:android": "cd android && gradlew.bat :app:assembleDebug",
     "seed:lovesathi-demo-female": "node scripts/seed-lovesathi-demo-female-profiles.mjs"
   },
   "dependencies": {
@@ -81,6 +87,10 @@
     "zod": "3.25.67"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.3.3",
+    "@capacitor/cli": "^8.3.3",
+    "@capacitor/core": "^8.3.3",
+    "@capacitor/ios": "^8.3.3",
     "@tailwindcss/postcss": "^4.1.9",
     "@types/node": "^22",
     "@types/react": "^18",

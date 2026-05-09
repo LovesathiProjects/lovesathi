@@ -4,7 +4,7 @@ Last updated: May 2026
 
 ## Current status
 
-Lovesathi is currently a production Next.js web app. It can be deployed to `lovesathi.com` and installed as a PWA-style experience from supported mobile browsers, but it is not yet a true native iOS or Android app.
+Lovesathi is currently a production Next.js web app with Capacitor wrapper configuration and an Android shell. It can be deployed to `lovesathi.com`, installed as a PWA-style experience from supported mobile browsers, and used as the source for a thin native wrapper.
 
 ## What is ready
 
@@ -12,13 +12,16 @@ Lovesathi is currently a production Next.js web app. It can be deployed to `love
 - Public Terms, Privacy, Safety, FAQ, Contact, and Account Deletion pages.
 - In-app account deletion flow through Settings.
 - PWA manifest with Lovesathi name, theme color, standalone display, and app icons.
+- Capacitor config for `com.lovesathi.app`, loading the hosted app at `https://lovesathi.com`.
+- Android Capacitor project scaffolded with portrait orientation, HTTPS-only traffic, and OS backup disabled.
 - Basic production security headers in `next.config.mjs`.
 - Safety/report/blocking/chat contact-sharing protections in the web app.
 - Admin portal for user, profile, verification, report, entitlement, and concierge review.
 
 ## What is not native-ready yet
 
-- No React Native, Expo, Capacitor, or native shell source is currently part of the production app.
+- Native iOS folder has not been generated yet because it requires macOS and Xcode.
+- Android release signing, Play Store upload, and physical-device QA are not complete yet.
 - Native push notifications are not configured.
 - Native deep links/universal links are not configured.
 - Native app icons and splash assets need final high-resolution PNG exports before store submission.

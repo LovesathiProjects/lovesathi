@@ -1,0 +1,7 @@
+## Copy this file to android/local.properties after installing Android Studio or Android command-line tools.
+## Keep android/local.properties uncommitted because it is machine-specific.
+##
+## Windows example:
+## sdk.dir=C\:\\Users\\Microsoft\\AppData\\Local\\Android\\Sdk
+
+sdk.dir=C\:\\Users\\Microsoft\\AppData\\Local\\Android\\Sdk
