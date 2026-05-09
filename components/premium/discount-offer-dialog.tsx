@@ -131,7 +131,7 @@ export function DiscountOfferDialog({ onSubscribe }: { onSubscribe: () => void }
                 {isFirstOffer ? "You are lucky. Your 70% discount is live." : "Your 70% Lovesathi offer is back."}
               </DialogTitle>
               <DialogDescription className="text-base leading-7 text-[#8B7B70]">
-                You have {remainingLabel} to avail this private launch discount. If you skip it, we will bring the offer back every 2 weeks until you subscribe.
+                You have {remainingLabel} to avail this private launch discount.
               </DialogDescription>
             </DialogHeader>
 
@@ -143,11 +143,6 @@ export function DiscountOfferDialog({ onSubscribe }: { onSubscribe: () => void }
                   <p className="text-xs leading-5 text-[#8B7B70]">70% forever pricing</p>
                 </div>
               ))}
-            </div>
-
-            <div className="flex items-center gap-2 rounded-2xl border border-[#482b1a]/10 bg-white/68 p-3 text-sm font-bold text-[#3A2B24]">
-              <Clock className="h-4 w-4 text-[#C2A574]" />
-              This offer refreshes every 2 weeks until purchase.
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">

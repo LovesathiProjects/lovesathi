@@ -8,6 +8,7 @@ import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
 import { cn } from "@/lib/utils"
 import { useMatrimonyShortlist } from "@/hooks/useMatrimonyShortlist"
 import type { ShortlistActionResult } from "@/lib/matrimonyShortlistService"
+import { formatPublicProfileName, getDisplayInitial } from "@/lib/displayName"
 
 interface MatrimonyShortlistViewProps {
   profiles: MatrimonyProfile[]
@@ -57,70 +58,74 @@ export function MatrimonyShortlistView({
 
   return (
     <div className="space-y-3">
-      {profiles.map((profile) => (
-        <div
-          key={profile.id}
-          className="luxe-card cursor-pointer rounded-[1.5rem] border-[#C2A574]/24 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(24,17,13,0.14)]"
-          onClick={() => onOpenProfile?.(profile)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault()
-              onOpenProfile?.(profile)
-            }
-          }}
-          aria-label={`Open profile for ${profile.name}`}
-        >
-          <div className="flex items-center space-x-3">
-            {/* Avatar */}
-            <div className="relative flex-shrink-0">
-              <Avatar className="w-12 h-12 border-2 border-[#E5E5E5]">
-                <AvatarImage src={profile.photos?.[0] || "/placeholder.svg"} alt={profile.name} />
-                <AvatarFallback className="bg-gray-100 text-black">{profile.name[0]}</AvatarFallback>
-              </Avatar>
-            </div>
+      {profiles.map((profile) => {
+        const displayName = formatPublicProfileName(profile.name)
 
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-sm text-black truncate">
-                {profile.name}
-                {profile.age && <span className="text-[#444444] ml-1">, {profile.age}</span>}
-              </h3>
-              {profile.location && (
-                <p className="text-sm text-[#444444] flex items-center gap-1 mt-1">
-                  <MapPin className="w-3.5 h-3.5" />
-                  {profile.location}
-                </p>
-              )}
-              {profile.education && (
-                <p className="text-sm text-[#444444] mt-1">{profile.education}</p>
-              )}
-            </div>
+        return (
+          <div
+            key={profile.id}
+            className="luxe-card cursor-pointer rounded-[1.5rem] border-[#C2A574]/24 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(24,17,13,0.14)]"
+            onClick={() => onOpenProfile?.(profile)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault()
+                onOpenProfile?.(profile)
+              }
+            }}
+            aria-label={`Open profile for ${profile.name}`}
+          >
+            <div className="flex items-center space-x-3">
+              {/* Avatar */}
+              <div className="relative flex-shrink-0">
+                <Avatar className="w-12 h-12 border-2 border-[#E5E5E5]">
+                  <AvatarImage src={profile.photos?.[0] || "/placeholder.svg"} alt={profile.name} />
+                  <AvatarFallback className="bg-gray-100 text-black">{getDisplayInitial(profile.name)}</AvatarFallback>
+                </Avatar>
+              </div>
 
-            {/* Remove Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "flex-shrink-0 rounded-full hover:bg-red-50 hover:text-[#C2A574] transition-all",
-                removingId === profile.id && "opacity-60 pointer-events-none",
-              )}
-              onClick={(event) => {
-                event.stopPropagation()
-                handleRemove(profile.id)
-              }}
-              aria-label="Remove from shortlist"
-            >
-              {removingId === profile.id ? (
-                <Loader2 className="w-4 h-4 animate-spin text-[#C2A574]" />
-              ) : (
-                <Trash2 className="w-4 h-4 text-[#444444]" />
-              )}
-            </Button>
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-sm text-black truncate">
+                  {displayName}
+                  {profile.age && <span className="text-[#444444] ml-1">, {profile.age}</span>}
+                </h3>
+                {profile.location && (
+                  <p className="text-sm text-[#444444] flex items-center gap-1 mt-1">
+                    <MapPin className="w-3.5 h-3.5" />
+                    {profile.location}
+                  </p>
+                )}
+                {profile.education && (
+                  <p className="text-sm text-[#444444] mt-1">{profile.education}</p>
+                )}
+              </div>
+
+              {/* Remove Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "flex-shrink-0 rounded-full hover:bg-red-50 hover:text-[#C2A574] transition-all",
+                  removingId === profile.id && "opacity-60 pointer-events-none",
+                )}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  handleRemove(profile.id)
+                }}
+                aria-label="Remove from shortlist"
+              >
+                {removingId === profile.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-[#C2A574]" />
+                ) : (
+                  <Trash2 className="w-4 h-4 text-[#444444]" />
+                )}
+              </Button>
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

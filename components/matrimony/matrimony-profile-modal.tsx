@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { X, MapPin, Briefcase, GraduationCap, Users, Share, Flag, Heart, ChevronLeft, ChevronRight, Phone } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
+import { formatPublicProfileName } from "@/lib/displayName"
 
 interface MatrimonyProfileModalProps {
   profile: MatrimonyProfile
@@ -25,6 +26,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
   const [revealedPhone, setRevealedPhone] = useState<string | null>(profile.phone || null)
   const phoneIsRevealed = Boolean(revealedPhone || profile.phone)
   const displayPhone = revealedPhone || profile.phone || profile.phoneMasked
+  const displayName = formatPublicProfileName(profile.name)
 
   useEffect(() => {
     setRevealedPhone(profile.phone || null)
@@ -184,7 +186,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
               <div className="space-y-4">
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                    {profile.name}, {profile.age}
+                    {displayName}, {profile.age}
                     {profile.height && <span className="text-xl sm:text-2xl font-normal text-gray-600"> • {profile.height}</span>}
                   </h1>
                   {profile.location && (

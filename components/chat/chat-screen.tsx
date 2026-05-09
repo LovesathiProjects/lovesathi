@@ -34,6 +34,7 @@ import { MessageActionMenu } from "@/components/chat/message-action-menu"
 import { ReportDialog } from "@/components/chat/report-dialog"
 import { getPreferredVerticalPlacement, type VerticalPlacement } from "@/components/chat/menu-position"
 import { getMessageSendLimitStatus } from "@/lib/planLimits"
+import { formatPublicProfileName, getDisplayInitial } from "@/lib/displayName"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -692,7 +693,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
       if (result.success) {
         toast({
           title: "User Blocked",
-          description: `${chatUser.name} has been blocked`,
+          description: `${formatPublicProfileName(chatUser.name)} has been blocked`,
           variant: "destructive",
         })
         // Navigate back to dashboard after blocking
@@ -836,6 +837,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
   }, [isHeaderMenuOpen])
 
   const isMatrimony = matchType === 'matrimony'
+  const chatDisplayName = formatPublicProfileName(chatUser?.name)
 
   if (loading) {
     return (
@@ -902,9 +904,9 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
             <div className="flex items-center space-x-3">
               <div className="relative">
                 <Avatar className={cn("h-11 w-11 border-2 shadow-[0_10px_28px_rgba(24,17,13,0.12)] sm:h-12 sm:w-12", isMatrimony ? "border-[#C2A574]/35" : "border-white/30")}>
-                  <AvatarImage src={chatUser.avatar || "/placeholder.svg"} alt={chatUser.name} />
+                  <AvatarImage src={chatUser.avatar || "/placeholder.svg"} alt={chatDisplayName} />
                   <AvatarFallback className={cn("text-lg", isMatrimony ? "bg-[#EFE7DB] text-[#3A2B24]" : "bg-white/20 text-white")}>
-                    {chatUser.name[0] || "U"}
+                    {getDisplayInitial(chatUser.name)}
                   </AvatarFallback>
                 </Avatar>
                 {chatUser.isOnline && (
@@ -914,7 +916,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
 
               <div>
                 <div className="flex items-center space-x-2">
-                  <h2 className={cn("max-w-[44vw] truncate font-serif text-2xl font-bold tracking-[-0.05em] sm:max-w-none", isMatrimony ? "text-[#3A2B24]" : "text-white")}>{chatUser.name}</h2>
+                  <h2 className={cn("max-w-[44vw] truncate font-serif text-2xl font-bold tracking-[-0.05em] sm:max-w-none", isMatrimony ? "text-[#3A2B24]" : "text-white")}>{chatDisplayName}</h2>
                   {chatUser.isPremium && (
                     <Badge className="bg-[#C2A574] text-[#3A2B24] text-xs px-2 py-0">
                       Premium
@@ -1056,7 +1058,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
               <Heart className={cn("w-8 h-8", isMatrimony ? "text-[#444444]" : "text-[#A1A1AA]")} />
             </div>
             <h3 className={cn("mb-2 font-serif text-3xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#3A2B24]" : "text-white")}>It's a Match</h3>
-            <p className={cn("text-sm", isMatrimony ? "text-[#8B7B70]" : "text-[#A1A1AA]")}>Start a calm, intentional conversation with {chatUser.name}.</p>
+            <p className={cn("text-sm", isMatrimony ? "text-[#8B7B70]" : "text-[#A1A1AA]")}>Start a calm, intentional conversation with {chatDisplayName}.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -1154,7 +1156,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
                         {repliedMessage && (
                           <div className={cn("mb-2 rounded-xl border px-3 py-2 text-xs", isMatrimony ? "border-[#C2A574]/24 bg-[#EFE7DB]" : "border-white/10 bg-white/10")}>
                             <p className={cn("text-[11px] uppercase tracking-wide", isMatrimony ? "text-[#444444]" : "text-[#A1A1AA]")}>
-                              Reply to {repliedMessage.sender_id === currentUserId ? "You" : chatUser.name}
+                              Reply to {repliedMessage.sender_id === currentUserId ? "You" : chatDisplayName}
                             </p>
                             <p className={cn("line-clamp-2", isMatrimony ? "text-black" : "text-white/90")}>
                               {repliedMessage.content || "Message deleted"}
@@ -1193,7 +1195,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
                             setReplyPreview({
                               messageId: message.id,
                               text: message.content,
-                              senderLabel: isOwn ? "You" : chatUser.name,
+                              senderLabel: isOwn ? "You" : chatDisplayName,
                             })
                           }}
                           onCopy={async () => {
@@ -1430,11 +1432,11 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
           reportedUserId={chatUser.id}
           reporterId={currentUserId}
           matchType={matchType}
-          userName={chatUser.name}
+        userName={chatDisplayName}
           onSuccess={() => {
             toast({
               title: "Report Submitted",
-              description: `Your report for ${chatUser.name} has been submitted for review.`,
+              description: `Your report for ${chatDisplayName} has been submitted for review.`,
             })
           }}
         />

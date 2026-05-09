@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MessageCircle, X } from "lucide-react"
+import { formatPublicProfileName, getDisplayInitial } from "@/lib/displayName"
 
 interface MatchNotificationProps {
   match: {
@@ -21,6 +22,7 @@ interface MatchNotificationProps {
 
 export function MatchNotification({ match, onStartChat, onKeepSwiping, onClose }: MatchNotificationProps) {
   const [isVisible, setIsVisible] = useState(true)
+  const displayName = formatPublicProfileName(match.name)
 
   if (!isVisible) return null
 
@@ -44,7 +46,7 @@ export function MatchNotification({ match, onStartChat, onKeepSwiping, onClose }
 
               <div>
                 <h2 className="text-2xl font-bold mb-1">It's a Match!</h2>
-                <p className="text-white/90 text-sm">You and {match.name} liked each other</p>
+                <p className="text-white/90 text-sm">You and {displayName} liked each other</p>
               </div>
             </div>
           </div>
@@ -54,8 +56,8 @@ export function MatchNotification({ match, onStartChat, onKeepSwiping, onClose }
             <div className="flex items-center justify-center">
               <div className="relative">
                 <Avatar className="w-20 h-20 border-4 border-primary">
-                  <AvatarImage src={match.avatar || "/placeholder.svg"} alt={match.name} />
-                  <AvatarFallback className="text-xl">{match.name[0]}</AvatarFallback>
+                  <AvatarImage src={match.avatar || "/placeholder.svg"} alt={displayName} />
+                  <AvatarFallback className="text-xl">{getDisplayInitial(match.name)}</AvatarFallback>
                 </Avatar>
                 <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary rounded-full" />
               </div>
@@ -63,7 +65,7 @@ export function MatchNotification({ match, onStartChat, onKeepSwiping, onClose }
 
             <div className="text-center space-y-2">
               <h3 className="text-xl font-semibold">
-                {match.name}, {match.age}
+                {displayName}, {match.age}
               </h3>
 
               {match.mutualInterests.length > 0 && (

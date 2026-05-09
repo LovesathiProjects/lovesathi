@@ -13,6 +13,7 @@ import { EditProfile } from "./edit-profile"
 import type { MatrimonyProfileFull } from "@/lib/matrimonyService"
 import { useToast } from "@/hooks/use-toast"
 import { getProfileContact, revealProfileContact, type ProfileContactInfo } from "@/lib/profileContacts"
+import { formatPublicProfileName } from "@/lib/displayName"
 
 interface ProfileViewProps {
   isOwnProfile?: boolean
@@ -34,6 +35,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
   const [isLiking, setIsLiking] = useState(false)
   const [contact, setContact] = useState<ProfileContactInfo | null>(null)
   const { toast } = useToast()
+  const publicName = formatPublicProfileName(profile?.name)
 
   useEffect(() => {
     void fetchProfile()
@@ -224,7 +226,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
             )}
             <div>
               <p className="luxe-kicker text-[0.62rem] text-[#C2A574]">{isOwnProfile ? "my dossier" : "profile dossier"}</p>
-              <h1 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#3A2B24]">{isOwnProfile ? "My Profile" : profile?.name || "Profile"}</h1>
+              <h1 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#3A2B24]">{isOwnProfile ? "My Profile" : publicName}</h1>
             </div>
           </div>
           {isOwnProfile ? (
@@ -292,7 +294,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
           <CardContent className="p-6 space-y-5">
             <div className="flex items-center gap-2">
               <h2 className="text-3xl font-bold text-black">
-                {profile?.name}
+                {isOwnProfile ? profile?.name : publicName}
                 {profile?.age ? `, ${profile.age}` : ""}
               </h2>
               {verified && <CheckCircle2 className="w-5 h-5 text-[#C2A574]" />}

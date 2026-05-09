@@ -16,6 +16,7 @@ import {
 } from "@/lib/matchmakingService"
 import { getUserEntitlementStatus } from "@/lib/planLimits"
 import { useToast } from "@/hooks/use-toast"
+import { formatPublicProfileName, getDisplayInitial } from "@/lib/displayName"
 
 interface ActivityScreenProps {
   onProfileClick?: (userId: string) => void
@@ -329,9 +330,9 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade
                   {/* Avatar */}
                   <div className="relative flex-shrink-0">
                     <Avatar className={cn("w-12 h-12 border-2", isMatrimony ? "border-[#E5E5E5]" : "border-white/30")}>
-                      <AvatarImage src={maskedView ? "" : activity.avatar || "/placeholder.svg"} alt={maskedView ? "Premium viewer" : activity.name} />
+                      <AvatarImage src={maskedView ? "" : activity.avatar || "/placeholder.svg"} alt={maskedView ? "Premium viewer" : formatPublicProfileName(activity.name)} />
                       <AvatarFallback className={cn(isMatrimony ? "bg-gray-100 text-black" : "bg-white/20 text-white")}>
-                        {maskedView ? "?" : activity.name[0]}
+                        {maskedView ? "?" : getDisplayInitial(activity.name)}
                       </AvatarFallback>
                     </Avatar>
                     {maskedView && (
@@ -346,7 +347,7 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade
                     <div className="flex items-center gap-2 mb-1">
                       {getActivityIcon(activity.type)}
                       <h3 className={cn("font-semibold text-sm truncate", isMatrimony ? "text-black" : "text-white")}>
-                        {maskedView ? "Premium viewer" : activity.name}
+                        {maskedView ? "Premium viewer" : formatPublicProfileName(activity.name)}
                         {!maskedView && activity.age && <span className={cn("ml-1", isMatrimony ? "text-[#444444]" : "text-[#A1A1AA]")}>, {activity.age}</span>}
                       </h3>
                       {activity.isNew && (

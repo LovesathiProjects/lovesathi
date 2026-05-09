@@ -25,6 +25,7 @@ import { getLastMessage, getUnreadCount, subscribeToMessages, deleteAllMessagesF
 import { useSocket } from "@/hooks/useSocket"
 import type { Message } from "@/lib/types"
 import { RealtimeChannel } from "@supabase/supabase-js"
+import { formatPublicProfileName, getDisplayInitial } from "@/lib/displayName"
 
 interface ChatPreview {
   matchId: string
@@ -504,6 +505,7 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
           <div className="space-y-3">
             {filteredChats.map((chat) => {
               const isSelected = selectedChats.has(chat.matchId)
+              const displayName = formatPublicProfileName(chat.name)
               
               return (
                 <div
@@ -547,8 +549,8 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
                       ) : (
                         <>
                           <Avatar className="h-12 w-12 border-2 border-[#C2A574]/35 shadow-[0_10px_28px_rgba(24,17,13,0.12)]">
-                            <AvatarImage src={chat.avatar || "/placeholder.svg"} alt={chat.name} />
-                            <AvatarFallback className="bg-[#EFE7DB] text-[#3A2B24]">{chat.name[0]}</AvatarFallback>
+                            <AvatarImage src={chat.avatar || "/placeholder.svg"} alt={displayName} />
+                            <AvatarFallback className="bg-[#EFE7DB] text-[#3A2B24]">{getDisplayInitial(chat.name)}</AvatarFallback>
                           </Avatar>
                           {chat.isOnline && (
                             <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-white rounded-full" />
@@ -561,7 +563,7 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center space-x-2">
-                          <h3 className="truncate font-serif text-xl font-bold tracking-[-0.04em] text-[#3A2B24]">{chat.name}</h3>
+                          <h3 className="truncate font-serif text-xl font-bold tracking-[-0.04em] text-[#3A2B24]">{displayName}</h3>
                           {chat.isPremium && (
                             <Badge className="bg-[#C2A574] text-[#3A2B24] text-xs px-1.5 py-0.5 border border-[#C2A574]">
                               Premium

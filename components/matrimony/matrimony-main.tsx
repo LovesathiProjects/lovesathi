@@ -45,6 +45,7 @@ import { MatrimonyProfileModal } from "@/components/matrimony/matrimony-profile-
 import { ProfileView } from "@/components/profile/profile-view"
 import { calculateAgeFromDate } from "@/lib/age"
 import { getLocationCity } from "@/lib/location"
+import { formatPublicProfileName } from "@/lib/displayName"
 
 interface MatrimonyMainProps {
   onExit?: () => void
@@ -190,8 +191,8 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         toast({
           title: wasShortlisted ? "Removed from shortlist" : "Added to shortlist",
           description: wasShortlisted
-            ? `${profile.name} was removed from your saved profiles.`
-            : `${profile.name} has been saved for later.`,
+            ? `${formatPublicProfileName(profile.name)} was removed from your saved profiles.`
+            : `${formatPublicProfileName(profile.name)} has been saved for later.`,
         })
       } else {
         toast({
@@ -213,7 +214,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       if (result.success) {
         toast({
           title: "Removed from shortlist",
-          description: profileName ? `${profileName} was removed.` : "Profile removed.",
+          description: profileName ? `${formatPublicProfileName(profileName)} was removed.` : "Profile removed.",
         })
       } else {
         toast({
@@ -248,7 +249,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         }
 
         toast({
-          title: `You liked ${profile.name}`,
+          title: `You liked ${formatPublicProfileName(profile.name)}`,
           description: "We'll notify you if it's a match.",
         })
       } catch (error: any) {

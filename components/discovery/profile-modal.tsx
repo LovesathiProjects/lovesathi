@@ -9,6 +9,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { X, MapPin, Briefcase, GraduationCap, Users, Share, Flag } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { formatPublicProfileName } from "@/lib/displayName"
 
 interface Profile {
   id: string
@@ -36,6 +37,7 @@ interface ProfileModalProps {
 
 export function ProfileModal({ profile, open, onOpenChange, onLike, onPass }: ProfileModalProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
+  const displayName = formatPublicProfileName(profile.name)
 
   const handlePhotoClick = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -104,7 +106,7 @@ export function ProfileModal({ profile, open, onOpenChange, onLike, onPass }: Pr
             <div className="space-y-3">
               <div className="space-y-1">
                 <h1 className="text-xl sm:text-2xl font-bold">
-                  {profile.name}, {profile.age}
+                  {displayName}, {profile.age}
                 </h1>
                 <div className="flex items-center space-x-1 text-muted-foreground">
                   <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />

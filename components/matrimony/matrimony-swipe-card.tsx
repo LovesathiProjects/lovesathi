@@ -13,6 +13,7 @@ import { getMatrimonyProfile, type MatrimonyProfileFull } from "@/lib/matrimonyS
 import { ReportDialog } from "@/components/chat/report-dialog"
 import { supabase } from "@/lib/supabaseClient"
 import { useToast } from "@/hooks/use-toast"
+import { formatPublicProfileName, getDisplayInitial } from "@/lib/displayName"
 
 interface MatrimonySwipeCardProps {
   profileId: string // user_id for fetching full profile
@@ -367,13 +368,9 @@ export function MatrimonySwipeCard({
     { label: "Community", value: community, icon: Users },
   ].filter((item) => item.value && item.value.trim().length > 0)
 
-  const getInitial = (value?: string) => {
-    const trimmed = value?.trim()
-    return trimmed && trimmed.length > 0 ? trimmed[0]!.toUpperCase() : "?"
-  }
-
-  const cardInitial = getInitial(name)
-  const displayName = name?.trim() || cardInitial
+  const cardInitial = getDisplayInitial(name)
+  const displayName = formatPublicProfileName(name)
+  const modalDisplayName = formatPublicProfileName(fullProfile?.name || name)
   const phoneIsRevealed = Boolean(revealedPhone || phone)
   const displayPhone = revealedPhone || phone || phoneMasked
   const premiumLocked = Boolean(premium && !viewerIsPremium)
@@ -849,7 +846,7 @@ export function MatrimonySwipeCard({
                       <div className="min-w-0">
                         <p className="luxe-kicker text-[0.58rem] text-[#C2A574]">full profile dossier</p>
                         <h1 className="truncate font-serif text-2xl font-bold tracking-[-0.06em] text-[#3A2B24] sm:text-3xl">
-                          {fullProfile?.name || name}, {fullProfile?.age || age}
+                          {modalDisplayName}, {fullProfile?.age || age}
                         </h1>
                         {location && (
                           <div className="mt-1 flex items-center space-x-1 text-sm text-[#8B7B70]">
@@ -1354,7 +1351,7 @@ export function MatrimonySwipeCard({
         reportedUserId={profileId}
         reporterId={currentUserId}
         matchType="matrimony"
-        userName={name || "User"}
+        userName={displayName}
         onSuccess={handleReportSuccess}
       />
     )}
