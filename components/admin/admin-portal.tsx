@@ -209,6 +209,8 @@ type AdminOverview = {
   readiness: ReadinessItem[]
 }
 
+type AdminQueueFilter = "all" | "attention" | "profiles" | "reports" | "premium" | "heritage"
+
 const metricIcons = [Users, BadgeCheck, Clock3, ShieldCheck, FileWarning, Crown, MessageCircle, Database, Sparkles]
 const riskIcons = [FileWarning, UserRoundCheck, ShieldCheck, Mail, Crown, Activity]
 
@@ -261,6 +263,70 @@ function EmptyState({ copy }: { copy: string }) {
   )
 }
 
+function normaliseStatus(value?: string | null) {
+  return (value || "").toLowerCase()
+}
+
+function userNeedsAttention(item: AdminUserItem) {
+  const userStatus = normaliseStatus(item.status)
+  const reviewStatus = normaliseStatus(item.profileReviewStatus)
+  const premiumStatus = normaliseStatus(item.premium.status)
+
+  return (
+    userStatus !== "active" ||
+    !item.emailConfirmedAt ||
+    item.premium.paymentDue ||
+    premiumStatus === "past_due" ||
+    ["pending", "in_review", "rejected"].includes(reviewStatus)
+  )
+}
+
+function profileNeedsAttention(profile: AdminProfileItem) {
+  return (
+    !profile.profileCompleted ||
+    profile.flags.length > 0 ||
+    ["pending", "in_review", "rejected"].includes(normaliseStatus(profile.reviewStatus))
+  )
+}
+
+function verificationNeedsAttention(item: AdminVerificationItem) {
+  return ["pending", "in_review", "rejected"].includes(normaliseStatus(item.status))
+}
+
+function reportNeedsAttention(item: AdminReportItem) {
+  return ["pending", "reviewed"].includes(normaliseStatus(item.status))
+}
+
+function userMatchesLane(item: AdminUserItem, lane: AdminQueueFilter) {
+  if (lane === "attention") return userNeedsAttention(item)
+  if (lane === "premium") return Boolean(item.premium.isPremium || item.premium.status)
+  if (lane === "heritage") return item.premium.planId === "heritage"
+  return true
+}
+
+function profileMatchesLane(profile: AdminProfileItem, lane: AdminQueueFilter) {
+  if (lane === "attention" || lane === "profiles") return profileNeedsAttention(profile)
+  return true
+}
+
+function verificationMatchesLane(item: AdminVerificationItem, lane: AdminQueueFilter) {
+  if (lane === "attention") return verificationNeedsAttention(item)
+  return true
+}
+
+function reportMatchesLane(item: AdminReportItem, lane: AdminQueueFilter) {
+  if (lane === "attention" || lane === "reports") return reportNeedsAttention(item)
+  return true
+}
+
+function auditMatchesLane(item: AdminAuditItem, lane: AdminQueueFilter) {
+  const resource = normaliseStatus(item.resource)
+  if (lane === "profiles") return resource === "profile"
+  if (lane === "reports") return resource === "report"
+  if (lane === "premium" || lane === "heritage") return resource === "entitlement"
+  return true
+}
+
 export function AdminPortal() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -272,6 +338,7 @@ export function AdminPortal() {
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [overview, setOverview] = useState<AdminOverview | null>(null)
   const [adminSearch, setAdminSearch] = useState("")
+  const [queueFilter, setQueueFilter] = useState<AdminQueueFilter>("all")
 
   const generatedAt = overview?.generatedAt ? formatDate(overview.generatedAt) : null
   const refreshing = loading && Boolean(sessionToken)
@@ -288,7 +355,7 @@ export function AdminPortal() {
   const verificationItems = overview?.queues.verifications.items || []
   const reportItems = overview?.queues.reports.items || []
   const auditItems = overview?.queues.audit.items || []
-  const filteredUsers = userItems.filter((item) =>
+  const searchedUsers = userItems.filter((item) =>
     matchesSearch(
       [
         item.email,
@@ -303,7 +370,7 @@ export function AdminPortal() {
       searchTerm,
     ),
   )
-  const filteredProfiles = profileItems.filter((profile) =>
+  const searchedProfiles = profileItems.filter((profile) =>
     matchesSearch(
       [
         profile.name,
@@ -320,21 +387,77 @@ export function AdminPortal() {
       searchTerm,
     ),
   )
-  const filteredVerifications = verificationItems.filter((item) =>
+  const searchedVerifications = verificationItems.filter((item) =>
     matchesSearch([item.profileName, item.userId, item.documentType, item.status, item.documentFileName, item.notes], searchTerm),
   )
-  const filteredReports = reportItems.filter((item) =>
+  const searchedReports = reportItems.filter((item) =>
     matchesSearch(
       [item.reporterName, item.reportedName, item.reporterId, item.reportedUserId, item.reason, item.description, item.status],
       searchTerm,
     ),
   )
-  const filteredAudit = auditItems.filter((item) =>
+  const searchedAudit = auditItems.filter((item) =>
     matchesSearch(
       [item.actorEmail, item.action, item.resource, item.recordId, item.previousStatus, item.nextStatus, item.notes],
       searchTerm,
     ),
   )
+  const filteredUsers = searchedUsers.filter((item) => userMatchesLane(item, queueFilter))
+  const filteredProfiles = searchedProfiles.filter((profile) => profileMatchesLane(profile, queueFilter))
+  const filteredVerifications = searchedVerifications.filter((item) => verificationMatchesLane(item, queueFilter))
+  const filteredReports = searchedReports.filter((item) => reportMatchesLane(item, queueFilter))
+  const filteredAudit = searchedAudit.filter((item) => auditMatchesLane(item, queueFilter))
+  const attentionUsers = userItems.filter(userNeedsAttention)
+  const attentionProfiles = profileItems.filter(profileNeedsAttention)
+  const attentionVerifications = verificationItems.filter(verificationNeedsAttention)
+  const attentionReports = reportItems.filter(reportNeedsAttention)
+  const premiumUsers = userItems.filter((item) => item.premium.isPremium || item.premium.status)
+  const heritageUsers = searchedUsers.filter((item) => item.premium.planId === "heritage")
+  const paymentDueUsers = userItems.filter((item) => item.premium.paymentDue)
+  const totalQueueItems = userItems.length + profileItems.length + verificationItems.length + reportItems.length
+  const queueFilters: Array<{
+    id: AdminQueueFilter
+    label: string
+    count: number
+    detail: string
+  }> = [
+    {
+      id: "all",
+      label: "All queues",
+      count: totalQueueItems,
+      detail: "Full admin command view",
+    },
+    {
+      id: "attention",
+      label: "Needs attention",
+      count: attentionUsers.length + attentionProfiles.length + attentionVerifications.length + attentionReports.length,
+      detail: "Review, safety, email, and renewal risks",
+    },
+    {
+      id: "profiles",
+      label: "Profile review",
+      count: attentionProfiles.length,
+      detail: "Incomplete, flagged, or pending dossiers",
+    },
+    {
+      id: "reports",
+      label: "Safety desk",
+      count: attentionReports.length,
+      detail: "Open member reports",
+    },
+    {
+      id: "premium",
+      label: "Premium ops",
+      count: premiumUsers.length,
+      detail: "Manual entitlements and payment follow-up",
+    },
+    {
+      id: "heritage",
+      label: "Heritage concierge",
+      count: userItems.filter((item) => item.premium.planId === "heritage").length,
+      detail: "High-touch members needing concierge care",
+    },
+  ]
 
   useEffect(() => {
     let mounted = true
@@ -697,6 +820,61 @@ export function AdminPortal() {
           </div>
         </section>
 
+        <section className="rounded-[2rem] border border-[#C2A574]/24 bg-[#ffffff]/72 p-4 shadow-[0_24px_80px_rgba(24,17,13,0.07)] backdrop-blur-xl sm:p-5">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="luxe-kicker mb-2 text-[#C2A574]">operations lanes</p>
+              <h2 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#3A2B24]">
+                Focus the command room
+              </h2>
+            </div>
+            <p className="max-w-xl text-sm leading-6 text-[#8B7B70]">
+              Use these lanes during launch review so support, safety, profile quality, and concierge work do not get
+              mixed together.
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+            {queueFilters.map((filter) => {
+              const isActive = queueFilter === filter.id
+              return (
+                <button
+                  key={filter.id}
+                  type="button"
+                  onClick={() => setQueueFilter(filter.id)}
+                  className={
+                    isActive
+                      ? "rounded-[1.45rem] border border-[#C2A574] bg-[#3A2B24] p-4 text-left text-white shadow-[0_18px_50px_rgba(58,43,36,0.18)] transition hover:-translate-y-0.5"
+                      : "rounded-[1.45rem] border border-[#482b1a]/10 bg-white/70 p-4 text-left text-[#3A2B24] shadow-[0_14px_36px_rgba(24,17,13,0.04)] transition hover:-translate-y-0.5 hover:border-[#C2A574]/45"
+                  }
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-bold">{filter.label}</p>
+                    <span
+                      className={
+                        isActive
+                          ? "rounded-full bg-[#C2A574] px-2.5 py-1 text-xs font-black text-[#3A2B24]"
+                          : "rounded-full bg-[#C2A574]/12 px-2.5 py-1 text-xs font-black text-[#8a641f]"
+                      }
+                    >
+                      {filter.count.toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                  <p className={isActive ? "mt-3 text-xs leading-5 text-[#eadcc8]" : "mt-3 text-xs leading-5 text-[#8B7B70]"}>
+                    {filter.detail}
+                  </p>
+                </button>
+              )
+            })}
+          </div>
+          {paymentDueUsers.length > 0 && (
+            <div className="mt-4 rounded-[1.35rem] border border-[#b45309]/20 bg-[#fff7ed] p-4 text-sm font-semibold leading-6 text-[#9a3412]">
+              {paymentDueUsers.length.toLocaleString("en-IN")} premium member
+              {paymentDueUsers.length === 1 ? "" : "s"} currently need renewal follow-up. Keep payment-provider wiring
+              queued until the dedicated subscription phase.
+            </div>
+          )}
+        </section>
+
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {(overview?.metrics || []).map((metric, index) => {
             const Icon = metricIcons[index % metricIcons.length]
@@ -730,6 +908,11 @@ export function AdminPortal() {
                     Inspect recent Supabase Auth users, email confirmation state, profile completion, review status,
                     and suspend or restore access with an audit note.
                   </p>
+                  {queueFilter !== "all" && (
+                    <p className="mt-2 text-xs font-bold uppercase tracking-[0.16em] text-[#C2A574]">
+                      Showing {statusLabel(queueFilter)} lane
+                    </p>
+                  )}
                 </div>
                 <StatusBadge status={overview?.queues.users.status || "pending"} />
               </div>
@@ -868,6 +1051,80 @@ export function AdminPortal() {
                 </div>
               ) : (
                 <EmptyState copy={searchTerm ? "No users match this admin search." : "No auth users were returned yet."} />
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        <section>
+          <Card className="luxe-card overflow-hidden rounded-[2rem] border-[#C2A574]/24">
+            <CardHeader className="border-b border-[#482b1a]/10 bg-[#3A2B24] text-white">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="luxe-kicker mb-2 text-[#C2A574]">heritage concierge</p>
+                  <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-white sm:text-4xl">
+                    High-touch member desk
+                  </CardTitle>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-[#eadcc8]">
+                    Heritage members need human follow-through: renewal grace, handpicked match care, and concierge
+                    notes should be easy to spot before payment automation arrives.
+                  </p>
+                </div>
+                <Badge variant="outline" className="rounded-full border-[#C2A574]/45 bg-[#C2A574]/15 px-4 py-2 text-[#C2A574]">
+                  {heritageUsers.length.toLocaleString("en-IN")} Heritage visible
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 p-5 sm:p-6">
+              {heritageUsers.length ? (
+                <div className="grid gap-3 xl:grid-cols-2">
+                  {heritageUsers.map((item) => (
+                    <div key={item.id} className="rounded-[1.5rem] border border-[#C2A574]/24 bg-white/72 p-4 shadow-[0_16px_42px_rgba(24,17,13,0.04)]">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#3A2B24]">
+                            {item.profileName || "Profile name pending"}
+                          </p>
+                          <p className="mt-1 truncate text-sm font-semibold text-[#8B7B70]">
+                            {item.email || "Email unavailable"}
+                          </p>
+                        </div>
+                        <StatusBadge status={item.premium.status || "heritage"} />
+                      </div>
+                      <div className="mt-4 grid gap-2 text-xs font-semibold text-[#8B7B70] sm:grid-cols-2">
+                        <span>Active until: {formatDate(item.premium.activeUntil)}</span>
+                        <span>Grace until: {formatDate(item.premium.graceUntil)}</span>
+                        <span>Renewal due: {formatDate(item.premium.renewalDueAt)}</span>
+                        <span>Source: {item.premium.source || "manual/admin"}</span>
+                      </div>
+                      <div className="mt-4 rounded-[1.2rem] border border-[#C2A574]/20 bg-[#F7F3EE] p-4 text-sm leading-6 text-[#8B7B70]">
+                        Next concierge action: confirm this member has an assigned relationship executive, a fresh
+                        handpicked shortlist, and payment follow-up if the grace window is active.
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {item.premium.paymentDue && (
+                          <Badge variant="outline" className="border-[#b45309]/25 bg-[#fff7ed] text-[#9a3412]">
+                            Renewal payment due
+                          </Badge>
+                        )}
+                        {!item.emailConfirmedAt && (
+                          <Badge variant="outline" className="border-[#C2A574]/24 bg-[#C2A574]/10 text-[#8a641f]">
+                            Email confirmation pending
+                          </Badge>
+                        )}
+                        {item.profileReviewStatus && <StatusBadge status={item.profileReviewStatus} />}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  copy={
+                    searchTerm
+                      ? "No Heritage concierge members match this admin search."
+                      : "No Heritage members are visible yet. Once granted, they will appear here for concierge follow-up."
+                  }
+                />
               )}
             </CardContent>
           </Card>
@@ -1334,7 +1591,8 @@ export function AdminPortal() {
                 <div className="flex gap-3 rounded-2xl border border-white/10 bg-white/8 p-4">
                   <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-[#C2A574]" />
                   <p>
-                    Account deletion, bulk edits, refunds, and subscription changes stay locked until those workflows get separate role gates and stronger confirmations.
+                    Account deletion, bulk edits, refunds, payment-provider changes, and webhook automation stay locked
+                    until those workflows get separate role gates and stronger confirmations.
                   </p>
                 </div>
               </CardContent>
