@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient'
 import type { MatrimonyProfile, MatrimonyPreferences, VerificationPayload } from "@/lib/types"
+import { getPhoneValidationMessage, normalizePhoneNumber } from "@/lib/phone"
 
 // ============================================
 // TYPE DEFINITIONS
@@ -175,6 +176,7 @@ export async function saveStep1(
   userId: string,
   data: {
     name: string
+    phone: string
     age: number
     gender: 'Male' | 'Female' | 'Other'
     createdBy: 'Self' | 'Parent' | 'Sibling' | 'Other'
@@ -182,6 +184,26 @@ export async function saveStep1(
   }
 ): Promise<ServiceResponse> {
   try {
+    const normalizedPhone = normalizePhoneNumber(data.phone)
+    const phoneError = getPhoneValidationMessage(normalizedPhone)
+    if (phoneError) {
+      throw new Error(phoneError)
+    }
+
+    const { data: userProfile, error: userProfileError } = await supabase
+      .from('user_profiles')
+      .select('user_id')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (userProfileError) {
+      throw userProfileError
+    }
+
+    if (!userProfile) {
+      throw new Error('Please complete age and phone verification before profile setup.')
+    }
+
     // Get existing profile to preserve other fields
     const { data: existing } = await supabase
       .from('matrimony_profile_full')
@@ -227,6 +249,19 @@ export async function saveStep1(
     if (error) {
       console.error('Supabase error saving step 1:', error)
       throw error
+    }
+
+    const { error: phoneUpdateError } = await supabase
+      .from('user_profiles')
+      .update({
+        phone: normalizedPhone,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId)
+
+    if (phoneUpdateError) {
+      console.error('Supabase error saving profile phone:', phoneUpdateError)
+      throw phoneUpdateError
     }
 
     return { success: true }

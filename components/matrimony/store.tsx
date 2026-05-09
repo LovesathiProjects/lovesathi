@@ -9,6 +9,7 @@ export type CreatedBy = "Self" | "Parent" | "Sibling" | "Other"
 
 export interface WelcomeIdentityState {
   name: string
+  phone?: string
   age?: number
   gender?: Gender
   createdBy?: CreatedBy
@@ -119,6 +120,7 @@ function mapProfileToSetupState(profile: any): Omit<MatrimonySetupState, "setPar
   return {
     welcome: {
       name: profile?.name || "",
+      phone: "",
       age: dob ? calculateAgeFromDate(dob) || profile?.age || undefined : profile?.age || undefined,
       gender: profile?.gender || undefined,
       createdBy: profile?.created_by || undefined,

@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import { toast } from "sonner"
 import { calculateAgeFromDate, formatDateForDisplay } from "@/lib/age"
+import { getPhoneValidationMessage, normalizePhoneNumber } from "@/lib/phone"
 
 type FormValues = z.infer<typeof welcomeIdentitySchema>
 
@@ -32,6 +33,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
     resolver: zodResolver(welcomeIdentitySchema),
     defaultValues: {
       name: welcome.name || "",
+      phone: welcome.phone || "",
       age: welcome.age ?? undefined,
       gender: (welcome.gender as any) ?? undefined,
       createdBy: (welcome.createdBy as any) ?? "Self",
@@ -44,6 +46,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
     const sub = form.watch((values) => {
       setPartial("welcome", {
         name: values.name,
+        phone: values.phone,
         age: values.age,
         gender: values.gender,
         createdBy: values.createdBy,
@@ -63,7 +66,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
 
       const { data } = await supabase
         .from("user_profiles")
-        .select("date_of_birth, gender")
+        .select("date_of_birth, gender, phone")
         .eq("user_id", user.id)
         .maybeSingle()
 
@@ -83,6 +86,12 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
         setVerifiedGender(nextGender)
         form.setValue("gender", nextGender, { shouldValidate: true })
         setPartial("welcome", { gender: nextGender })
+      }
+
+      const hydratedPhone = normalizePhoneNumber(data?.phone || user.user_metadata?.phone || user.phone || "")
+      if (hydratedPhone) {
+        form.setValue("phone", hydratedPhone, { shouldValidate: true })
+        setPartial("welcome", { phone: hydratedPhone })
       }
     }
 
@@ -111,9 +120,18 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
         return
       }
 
+      const normalizedPhone = normalizePhoneNumber(values.phone)
+      const phoneError = getPhoneValidationMessage(normalizedPhone)
+      if (phoneError) {
+        toast.error(phoneError)
+        setIsLoading(false)
+        return
+      }
+
       // Save to store
       setPartial("welcome", {
         name: values.name,
+        phone: normalizedPhone,
         age: values.age,
         gender: values.gender,
         createdBy: values.createdBy,
@@ -123,6 +141,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
       // Save to database
       const result = await saveStep1(user.id, {
         name: values.name,
+        phone: normalizedPhone,
         age: values.age,
         gender: values.gender,
         createdBy: values.createdBy,
@@ -219,6 +238,35 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
                     className="h-12 text-base text-[#111] border-black/20 focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20 rounded-xl"
                   />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-black">Phone Number</FormLabel>
+                <FormControl>
+                  <Input
+                    type="tel"
+                    placeholder="+91 98765 43210"
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    onBlur={() => {
+                      const normalized = normalizePhoneNumber(field.value || "")
+                      field.onChange(normalized)
+                      setPartial("welcome", { phone: normalized })
+                    }}
+                    autoComplete="tel"
+                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20 rounded-xl"
+                  />
+                </FormControl>
+                <p className="text-xs leading-5 text-[#8B7B70]">
+                  Required. Free users see it masked; paid plans reveal it through Lovesathi contact access.
+                </p>
                 <FormMessage />
               </FormItem>
             )}
