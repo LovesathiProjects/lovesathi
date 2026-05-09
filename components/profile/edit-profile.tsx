@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { TimeInput } from "@/components/ui/time-input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { supabase } from "@/lib/supabaseClient"
@@ -696,10 +697,9 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                 )}
                 <div className="space-y-2">
                   <Label>Time of Birth</Label>
-                  <Input
-                    type="time"
+                  <TimeInput
                     value={cultural.time_of_birth || "00:00"}
-                    onChange={(event) => setNested("cultural", "time_of_birth", event.target.value)}
+                    onChange={(value) => setNested("cultural", "time_of_birth", value)}
                   />
                 </div>
                 <SelectField

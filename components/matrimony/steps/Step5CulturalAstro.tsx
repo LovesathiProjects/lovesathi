@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { SearchableSelect } from "@/components/ui/searchable-select"
+import { TimeInput } from "@/components/ui/time-input"
 import { useMatrimonySetupStore } from "@/components/matrimony/store"
 import { culturalAstroSchema } from "@/lib/schemas/matrimony"
 import { saveStep5 } from "@/lib/matrimonyService"
@@ -343,11 +344,7 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
                 <FormItem>
                   <FormLabel className="text-black">Time of Birth</FormLabel>
                   <FormControl>
-                    <Input
-                      type="time"
-                      {...field}
-                      className="h-12 rounded-xl border-black/20 text-base text-[#111] focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20"
-                    />
+                    <TimeInput value={field.value || "00:00"} onChange={field.onChange} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
