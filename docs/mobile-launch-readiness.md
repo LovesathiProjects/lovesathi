@@ -1,0 +1,41 @@
+# Lovesathi Mobile Launch Readiness
+
+Last updated: May 2026
+
+## Current status
+
+Lovesathi is currently a production Next.js web app. It can be deployed to `lovesathi.com` and installed as a PWA-style experience from supported mobile browsers, but it is not yet a true native iOS or Android app.
+
+## What is ready
+
+- Responsive matrimony web experience for desktop and mobile browsers.
+- Public Terms, Privacy, Safety, FAQ, Contact, and Account Deletion pages.
+- In-app account deletion flow through Settings.
+- PWA manifest with Lovesathi name, theme color, standalone display, and app icons.
+- Basic production security headers in `next.config.mjs`.
+- Safety/report/blocking/chat contact-sharing protections in the web app.
+- Admin portal for user, profile, verification, report, entitlement, and concierge review.
+
+## What is not native-ready yet
+
+- No React Native, Expo, Capacitor, or native shell source is currently part of the production app.
+- Native push notifications are not configured.
+- Native deep links/universal links are not configured.
+- Native app icons and splash assets need final high-resolution PNG exports before store submission.
+- Store-specific subscription/payment integration is intentionally queued last.
+- Apple Sign In should be added if the iOS app offers Google/social login or if Apple review requires it for the selected auth methods.
+
+## Recommended path
+
+1. Keep the web app as the source of truth.
+2. For the first app-store build, wrap the existing web app with Capacitor or a very thin native shell.
+3. Use the public policy pages and in-app delete-account flow for review compliance.
+4. Add native push notifications and deep links only after the core wrapped app is stable.
+5. Complete subscription/payment integration last, using Apple/Google in-app purchases if digital premium features are sold inside native apps.
+
+## Store review notes
+
+- Do not request camera, photos, microphone, contacts, or location permissions until the native app truly uses them.
+- If camera or photo upload is used for verification/profile photos, explain this clearly in permission prompts.
+- Keep legal language clear that Lovesathi is a matchmaking platform, not a guarantee of marriage, identity, safety, financial status, or relationship outcome.
+- Make account deletion discoverable inside the app and keep the public account deletion page live.

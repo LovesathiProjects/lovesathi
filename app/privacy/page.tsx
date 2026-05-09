@@ -39,7 +39,7 @@ export default function PrivacyPage() {
         },
         {
           title: "Retention and deletion",
-          body: "You may request account deletion or support review. Some information may be retained where necessary for legal obligations, fraud prevention, safety investigations, billing, tax, audit, backup, dispute resolution, or enforcement of these policies.",
+          body: "You may request account deletion from inside Lovesathi settings or through the public account deletion page. Some information may be retained where necessary for legal obligations, fraud prevention, safety investigations, billing, tax, audit, backup, dispute resolution, or enforcement of these policies.",
         },
         {
           title: "Your responsibility",

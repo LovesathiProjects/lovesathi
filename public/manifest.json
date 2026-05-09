@@ -1,12 +1,17 @@
 {
+  "id": "/",
   "name": "Lovesathi",
   "short_name": "Lovesathi",
-  "description": "Premium matrimony for serious life-partner discovery.",
+  "description": "Premium matrimony for serious, verified, family-aware life-partner discovery.",
+  "lang": "en-IN",
+  "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#fbf6ed",
-  "theme_color": "#8f001c",
+  "orientation": "portrait-primary",
+  "background_color": "#F7F3EE",
+  "theme_color": "#F7F3EE",
+  "categories": ["lifestyle", "social"],
   "icons": [
     {
       "src": "/icon.svg",

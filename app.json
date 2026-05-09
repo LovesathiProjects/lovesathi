@@ -5,11 +5,11 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./public/placeholder-logo.png",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "splash": {
       "image": "./public/placeholder-logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FFFFFF"
+      "backgroundColor": "#F7F3EE"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -19,36 +19,24 @@
       "bundleIdentifier": "com.lovesathi.app",
       "infoPlist": {
         "NSCameraUsageDescription": "We need access to your camera for KYC identity verification. This helps keep our community safe and authentic.",
-        "NSPhotoLibraryUsageDescription": "We need access to your photo library to upload profile photos.",
-        "NSMicrophoneUsageDescription": "Microphone access is needed for future calling features."
+        "NSPhotoLibraryUsageDescription": "We need access to your photo library to upload profile photos."
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./public/placeholder-logo.png",
-        "backgroundColor": "#FFFFFF"
+        "backgroundColor": "#F7F3EE"
       },
       "package": "com.lovesathi.app",
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.READ_MEDIA_IMAGES"
       ]
     },
     "web": {
       "favicon": "./public/placeholder-logo.png",
       "bundler": "metro"
     },
-    "plugins": [
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera for identity verification.",
-          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone for video calls.",
-          "recordAudioAndroid": true
-        }
-      ]
-    ]
+    "plugins": []
   }
 }
