@@ -177,10 +177,10 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
   const fetchUserInfo = async () => {
     try {
       setLoading(true)
-      
+
       // Get auth user for email
       const { data: { user }, error: authError } = await supabase.auth.getUser()
-      
+
       if (authError || !user) {
         console.error("Error fetching auth user:", authError)
         setUserInfo({
@@ -305,7 +305,7 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
     <div className={cn("relative flex h-full flex-col", isMatrimony ? "luxe-light-page" : "bg-[#0E0F12]")}>
       {/* Static Background */}
       <StaticBackground />
-      
+
       {/* Header */}
       <div className={cn(
         "flex-shrink-0 p-6 border-b backdrop-blur-xl relative z-10",
@@ -313,9 +313,9 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
       )}>
         <div className="flex items-center space-x-4">
           {onBack && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className={cn(
                 "p-2 rounded-full",
                 isMatrimony ? "hover:bg-gray-50 text-black" : "hover:bg-white/10 text-white"
@@ -325,19 +325,19 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
               <ArrowLeft className={cn("w-5 h-5", isMatrimony ? "text-black" : "text-white")} />
             </Button>
           )}
-          <Avatar className={cn("h-16 w-16 border-2 shadow-lg", isMatrimony ? "border-[#d8c79f]/50" : "border-white/30")}>
+          <Avatar className={cn("h-16 w-16 border-2 shadow-lg", isMatrimony ? "border-[#C2A574]/50" : "border-white/30")}>
             <AvatarImage src={userInfo.photo || "/placeholder-user.jpg"} alt="Profile" />
             <AvatarFallback className={cn("font-semibold", isMatrimony ? "bg-gray-100 text-black" : "bg-white/20 text-white")}>
               {getInitials(userInfo.name)}
             </AvatarFallback>
           </Avatar>
           <div className="space-y-1">
-            <h1 className={cn("font-serif text-3xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#18110d]" : "text-white")}>{userInfo.name}</h1>
+            <h1 className={cn("font-serif text-3xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#3A2B24]" : "text-white")}>{userInfo.name}</h1>
             <p className={cn("text-sm font-medium", isMatrimony ? "text-[#444444]" : "text-white/75")}>{userInfo.email}</p>
             <Badge variant="secondary" className={cn(
               "text-xs font-semibold",
-              isMatrimony 
-                ? "border-[#d8c79f]/35 bg-[#ffffff] text-[#8f001c]"
+              isMatrimony
+                ? "border-[#C2A574]/35 bg-[#ffffff] text-[#C2A574]"
                 : "bg-white/20 text-white border-white/30"
             )}>
               {userInfo.accountType}
@@ -351,14 +351,14 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
         <div className="p-6 space-y-6">
           {settingsSections.map((section) => (
             <div key={section.title} className="space-y-3">
-              <h2 className={cn("luxe-kicker", isMatrimony ? "text-[#8f001c]" : "text-white/75")}>
+              <h2 className={cn("luxe-kicker", isMatrimony ? "text-[#C2A574]" : "text-white/75")}>
                 {section.title}
               </h2>
 
               <Card className={cn(
                 "overflow-hidden backdrop-blur-sm",
-                isMatrimony 
-                  ? "luxe-card border-[#d8c79f]/24"
+                isMatrimony
+                  ? "luxe-card border-[#C2A574]/24"
                   : "bg-[#14161B] border-white/20"
               )}>
                 <CardContent className="p-0">
@@ -378,9 +378,9 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
                           <div
                             className={cn(
                               "w-10 h-10 rounded-full flex items-center justify-center",
-                              item.destructive 
-                                ? "bg-[#97011A]/20" 
-                                : isMatrimony 
+                              item.destructive
+                                ? "bg-[#C2A574]/20"
+                                : isMatrimony
                                   ? "bg-gray-100"
                                   : "bg-white/10"
                             )}
@@ -388,9 +388,9 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
                             <item.icon
                               className={cn(
                                 "w-5 h-5",
-                                item.destructive 
-                                  ? "text-[#97011A]" 
-                                  : isMatrimony 
+                                item.destructive
+                                  ? "text-[#C2A574]"
+                                  : isMatrimony
                                     ? "text-black"
                                     : "text-white"
                               )}
@@ -401,16 +401,16 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
                             <div className="flex items-center space-x-2">
                               <span className={cn(
                                 "font-semibold",
-                                item.destructive 
-                                  ? "text-[#97011A]" 
-                                  : isMatrimony 
+                                item.destructive
+                                  ? "text-[#C2A574]"
+                                  : isMatrimony
                                     ? "text-black"
                                     : "text-white"
                               )}>
                                 {item.label}
                               </span>
                               {item.badge && (
-                                <Badge variant="secondary" className="text-xs font-semibold bg-[#97011A] text-white border-0">
+                                <Badge variant="secondary" className="text-xs font-semibold bg-[#C2A574] text-[#3A2B24] border-0">
                                   {item.badge}
                                 </Badge>
                               )}
@@ -422,7 +422,7 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
                                       <CheckCircle className="w-3.5 h-3.5 text-white" />
                                     </div>
                                   ) : (
-                                    <div className="w-5 h-5 rounded-full bg-[#97011A] flex items-center justify-center">
+                                    <div className="w-5 h-5 rounded-full bg-[#C2A574] flex items-center justify-center">
                                       <AlertCircle className="w-3.5 h-3.5 text-white" />
                                     </div>
                                   )}
@@ -436,7 +436,7 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
                                   <span className={cn("ml-2 text-xs font-semibold", isMatrimony ? "text-green-600" : "text-green-400")}>Verification completed</span>
                                 )}
                                 {item.id === "verification" && verificationStatus && verificationStatus !== 'approved' && (
-                                  <span className="ml-2 text-[#97011A] text-xs font-semibold">Pending verification</span>
+                                  <span className="ml-2 text-[#C2A574] text-xs font-semibold">Pending verification</span>
                                 )}
                               </p>
                             )}
@@ -444,7 +444,7 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
                         </div>
 
                         <div className="flex items-center">
-                          {item.type === "navigation" && <ChevronRight className="w-5 h-5" style={{ color: isMatrimony ? '#8f001c' : 'rgba(255, 255, 255, 0.7)' }} />}
+                          {item.type === "navigation" && <ChevronRight className="w-5 h-5" style={{ color: isMatrimony ? '#C2A574' : 'rgba(255, 255, 255, 0.7)' }} />}
                         </div>
                       </div>
 

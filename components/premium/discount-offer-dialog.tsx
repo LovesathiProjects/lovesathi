@@ -15,6 +15,54 @@ function offerStorageKey(userId: string) {
   return `lovesathi.70_discount_offer.last_shown:${userId}`
 }
 
+function formatRemainingTime(expiresAt: Date | null) {
+  if (!expiresAt) return "24:00:00"
+  const remainingMs = Math.max(expiresAt.getTime() - Date.now(), 0)
+  const totalSeconds = Math.floor(remainingMs / 1000)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return [hours, minutes, seconds].map((value) => String(value).padStart(2, "0")).join(":")
+}
+
+async function getActiveDiscountOfferWindow() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const entitlement = await getUserEntitlementStatus(user.id)
+  if (entitlement.isPremium) return null
+
+  const { data: profile } = await supabase
+    .from("matrimony_profile_full")
+    .select("profile_completed, created_at, updated_at")
+    .eq("user_id", user.id)
+    .maybeSingle()
+
+  if (!profile?.profile_completed) return null
+
+  const now = Date.now()
+  const key = offerStorageKey(user.id)
+  const lastShown = Number(window.localStorage.getItem(key) || "0")
+  const profileCreatedAt = new Date(profile.updated_at || profile.created_at).getTime()
+  const firstWindowExpiresAt = profileCreatedAt + OFFER_WINDOW_MS
+
+  if (!lastShown && now <= firstWindowExpiresAt) {
+    return { userId: user.id, expiresAt: new Date(firstWindowExpiresAt), isFirstOffer: true }
+  }
+
+  if (lastShown && now - lastShown <= OFFER_WINDOW_MS) {
+    return { userId: user.id, expiresAt: new Date(lastShown + OFFER_WINDOW_MS), isFirstOffer: false }
+  }
+
+  if (!lastShown || now - lastShown >= OFFER_REPEAT_MS) {
+    return { userId: user.id, expiresAt: new Date(now + OFFER_WINDOW_MS), isFirstOffer: !lastShown }
+  }
+
+  return null
+}
+
 export function DiscountOfferDialog({ onSubscribe }: { onSubscribe: () => void }) {
   const [open, setOpen] = useState(false)
   const [expiresAt, setExpiresAt] = useState<Date | null>(null)
@@ -25,36 +73,19 @@ export function DiscountOfferDialog({ onSubscribe }: { onSubscribe: () => void }
     let cancelled = false
 
     async function maybeShowOffer() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user || cancelled) return
+      const offer = await getActiveDiscountOfferWindow()
+      if (!offer || cancelled) return
 
-      const entitlement = await getUserEntitlementStatus(user.id)
-      if (entitlement.isPremium || cancelled) return
-
-      const { data: profile } = await supabase
-        .from("matrimony_profile_full")
-        .select("profile_completed, created_at, updated_at")
-        .eq("user_id", user.id)
-        .maybeSingle()
-
-      if (!profile?.profile_completed || cancelled) return
-
-      const key = offerStorageKey(user.id)
+      const key = offerStorageKey(offer.userId)
       const lastShown = Number(window.localStorage.getItem(key) || "0")
-      const now = Date.now()
-      const profileCreatedAt = new Date(profile.updated_at || profile.created_at).getTime()
-      const withinFirstWindow = now - profileCreatedAt <= OFFER_WINDOW_MS
-      const shouldShow = !lastShown || now - lastShown >= OFFER_REPEAT_MS
-
+      const shouldShow = !lastShown || Date.now() - lastShown >= OFFER_REPEAT_MS
       if (!shouldShow) return
 
-      setUserId(user.id)
-      setIsFirstOffer(withinFirstWindow || !lastShown)
-      setExpiresAt(new Date((withinFirstWindow ? profileCreatedAt : now) + OFFER_WINDOW_MS))
+      setUserId(offer.userId)
+      setIsFirstOffer(offer.isFirstOffer)
+      setExpiresAt(offer.expiresAt)
       setOpen(true)
-      window.localStorage.setItem(key, String(now))
+      window.localStorage.setItem(key, String(Date.now()))
     }
 
     void maybeShowOffer()
@@ -80,42 +111,42 @@ export function DiscountOfferDialog({ onSubscribe }: { onSubscribe: () => void }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="overflow-hidden rounded-[2rem] border-[#d8c79f]/40 bg-[#fffdf8] p-0 shadow-[0_30px_100px_rgba(24,17,13,0.28)] sm:max-w-xl">
+      <DialogContent className="overflow-hidden rounded-[2rem] border-[#C2A574]/40 bg-[#FBF8F3] p-0 shadow-[0_30px_100px_rgba(24,17,13,0.28)] sm:max-w-xl">
         <div className="relative p-6 sm:p-8">
-          <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#8f001c]/14 blur-2xl" />
-          <div className="absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-[#d8c79f]/30 blur-2xl" />
+          <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#C2A574]/14 blur-2xl" />
+          <div className="absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-[#C2A574]/30 blur-2xl" />
           <div className="relative space-y-5">
             <div className="flex items-start justify-between gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#8f001c] text-white shadow-[0_18px_45px_rgba(143,0,28,0.25)]">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#C2A574] text-[#3A2B24] shadow-[0_18px_45px_rgba(194,165,116,0.25)]">
                 <Crown className="h-7 w-7" />
               </div>
-              <Badge className="border border-[#8f001c]/20 bg-[#8f001c]/10 px-3 py-1 text-[#8f001c]">
+              <Badge className="border border-[#C2A574]/20 bg-[#C2A574]/10 px-3 py-1 text-[#C2A574]">
                 70% off forever
               </Badge>
             </div>
 
             <DialogHeader className="text-left">
-              <p className="luxe-kicker text-[0.68rem] text-[#8f001c]">profile complete reward</p>
-              <DialogTitle className="font-serif text-4xl font-bold leading-[0.95] tracking-[-0.06em] text-[#18110d] sm:text-5xl">
+              <p className="luxe-kicker text-[0.68rem] text-[#C2A574]">profile complete reward</p>
+              <DialogTitle className="font-serif text-4xl font-bold leading-[0.95] tracking-[-0.06em] text-[#3A2B24] sm:text-5xl">
                 {isFirstOffer ? "You are lucky. Your 70% discount is live." : "Your 70% Lovesathi offer is back."}
               </DialogTitle>
-              <DialogDescription className="text-base leading-7 text-[#685f58]">
+              <DialogDescription className="text-base leading-7 text-[#8B7B70]">
                 You have {remainingLabel} to avail this private launch discount. If you skip it, we will bring the offer back every 2 weeks until you subscribe.
               </DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-3 sm:grid-cols-3">
               {["Basic", "Essential", "Signature"].map((plan) => (
-                <div key={plan} className="rounded-2xl border border-[#d8c79f]/30 bg-white/70 p-3">
-                  <Sparkles className="mb-2 h-4 w-4 text-[#8f001c]" />
-                  <p className="text-sm font-black text-[#18110d]">{plan}</p>
-                  <p className="text-xs leading-5 text-[#685f58]">70% forever pricing</p>
+                <div key={plan} className="rounded-2xl border border-[#C2A574]/30 bg-white/70 p-3">
+                  <Sparkles className="mb-2 h-4 w-4 text-[#C2A574]" />
+                  <p className="text-sm font-black text-[#3A2B24]">{plan}</p>
+                  <p className="text-xs leading-5 text-[#8B7B70]">70% forever pricing</p>
                 </div>
               ))}
             </div>
 
-            <div className="flex items-center gap-2 rounded-2xl border border-[#482b1a]/10 bg-white/68 p-3 text-sm font-bold text-[#18110d]">
-              <Clock className="h-4 w-4 text-[#8f001c]" />
+            <div className="flex items-center gap-2 rounded-2xl border border-[#482b1a]/10 bg-white/68 p-3 text-sm font-bold text-[#3A2B24]">
+              <Clock className="h-4 w-4 text-[#C2A574]" />
               This offer refreshes every 2 weeks until purchase.
             </div>
 
@@ -137,5 +168,60 @@ export function DiscountOfferDialog({ onSubscribe }: { onSubscribe: () => void }
         </div>
       </DialogContent>
     </Dialog>
+  )
+}
+
+export function DiscountOfferTimer({ onSubscribe }: { onSubscribe: () => void }) {
+  const [expiresAt, setExpiresAt] = useState<Date | null>(null)
+  const [remainingLabel, setRemainingLabel] = useState("24:00:00")
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadOffer() {
+      const offer = await getActiveDiscountOfferWindow()
+      if (!offer || cancelled) return
+      setExpiresAt(offer.expiresAt)
+      setRemainingLabel(formatRemainingTime(offer.expiresAt))
+    }
+
+    void loadOffer()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!expiresAt) return
+
+    const interval = window.setInterval(() => {
+      setRemainingLabel(formatRemainingTime(expiresAt))
+      if (expiresAt.getTime() <= Date.now()) {
+        setExpiresAt(null)
+      }
+    }, 1000)
+
+    return () => window.clearInterval(interval)
+  }, [expiresAt])
+
+  if (!expiresAt) return null
+
+  return (
+    <button
+      type="button"
+      onClick={onSubscribe}
+      className="fixed left-1/2 top-[calc(5.4rem+env(safe-area-inset-top))] z-40 -translate-x-1/2 rounded-full border border-[#C2A574]/45 bg-[#FBF8F3]/88 px-4 py-2 text-left shadow-[0_18px_55px_rgba(58,43,36,0.16)] backdrop-blur-2xl transition hover:-translate-y-0.5 hover:border-[#C2A574] sm:top-[calc(4.9rem+env(safe-area-inset-top))]"
+    >
+      <span className="flex items-center gap-3">
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#C2A574] text-[#3A2B24]">
+          <Clock className="h-4 w-4" />
+        </span>
+        <span>
+          <span className="block luxe-kicker text-[0.55rem] text-[#C2A574]">70% offer expires in</span>
+          <span className="block font-mono text-sm font-black tracking-[0.12em] text-[#3A2B24]">{remainingLabel}</span>
+        </span>
+      </span>
+    </button>
   )
 }

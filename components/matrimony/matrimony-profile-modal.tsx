@@ -170,7 +170,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                 </Badge>
               )}
               {profile.premium && (
-                <Badge className="bg-[#97011A] text-white text-xs px-3 py-1.5 font-medium shadow-lg">
+                <Badge className="bg-[#C2A574] text-[#3A2B24] text-xs px-3 py-1.5 font-medium shadow-lg">
                   Premium
                 </Badge>
               )}
@@ -208,8 +208,8 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                       className={cn(
                         "mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold",
                         phoneIsRevealed
-                          ? "border-[#97011A]/20 bg-[#97011A]/8 text-[#97011A]"
-                          : "border-gray-200 bg-gray-50 text-gray-700 hover:border-[#97011A]/30",
+                          ? "border-[#C2A574]/20 bg-[#C2A574]/8 text-[#C2A574]"
+                          : "border-gray-200 bg-gray-50 text-gray-700 hover:border-[#C2A574]/30",
                       )}
                     >
                       <Phone className="h-4 w-4" />
@@ -312,7 +312,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
 
               <Button
                 size="lg"
-                className="w-16 h-16 rounded-full p-0 bg-gradient-to-r from-[#97011A] to-[#7A0115] hover:from-[#7A0115] hover:to-[#97011A] shadow-lg shadow-[#97011A]/30"
+                className="w-16 h-16 rounded-full p-0 bg-gradient-to-r from-[#C2A574] to-[#B9975E] hover:from-[#B9975E] hover:to-[#C2A574] shadow-lg shadow-[#C2A574]/30"
                 onClick={onConnect}
               >
                 <Heart className="w-7 h-7 fill-white text-white" />

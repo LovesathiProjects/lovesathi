@@ -315,7 +315,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
       <div className="min-h-screen bg-white flex items-center justify-center p-6">
         <div className="w-full max-w-md mx-auto">
           <div className="flex flex-col items-center justify-center space-y-4 py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-[#97011A]" />
+            <Loader2 className="w-8 h-8 animate-spin text-[#C2A574]" />
             <p className="text-black/70 text-sm font-medium">Loading...</p>
           </div>
         </div>
@@ -340,8 +340,8 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
                   <CheckCircle className="w-16 h-16 text-green-500" />
                 </div>
               ) : (
-                <div className="rounded-full bg-[#97011A]/10 p-6">
-                  <Mail className="w-16 h-16 text-[#97011A]" />
+                <div className="rounded-full bg-[#C2A574]/10 p-6">
+                  <Mail className="w-16 h-16 text-[#C2A574]" />
                 </div>
               )}
             </div>

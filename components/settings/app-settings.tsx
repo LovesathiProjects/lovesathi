@@ -253,15 +253,15 @@ export function AppSettings({ onNavigate, onLogout, onBack, mode = 'matrimony' }
       {/* Header */}
       <div className={cn(
         "flex-shrink-0 p-4 border-b shadow-lg",
-        isMatrimony 
-          ? "border-[#E5E5E5] bg-white" 
+        isMatrimony
+          ? "border-[#E5E5E5] bg-white"
           : "border-white/20 bg-[#14161B]/50 backdrop-blur-xl"
       )}>
         <div className="flex items-center space-x-4">
           {onBack && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className={cn(
                 "p-2 rounded-full border",
                 isMatrimony
@@ -274,8 +274,8 @@ export function AppSettings({ onNavigate, onLogout, onBack, mode = 'matrimony' }
             </Button>
           )}
           <div>
-            <p className="luxe-kicker text-[0.62rem] text-[#8f001c]">controls</p>
-            <h1 className={cn("font-serif text-3xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#18110d]" : "text-white")}>Settings</h1>
+            <p className="luxe-kicker text-[0.62rem] text-[#C2A574]">controls</p>
+            <h1 className={cn("font-serif text-3xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#3A2B24]" : "text-white")}>Settings</h1>
           </div>
         </div>
       </div>
@@ -285,12 +285,12 @@ export function AppSettings({ onNavigate, onLogout, onBack, mode = 'matrimony' }
         <div className="p-6 space-y-6">
           {settingsSections.map((section) => (
             <div key={section.title} className="space-y-3">
-              <h2 className={cn("luxe-kicker", isMatrimony ? "text-[#8f001c]" : "text-white")}>{section.title}</h2>
+              <h2 className={cn("luxe-kicker", isMatrimony ? "text-[#C2A574]" : "text-white")}>{section.title}</h2>
 
               <Card className={cn(
                 "overflow-hidden shadow-sm",
-                isMatrimony 
-                  ? "luxe-card border-[#d8c79f]/24"
+                isMatrimony
+                  ? "luxe-card border-[#C2A574]/24"
                   : "bg-[#14161B]/50 border border-white/20"
               )}>
                 <CardContent className="p-0">
@@ -310,20 +310,20 @@ export function AppSettings({ onNavigate, onLogout, onBack, mode = 'matrimony' }
                           <div
                             className={cn(
                               "w-10 h-10 rounded-full flex items-center justify-center",
-                              item.destructive 
-                                ? "bg-[#97011A]/10" 
-                                : isMatrimony 
-                                  ? "bg-gray-100" 
+                              item.destructive
+                                ? "bg-[#C2A574]/10"
+                                : isMatrimony
+                                  ? "bg-gray-100"
                                   : "bg-white/10"
                             )}
                           >
                             <item.icon
                               className={cn(
                                 "w-5 h-5",
-                                item.destructive 
-                                  ? "text-[#97011A]" 
-                                  : isMatrimony 
-                                    ? "text-black" 
+                                item.destructive
+                                  ? "text-[#C2A574]"
+                                  : isMatrimony
+                                    ? "text-black"
                                     : "text-white"
                               )}
                             />
@@ -331,13 +331,13 @@ export function AppSettings({ onNavigate, onLogout, onBack, mode = 'matrimony' }
 
                           <div className="space-y-1">
                             <div className="flex items-center space-x-2">
-                              <span 
+                              <span
                                 className={cn(
                                   "font-medium",
-                                  item.destructive 
-                                    ? "text-[#97011A]" 
-                                    : isMatrimony 
-                                      ? "text-black" 
+                                  item.destructive
+                                    ? "text-[#C2A574]"
+                                    : isMatrimony
+                                      ? "text-black"
                                       : "text-white"
                                 )}
                               >
@@ -346,8 +346,8 @@ export function AppSettings({ onNavigate, onLogout, onBack, mode = 'matrimony' }
                               {item.badge && (
                                 <Badge variant="secondary" className={cn(
                                   "text-xs",
-                                  isMatrimony 
-                                    ? "bg-[#97011A] text-white border-0" 
+                                  isMatrimony
+                                    ? "bg-[#C2A574] text-[#3A2B24] border-0"
                                     : ""
                                 )}>
                                   {item.badge}
@@ -371,8 +371,8 @@ export function AppSettings({ onNavigate, onLogout, onBack, mode = 'matrimony' }
                             />
                           )}
                           {item.type === "navigation" && (
-                            <ChevronRight 
-                              className={cn("w-5 h-5", isMatrimony ? "text-[#666666]" : "text-white")} 
+                            <ChevronRight
+                              className={cn("w-5 h-5", isMatrimony ? "text-[#666666]" : "text-white")}
                             />
                           )}
                         </div>

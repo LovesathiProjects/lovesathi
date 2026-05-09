@@ -105,8 +105,8 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex-1 space-y-6">
           <div className="space-y-2">
-            <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">About You</h1>
-            <p className="text-base leading-7 text-[#685f58]">Tell us more about your personal details in a clean, family-ready format.</p>
+            <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#3A2B24] sm:text-5xl">About You</h1>
+            <p className="text-base leading-7 text-[#8B7B70]">Tell us more about your personal details in a clean, family-ready format.</p>
           </div>
           
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -117,7 +117,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                   type="button" 
                   variant={unit === "cm" ? "default" : "outline"} 
                   onClick={() => setUnit("cm")}
-                  className={unit === "cm" ? "bg-[#97011A] hover:bg-[#7A010E] text-white" : "border-black/20 text-black hover:border-[#97011A]"}
+                  className={unit === "cm" ? "bg-[#C2A574] hover:bg-[#B9975E] text-[#3A2B24]" : "border-black/20 text-black hover:border-[#C2A574]"}
                 >
                   cm
                 </Button>
@@ -125,7 +125,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                   type="button" 
                   variant={unit === "ftin" ? "default" : "outline"} 
                   onClick={() => setUnit("ftin")}
-                  className={unit === "ftin" ? "bg-[#97011A] hover:bg-[#7A010E] text-white" : "border-black/20 text-black hover:border-[#97011A]"}
+                  className={unit === "ftin" ? "bg-[#C2A574] hover:bg-[#B9975E] text-[#3A2B24]" : "border-black/20 text-black hover:border-[#C2A574]"}
                 >
                   ft/in
                 </Button>
@@ -146,7 +146,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                         max={250} 
                         {...field} 
                         onChange={(e) => field.onChange(Number(e.target.value))}
-                        className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
+                        className="h-12 text-base text-[#111] border-black/20 focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20 rounded-xl"
                       />
                     ) : (
                       <div className="flex gap-2">
@@ -161,7 +161,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                             const cm = toCm({ ft: Number(e.target.value), inch: current.inch })
                             field.onChange(cm)
                           }}
-                          className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
+                          className="h-12 text-base text-[#111] border-black/20 focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20 rounded-xl"
                         />
                         <Input 
                           type="number" 
@@ -174,7 +174,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                             const cm = toCm({ ft: current.ft, inch: Number(e.target.value) })
                             field.onChange(cm)
                           }}
-                          className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
+                          className="h-12 text-base text-[#111] border-black/20 focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20 rounded-xl"
                         />
                       </div>
                     )}
@@ -194,7 +194,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                   <FormLabel className="text-black">Complexion / Skin tone</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white">
+                      <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20 rounded-xl bg-white">
                         <SelectValue placeholder="Select complexion" />
                       </SelectTrigger>
                     </FormControl>
@@ -219,7 +219,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                   <FormLabel className="text-black">Body Type</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white">
+                      <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20 rounded-xl bg-white">
                         <SelectValue placeholder="Select body type" />
                       </SelectTrigger>
                     </FormControl>
@@ -246,7 +246,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                   <FormLabel className="text-black">Dietary Habits</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white">
+                      <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20 rounded-xl bg-white">
                         <SelectValue placeholder="Select dietary preference" />
                       </SelectTrigger>
                     </FormControl>
@@ -278,7 +278,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                         onClick={() => field.onChange(!field.value)}
                         className={`w-12 h-10 rounded-lg flex items-center justify-center transition-all ${
                           field.value
-                            ? "bg-[#97011A] text-white border border-[#97011A]"
+                            ? "bg-[#C2A574] text-[#3A2B24] border border-[#C2A574]"
                           : "bg-white text-black border border-black/20"
                         }`}
                       >
@@ -301,7 +301,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                         onClick={() => field.onChange(!field.value)}
                         className={`w-12 h-10 rounded-lg flex items-center justify-center transition-all ${
                           field.value
-                            ? "bg-[#97011A] text-white border border-[#97011A]"
+                            ? "bg-[#C2A574] text-[#3A2B24] border border-[#C2A574]"
                             : "bg-white text-black border border-black/20"
                         }`}
                       >
@@ -323,7 +323,7 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
                 <FormLabel className="text-black">Marital Status</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl bg-white">
+                    <SelectTrigger className="h-12 text-base text-[#111] border-black/20 focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20 rounded-xl bg-white">
                       <SelectValue placeholder="Select marital status" />
                     </SelectTrigger>
                   </FormControl>
@@ -348,14 +348,14 @@ export function Step2PersonalPhysical({ onNext, onBack }: { onNext: () => void; 
               variant="ghost" 
               onClick={onBack} 
               disabled={isLoading}
-              className="text-black hover:text-[#97011A]"
+              className="text-black hover:text-[#C2A574]"
             >
               Back
             </Button>
             <Button 
               type="submit" 
               disabled={isLoading}
-              className="bg-[#97011A] hover:bg-[#7A010E] text-white rounded-full px-6"
+              className="bg-[#C2A574] hover:bg-[#B9975E] text-[#3A2B24] rounded-full px-6"
             >
               {isLoading ? "Saving..." : "Next"}
             </Button>

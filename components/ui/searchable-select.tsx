@@ -60,7 +60,7 @@ export function SearchableSelect({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            "h-12 w-full justify-between rounded-xl border-black/20 bg-white px-4 text-left text-base font-normal text-[#111] hover:border-[#97011A]/45 hover:bg-white focus-visible:ring-[#97011A]/20 disabled:opacity-60",
+            "h-12 w-full justify-between rounded-xl border-black/20 bg-white px-4 text-left text-base font-normal text-[#111] hover:border-[#C2A574]/45 hover:bg-white focus-visible:ring-[#C2A574]/20 disabled:opacity-60",
             !selectedOption && "text-[#8f8982]",
             triggerClassName,
           )}
@@ -71,7 +71,7 @@ export function SearchableSelect({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className={cn("z-50 w-[--radix-popover-trigger-width] border-[#d8c79f]/35 bg-white p-0 text-black shadow-[0_22px_70px_rgba(24,17,13,0.14)]", contentClassName)}
+        className={cn("z-50 w-[--radix-popover-trigger-width] border-[#C2A574]/35 bg-white p-0 text-black shadow-[0_22px_70px_rgba(24,17,13,0.14)]", contentClassName)}
       >
         <Command filter={(optionValue, search, keywords) => {
           const haystack = [optionValue, ...(keywords || [])].join(" ").toLowerCase()
@@ -91,12 +91,12 @@ export function SearchableSelect({
                     onValueChange(nextValue)
                     setOpen(false)
                   }}
-                  className="cursor-pointer rounded-xl px-3 py-3 text-[#18110d] data-[selected=true]:bg-[#f5f2ec]"
+                  className="cursor-pointer rounded-xl px-3 py-3 text-[#3A2B24] data-[selected=true]:bg-[#f5f2ec]"
                 >
-                  <Check className={cn("mr-2 h-4 w-4 text-[#97011A]", value === option.value ? "opacity-100" : "opacity-0")} />
+                  <Check className={cn("mr-2 h-4 w-4 text-[#C2A574]", value === option.value ? "opacity-100" : "opacity-0")} />
                   <div className="min-w-0">
                     <p className="truncate font-semibold">{option.label}</p>
-                    {option.description && <p className="truncate text-xs text-[#685f58]">{option.description}</p>}
+                    {option.description && <p className="truncate text-xs text-[#8B7B70]">{option.description}</p>}
                   </div>
                 </CommandItem>
               ))}
@@ -150,7 +150,7 @@ export function SearchableMultiSelect({
             aria-expanded={open}
             disabled={disabled}
             className={cn(
-              "h-12 w-full justify-between rounded-xl border-black/20 bg-white px-4 text-left text-base font-normal text-[#111] hover:border-[#97011A]/45 hover:bg-white focus-visible:ring-[#97011A]/20 disabled:opacity-60",
+              "h-12 w-full justify-between rounded-xl border-black/20 bg-white px-4 text-left text-base font-normal text-[#111] hover:border-[#C2A574]/45 hover:bg-white focus-visible:ring-[#C2A574]/20 disabled:opacity-60",
               values.length === 0 && "text-[#8f8982]",
               triggerClassName,
             )}
@@ -163,7 +163,7 @@ export function SearchableMultiSelect({
         </PopoverTrigger>
         <PopoverContent
           align="start"
-          className={cn("z-50 w-[--radix-popover-trigger-width] border-[#d8c79f]/35 bg-white p-0 text-black shadow-[0_22px_70px_rgba(24,17,13,0.14)]", contentClassName)}
+          className={cn("z-50 w-[--radix-popover-trigger-width] border-[#C2A574]/35 bg-white p-0 text-black shadow-[0_22px_70px_rgba(24,17,13,0.14)]", contentClassName)}
         >
           <Command filter={(optionValue, search, keywords) => {
             const haystack = [optionValue, ...(keywords || [])].join(" ").toLowerCase()
@@ -182,12 +182,12 @@ export function SearchableMultiSelect({
                       keywords={[option.label, ...(option.keywords || [])]}
                       disabled={option.disabled}
                       onSelect={toggleValue}
-                      className="cursor-pointer rounded-xl px-3 py-3 text-[#18110d] data-[selected=true]:bg-[#f5f2ec]"
+                      className="cursor-pointer rounded-xl px-3 py-3 text-[#3A2B24] data-[selected=true]:bg-[#f5f2ec]"
                     >
-                      <Check className={cn("mr-2 h-4 w-4 text-[#97011A]", selected ? "opacity-100" : "opacity-0")} />
+                      <Check className={cn("mr-2 h-4 w-4 text-[#C2A574]", selected ? "opacity-100" : "opacity-0")} />
                       <div className="min-w-0">
                         <p className="truncate font-semibold">{option.label}</p>
-                        {option.description && <p className="truncate text-xs text-[#685f58]">{option.description}</p>}
+                        {option.description && <p className="truncate text-xs text-[#8B7B70]">{option.description}</p>}
                       </div>
                     </CommandItem>
                   )
@@ -204,14 +204,14 @@ export function SearchableMultiSelect({
             <Badge
               key={option.value}
               variant="outline"
-              className="gap-2 rounded-full border-[#d8c79f]/40 bg-[#ffffff] px-3 py-1 text-[#18110d]"
+              className="gap-2 rounded-full border-[#C2A574]/40 bg-[#ffffff] px-3 py-1 text-[#3A2B24]"
             >
               {option.label}
               <button
                 type="button"
                 aria-label={`Remove ${option.label}`}
                 onClick={() => onValuesChange(values.filter((item) => item !== option.value))}
-                className="rounded-full text-[#8f001c] hover:text-[#5f0012]"
+                className="rounded-full text-[#C2A574] hover:text-[#5f0012]"
               >
                 <X className="h-3 w-3" />
               </button>

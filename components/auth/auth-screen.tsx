@@ -33,13 +33,13 @@ const trustSignals = [
 
 function LegalLinks({ action }: { action: "continuing" | "signing up" }) {
   return (
-    <p className="mx-auto max-w-sm text-center text-xs leading-relaxed text-[#685f58]">
+    <p className="mx-auto max-w-sm text-center text-xs leading-relaxed text-[#8B7B70]">
       By {action}, you agree to our{" "}
-      <Link href="/terms" className="font-bold text-[#8f001c] hover:underline">
+      <Link href="/terms" className="font-bold text-[#C2A574] hover:underline">
         Terms of Service
       </Link>{" "}
       and{" "}
-      <Link href="/privacy" className="font-bold text-[#8f001c] hover:underline">
+      <Link href="/privacy" className="font-bold text-[#C2A574] hover:underline">
         Privacy Policy
       </Link>
       .
@@ -50,13 +50,13 @@ function LegalLinks({ action }: { action: "continuing" | "signing up" }) {
 function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex flex-col items-center text-center">
-      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#8f001c] text-[#ffffff] shadow-[0_18px_45px_rgba(143,0,28,0.28)] sm:h-20 sm:w-20">
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#C2A574] text-[#3A2B24] shadow-[0_18px_45px_rgba(194,165,116,0.28)] sm:h-20 sm:w-20">
         <Heart className="h-8 w-8 fill-current sm:h-10 sm:w-10" />
       </div>
-      <h1 className={`${compact ? "text-5xl" : "text-6xl sm:text-7xl"} font-serif font-bold tracking-[-0.07em] text-[#18110d]`}>
+      <h1 className={`${compact ? "text-5xl" : "text-6xl sm:text-7xl"} font-serif font-bold tracking-[-0.07em] text-[#3A2B24]`}>
         Lovesathi
       </h1>
-      <p className="mt-2 max-w-sm text-sm font-semibold uppercase tracking-[0.2em] text-[#8f001c]">
+      <p className="mt-2 max-w-sm text-sm font-semibold uppercase tracking-[0.2em] text-[#C2A574]">
         Premium matrimony
       </p>
     </div>
@@ -77,11 +77,11 @@ function AuthShell({
   return (
     <div className="luxe-light-page flex min-h-screen flex-col overflow-x-hidden px-4 py-5 sm:px-6">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
-        <Button variant="ghost" className="rounded-full text-[#18110d]" onClick={onBack}>
+        <Button variant="ghost" className="rounded-full text-[#3A2B24]" onClick={onBack}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-        <Link href="/" className="font-serif text-2xl font-bold tracking-[-0.05em] text-[#18110d] no-underline">
+        <Link href="/" className="font-serif text-2xl font-bold tracking-[-0.05em] text-[#3A2B24] no-underline">
           Lovesathi
         </Link>
       </div>
@@ -89,16 +89,16 @@ function AuthShell({
         <div className="hidden space-y-8 lg:block">
           <BrandMark />
           <div className="luxe-card rounded-[2rem] p-6">
-            <p className="luxe-kicker mb-3 text-[#8f001c]">Built for serious intent</p>
-            <p className="text-lg leading-8 text-[#685f58]">
+            <p className="luxe-kicker mb-3 text-[#C2A574]">Built for serious intent</p>
+            <p className="text-lg leading-8 text-[#8B7B70]">
               A calm, premium entry into profile creation, verification, and life-partner discovery.
             </p>
           </div>
         </div>
         <div className="luxe-card mx-auto w-full max-w-xl rounded-[2rem] p-5 shadow-2xl sm:p-8">
           <div className="mb-8 text-center">
-            <p className="luxe-kicker mb-3 text-[#8f001c]">{eyebrow}</p>
-            <h2 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">
+            <p className="luxe-kicker mb-3 text-[#C2A574]">{eyebrow}</p>
+            <h2 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#3A2B24] sm:text-5xl">
               {title}
             </h2>
           </div>
@@ -230,11 +230,11 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
   if (view === "landing") {
     return (
       <div className="luxe-page flex min-h-screen flex-col overflow-x-hidden px-4 py-5 sm:px-6">
-        <div className="luxe-orb left-[-7rem] top-20 h-72 w-72 bg-[#d8c79f]/18" />
-        <div className="luxe-orb right-[-8rem] top-10 h-96 w-96 bg-[#8f001c]/30" style={{ animationDelay: "1.2s" }} />
+        <div className="luxe-orb left-[-7rem] top-20 h-72 w-72 bg-[#C2A574]/18" />
+        <div className="luxe-orb right-[-8rem] top-10 h-96 w-96 bg-[#C2A574]/30" style={{ animationDelay: "1.2s" }} />
         <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between rounded-full border border-white/10 bg-white/8 px-4 py-3 text-[#ffffff] backdrop-blur-xl">
           <Link href="/" className="flex items-center gap-3 text-[#ffffff] no-underline">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#ffffff] text-[#8f001c]">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#ffffff] text-[#C2A574]">
               <Heart className="h-5 w-5 fill-current" />
             </span>
             <span className="font-serif text-2xl font-bold tracking-[-0.05em]">Lovesathi</span>
@@ -246,9 +246,9 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
 
         <main className="relative z-10 mx-auto grid w-[calc(100vw-2rem)] min-w-0 max-w-6xl flex-1 items-center gap-10 overflow-hidden py-10 sm:w-full lg:grid-cols-[1.08fr_0.92fr]">
           <section className="w-full min-w-0 max-w-full space-y-8 overflow-hidden text-[#ffffff]">
-            <div className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-full border border-[#d8c79f]/30 bg-white/8 px-4 py-2 backdrop-blur">
-              <Sparkles className="h-4 w-4 text-[#d8c79f]" />
-              <span className="luxe-kicker max-w-full truncate text-[#d8c79f] sm:whitespace-normal">A private entrance to serious matrimony</span>
+            <div className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-full border border-[#C2A574]/30 bg-white/8 px-4 py-2 backdrop-blur">
+              <Sparkles className="h-4 w-4 text-[#C2A574]" />
+              <span className="luxe-kicker max-w-full truncate text-[#C2A574] sm:whitespace-normal">A private entrance to serious matrimony</span>
             </div>
             <div className="space-y-5">
               <h1 className="luxe-title max-w-[22rem] text-4xl font-bold text-[#ffffff] sm:max-w-3xl sm:text-7xl lg:text-8xl">
@@ -256,7 +256,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                 <span className="block">with depth,</span>
                 <span className="block">dignity, and taste.</span>
               </h1>
-              <p className="max-w-[22rem] text-base leading-7 text-[#d8c79f] sm:max-w-2xl sm:text-lg sm:leading-8">
+              <p className="max-w-[22rem] text-base leading-7 text-[#C2A574] sm:max-w-2xl sm:text-lg sm:leading-8">
                 Lovesathi brings a luxury standard to matrimony: verified identity, rich profiles,
                 family context, and calm discovery for people ready to choose seriously.
               </p>
@@ -264,7 +264,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             <div className="grid max-w-2xl gap-3 sm:grid-cols-3">
               {trustSignals.map((item) => (
                 <div key={item.label} className="rounded-3xl border border-white/10 bg-white/8 p-4 backdrop-blur">
-                  <item.icon className="mb-4 h-5 w-5 text-[#d8c79f]" />
+                  <item.icon className="mb-4 h-5 w-5 text-[#C2A574]" />
                   <p className="text-sm font-bold text-[#ffffff]">{item.label}</p>
                 </div>
               ))}
@@ -274,7 +274,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           <section className="luxe-card mx-auto w-full max-w-md rounded-[2rem] p-5 sm:p-7">
             <div className="mb-8">
               <BrandMark compact />
-              <p className="mx-auto mt-4 max-w-xs text-center text-[#685f58]">
+              <p className="mx-auto mt-4 max-w-xs text-center text-[#8B7B70]">
                 Where meaningful life-partner discovery begins.
               </p>
             </div>
@@ -295,11 +295,11 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
               </Button>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm text-[#685f58]">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm text-[#8B7B70]">
               <span>Already have an account?</span>
               <Button
                 variant="link"
-                className="h-auto p-0 font-bold text-[#8f001c]"
+                className="h-auto p-0 font-bold text-[#C2A574]"
                 onClick={() => {
                   resetForm()
                   setView("login")
@@ -360,7 +360,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute right-1 top-1 h-10 rounded-xl px-3 text-[#685f58] hover:bg-transparent"
+                className="absolute right-1 top-1 h-10 rounded-xl px-3 text-[#8B7B70] hover:bg-transparent"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -369,14 +369,14 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           </div>
 
           <div className="flex justify-end">
-            <Button asChild variant="link" className="h-auto px-0 text-sm font-bold text-[#8f001c]">
+            <Button asChild variant="link" className="h-auto px-0 text-sm font-bold text-[#C2A574]">
               <Link href="/auth/forgot-password">Forgot password?</Link>
             </Button>
           </div>
 
           {error && (
-            <div className="rounded-2xl border border-[#8f001c]/20 bg-[#8f001c]/10 p-3">
-              <p className="text-center text-sm font-bold text-[#8f001c]">{error}</p>
+            <div className="rounded-2xl border border-[#C2A574]/20 bg-[#C2A574]/10 p-3">
+              <p className="text-center text-sm font-bold text-[#C2A574]">{error}</p>
             </div>
           )}
 
@@ -387,7 +387,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
 
         <div className="my-7 flex items-center gap-3">
           <div className="h-px flex-1 bg-[#482b1a]/12" />
-          <span className="luxe-kicker text-[#685f58]">or</span>
+          <span className="luxe-kicker text-[#8B7B70]">or</span>
           <div className="h-px flex-1 bg-[#482b1a]/12" />
         </div>
 
@@ -396,11 +396,11 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           <AppleLoginButton variant="login" />
         </div>
 
-        <p className="mt-7 text-center text-sm text-[#685f58]">
+        <p className="mt-7 text-center text-sm text-[#8B7B70]">
           New to Lovesathi?{" "}
           <Button
             variant="link"
-            className="h-auto p-0 font-bold text-[#8f001c]"
+            className="h-auto p-0 font-bold text-[#C2A574]"
             onClick={() => {
               resetForm()
               setView("signup")
@@ -483,7 +483,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute right-1 top-1 h-10 rounded-xl px-3 text-[#685f58] hover:bg-transparent"
+                className="absolute right-1 top-1 h-10 rounded-xl px-3 text-[#8B7B70] hover:bg-transparent"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -492,8 +492,8 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           </div>
 
           {error && (
-            <div className="rounded-2xl border border-[#8f001c]/20 bg-[#8f001c]/10 p-3">
-              <p className="text-center text-sm font-bold text-[#8f001c]">{error}</p>
+            <div className="rounded-2xl border border-[#C2A574]/20 bg-[#C2A574]/10 p-3">
+              <p className="text-center text-sm font-bold text-[#C2A574]">{error}</p>
             </div>
           )}
 
@@ -504,7 +504,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
 
         <div className="my-7 flex items-center gap-3">
           <div className="h-px flex-1 bg-[#482b1a]/12" />
-          <span className="luxe-kicker text-[#685f58]">or</span>
+          <span className="luxe-kicker text-[#8B7B70]">or</span>
           <div className="h-px flex-1 bg-[#482b1a]/12" />
         </div>
 
@@ -513,11 +513,11 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           <AppleLoginButton />
         </div>
 
-        <p className="mt-7 text-center text-sm text-[#685f58]">
+        <p className="mt-7 text-center text-sm text-[#8B7B70]">
           Already a member?{" "}
           <Button
             variant="link"
-            className="h-auto p-0 font-bold text-[#8f001c]"
+            className="h-auto p-0 font-bold text-[#C2A574]"
             onClick={() => {
               resetForm()
               setView("login")

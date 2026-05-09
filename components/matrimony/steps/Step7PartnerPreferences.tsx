@@ -22,6 +22,10 @@ type PreferenceKey =
   | "locations"
   | "communities"
   | "familyTypePrefs"
+  | "maritalStatusPrefs"
+  | "incomePrefs"
+  | "manglikPrefs"
+  | "profileCreatedByPrefs"
 
 const preferenceGroups: Array<{
   key: PreferenceKey
@@ -30,16 +34,16 @@ const preferenceGroups: Array<{
   options: string[]
 }> = [
   {
-    key: "educationPrefs",
-    title: "Education",
-    description: "Academic background you would like to prioritize.",
-    options: ["Any", "Bachelor's Degree", "Master's Degree", "MBA", "PhD", "Doctor", "Engineer"],
+    key: "maritalStatusPrefs",
+    title: "Marital Status",
+    description: "Set the relationship history your family is comfortable with.",
+    options: ["Any", "Never Married", "Divorced", "Widowed", "Annulled", "Separated"],
   },
   {
-    key: "professionPrefs",
-    title: "Profession",
-    description: "Career paths that feel compatible with your expectations.",
-    options: ["Any", "Software Engineer", "Doctor", "Business Owner", "Civil Servant", "Teacher", "Finance"],
+    key: "incomePrefs",
+    title: "Annual Income",
+    description: "A broad financial comfort range, inspired by traditional matrimony search.",
+    options: ["Any", "Open to all", "3-6 LPA", "6-10 LPA", "10-20 LPA", "20-35 LPA", "35-50 LPA", "50 LPA+"],
   },
   {
     key: "dietPrefs",
@@ -59,6 +63,58 @@ const preferenceGroups: Array<{
     description: "Family environment that feels aligned.",
     options: ["Any", "Nuclear", "Joint", "Extended", "Single Parent"],
   },
+  {
+    key: "manglikPrefs",
+    title: "Horoscope / Manglik",
+    description: "Optional astrology preference for families who consider it important.",
+    options: ["Any", "Manglik accepted", "Non-Manglik preferred", "Horoscope match required", "Does not matter"],
+  },
+  {
+    key: "profileCreatedByPrefs",
+    title: "Profile Managed By",
+    description: "Choose whether self-managed or family-managed profiles are preferred.",
+    options: ["Any", "Self", "Parent", "Sibling", "Family managed"],
+  },
+]
+
+const EDUCATION_PREFERENCE_OPTIONS = [
+  "Any",
+  "High School",
+  "Diploma",
+  "Bachelor's Degree",
+  "Master's Degree",
+  "MBA",
+  "M.Tech",
+  "MBBS",
+  "MD/MS",
+  "CA",
+  "CS",
+  "LLB",
+  "PhD",
+  "IIT / NIT",
+  "IIM / ISB",
+  "Foreign University",
+]
+
+const PROFESSION_PREFERENCE_OPTIONS = [
+  "Any",
+  "Software Engineer",
+  "Data Scientist",
+  "Doctor",
+  "Dentist",
+  "Chartered Accountant",
+  "Corporate Lawyer",
+  "Civil Servant",
+  "Government Employee",
+  "Professor / Teacher",
+  "Business Owner",
+  "Founder",
+  "Finance Professional",
+  "Marketing Manager",
+  "Product Manager",
+  "Architect",
+  "Designer",
+  "Homemaker",
 ]
 
 function toggleList(list: string[] | undefined, value: string) {
@@ -81,6 +137,10 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
     locations: preferences.locations || [],
     communities: preferences.communities || [],
     familyTypePrefs: preferences.familyTypePrefs || [],
+    maritalStatusPrefs: preferences.maritalStatusPrefs || [],
+    incomePrefs: preferences.incomePrefs || [],
+    manglikPrefs: preferences.manglikPrefs || [],
+    profileCreatedByPrefs: preferences.profileCreatedByPrefs || [],
   })
 
   const setRangeValue = (key: "ageRange" | "heightRangeCm", index: 0 | 1, nextValue: number) => {
@@ -112,6 +172,15 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
   const setCommunities = (communities: string[]) => {
     setValues((prev) => {
       const next = { ...prev, communities }
+      setPartial("preferences", next)
+      return next
+    })
+  }
+
+  const setSearchablePreference = (key: PreferenceKey, selectedValues: string[]) => {
+    setValues((prev) => {
+      const cleanedValues = selectedValues.includes("Any") && selectedValues.length > 1 ? ["Any"] : selectedValues
+      const next = { ...prev, [key]: cleanedValues }
       setPartial("preferences", next)
       return next
     })
@@ -158,33 +227,45 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
   return (
     <div className="space-y-7">
       <div className="space-y-3">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[#d8c79f]/35 bg-[#ffffff]/74 px-4 py-2 text-[#8f001c] shadow-sm">
+        <div className="inline-flex items-center gap-2 rounded-full border border-[#C2A574]/35 bg-[#ffffff]/74 px-4 py-2 text-[#C2A574] shadow-sm">
           <Sparkles className="h-4 w-4" />
           <span className="luxe-kicker">curated matching</span>
         </div>
-        <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">
-          Tell us what a good match should feel like.
+        <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#3A2B24] sm:text-5xl">
+          Build your partner search with matrimony-grade clarity.
         </h1>
-        <p className="max-w-2xl text-base leading-7 text-[#685f58]">
-          These preferences help Lovesathi move from simple browsing to refined matrimony recommendations.
-          You can edit them anytime.
+        <p className="max-w-2xl text-base leading-7 text-[#8B7B70]">
+          Inspired by serious matrimony search flows, this keeps core filters structured while letting you stay flexible where family compatibility matters more than a checkbox.
         </p>
       </div>
 
+      <section className="grid gap-3 sm:grid-cols-3">
+        {[
+          ["Must-have", "Age, height, location, community"],
+          ["Preferred", "Education, profession, income, family context"],
+          ["Flexible", "Lifestyle and horoscope comfort"],
+        ].map(([title, copy]) => (
+          <div key={title} className="rounded-[1.4rem] border border-[#C2A574]/30 bg-[#FBF8F3]/80 p-4 shadow-[0_14px_38px_rgba(58,43,36,0.06)]">
+            <p className="luxe-kicker text-[0.58rem] text-[#C2A574]">{title}</p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-[#3A2B24]">{copy}</p>
+          </div>
+        ))}
+      </section>
+
       <section className="luxe-card rounded-[2rem] p-5 sm:p-6">
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#8f001c] text-[#ffffff]">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#C2A574] text-[#3A2B24]">
             <HeartHandshake className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">Core range</h2>
-            <p className="text-sm text-[#685f58]">Start broad; we can refine later.</p>
+            <h2 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#3A2B24]">Core range</h2>
+            <p className="text-sm text-[#8B7B70]">Start broad; we can refine later.</p>
           </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-3xl border border-[#482b1a]/10 bg-white/58 p-4">
-            <Label className="text-[#18110d]">Age range</Label>
+            <Label className="text-[#3A2B24]">Age range</Label>
             <div className="mt-3 grid grid-cols-2 gap-3">
               <Input
                 type="number"
@@ -206,7 +287,7 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
           </div>
 
           <div className="rounded-3xl border border-[#482b1a]/10 bg-white/58 p-4">
-            <Label className="text-[#18110d]">Height range in cm</Label>
+            <Label className="text-[#3A2B24]">Height range in cm</Label>
             <div className="mt-3 grid grid-cols-2 gap-3">
               <Input
                 type="number"
@@ -229,14 +310,14 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
         </div>
       </section>
 
-      <section className="rounded-[1.75rem] border border-[#d8c79f]/24 bg-[#ffffff]/76 p-5 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur">
+      <section className="rounded-[1.75rem] border border-[#C2A574]/24 bg-[#ffffff]/76 p-5 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur">
         <div className="mb-4 flex items-start gap-3">
-          <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#8f001c]/10 text-[#8f001c]">
+          <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#C2A574]/10 text-[#C2A574]">
             <MapPin className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">Location</h3>
-            <p className="text-sm leading-6 text-[#685f58]">
+            <h3 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#3A2B24]">Location</h3>
+            <p className="text-sm leading-6 text-[#8B7B70]">
               Add preferred cities by choosing country, state, then city.
             </p>
           </div>
@@ -244,14 +325,14 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
         <LocationPreferencePicker value={values.locations} onChange={setLocations} label="Preferred Cities" />
       </section>
 
-      <section className="rounded-[1.75rem] border border-[#d8c79f]/24 bg-[#ffffff]/76 p-5 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur">
+      <section className="rounded-[1.75rem] border border-[#C2A574]/24 bg-[#ffffff]/76 p-5 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur">
         <div className="mb-4 flex items-start gap-3">
-          <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#8f001c]/10 text-[#8f001c]">
+          <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#C2A574]/10 text-[#C2A574]">
             <BadgeCheck className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">Community</h3>
-            <p className="text-sm leading-6 text-[#685f58]">
+            <h3 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#3A2B24]">Community</h3>
+            <p className="text-sm leading-6 text-[#8B7B70]">
               Search a broad community list instead of scrolling through dozens of chips.
             </p>
           </div>
@@ -266,16 +347,41 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
         />
       </section>
 
+      <section className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-[1.75rem] border border-[#C2A574]/24 bg-[#FBF8F3]/76 p-5 shadow-[0_18px_55px_rgba(58,43,36,0.08)] backdrop-blur">
+          <h3 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#3A2B24]">Education Preference</h3>
+          <p className="mb-4 mt-1 text-sm leading-6 text-[#8B7B70]">Search and select one or more education signals.</p>
+          <SearchableMultiSelect
+            values={values.educationPrefs}
+            onValuesChange={(nextValues) => setSearchablePreference("educationPrefs", nextValues)}
+            options={EDUCATION_PREFERENCE_OPTIONS.map((option) => ({ value: option, label: option }))}
+            placeholder="Select education preference"
+            searchPlaceholder="Search education..."
+          />
+        </div>
+        <div className="rounded-[1.75rem] border border-[#C2A574]/24 bg-[#FBF8F3]/76 p-5 shadow-[0_18px_55px_rgba(58,43,36,0.08)] backdrop-blur">
+          <h3 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#3A2B24]">Profession Preference</h3>
+          <p className="mb-4 mt-1 text-sm leading-6 text-[#8B7B70]">Prioritize compatible career paths without forcing one job title.</p>
+          <SearchableMultiSelect
+            values={values.professionPrefs}
+            onValuesChange={(nextValues) => setSearchablePreference("professionPrefs", nextValues)}
+            options={PROFESSION_PREFERENCE_OPTIONS.map((option) => ({ value: option, label: option }))}
+            placeholder="Select profession preference"
+            searchPlaceholder="Search profession..."
+          />
+        </div>
+      </section>
+
       <div className="grid gap-4">
         {preferenceGroups.map((group) => (
-          <section key={group.key} className="rounded-[1.75rem] border border-[#d8c79f]/24 bg-[#ffffff]/76 p-5 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur">
+          <section key={group.key} className="rounded-[1.75rem] border border-[#C2A574]/24 bg-[#ffffff]/76 p-5 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur">
             <div className="mb-4 flex items-start gap-3">
-              <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#8f001c]/10 text-[#8f001c]">
+              <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#C2A574]/10 text-[#C2A574]">
                 {group.key === "locations" ? <MapPin className="h-4 w-4" /> : <BadgeCheck className="h-4 w-4" />}
               </div>
               <div>
-                <h3 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">{group.title}</h3>
-                <p className="text-sm leading-6 text-[#685f58]">{group.description}</p>
+                <h3 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#3A2B24]">{group.title}</h3>
+                <p className="text-sm leading-6 text-[#8B7B70]">{group.description}</p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -289,8 +395,8 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
                     className={cn(
                       "rounded-full border px-4 py-2 text-sm font-bold transition",
                       selected
-                        ? "border-[#8f001c] bg-[#8f001c] text-[#ffffff] shadow-[0_12px_30px_rgba(143,0,28,0.22)]"
-                        : "border-[#482b1a]/12 bg-white/70 text-[#685f58] hover:border-[#b79b62] hover:text-[#18110d]",
+                        ? "border-[#C2A574] bg-[#C2A574] text-[#3A2B24] shadow-[0_12px_30px_rgba(194,165,116,0.22)]"
+                        : "border-[#482b1a]/12 bg-white/70 text-[#8B7B70] hover:border-[#C2A574] hover:text-[#3A2B24]",
                     )}
                   >
                     {option}
@@ -303,7 +409,7 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
       </div>
 
       <div className="flex justify-between pt-2">
-        <Button type="button" variant="ghost" onClick={onBack} disabled={isLoading} className="text-[#18110d] hover:text-[#8f001c]">
+        <Button type="button" variant="ghost" onClick={onBack} disabled={isLoading} className="text-[#3A2B24] hover:text-[#C2A574]">
           Back
         </Button>
         <Button type="button" disabled={isLoading} onClick={handleSave} className="luxe-button rounded-full px-7">

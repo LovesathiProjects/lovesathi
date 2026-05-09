@@ -149,13 +149,13 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'match':
-        return <Sparkles className="w-4 h-4 text-[#97011A]" />
+        return <Sparkles className="w-4 h-4 text-[#C2A574]" />
       case 'like':
         return <Heart className="w-4 h-4 text-red-500 fill-current" />
       case 'super_like':
         return <Gem className="w-4 h-4 text-[#b8892f] fill-current" />
       case 'view':
-        return <Eye className="w-4 h-4 text-[#97011A]" />
+        return <Eye className="w-4 h-4 text-[#C2A574]" />
       default:
         return null
     }
@@ -214,8 +214,8 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade
               </Button>
             )}
             <div>
-              <p className="luxe-kicker text-[0.62rem] text-[#8f001c]">interest ledger</p>
-              <h1 className={cn("font-serif text-3xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#18110d]" : "text-white")}>Activity</h1>
+              <p className="luxe-kicker text-[0.62rem] text-[#C2A574]">interest ledger</p>
+              <h1 className={cn("font-serif text-3xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#3A2B24]" : "text-white")}>Activity</h1>
             </div>
           </div>
 
@@ -228,9 +228,9 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade
                 className={cn(
                   "flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold whitespace-nowrap transition-colors",
                   activeTab === tab.id
-                    ? "bg-[#8f001c] text-[#ffffff] shadow-[0_12px_28px_rgba(143,0,28,0.22)]"
+                    ? "bg-[#C2A574] text-[#3A2B24] shadow-[0_12px_28px_rgba(194,165,116,0.22)]"
                     : isMatrimony 
-                      ? "border border-[#482b1a]/10 bg-white/70 text-[#685f58] hover:bg-white"
+                      ? "border border-[#482b1a]/10 bg-white/70 text-[#8B7B70] hover:bg-white"
                       : "bg-white/10 hover:bg-white/20 text-[#A1A1AA]"
                 )}
               >
@@ -258,7 +258,7 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade
         <div className="flex-1 overflow-y-auto p-4 min-h-0">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
-            <Loader2 className={cn("w-8 h-8 animate-spin mb-4", isMatrimony ? "text-[#97011A]" : "text-white")} />
+            <Loader2 className={cn("w-8 h-8 animate-spin mb-4", isMatrimony ? "text-[#C2A574]" : "text-white")} />
             <p className={cn("text-sm", isMatrimony ? "text-black" : "text-white")}>Loading activity...</p>
           </div>
         ) : error ? (
@@ -310,7 +310,7 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade
                 className={cn(
                   "border backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer",
                   isMatrimony 
-                    ? "luxe-card border-[#d8c79f]/24 hover:bg-[#ffffff]"
+                    ? "luxe-card border-[#C2A574]/24 hover:bg-[#ffffff]"
                     : "bg-[#14161B] border-white/20 hover:bg-white/10"
                 )}
                 onClick={() => {
@@ -335,8 +335,8 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade
                       </AvatarFallback>
                     </Avatar>
                     {maskedView && (
-                      <div className="absolute inset-0 flex items-center justify-center rounded-full bg-[#18110d]/20 backdrop-blur-sm">
-                        <Crown className="h-4 w-4 text-[#d8c79f]" />
+                      <div className="absolute inset-0 flex items-center justify-center rounded-full bg-[#3A2B24]/20 backdrop-blur-sm">
+                        <Crown className="h-4 w-4 text-[#C2A574]" />
                       </div>
                     )}
                   </div>
@@ -350,7 +350,7 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade
                         {!maskedView && activity.age && <span className={cn("ml-1", isMatrimony ? "text-[#444444]" : "text-[#A1A1AA]")}>, {activity.age}</span>}
                       </h3>
                       {activity.isNew && (
-                        <Badge className="bg-[#97011A] text-white text-xs px-1.5 py-0.5 border border-[#97011A]">
+                        <Badge className="bg-[#C2A574] text-[#3A2B24] text-xs px-1.5 py-0.5 border border-[#C2A574]">
                           New
                         </Badge>
                       )}
@@ -381,7 +381,7 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade
                           }
                         }
                       }}
-                      className="bg-[#97011A] hover:bg-[#7A0115] text-white"
+                      className="bg-[#C2A574] hover:bg-[#B9975E] text-[#3A2B24]"
                     >
                       Chat
                     </Button>
@@ -397,12 +397,12 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade
                           likedBack.has(activity.id)
                             ? "bg-red-500/20 border-red-500"
                             : isMatrimony
-                              ? "bg-gray-100 border-[#E5E5E5] hover:border-[#97011A]"
+                              ? "bg-gray-100 border-[#E5E5E5] hover:border-[#C2A574]"
                               : "bg-black/40 border-white/60 hover:border-white/80"
                         )}
                       >
                         {likingInProgress.has(activity.id) ? (
-                          <Loader2 className={cn("w-4 h-4 animate-spin", isMatrimony ? "text-[#97011A]" : "text-white")} />
+                          <Loader2 className={cn("w-4 h-4 animate-spin", isMatrimony ? "text-[#C2A574]" : "text-white")} />
                         ) : (
                           <Heart
                             className={cn(
@@ -410,7 +410,7 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade
                               likedBack.has(activity.id)
                                 ? "text-red-500 fill-red-500"
                                 : isMatrimony
-                                  ? "text-[#97011A] fill-[#97011A]"
+                                  ? "text-[#C2A574] fill-[#C2A574]"
                                   : "text-white fill-white"
                             )}
                           />

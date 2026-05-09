@@ -29,14 +29,14 @@ const Slider = React.forwardRef<
     >
       <SliderPrimitive.Track className="relative h-[6px] w-full grow overflow-hidden rounded-full bg-[#e5e7eb]">
         {/* Highlighted selected range */}
-        <SliderPrimitive.Range className="absolute h-full bg-[#97011A] transition-[left,width] duration-300 ease-out" />
+        <SliderPrimitive.Range className="absolute h-full bg-[#C2A574] transition-[left,width] duration-300 ease-out" />
       </SliderPrimitive.Track>
       {thumbs.map((_, idx) => (
         <SliderPrimitive.Thumb
           key={idx}
-          className="grid place-items-center h-5 w-5 rounded-full border-2 border-[#97011A] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.15)] ring-offset-white transition-transform duration-300 ease-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#97011A]/30 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95 will-change-transform"
+          className="grid place-items-center h-5 w-5 rounded-full border-2 border-[#C2A574] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.15)] ring-offset-white transition-transform duration-300 ease-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C2A574]/30 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95 will-change-transform"
         >
-          <span className="block h-2 w-2 rounded-full bg-[#97011A]" />
+          <span className="block h-2 w-2 rounded-full bg-[#C2A574]" />
         </SliderPrimitive.Thumb>
       ))}
     </SliderPrimitive.Root>

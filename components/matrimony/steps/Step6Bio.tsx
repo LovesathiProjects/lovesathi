@@ -83,8 +83,8 @@ export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () =>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex-1 space-y-6">
           <div className="space-y-2">
-            <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">A Few Words About You</h1>
-            <p className="text-base leading-7 text-[#685f58]">Write a warm introduction that helps families and serious matches understand your personality.</p>
+            <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#3A2B24] sm:text-5xl">A Few Words About You</h1>
+            <p className="text-base leading-7 text-[#8B7B70]">Write a warm introduction that helps families and serious matches understand your personality.</p>
           </div>
           
           <FormField control={form.control} name="bio" render={({ field }) => (
@@ -96,13 +96,13 @@ export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () =>
                   maxLength={300} 
                   placeholder="Describe your personality, passions, and what you're looking for in a life partner." 
                   {...field}
-                  className="text-base text-[#111] placeholder:text-black/40 resize-none min-h-[250px] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
+                  className="text-base text-[#111] placeholder:text-black/40 resize-none min-h-[250px] border-black/20 focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20 rounded-xl"
                 />
               </FormControl>
               <div className="flex justify-between items-center">
                 <p className={`text-sm ${
                   (field.value?.length || 0) > 0 && (field.value?.length || 0) < 20
-                    ? "text-[#97011A]"
+                    ? "text-[#C2A574]"
                     : "text-black/60"
                 }`}>
                   {(field.value?.length || 0) > 0 && (field.value?.length || 0) < 20
@@ -111,9 +111,9 @@ export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () =>
                 </p>
                 <p className={`text-sm ${
                   (field.value?.length || 0) === 300 
-                    ? "text-[#97011A]"
+                    ? "text-[#C2A574]"
                     : (field.value?.length || 0) < 20 && (field.value?.length || 0) > 0
-                    ? "text-[#97011A]"
+                    ? "text-[#C2A574]"
                     : "text-black/60"
                 }`}>
                   {(field.value?.length || 0)}/300
@@ -123,8 +123,8 @@ export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () =>
             </FormItem>
           )} />
 
-          <div className="rounded-[1.75rem] border border-[#d8c79f]/24 bg-[#ffffff]/78 p-4 shadow-[0_16px_45px_rgba(24,17,13,0.06)]">
-            <div className="mb-3 flex items-center gap-2 text-[#8f001c]">
+          <div className="rounded-[1.75rem] border border-[#C2A574]/24 bg-[#ffffff]/78 p-4 shadow-[0_16px_45px_rgba(24,17,13,0.06)]">
+            <div className="mb-3 flex items-center gap-2 text-[#C2A574]">
               <Sparkles className="h-4 w-4" />
               <p className="luxe-kicker">bio suggestions from your details</p>
             </div>
@@ -134,9 +134,9 @@ export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () =>
                   key={suggestion}
                   type="button"
                   onClick={() => applySuggestion(suggestion)}
-                  className="rounded-2xl border border-[#482b1a]/10 bg-white/70 p-3 text-left text-sm leading-6 text-[#685f58] transition hover:border-[#8f001c]/30 hover:text-[#18110d]"
+                  className="rounded-2xl border border-[#482b1a]/10 bg-white/70 p-3 text-left text-sm leading-6 text-[#8B7B70] transition hover:border-[#C2A574]/30 hover:text-[#3A2B24]"
                 >
-                  <span className="mb-1 block text-xs font-bold uppercase tracking-[0.16em] text-[#8f001c]">
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-[0.16em] text-[#C2A574]">
                     Option {index + 1}
                   </span>
                   {suggestion}
@@ -151,14 +151,14 @@ export function Step6Bio({ onNext, onBack }: { onNext: () => void; onBack: () =>
               variant="ghost" 
               onClick={onBack} 
               disabled={isLoading}
-              className="text-black hover:text-[#97011A]"
+              className="text-black hover:text-[#C2A574]"
             >
               Back
             </Button>
             <Button 
               type="submit" 
               disabled={isLoading}
-              className="bg-[#97011A] hover:bg-[#7A010E] text-white rounded-full px-6"
+              className="bg-[#C2A574] hover:bg-[#B9975E] text-[#3A2B24] rounded-full px-6"
             >
               {isLoading ? "Saving..." : "Next"}
             </Button>

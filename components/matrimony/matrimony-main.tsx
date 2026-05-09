@@ -21,7 +21,7 @@ import { AppSettings } from "@/components/settings/app-settings"
 import { PremiumScreen } from "@/components/premium/premium-screen"
 import { PaymentScreen } from "@/components/premium/payment-screen"
 import { PremiumFeatures } from "@/components/premium/premium-features"
-import { DiscountOfferDialog } from "@/components/premium/discount-offer-dialog"
+import { DiscountOfferDialog, DiscountOfferTimer } from "@/components/premium/discount-offer-dialog"
 import { VerificationStatus } from "@/components/profile/verification-status"
 import { EditProfile } from "@/components/profile/edit-profile"
 import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
@@ -34,7 +34,7 @@ import {
   getMatrimonyLikedProfiles,
   recordMatrimonyLike,
 } from "@/lib/matchmakingService"
-import { getSuperLikeLimitStatus, type UsageLimitStatus } from "@/lib/planLimits"
+import { getSuperLikeLimitStatus, getUserEntitlementStatus, type UsageLimitStatus } from "@/lib/planLimits"
 import { getProfileContacts, revealProfileContact } from "@/lib/profileContacts"
 import { MatchNotification } from "@/components/chat/match-notification"
 import type { FilterState } from "@/components/matrimony/matrimony-filter-sheet"
@@ -97,6 +97,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
   const [appliedFilters, setAppliedFilters] = useState<FilterState | null>(null)
   const [shortlistModalProfile, setShortlistModalProfile] = useState<MatrimonyProfile | null>(null)
   const [swipeLimitStatus, setSwipeLimitStatus] = useState<UsageLimitStatus | null>(null)
+  const [viewerIsPremium, setViewerIsPremium] = useState(false)
   const [premiumBackTarget, setPremiumBackTarget] = useState<"discover" | "profile" | "activity">("profile")
   const { toast } = useToast()
   const {
@@ -283,6 +284,8 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         }
 
         await refreshSwipeLimitStatus(user.id)
+        const entitlement = await getUserEntitlementStatus(user.id)
+        setViewerIsPremium(entitlement.isPremium)
 
         // Fetch current user's gender from user_profiles
         const { data: currentUserProfile, error: currentUserError } = await supabase
@@ -573,6 +576,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
               interests: [], // Not in current schema, can be added later
               verified: verification?.verification_status === "approved",
               premium: premiumUserIds.has(matrimonyProfile.user_id),
+              demo: Boolean(matrimonyProfile.is_seeded_profile),
               height, // Add height to profile
               phoneMasked: contact?.phoneMasked || undefined,
               phone: contact?.phoneRevealed || undefined,
@@ -835,64 +839,71 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       {/* Floating header elements */}
       {currentScreen === "discover" && (
         <>
-          <div className="fixed left-4 top-[calc(0.75rem+env(safe-area-inset-top))] z-40 max-w-[70vw] rounded-[1.35rem] border border-[#d8c79f]/36 bg-[#ffffff]/78 px-4 py-3 shadow-[0_24px_60px_rgba(24,17,13,0.16)] backdrop-blur-2xl sm:left-6 sm:px-5">
-            <p className="luxe-kicker text-[0.58rem] text-[#8f001c] sm:text-[0.65rem]">Lovesathi private salon</p>
-            <p className="truncate font-serif text-xl font-bold leading-none tracking-[-0.05em] text-[#18110d] sm:text-2xl">Curated discovery</p>
-            <p className="mt-1 hidden text-xs font-semibold text-[#685f58] sm:block">{profiles.length} profile dossiers prepared</p>
+          <div className="fixed left-4 top-[calc(0.75rem+env(safe-area-inset-top))] z-40 max-w-[70vw] rounded-[1.35rem] border border-[#C2A574]/36 bg-[#ffffff]/78 px-4 py-3 shadow-[0_24px_60px_rgba(24,17,13,0.16)] backdrop-blur-2xl sm:left-6 sm:px-5">
+            <p className="luxe-kicker text-[0.58rem] text-[#C2A574] sm:text-[0.65rem]">Lovesathi private salon</p>
+            <p className="truncate font-serif text-xl font-bold leading-none tracking-[-0.05em] text-[#3A2B24] sm:text-2xl">Curated discovery</p>
+            <p className="mt-1 hidden text-xs font-semibold text-[#8B7B70] sm:block">{profiles.length} profile dossiers prepared</p>
           </div>
           <div className="fixed right-3 top-[calc(0.75rem+env(safe-area-inset-top))] z-40 sm:right-6">
             <Button
               variant="secondary"
               size="default"
-              className="rounded-full border border-[#d8c79f]/40 bg-[#ffffff]/86 px-4 py-5 text-[#18110d] shadow-[0_24px_60px_rgba(24,17,13,0.16)] backdrop-blur-2xl hover:bg-white sm:px-5"
+              className="rounded-full border border-[#C2A574]/40 bg-[#ffffff]/86 px-4 py-5 text-[#3A2B24] shadow-[0_24px_60px_rgba(24,17,13,0.16)] backdrop-blur-2xl hover:bg-white sm:px-5"
               onClick={() => setShowFilters(true)}
             >
-              <Filter className="h-5 w-5 text-[#8f001c]" />
+              <Filter className="h-5 w-5 text-[#C2A574]" />
               <span className="hidden font-bold sm:inline">Refine</span>
             </Button>
           </div>
+          <DiscountOfferTimer
+            onSubscribe={() => {
+              setSelectedPlanId("essential")
+              setPremiumBackTarget("discover")
+              setCurrentScreen("premium")
+            }}
+          />
         </>
       )}
 
       {currentScreen === "discover" && (
-        <div className="fixed inset-0 flex h-[100dvh] min-h-[100dvh] w-screen flex-col overflow-hidden bg-[#fdfdfb]">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_14%,rgba(216,199,159,0.34),transparent_25rem),radial-gradient(circle_at_82%_12%,rgba(143,0,28,0.18),transparent_28rem),radial-gradient(circle_at_50%_104%,rgba(185,144,77,0.30),transparent_32rem),linear-gradient(135deg,#fdfdfb_0%,#fbf3e5_46%,#f1d9aa_100%)]" />
+        <div className="fixed inset-0 flex h-[100dvh] min-h-[100dvh] w-screen flex-col overflow-hidden bg-[#F7F3EE]">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_14%,rgba(216,199,159,0.34),transparent_25rem),radial-gradient(circle_at_82%_12%,rgba(194,165,116,0.18),transparent_28rem),radial-gradient(circle_at_50%_104%,rgba(185,144,77,0.30),transparent_32rem),linear-gradient(135deg,#F7F3EE_0%,#fbf3e5_46%,#f1d9aa_100%)]" />
           <div className="pointer-events-none absolute inset-0 opacity-[0.34] [background-image:linear-gradient(rgba(185,144,77,0.14)_1px,transparent_1px),linear-gradient(90deg,rgba(185,144,77,0.10)_1px,transparent_1px)] [background-size:88px_88px] [mask-image:radial-gradient(circle_at_center,black,transparent_76%)]" />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[linear-gradient(to_bottom,rgba(255,253,248,0.96),rgba(255,253,248,0))]" />
-          <div className="pointer-events-none absolute left-1/2 top-20 hidden h-[78vh] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[#d8c79f]/30 to-transparent lg:block" />
-          <div className="pointer-events-none absolute bottom-[-9rem] left-1/2 h-72 w-[52rem] -translate-x-1/2 rounded-full bg-[#b79b62]/20 blur-3xl" />
+          <div className="pointer-events-none absolute left-1/2 top-20 hidden h-[78vh] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[#C2A574]/30 to-transparent lg:block" />
+          <div className="pointer-events-none absolute bottom-[-9rem] left-1/2 h-72 w-[52rem] -translate-x-1/2 rounded-full bg-[#C2A574]/20 blur-3xl" />
           <DynamicBackground imageUrl={currentProfile?.photos?.[0] || null} />
           
           <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center overflow-hidden px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(7.5rem+env(safe-area-inset-top))] sm:px-6 sm:pb-[calc(6.25rem+env(safe-area-inset-bottom))] lg:px-10 lg:pt-28">
             {loading ? (
               <div className="flex items-center justify-center h-full w-full">
-                <div className="luxe-card rounded-[2rem] border-[#d8c79f]/30 p-8 text-center shadow-[0_28px_90px_rgba(24,17,13,0.14)]">
-                  <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#d8c79f] border-t-[#8f001c]" />
-                  <p className="mt-4 luxe-kicker text-[0.62rem] text-[#8f001c]">private curation</p>
-                  <p className="mt-2 text-sm font-bold text-[#18110d]">Preparing premium profile dossiers...</p>
+                <div className="luxe-card rounded-[2rem] border-[#C2A574]/30 p-8 text-center shadow-[0_28px_90px_rgba(24,17,13,0.14)]">
+                  <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#C2A574] border-t-[#C2A574]" />
+                  <p className="mt-4 luxe-kicker text-[0.62rem] text-[#C2A574]">private curation</p>
+                  <p className="mt-2 text-sm font-bold text-[#3A2B24]">Preparing premium profile dossiers...</p>
                 </div>
               </div>
             ) : (
               <div className="grid w-full max-w-[1240px] items-center gap-5 lg:grid-cols-[minmax(230px,0.78fr)_minmax(420px,500px)_minmax(230px,0.78fr)] xl:gap-8">
                 <aside className="hidden lg:block">
-                  <div className="luxe-card space-y-5 rounded-[2rem] border-[#d8c79f]/28 p-6 shadow-[0_30px_90px_rgba(24,17,13,0.12)]">
+                  <div className="luxe-card space-y-5 rounded-[2rem] border-[#C2A574]/28 p-6 shadow-[0_30px_90px_rgba(24,17,13,0.12)]">
                     <div>
-                      <p className="luxe-kicker text-[0.62rem] text-[#8f001c]">today's salon</p>
-                      <h2 className="mt-2 font-serif text-4xl font-bold leading-[0.95] tracking-[-0.07em] text-[#18110d]">
+                      <p className="luxe-kicker text-[0.62rem] text-[#C2A574]">today's salon</p>
+                      <h2 className="mt-2 font-serif text-4xl font-bold leading-[0.95] tracking-[-0.07em] text-[#3A2B24]">
                         Serious introductions, beautifully curated.
                       </h2>
                     </div>
-                    <p className="text-sm font-semibold leading-6 text-[#685f58]">
+                    <p className="text-sm font-semibold leading-6 text-[#8B7B70]">
                       Every card should feel like a private profile dossier, not a casual swipe tile.
                     </p>
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="rounded-2xl border border-[#d8c79f]/24 bg-white/62 p-4">
-                        <p className="font-serif text-3xl font-bold tracking-[-0.06em] text-[#8f001c]">{profiles.length}</p>
-                        <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#685f58]">profiles</p>
+                      <div className="rounded-2xl border border-[#C2A574]/24 bg-white/62 p-4">
+                        <p className="font-serif text-3xl font-bold tracking-[-0.06em] text-[#C2A574]">{profiles.length}</p>
+                        <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#8B7B70]">profiles</p>
                       </div>
-                      <div className="rounded-2xl border border-[#d8c79f]/24 bg-white/62 p-4">
-                        <ShieldCheck className="h-6 w-6 text-[#8f001c]" />
-                        <p className="mt-3 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#685f58]">trust first</p>
+                      <div className="rounded-2xl border border-[#C2A574]/24 bg-white/62 p-4">
+                        <ShieldCheck className="h-6 w-6 text-[#C2A574]" />
+                        <p className="mt-3 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#8B7B70]">trust first</p>
                       </div>
                     </div>
                   </div>
@@ -901,8 +912,8 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                 {/* Card Stack */}
                 <div className="relative mx-auto flex h-[min(64svh,610px)] w-full max-w-[min(92vw,470px)] items-center justify-center overflow-visible md:h-[min(72dvh,680px)]">
                   <div className="pointer-events-none absolute -inset-8 rounded-[3rem] bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.78),rgba(216,199,159,0.22)_42%,transparent_70%)] blur-xl" />
-                  <div className="pointer-events-none absolute -bottom-8 h-20 w-[82%] rounded-full bg-[#18110d]/20 blur-2xl" />
-                  <div className="pointer-events-none absolute inset-x-7 -bottom-4 h-5 rounded-full bg-[#685f58]/18 blur-md" />
+                  <div className="pointer-events-none absolute -bottom-8 h-20 w-[82%] rounded-full bg-[#3A2B24]/20 blur-2xl" />
+                  <div className="pointer-events-none absolute inset-x-7 -bottom-4 h-5 rounded-full bg-[#8B7B70]/18 blur-md" />
                   {hasMoreProfiles && profiles.length > 0 ? (
                     <div className="relative w-full h-full overflow-visible">
                       {visibleProfileStack.map(({ profile, key }, index) => (
@@ -918,6 +929,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                               photos={profile.photos}
                               verified={profile.verified}
                               premium={profile.premium}
+                              viewerIsPremium={viewerIsPremium}
                               demo={profile.demo}
                               visibilityLabel={profile.visibilityLabel}
                               bio={profile.bio}
@@ -936,12 +948,27 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                                   "discover",
                                 )
                               }
+                              onPremiumProfileUpgrade={() =>
+                                showPremiumUpsell(
+                                  "Unlock premium profile details",
+                                  "Premium profiles are visible to free members, but photos and full details unlock with a paid Lovesathi plan.",
+                                  "discover",
+                                )
+                              }
                               onRevealPhone={handleRevealPhone}
                               isShortlisted={shortlistedIds.has(profile.id)}
                               onToggleShortlist={() => handleShortlistToggle(profile)}
                               swipeLocked={swipeLocked}
                               onSwipeLocked={showSwipePaywall}
                               onProfileClick={() => {
+                                if (profile.premium && !viewerIsPremium) {
+                                  showPremiumUpsell(
+                                    "Unlock premium profile details",
+                                    "Subscribe to view premium profile photos and full family details.",
+                                    "discover",
+                                  )
+                                  return
+                                }
                                 setShortlistModalProfile(profile)
                               }}
                               stackIndex={index}
@@ -950,14 +977,14 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                         ))}
                     </div>
                   ) : (
-                    <Card className="luxe-card flex h-96 w-full max-w-sm items-center justify-center rounded-[2rem] border-[#d8c79f]/30 shadow-[0_28px_90px_rgba(24,17,13,0.12)]">
+                    <Card className="luxe-card flex h-96 w-full max-w-sm items-center justify-center rounded-[2rem] border-[#C2A574]/30 shadow-[0_28px_90px_rgba(24,17,13,0.12)]">
                       <CardContent className="text-center space-y-4">
-                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#8f001c]/10">
-                          <Heart className="h-8 w-8 text-[#8f001c]" />
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#C2A574]/10">
+                          <Heart className="h-8 w-8 text-[#C2A574]" />
                         </div>
                         <div className="space-y-2">
-                          <h3 className="font-serif text-2xl font-bold text-[#18110d]">No more profiles</h3>
-                          <p className="text-sm leading-6 text-[#685f58]">
+                          <h3 className="font-serif text-2xl font-bold text-[#3A2B24]">No more profiles</h3>
+                          <p className="text-sm leading-6 text-[#8B7B70]">
                             {profiles.length === 0
                               ? "No matching completed profiles are available right now. Try relaxing filters, checking your preferences, or coming back after more members complete verification."
                               : "You have reviewed this set. New completed profiles will appear here as members join."}
@@ -987,18 +1014,18 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
                 <aside className="hidden lg:block">
                   <div className="space-y-4">
-                    <div className="rounded-[1.75rem] border border-[#d8c79f]/28 bg-[#ffffff]/76 p-5 shadow-[0_24px_70px_rgba(24,17,13,0.10)] backdrop-blur-2xl">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#8f001c] text-[#ffffff] shadow-[0_18px_42px_rgba(143,0,28,0.22)]">
+                    <div className="rounded-[1.75rem] border border-[#C2A574]/28 bg-[#ffffff]/76 p-5 shadow-[0_24px_70px_rgba(24,17,13,0.10)] backdrop-blur-2xl">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#C2A574] text-[#3A2B24] shadow-[0_18px_42px_rgba(194,165,116,0.22)]">
                         <Sparkles className="h-5 w-5" />
                       </div>
-                      <h3 className="mt-4 font-serif text-2xl font-bold tracking-[-0.05em] text-[#18110d]">Refined discovery</h3>
-                      <p className="mt-2 text-sm font-semibold leading-6 text-[#685f58]">
+                      <h3 className="mt-4 font-serif text-2xl font-bold tracking-[-0.05em] text-[#3A2B24]">Refined discovery</h3>
+                      <p className="mt-2 text-sm font-semibold leading-6 text-[#8B7B70]">
                         Tune age, height, location, family context, lifestyle, and verified-only visibility.
                       </p>
                     </div>
-                    <div className="rounded-[1.75rem] border border-[#d8c79f]/28 bg-[#18110d]/88 p-5 text-[#ffffff] shadow-[0_28px_90px_rgba(24,17,13,0.18)] backdrop-blur-2xl">
-                      <Crown className="h-6 w-6 text-[#d8c79f]" />
-                      <p className="mt-4 luxe-kicker text-[0.58rem] text-[#d8c79f]">premium signal</p>
+                    <div className="rounded-[1.75rem] border border-[#C2A574]/28 bg-[#3A2B24]/88 p-5 text-[#ffffff] shadow-[0_28px_90px_rgba(24,17,13,0.18)] backdrop-blur-2xl">
+                      <Crown className="h-6 w-6 text-[#C2A574]" />
+                      <p className="mt-4 luxe-kicker text-[0.58rem] text-[#C2A574]">premium signal</p>
                       <p className="mt-2 text-sm font-semibold leading-6 text-[#ffffff]/78">
                         Verified filters reopen after the free allowance when a paid membership is active.
                       </p>
@@ -1009,7 +1036,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             )}
           </div>
           {hasMoreProfiles && profiles.length > 0 && (
-            <div className="pointer-events-none fixed bottom-[calc(5.35rem+env(safe-area-inset-bottom))] left-1/2 z-30 hidden -translate-x-1/2 rounded-full border border-[#d8c79f]/24 bg-[#ffffff]/70 px-4 py-2 text-xs font-bold text-[#685f58] shadow-[0_18px_48px_rgba(24,17,13,0.12)] backdrop-blur-xl sm:block">
+            <div className="pointer-events-none fixed bottom-[calc(5.35rem+env(safe-area-inset-bottom))] left-1/2 z-30 hidden -translate-x-1/2 rounded-full border border-[#C2A574]/24 bg-[#ffffff]/70 px-4 py-2 text-xs font-bold text-[#8B7B70] shadow-[0_18px_48px_rgba(24,17,13,0.12)] backdrop-blur-xl sm:block">
               Swipe with intention. Tap the card for the full dossier.
             </div>
           )}
@@ -1017,7 +1044,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {currentScreen === "messages" && (
-        <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#fdfdfb]">
+        <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#F7F3EE]">
           <MatrimonyChatList onChatClick={(chatId) => {
             setSelectedChatId(chatId)
             setCurrentScreen("chat")
@@ -1026,7 +1053,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {currentScreen === "activity" && (
-        <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#fdfdfb]">
+        <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#F7F3EE]">
           <ActivityScreen
             mode="matrimony"
             onProfileClick={(userId) => {
@@ -1050,7 +1077,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {currentScreen === "shortlist" && (
-        <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#fdfdfb]">
+        <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#F7F3EE]">
           <div className="flex flex-col h-full relative">
             {/* Static Background */}
             <StaticBackground />
@@ -1068,8 +1095,8 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                     <ArrowLeft className="w-5 h-5" />
                   </Button>
                   <div>
-                    <p className="luxe-kicker text-[0.62rem] text-[#8f001c]">saved profiles</p>
-                    <h1 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#18110d]">Shortlist</h1>
+                    <p className="luxe-kicker text-[0.62rem] text-[#C2A574]">saved profiles</p>
+                    <h1 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#3A2B24]">Shortlist</h1>
                   </div>
                 </div>
               </div>

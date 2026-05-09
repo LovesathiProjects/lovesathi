@@ -35,7 +35,7 @@ export default function GoogleLoginButton({ variant = "signup" }: GoogleLoginBut
   return (
     <Button
       variant="outline"
-      className={`h-12 w-full rounded-2xl border border-[#482b1a]/18 bg-[#ffffff]/86 font-bold text-[#18110d] shadow-sm transition-all hover:border-[#8f001c]/40 hover:bg-white hover:text-[#8f001c] active:bg-[#f4f2ee] ${
+      className={`h-12 w-full rounded-2xl border border-[#482b1a]/18 bg-[#ffffff]/86 font-bold text-[#3A2B24] shadow-sm transition-all hover:border-[#C2A574]/40 hover:bg-white hover:text-[#C2A574] active:bg-[#EFE7DB] ${
         isPressed || isLoading ? "opacity-80" : ""
       }`}
       size="lg"

@@ -37,13 +37,13 @@ export function MatrimonySetup() {
 
   return (
     <div className="luxe-light-page relative flex min-h-screen flex-col overflow-hidden">
-      <div className="luxe-orb left-[-8rem] top-20 h-80 w-80 bg-[#b79b62]/18" />
-      <div className="luxe-orb right-[-10rem] top-10 h-96 w-96 bg-[#8f001c]/14" style={{ animationDelay: "1.2s" }} />
+      <div className="luxe-orb left-[-8rem] top-20 h-80 w-80 bg-[#C2A574]/18" />
+      <div className="luxe-orb right-[-10rem] top-10 h-96 w-96 bg-[#C2A574]/14" style={{ animationDelay: "1.2s" }} />
       {/* Header with exit button and progress */}
-      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[#d8c79f]/24 bg-white/82 px-4 py-4 shadow-[0_16px_60px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:px-6">
+      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[#C2A574]/24 bg-white/82 px-4 py-4 shadow-[0_16px_60px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:px-6">
         <button
           onClick={onExit}
-          className="-ml-2 rounded-full border border-[#482b1a]/10 bg-white/70 p-2 text-[#18110d] transition-colors hover:border-[#8f001c]/30 hover:bg-white"
+          className="-ml-2 rounded-full border border-[#482b1a]/10 bg-white/70 p-2 text-[#3A2B24] transition-colors hover:border-[#C2A574]/30 hover:bg-white"
         >
           <X className="h-6 w-6" />
         </button>
@@ -53,15 +53,15 @@ export function MatrimonySetup() {
               key={index}
               className={`h-2 shrink-0 rounded-full transition-all ${
                 index === step
-                  ? "w-9 bg-[#8f001c]"
+                  ? "w-9 bg-[#C2A574]"
                   : index < step
-                  ? "w-3 bg-[#b79b62]"
+                  ? "w-3 bg-[#C2A574]"
                   : "w-2 bg-[#482b1a]/18"
               }`}
             />
           ))}
         </div>
-        <div className="w-10 text-right text-xs font-bold uppercase tracking-[0.16em] text-[#8f001c]">{step + 1}/7</div>
+        <div className="w-10 text-right text-xs font-bold uppercase tracking-[0.16em] text-[#C2A574]">{step + 1}/7</div>
       </div>
 
       {/* Main Content */}
@@ -69,11 +69,11 @@ export function MatrimonySetup() {
         <aside className="hidden lg:block">
           <div className="sticky top-28 space-y-5">
             <div className="luxe-dark-card rounded-[2rem] p-7 text-[#ffffff]">
-              <p className="luxe-kicker mb-4 text-[#d8c79f]">profile atelier</p>
+              <p className="luxe-kicker mb-4 text-[#C2A574]">profile atelier</p>
               <h1 className="font-serif text-5xl font-bold leading-[0.92] tracking-[-0.055em] text-[#ffffff]">
                 Build a profile worthy of a serious introduction.
               </h1>
-              <p className="mt-5 text-sm leading-7 text-[#d8c79f]">
+              <p className="mt-5 text-sm leading-7 text-[#C2A574]">
                 We collect family, culture, career, and preference signals so discovery can feel calm,
                 intentional, and premium.
               </p>
@@ -83,11 +83,11 @@ export function MatrimonySetup() {
                 <div
                   key={title}
                   className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold ${
-                    index === step ? "bg-[#8f001c] text-[#ffffff]" : index < step ? "text-[#8f001c]" : "text-[#685f58]"
+                    index === step ? "bg-[#C2A574] text-[#3A2B24]" : index < step ? "text-[#C2A574]" : "text-[#8B7B70]"
                   }`}
                 >
                   <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs ${
-                    index === step ? "bg-[#ffffff] text-[#8f001c]" : "bg-[#d8c79f] text-[#18110d]"
+                    index === step ? "bg-[#ffffff] text-[#C2A574]" : "bg-[#C2A574] text-[#3A2B24]"
                   }`}>
                     {index + 1}
                   </span>

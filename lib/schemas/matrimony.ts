@@ -68,6 +68,10 @@ export const partnerPreferencesSchema = z.object({
   locations: z.array(z.string()).optional(),
   communities: z.array(z.string()).optional(),
   familyTypePrefs: z.array(z.string()).optional(),
+  maritalStatusPrefs: z.array(z.string()).optional(),
+  incomePrefs: z.array(z.string()).optional(),
+  manglikPrefs: z.array(z.string()).optional(),
+  profileCreatedByPrefs: z.array(z.string()).optional(),
 })
 
 export const verificationSchema = z.object({

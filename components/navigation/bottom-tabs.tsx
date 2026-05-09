@@ -86,7 +86,7 @@ export function BottomTabs({ activeTab = "discover", onTabChange }: BottomTabsPr
                   {/* Unread message badge for messages icon */}
                   {tab.id === "messages" && unreadCount > 0 && (
                     <div className={cn(
-                      "absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full bg-[#97011A] text-white text-[10px] font-bold shadow-md z-10",
+                      "absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full bg-[#C2A574] text-[#3A2B24] text-[10px] font-bold shadow-md z-10",
                       "border-2 border-white"
                     )}>
                       {unreadCount > 99 ? '99+' : unreadCount}
@@ -95,7 +95,7 @@ export function BottomTabs({ activeTab = "discover", onTabChange }: BottomTabsPr
                   {/* Unread activity badge for activity icon */}
                   {tab.id === "activity" && activityUnreadCount > 0 && (
                     <div className={cn(
-                      "absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full bg-[#97011A] text-white text-[10px] font-bold shadow-md z-10",
+                      "absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full bg-[#C2A574] text-[#3A2B24] text-[10px] font-bold shadow-md z-10",
                       "border-2 border-white"
                     )}>
                       {activityUnreadCount > 99 ? '99+' : activityUnreadCount}

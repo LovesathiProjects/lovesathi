@@ -58,20 +58,20 @@ export default function ForgotPasswordPage() {
   return (
     <div className="luxe-light-page flex min-h-screen flex-col overflow-x-hidden px-4 py-5 sm:px-6">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-full border border-[#482b1a]/10 bg-[#ffffff]/74 px-4 py-3 shadow-sm backdrop-blur-xl">
-        <Button variant="ghost" size="sm" className="rounded-full text-[#18110d]" onClick={() => router.push("/auth")}>
+        <Button variant="ghost" size="sm" className="rounded-full text-[#3A2B24]" onClick={() => router.push("/auth")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-        <h2 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">{title}</h2>
+        <h2 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#3A2B24]">{title}</h2>
         <div className="w-16" />
       </div>
 
       <div className="flex flex-1 items-center justify-center py-10">
         <div className="luxe-card mx-auto w-full max-w-lg space-y-6 rounded-[2rem] p-6 sm:p-8">
           <div className="space-y-2 text-center">
-            <p className="luxe-kicker text-[#8f001c]">Lovesathi recovery</p>
-            <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">{title}</h1>
-            <p className="text-base text-[#685f58]">{subtitle}</p>
+            <p className="luxe-kicker text-[#C2A574]">Lovesathi recovery</p>
+            <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#3A2B24] sm:text-5xl">{title}</h1>
+            <p className="text-base text-[#8B7B70]">{subtitle}</p>
           </div>
 
           {step === "request" && (
@@ -98,15 +98,15 @@ export default function ForgotPasswordPage() {
 
           {step === "sent" && (
             <div className="space-y-5 pt-4 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#d8c79f]/28 bg-[#f7f5f1] text-[#8f001c] shadow-[0_18px_48px_rgba(24,17,13,0.08)]">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#C2A574]/28 bg-[#EFE7DB] text-[#C2A574] shadow-[0_18px_48px_rgba(24,17,13,0.08)]">
                 <Mail className="h-8 w-8" />
               </div>
-              <div className="rounded-[1.5rem] border border-[#d8c79f]/24 bg-white/62 p-4 text-sm font-semibold leading-6 text-[#685f58]">
+              <div className="rounded-[1.5rem] border border-[#C2A574]/24 bg-white/62 p-4 text-sm font-semibold leading-6 text-[#8B7B70]">
                 Check your inbox and spam folder. The recovery link opens a secure Lovesathi session where you can set a new password.
               </div>
               <Button
                 variant="outline"
-                className="h-12 w-full rounded-2xl border-[#482b1a]/16 bg-[#ffffff] font-bold text-[#18110d]"
+                className="h-12 w-full rounded-2xl border-[#482b1a]/16 bg-[#ffffff] font-bold text-[#3A2B24]"
                 onClick={() => setStep("request")}
               >
                 Use a different email

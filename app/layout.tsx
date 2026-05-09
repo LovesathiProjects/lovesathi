@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "sonner"
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster"
 import { SocketProvider } from "@/contexts/SocketContext"
+import { LUXURY_THEME } from "@/lib/luxuryTheme"
 
 const manrope = Manrope({
   variable: "--font-body",
@@ -94,7 +95,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
-  themeColor: "#8f001c",
+  themeColor: LUXURY_THEME.ivoryWhite,
 }
 
 export default function RootLayout({
@@ -103,8 +104,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${manrope.variable} ${cormorant.variable} ${dmMono.variable} antialiased bg-[#fdfdfb]`}>
-      <body className="bg-[#fdfdfb] text-[#18110d]">
+    <html lang="en" className={`${manrope.variable} ${cormorant.variable} ${dmMono.variable} antialiased bg-[#F7F3EE]`}>
+      <body className="bg-[#F7F3EE] text-[#3A2B24]">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
           <SocketProvider>
             {children}

@@ -148,8 +148,8 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex-1 space-y-6">
           <div className="space-y-2">
-            <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#18110d] sm:text-5xl">Welcome</h1>
-            <p className="text-base leading-7 text-[#685f58]">Tell us whose profile we are preparing. Age is derived from your verified birth date.</p>
+            <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#3A2B24] sm:text-5xl">Welcome</h1>
+            <p className="text-base leading-7 text-[#8B7B70]">Tell us whose profile we are preparing. Age is derived from your verified birth date.</p>
           </div>
           
           <div className="flex items-center gap-3 sm:gap-4">
@@ -163,7 +163,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
             <Button
               type="button"
               variant="outline"
-              className="text-xs sm:text-sm bg-[#97011A] text-white border-[#97011A] rounded-full px-4 hover:bg-[#7A010E] hover:border-[#7A010E] transition-all duration-200"
+              className="text-xs sm:text-sm bg-[#C2A574] text-[#3A2B24] border-[#C2A574] rounded-full px-4 hover:bg-[#B9975E] hover:border-[#B9975E] transition-all duration-200"
               onClick={async () => {
                 const input = document.createElement("input")
                 input.type = "file"
@@ -216,7 +216,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
                   <Input 
                     placeholder="Your full name" 
                     {...field} 
-                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
+                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20 rounded-xl"
                   />
                 </FormControl>
                 <FormMessage />
@@ -225,12 +225,12 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
           />
 
           {verifiedDob ? (
-            <div className="rounded-3xl border border-[#b79b62]/24 bg-[#ffffff]/76 p-4">
-              <p className="luxe-kicker text-[#8f001c]">verified age</p>
-              <p className="mt-1 font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">
+            <div className="rounded-3xl border border-[#C2A574]/24 bg-[#ffffff]/76 p-4">
+              <p className="luxe-kicker text-[#C2A574]">verified age</p>
+              <p className="mt-1 font-serif text-2xl font-bold tracking-[-0.04em] text-[#3A2B24]">
                 {form.watch("age")} years
               </p>
-              <p className="mt-1 text-sm text-[#685f58]">
+              <p className="mt-1 text-sm text-[#8B7B70]">
                 Based on {formatDateForDisplay(verifiedDob)}. You will not need to enter age again.
               </p>
             </div>
@@ -248,7 +248,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
                       max={80}
                       {...field}
                       onChange={(e) => field.onChange(Number(e.target.value))}
-                      className="h-12 text-base text-[#111] border-black/20 focus:border-[#97011A] focus:ring-2 focus:ring-[#97011A]/20 rounded-xl"
+                      className="h-12 text-base text-[#111] border-black/20 focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20 rounded-xl"
                     />
                   </FormControl>
                   <FormMessage />
@@ -258,12 +258,12 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
           )}
 
           {verifiedGender ? (
-            <div className="rounded-3xl border border-[#b79b62]/24 bg-[#ffffff]/76 p-4">
-              <p className="luxe-kicker text-[#8f001c]">verified gender</p>
-              <p className="mt-1 font-serif text-2xl font-bold tracking-[-0.04em] text-[#18110d]">
+            <div className="rounded-3xl border border-[#C2A574]/24 bg-[#ffffff]/76 p-4">
+              <p className="luxe-kicker text-[#C2A574]">verified gender</p>
+              <p className="mt-1 font-serif text-2xl font-bold tracking-[-0.04em] text-[#3A2B24]">
                 {verifiedGender}
               </p>
-              <p className="mt-1 text-sm text-[#685f58]">
+              <p className="mt-1 text-sm text-[#8B7B70]">
                 This was already captured during verification, so we will not ask again here.
               </p>
             </div>
@@ -277,8 +277,8 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
                   <FormControl>
                     <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       {(["Male", "Female", "Other"] as const).map((opt) => (
-                        <div key={opt} className="flex items-center space-x-2 border-2 border-black/20 rounded-xl p-3 hover:border-[#97011A] transition-colors">
-                          <RadioGroupItem value={opt} id={`gender-${opt}`} className="border-black/40 data-[state=checked]:border-[#97011A] data-[state=checked]:bg-[#97011A]" />
+                        <div key={opt} className="flex items-center space-x-2 border-2 border-black/20 rounded-xl p-3 hover:border-[#C2A574] transition-colors">
+                          <RadioGroupItem value={opt} id={`gender-${opt}`} className="border-black/40 data-[state=checked]:border-[#C2A574] data-[state=checked]:bg-[#C2A574]" />
                           <label htmlFor={`gender-${opt}`} className="text-xs sm:text-sm text-black cursor-pointer">
                             {opt}
                           </label>
@@ -301,8 +301,8 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
                 <FormControl>
                   <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {(["Self", "Parent", "Sibling", "Other"] as const).map((opt) => (
-                      <div key={opt} className="flex items-center space-x-2 border-2 border-black/20 rounded-xl p-3 hover:border-[#97011A] transition-colors">
-                        <RadioGroupItem value={opt} id={`created-${opt}`} className="border-black/40 data-[state=checked]:border-[#97011A] data-[state=checked]:bg-[#97011A]" />
+                      <div key={opt} className="flex items-center space-x-2 border-2 border-black/20 rounded-xl p-3 hover:border-[#C2A574] transition-colors">
+                        <RadioGroupItem value={opt} id={`created-${opt}`} className="border-black/40 data-[state=checked]:border-[#C2A574] data-[state=checked]:bg-[#C2A574]" />
                         <label htmlFor={`created-${opt}`} className="text-xs sm:text-sm text-black cursor-pointer">
                           {opt}
                         </label>
@@ -330,14 +330,14 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
                 } catch {}
                 router.push("/")
               }}
-              className="text-black hover:text-[#97011A]"
+              className="text-black hover:text-[#C2A574]"
             >
               Back
             </Button>
             <Button 
               type="submit" 
               disabled={isLoading}
-              className="bg-[#97011A] hover:bg-[#7A010E] text-white rounded-full px-6"
+              className="bg-[#C2A574] hover:bg-[#B9975E] text-[#3A2B24] rounded-full px-6"
             >
               {isLoading ? "Saving..." : "Next"}
             </Button>

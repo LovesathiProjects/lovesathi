@@ -71,6 +71,10 @@ export interface PartnerPreferencesState {
   locations?: string[]
   communities?: string[]
   familyTypePrefs?: string[]
+  maritalStatusPrefs?: string[]
+  incomePrefs?: string[]
+  manglikPrefs?: string[]
+  profileCreatedByPrefs?: string[]
 }
 
 export interface VerificationState {
@@ -176,6 +180,10 @@ function mapProfileToSetupState(profile: any): Omit<MatrimonySetupState, "setPar
       locations: preferences.locations || [],
       communities: preferences.communities || [],
       familyTypePrefs: preferences.family_type_prefs || [],
+      maritalStatusPrefs: preferences.marital_status_prefs || [],
+      incomePrefs: preferences.income_prefs || [],
+      manglikPrefs: preferences.manglik_prefs || [],
+      profileCreatedByPrefs: preferences.profile_created_by_prefs || [],
     },
     verification: {},
   }
@@ -235,9 +243,9 @@ export function MatrimonySetupProvider({ children }: { children: React.ReactNode
   if (hydrating) {
     return (
       <div className="flex min-h-[26rem] items-center justify-center">
-        <div className="rounded-[2rem] border border-[#d8c79f]/24 bg-white/80 p-7 text-center shadow-[0_20px_70px_rgba(24,17,13,0.08)]">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#8f001c] border-t-transparent" />
-          <p className="mt-4 font-semibold text-[#18110d]">Restoring your saved profile details...</p>
+        <div className="rounded-[2rem] border border-[#C2A574]/24 bg-white/80 p-7 text-center shadow-[0_20px_70px_rgba(24,17,13,0.08)]">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#C2A574] border-t-transparent" />
+          <p className="mt-4 font-semibold text-[#3A2B24]">Restoring your saved profile details...</p>
         </div>
       </div>
     )

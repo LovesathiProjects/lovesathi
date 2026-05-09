@@ -272,13 +272,13 @@ export function LocationPreferencePicker({
       {selected.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {selected.map((location) => (
-            <Badge key={location} variant="outline" className="gap-2 rounded-full border-[#d8c79f]/40 bg-[#ffffff] px-3 py-1 text-[#18110d]">
+            <Badge key={location} variant="outline" className="gap-2 rounded-full border-[#C2A574]/40 bg-[#ffffff] px-3 py-1 text-[#3A2B24]">
               {location}
               <button
                 type="button"
                 aria-label={`Remove ${location}`}
                 onClick={() => onChange(selected.filter((item) => item !== location))}
-                className="rounded-full text-[#8f001c] hover:text-[#5f0012]"
+                className="rounded-full text-[#C2A574] hover:text-[#5f0012]"
               >
                 <X className="h-3 w-3" />
               </button>

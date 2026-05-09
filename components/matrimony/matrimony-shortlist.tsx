@@ -33,8 +33,8 @@ export function MatrimonyShortlistView({
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-[#8f001c]" />
-        <p className="text-sm font-bold text-[#18110d]">Preparing your shortlist...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-[#C2A574]" />
+        <p className="text-sm font-bold text-[#3A2B24]">Preparing your shortlist...</p>
       </div>
     )
   }
@@ -42,12 +42,12 @@ export function MatrimonyShortlistView({
   if (!profiles || profiles.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#8f001c]/10">
-          <Star className="h-8 w-8 text-[#8f001c]" />
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#C2A574]/10">
+          <Star className="h-8 w-8 text-[#C2A574]" />
         </div>
         <div className="space-y-2">
-          <h3 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#18110d]">No shortlisted profiles yet</h3>
-          <p className="max-w-sm text-sm leading-6 text-[#685f58]">
+          <h3 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#3A2B24]">No shortlisted profiles yet</h3>
+          <p className="max-w-sm text-sm leading-6 text-[#8B7B70]">
             Tap the star icon on profiles that deserve a second look and build a calmer family-ready shortlist.
           </p>
         </div>
@@ -60,7 +60,7 @@ export function MatrimonyShortlistView({
       {profiles.map((profile) => (
         <div
           key={profile.id}
-          className="luxe-card cursor-pointer rounded-[1.5rem] border-[#d8c79f]/24 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(24,17,13,0.14)]"
+          className="luxe-card cursor-pointer rounded-[1.5rem] border-[#C2A574]/24 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(24,17,13,0.14)]"
           onClick={() => onOpenProfile?.(profile)}
           role="button"
           tabIndex={0}
@@ -103,7 +103,7 @@ export function MatrimonyShortlistView({
               variant="ghost"
               size="icon"
               className={cn(
-                "flex-shrink-0 rounded-full hover:bg-red-50 hover:text-[#97011A] transition-all",
+                "flex-shrink-0 rounded-full hover:bg-red-50 hover:text-[#C2A574] transition-all",
                 removingId === profile.id && "opacity-60 pointer-events-none",
               )}
               onClick={(event) => {
@@ -113,7 +113,7 @@ export function MatrimonyShortlistView({
               aria-label="Remove from shortlist"
             >
               {removingId === profile.id ? (
-                <Loader2 className="w-4 h-4 animate-spin text-[#97011A]" />
+                <Loader2 className="w-4 h-4 animate-spin text-[#C2A574]" />
               ) : (
                 <Trash2 className="w-4 h-4 text-[#444444]" />
               )}

@@ -72,6 +72,10 @@ export interface MatrimonyProfileFull {
     locations?: string[]
     communities?: string[]
     family_type_prefs?: string[]
+    marital_status_prefs?: string[]
+    income_prefs?: string[]
+    manglik_prefs?: string[]
+    profile_created_by_prefs?: string[]
   }
   step1_completed?: boolean
   step2_completed?: boolean
@@ -660,6 +664,10 @@ export async function saveStep7(
     locations?: string[]
     communities?: string[]
     familyTypePrefs?: string[]
+    maritalStatusPrefs?: string[]
+    incomePrefs?: string[]
+    manglikPrefs?: string[]
+    profileCreatedByPrefs?: string[]
   }
 ): Promise<ServiceResponse> {
   try {
@@ -682,6 +690,10 @@ export async function saveStep7(
       locations: data.locations || [],
       communities: data.communities || [],
       family_type_prefs: data.familyTypePrefs || [],
+      marital_status_prefs: data.maritalStatusPrefs || [],
+      income_prefs: data.incomePrefs || [],
+      manglik_prefs: data.manglikPrefs || [],
+      profile_created_by_prefs: data.profileCreatedByPrefs || [],
     }
 
     const profileData: any = {

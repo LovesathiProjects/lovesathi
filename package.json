@@ -8,7 +8,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "start": "next start",
-    "server": "node server.js"
+    "server": "node server.js",
+    "seed:lovesathi-demo-female": "node scripts/seed-lovesathi-demo-female-profiles.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
