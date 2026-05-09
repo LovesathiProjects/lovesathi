@@ -225,8 +225,8 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="flex-1 space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-full space-y-6 overflow-hidden">
+        <div className="min-w-0 flex-1 space-y-6">
           <div className="space-y-2">
             <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#3A2B24] sm:text-5xl">
               Cultural & Birth Details
@@ -248,7 +248,7 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField
               control={form.control}
               name="religion"
@@ -316,7 +316,7 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
             {!verifiedDob && (
               <FormField
                 control={form.control}
@@ -355,7 +355,7 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
             />
           </div>
 
-          <div className="rounded-3xl border border-[#C2A574]/24 bg-white/58 p-4">
+          <div className="max-w-full overflow-hidden rounded-3xl border border-[#C2A574]/24 bg-white/58 p-3 sm:p-4">
             <FormField
               control={form.control}
               name="pob"
@@ -367,7 +367,7 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
                     countryLabel="Birth Country"
                     stateLabel="Birth State"
                     cityLabel="Birth City"
-                    className="grid grid-cols-1 gap-4 md:grid-cols-3"
+                    className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-3"
                   />
                   <FormMessage />
                 </FormItem>
@@ -375,7 +375,7 @@ export function Step5CulturalAstro({ onNext, onBack }: { onNext: () => void; onB
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField
               control={form.control}
               name="star"

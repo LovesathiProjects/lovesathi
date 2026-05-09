@@ -60,7 +60,7 @@ function SelectField({
   onValueChange: (value: string) => void
 }) {
   return (
-    <div className="space-y-2">
+    <div className="min-w-0 space-y-2">
       <Label>{label}</Label>
       <SearchableSelect
         value={value || undefined}
@@ -319,7 +319,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
   const bioSuggestions = generateSmartBioSuggestions({ name, career, cultural, family, personal })
 
   return (
-    <div className="luxe-light-page min-h-screen">
+    <div className="luxe-light-page min-h-screen overflow-x-hidden">
       <div className="sticky top-0 z-20 border-b border-[#482b1a]/10 bg-[#ffffff]/84 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur-xl">
         <div className="flex items-center justify-between p-4">
           <Button variant="ghost" size="sm" className="p-2" onClick={onBack}>
@@ -336,7 +336,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl p-4 pb-24 sm:p-6">
+      <div className="mx-auto w-full max-w-6xl overflow-hidden px-3 py-4 pb-24 sm:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto rounded-[1.5rem] border border-[#C2A574]/24 bg-[#ffffff]/80 p-1 shadow-[0_14px_45px_rgba(24,17,13,0.08)]">
             <TabsTrigger value="photos" className="min-w-[6.5rem] rounded-[1.15rem]">Photos</TabsTrigger>
@@ -347,7 +347,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
           </TabsList>
 
           <TabsContent value="photos" className="mt-4">
-            <Card className="luxe-card rounded-[2rem] border-[#C2A574]/24">
+            <Card className="luxe-card overflow-hidden rounded-[2rem] border-[#C2A574]/24">
               <CardHeader>
                 <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#3A2B24]">Photos</CardTitle>
               </CardHeader>
@@ -384,7 +384,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
               <CardHeader>
                 <CardTitle>Basic Details</CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-4 sm:grid-cols-2">
+              <CardContent className="grid min-w-0 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Name</Label>
                   <Input value={name} onChange={(e) => setName(e.target.value)} />
@@ -582,6 +582,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                     countryLabel="Work Country"
                     stateLabel="Work State"
                     cityLabel="Work City"
+                    className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-3"
                   />
                 </div>
                 <SelectField
@@ -678,6 +679,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                     countryLabel="Birth Country"
                     stateLabel="Birth State"
                     cityLabel="Birth City"
+                    className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-3"
                   />
                 </div>
                 {dateOfBirth && (

@@ -60,7 +60,7 @@ export function SearchableSelect({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            "h-12 w-full justify-between rounded-xl border-black/20 bg-white px-4 text-left text-base font-normal text-[#111] hover:border-[#C2A574]/45 hover:bg-white focus-visible:ring-[#C2A574]/20 disabled:opacity-60",
+            "h-12 w-full min-w-0 justify-between rounded-xl border-black/20 bg-white px-4 text-left text-base font-normal text-[#111] hover:border-[#C2A574]/45 hover:bg-white focus-visible:ring-[#C2A574]/20 disabled:opacity-60",
             !selectedOption && "text-[#8f8982]",
             triggerClassName,
           )}
@@ -71,7 +71,7 @@ export function SearchableSelect({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className={cn("z-50 w-[--radix-popover-trigger-width] border-[#C2A574]/35 bg-white p-0 text-black shadow-[0_22px_70px_rgba(24,17,13,0.14)]", contentClassName)}
+        className={cn("z-50 w-[--radix-popover-trigger-width] max-w-[calc(100vw-2rem)] border-[#C2A574]/35 bg-white p-0 text-black shadow-[0_22px_70px_rgba(24,17,13,0.14)]", contentClassName)}
       >
         <Command filter={(optionValue, search, keywords) => {
           const haystack = [optionValue, ...(keywords || [])].join(" ").toLowerCase()
@@ -150,7 +150,7 @@ export function SearchableMultiSelect({
             aria-expanded={open}
             disabled={disabled}
             className={cn(
-              "h-12 w-full justify-between rounded-xl border-black/20 bg-white px-4 text-left text-base font-normal text-[#111] hover:border-[#C2A574]/45 hover:bg-white focus-visible:ring-[#C2A574]/20 disabled:opacity-60",
+              "h-12 w-full min-w-0 justify-between rounded-xl border-black/20 bg-white px-4 text-left text-base font-normal text-[#111] hover:border-[#C2A574]/45 hover:bg-white focus-visible:ring-[#C2A574]/20 disabled:opacity-60",
               values.length === 0 && "text-[#8f8982]",
               triggerClassName,
             )}
@@ -163,7 +163,7 @@ export function SearchableMultiSelect({
         </PopoverTrigger>
         <PopoverContent
           align="start"
-          className={cn("z-50 w-[--radix-popover-trigger-width] border-[#C2A574]/35 bg-white p-0 text-black shadow-[0_22px_70px_rgba(24,17,13,0.14)]", contentClassName)}
+          className={cn("z-50 w-[--radix-popover-trigger-width] max-w-[calc(100vw-2rem)] border-[#C2A574]/35 bg-white p-0 text-black shadow-[0_22px_70px_rgba(24,17,13,0.14)]", contentClassName)}
         >
           <Command filter={(optionValue, search, keywords) => {
             const haystack = [optionValue, ...(keywords || [])].join(" ").toLowerCase()

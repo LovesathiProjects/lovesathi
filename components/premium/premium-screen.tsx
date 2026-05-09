@@ -77,7 +77,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
   }, [])
 
   return (
-    <div className={cn("relative min-h-[100dvh] overflow-x-hidden", isMatrimony ? "luxe-light-page" : "bg-[#0E0F12]")}>
+    <div className={cn("relative min-h-[100dvh] w-full max-w-full overflow-x-hidden", isMatrimony ? "luxe-light-page" : "bg-[#0E0F12]")}>
       {/* Header */}
       <div className={cn(
         "sticky top-0 z-10 border-b shadow-lg",
@@ -85,7 +85,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
           ? "border-[#E5E5E5] bg-white"
           : "backdrop-blur-xl border-white/20 bg-[#14161B]/50"
       )}>
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 p-4">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:p-4">
           {onBack && (
             <Button
               variant="ghost"
@@ -98,31 +98,35 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
               )}
               onClick={onBack}
             >
-              <ArrowLeft className={cn("w-4 h-4 mr-2", isMatrimony ? "text-black" : "text-white")} />
-              <span className={cn(isMatrimony ? "text-black" : "text-white")}>Back</span>
+              <ArrowLeft className={cn("h-4 w-4 sm:mr-2", isMatrimony ? "text-black" : "text-white")} />
+              <span className={cn("hidden sm:inline", isMatrimony ? "text-black" : "text-white")}>Back</span>
             </Button>
           )}
-          {!onBack && <div className="w-16"></div>}
-          <h1 className={cn("font-serif text-3xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#3A2B24]" : "text-white")}>Lovesathi Signature</h1>
-          <div className="w-16"></div>
+          {!onBack && <div className="w-10 sm:w-16"></div>}
+          <h1 className={cn("min-w-0 truncate text-center font-serif text-2xl font-bold tracking-[-0.05em] sm:text-3xl", isMatrimony ? "text-[#3A2B24]" : "text-white")}>Lovesathi Premium</h1>
+          <div className="w-10 sm:w-16"></div>
         </div>
       </div>
 
-      <div className="overflow-y-auto">
+      <div className="overflow-x-hidden overflow-y-auto">
         {/* Hero Section */}
         <div className={cn(
-          "bg-gradient-to-br from-[#3A2B24] via-[#5f0012] to-[#C2A574] p-8 text-[#ffffff] shadow-[0_26px_80px_rgba(24,17,13,0.28)]",
+          "w-full overflow-hidden bg-gradient-to-br from-[#3A2B24] via-[#5f0012] to-[#C2A574] px-4 py-8 text-[#ffffff] shadow-[0_26px_80px_rgba(24,17,13,0.28)] sm:p-8",
           isMatrimony ? "" : "glass-apple"
         )}>
-          <div className="text-center space-y-4">
+          <div className="mx-auto max-w-3xl space-y-4 text-center">
             <div className="flex justify-center">
-              <Crown className="w-16 h-16 fill-current" />
+              <Crown className="h-12 w-12 fill-current sm:h-16 sm:w-16" />
             </div>
             <div>
               <p className="luxe-kicker mb-3 text-[#C2A574]">premium matrimony</p>
-              <h1 className="font-serif text-5xl font-bold tracking-[-0.05em] text-[#ffffff]">A more intentional path to the right family.</h1>
-              <p className="mx-auto mt-4 max-w-xl text-[#C2A574]">Unlock refined discovery, richer signals, and priority trust features without turning matrimony into noise.</p>
-              <Badge className="mt-4 border border-[#C2A574]/40 bg-[#ffffff]/14 px-4 py-2 text-sm font-black uppercase tracking-[0.18em] text-[#fff7df]">
+              <h1 className="mx-auto max-w-[18rem] font-serif text-4xl font-bold leading-[0.96] tracking-[-0.05em] text-[#ffffff] sm:max-w-2xl sm:text-5xl">
+                A more intentional path to the right family.
+              </h1>
+              <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-[#f0d6a4] sm:text-lg">
+                Unlock refined discovery, richer signals, and priority trust features without turning matrimony into noise.
+              </p>
+              <Badge className="mx-auto mt-4 max-w-full whitespace-normal rounded-full border border-[#C2A574]/40 bg-[#ffffff]/14 px-4 py-2 text-center text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#fff7df] sm:text-sm sm:tracking-[0.18em]">
                 Every plan includes 70% off forever
               </Badge>
               {entitlement?.isPremium && activePlan && (
@@ -142,22 +146,22 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
           </div>
         </div>
         {/* Features Section */}
-        <div className={cn("mx-auto max-w-7xl space-y-6 p-4 sm:p-6", isMatrimony ? "bg-white/0" : "")}>
+        <div className={cn("mx-auto w-full max-w-7xl space-y-6 px-5 py-6 sm:p-6", isMatrimony ? "bg-white/0" : "")}>
           <div className="space-y-4">
-            <h2 className={cn("text-center font-serif text-4xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#3A2B24]" : "text-white")}>Premium Features</h2>
-            <div className="grid gap-4">
+            <h2 className={cn("text-center font-serif text-4xl font-bold tracking-[-0.05em] sm:text-5xl", isMatrimony ? "text-[#3A2B24]" : "text-white")}>Premium Features</h2>
+            <div className="grid min-w-0 gap-4">
               {premiumFeatures.map((feature, index) => (
                 <div key={feature.title}>
-                  <div className="flex items-start space-x-4">
+                  <div className="flex min-w-0 items-start gap-4">
                     <div className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0",
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
                       isMatrimony ? "bg-[#C2A574]/10" : "bg-[#C2A574]/10"
                     )}>
                       <feature.icon className="w-5 h-5" style={{ color: '#C2A574' }} />
                     </div>
-                    <div className="space-y-1 flex-1">
+                    <div className="min-w-0 flex-1 space-y-1">
                       <h3 className={cn("font-semibold", isMatrimony ? "text-black" : "text-white")}>{feature.title}</h3>
-                      <p className={cn("text-sm", isMatrimony ? "text-[#666666]" : "text-[#A1A1AA]")}>{feature.description}</p>
+                      <p className={cn("text-sm leading-6", isMatrimony ? "text-[#666666]" : "text-[#A1A1AA]")}>{feature.description}</p>
                     </div>
                   </div>
                   {isMatrimony && index < premiumFeatures.length - 1 && (

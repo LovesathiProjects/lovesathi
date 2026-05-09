@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { SearchableSelect, type SearchableOption } from "@/components/ui/searchable-select"
 import { formatLocationValue, type LocationValue } from "@/lib/location"
+import { cn } from "@/lib/utils"
 
 type LocationOption = {
   id: number
@@ -171,8 +172,8 @@ export function LocationCascadeSelect({
   }
 
   return (
-    <div className={className}>
-      <div className="space-y-2">
+    <div className={cn("min-w-0 max-w-full", className)}>
+      <div className="min-w-0 space-y-2">
         <Label className="text-black">{countryLabel}</Label>
         <SearchableSelect
           value={countryId || undefined}
@@ -185,7 +186,7 @@ export function LocationCascadeSelect({
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-2">
         <Label className="text-black">{stateLabel}</Label>
         <SearchableSelect
           value={stateId || undefined}
@@ -206,7 +207,7 @@ export function LocationCascadeSelect({
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-2">
         <Label className="text-black">{cityLabel}</Label>
         <SearchableSelect
           value={cityValue ? String(cityValue.id) : undefined}

@@ -178,15 +178,15 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade
   }
 
   const tabs = [
-    { id: 'all_matches' as const, label: 'All time matched', count: activities.filter(a => a.type === 'match').length, icon: Sparkles },
+    { id: 'all_matches' as const, label: 'All time matched', shortLabel: 'All matches', count: activities.filter(a => a.type === 'match').length, icon: Sparkles },
     { id: 'today_matches' as const, label: 'Matched today', count: activities.filter((a) => {
       if (a.type !== 'match') return false
       const occurred = new Date(a.occurredAt || a.timestamp)
       const today = new Date()
       return occurred.getFullYear() === today.getFullYear() && occurred.getMonth() === today.getMonth() && occurred.getDate() === today.getDate()
-    }).length, icon: CalendarDays },
-    { id: 'super_liked' as const, label: 'Super liked', count: activities.filter(a => a.type === 'super_like').length, icon: Gem },
-    { id: 'recent_views' as const, label: 'Recently viewed', count: activities.filter(a => a.type === 'view').length, icon: Eye },
+    }).length, shortLabel: 'Today', icon: CalendarDays },
+    { id: 'super_liked' as const, label: 'Super liked', shortLabel: 'Super Likes', count: activities.filter(a => a.type === 'super_like').length, icon: Gem },
+    { id: 'recent_views' as const, label: 'Recently viewed', shortLabel: 'Views', count: activities.filter(a => a.type === 'view').length, icon: Eye },
   ]
 
   return (
@@ -221,13 +221,13 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2 overflow-x-auto">
+          <div className="-mx-4 flex max-w-[100vw] gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold whitespace-nowrap transition-colors",
+                  "flex shrink-0 items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold whitespace-nowrap transition-colors",
                   activeTab === tab.id
                     ? "bg-[#C2A574] text-[#3A2B24] shadow-[0_12px_28px_rgba(194,165,116,0.22)]"
                     : isMatrimony 
@@ -236,10 +236,11 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade
                 )}
               >
                 <tab.icon className="h-4 w-4" />
-                {tab.label}
+                <span className="sm:hidden">{tab.shortLabel}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
                 {tab.count > 0 && (
                   <Badge className={cn(
-                    "ml-2 text-xs",
+                    "ml-1 text-xs sm:ml-2",
                     activeTab === tab.id 
                       ? "bg-white/20 text-white"
                       : isMatrimony
