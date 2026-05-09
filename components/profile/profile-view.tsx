@@ -12,7 +12,7 @@ import { recordMatrimonyLike, recordMatrimonyProfileView } from "@/lib/matchmaki
 import { EditProfile } from "./edit-profile"
 import type { MatrimonyProfileFull } from "@/lib/matrimonyService"
 import { useToast } from "@/hooks/use-toast"
-import { getProfileContact, type ProfileContactInfo } from "@/lib/profileContacts"
+import { getProfileContact, revealProfileContact, type ProfileContactInfo } from "@/lib/profileContacts"
 
 interface ProfileViewProps {
   isOwnProfile?: boolean
@@ -179,7 +179,38 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
   const cultural = profile?.cultural || {}
   const preferences = profile?.partner_preferences || {}
   const locationParts = [career.work_location?.city, career.work_location?.state, career.work_location?.country].filter(Boolean)
-  const displayPhone = contact?.canReveal ? contact.phoneRevealed || contact.phoneMasked : contact?.phoneMasked
+  const phoneIsRevealed = Boolean(contact?.phoneRevealed)
+  const displayPhone = contact?.phoneRevealed || contact?.phoneMasked
+
+  async function handleRevealContact() {
+    if (!userId || isOwnProfile) return
+    if (phoneIsRevealed) return
+    if (!contact?.canReveal) {
+      onUpgrade?.()
+      toast({
+        title: "Unlock contact details",
+        description: "Choose a paid plan to reveal masked phone numbers.",
+      })
+      return
+    }
+
+    try {
+      const revealed = await revealProfileContact(userId)
+      setContact(revealed)
+      toast({
+        title: "Contact revealed",
+        description: revealed.remainingContactViews === null
+          ? "This contact is now available through your plan."
+          : `${revealed.remainingContactViews} contact reveals remaining in your plan.`,
+      })
+    } catch (error: any) {
+      toast({
+        title: "Could not reveal contact",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
 
   return (
     <div className="luxe-light-page min-h-screen">
@@ -299,24 +330,20 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
                   <p className="luxe-kicker text-[0.62rem] text-[#8f001c]">premium contact</p>
                   <h3 className="mt-1 text-lg font-bold text-[#18110d]">{displayPhone}</h3>
                   <p className="mt-1 text-sm leading-6 text-[#685f58]">
-                    {contact?.canReveal
+                    {phoneIsRevealed
                       ? "This phone number is revealed through your active plan."
-                      : "Masked for free users. Subscribe to reveal contact details safely."}
+                      : contact?.canReveal
+                        ? "Included in your plan. Tap reveal to count it as a contact view."
+                        : "Masked for free users. Subscribe to reveal contact details safely."}
                   </p>
                 </div>
               </div>
-              {!contact?.canReveal && (
+              {!phoneIsRevealed && (
                 <Button
                   className="luxe-button rounded-full"
-                  onClick={() => {
-                    onUpgrade?.()
-                    toast({
-                      title: "Unlock contact details",
-                      description: "Choose a paid plan to reveal masked phone numbers.",
-                    })
-                  }}
+                  onClick={handleRevealContact}
                 >
-                  Reveal with Premium
+                  {contact?.canReveal ? "Reveal Contact" : "Reveal with Premium"}
                 </Button>
               )}
             </CardContent>

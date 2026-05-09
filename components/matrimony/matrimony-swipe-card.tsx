@@ -37,6 +37,7 @@ interface MatrimonySwipeCardProps {
   onNotNow: () => boolean | void | Promise<boolean | void>
   onSuperLike?: () => boolean | void | Promise<boolean | void>
   onPhoneUpgrade?: () => void
+  onRevealPhone?: (profileId: string) => Promise<string | null>
   onProfileClick?: () => void
   stackIndex?: number // 0 is top, then 1,2 for depth visuals
   isShortlisted?: boolean
@@ -68,6 +69,7 @@ export function MatrimonySwipeCard({
   onNotNow,
   onSuperLike,
   onPhoneUpgrade,
+  onRevealPhone,
   onProfileClick,
   stackIndex = 0,
   isShortlisted = false,
@@ -86,6 +88,7 @@ export function MatrimonySwipeCard({
   const [shortlistBusy, setShortlistBusy] = useState(false)
   const [showReportDialog, setShowReportDialog] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [revealedPhone, setRevealedPhone] = useState<string | null>(phone || null)
   const { toast } = useToast()
   const safePhotos = useMemo(
     () => photos.filter((photo) => typeof photo === "string" && photo.trim().length > 0),
@@ -102,6 +105,10 @@ export function MatrimonySwipeCard({
   useEffect(() => {
     setImageLoadFailed(false)
   }, [activePhoto])
+
+  useEffect(() => {
+    setRevealedPhone(phone || null)
+  }, [phone, profileId])
 
   // Get current user on component mount
   useEffect(() => {
@@ -355,11 +362,31 @@ export function MatrimonySwipeCard({
 
   const cardInitial = getInitial(name)
   const displayName = name?.trim() || cardInitial
-  const displayPhone = canRevealPhone ? phone || phoneMasked : phoneMasked
+  const phoneIsRevealed = Boolean(revealedPhone || phone)
+  const displayPhone = revealedPhone || phone || phoneMasked
 
-  const handlePhoneClick = (e: React.MouseEvent) => {
+  const handlePhoneClick = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (canRevealPhone) return
+    if (phoneIsRevealed) return
+    if (canRevealPhone && onRevealPhone) {
+      try {
+        const nextPhone = await onRevealPhone(profileId)
+        if (nextPhone) {
+          setRevealedPhone(nextPhone)
+          toast({
+            title: "Contact revealed",
+            description: "This profile contact is now saved to your premium reveals.",
+          })
+        }
+      } catch (error: any) {
+        toast({
+          title: "Could not reveal contact",
+          description: error.message || "Please try again.",
+          variant: "destructive",
+        })
+      }
+      return
+    }
     onPhoneUpgrade?.()
     toast({
       title: "Premium contact reveal",
@@ -622,7 +649,7 @@ export function MatrimonySwipeCard({
                   onClick={handlePhoneClick}
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold text-[#ffffff] backdrop-blur sm:text-sm",
-                    canRevealPhone
+                    phoneIsRevealed
                       ? "border-[#d8c79f]/38 bg-[#d8c79f]/24"
                       : "border-white/18 bg-white/14 hover:bg-white/22",
                   )}
@@ -806,9 +833,9 @@ export function MatrimonySwipeCard({
                             onClick={handlePhoneClick}
                             className={cn(
                               "mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold",
-                              canRevealPhone
-                                ? "border-[#d8c79f]/34 bg-[#fff7df] text-[#18110d]"
-                                : "border-[#d8c79f]/28 bg-white/72 text-[#685f58] hover:border-[#8f001c]/30",
+                                phoneIsRevealed
+                                  ? "border-[#d8c79f]/34 bg-[#fff7df] text-[#18110d]"
+                                  : "border-[#d8c79f]/28 bg-white/72 text-[#685f58] hover:border-[#8f001c]/30",
                             )}
                           >
                             <Phone className="h-3.5 w-3.5 text-[#8f001c]" />
@@ -968,9 +995,11 @@ export function MatrimonySwipeCard({
                               <p className="luxe-kicker text-[0.58rem] text-[#8f001c]">premium contact</p>
                               <p className="mt-1 font-bold text-[#18110d]">{displayPhone}</p>
                               <p className="mt-1 text-xs leading-5 text-[#685f58]">
-                                {canRevealPhone
+                                {phoneIsRevealed
                                   ? "This contact is revealed through your active plan."
-                                  : "Masked for free users. Tap to unlock contact reveal."}
+                                  : canRevealPhone
+                                    ? "Included in your plan. Tap to reveal and count it as a contact view."
+                                    : "Masked for free users. Tap to unlock contact reveal."}
                               </p>
                             </div>
                             <button
@@ -1245,7 +1274,7 @@ export function MatrimonySwipeCard({
     {/* Profile Modal */}
     <MatrimonyProfileModal
       profile={{
-        id: `${name}-${age}`,
+        id: profileId,
         name,
         age,
         height,
@@ -1268,6 +1297,7 @@ export function MatrimonySwipeCard({
       open={showProfileModal}
       onOpenChange={setShowProfileModal}
       onPhoneUpgrade={onPhoneUpgrade}
+      onRevealPhone={onRevealPhone}
       onConnect={() => {
         if (swipeLocked) {
           onSwipeLocked?.()

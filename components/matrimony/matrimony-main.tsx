@@ -21,6 +21,7 @@ import { AppSettings } from "@/components/settings/app-settings"
 import { PremiumScreen } from "@/components/premium/premium-screen"
 import { PaymentScreen } from "@/components/premium/payment-screen"
 import { PremiumFeatures } from "@/components/premium/premium-features"
+import { DiscountOfferDialog } from "@/components/premium/discount-offer-dialog"
 import { VerificationStatus } from "@/components/profile/verification-status"
 import { EditProfile } from "@/components/profile/edit-profile"
 import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
@@ -34,7 +35,7 @@ import {
   recordMatrimonyLike,
 } from "@/lib/matchmakingService"
 import { getSuperLikeLimitStatus, type UsageLimitStatus } from "@/lib/planLimits"
-import { getProfileContacts } from "@/lib/profileContacts"
+import { getProfileContacts, revealProfileContact } from "@/lib/profileContacts"
 import { MatchNotification } from "@/components/chat/match-notification"
 import type { FilterState } from "@/components/matrimony/matrimony-filter-sheet"
 import { useToast } from "@/hooks/use-toast"
@@ -136,6 +137,28 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       setCurrentScreen("premium")
     },
     [toast],
+  )
+
+  const handleRevealPhone = useCallback(
+    async (profileId: string) => {
+      const contact = await revealProfileContact(profileId)
+      if (contact.phoneRevealed) {
+        setProfiles((previousProfiles) =>
+          previousProfiles.map((profile) =>
+            profile.id === profileId
+              ? {
+                  ...profile,
+                  phone: contact.phoneRevealed || undefined,
+                  phoneMasked: contact.phoneMasked || profile.phoneMasked,
+                  canRevealPhone: true,
+                }
+              : profile,
+          ),
+        )
+      }
+      return contact.phoneRevealed
+    },
+    [],
   )
 
   const refreshSwipeLimitStatus = useCallback(async (userId: string) => {
@@ -913,6 +936,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                                   "discover",
                                 )
                               }
+                              onRevealPhone={handleRevealPhone}
                               isShortlisted={shortlistedIds.has(profile.id)}
                               onToggleShortlist={() => handleShortlistToggle(profile)}
                               swipeLocked={swipeLocked}
@@ -1135,7 +1159,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       {currentScreen === "payment" && (
         <div className="p-0 pb-0 mt-0">
           <PaymentScreen
-            planId={selectedPlanId || "monthly"}
+            planId={selectedPlanId || "essential"}
             onSuccess={() => setCurrentScreen("premium-features")}
             onCancel={() => setCurrentScreen("premium")}
           />
@@ -1183,6 +1207,14 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {/* Match Notification */}
+      <DiscountOfferDialog
+        onSubscribe={() => {
+          setSelectedPlanId("essential")
+          setPremiumBackTarget("discover")
+          setCurrentScreen("premium")
+        }}
+      />
+
       {showMatchNotification && matchedProfile && (
         <MatchNotification
           match={{
@@ -1228,6 +1260,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
               "discover",
             )
           }
+          onRevealPhone={handleRevealPhone}
           onConnect={() => {
             void handleShortlistConnect(shortlistModalProfile)
             setShortlistModalProfile(null)

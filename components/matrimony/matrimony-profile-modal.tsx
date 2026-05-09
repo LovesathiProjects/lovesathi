@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
@@ -17,11 +17,18 @@ interface MatrimonyProfileModalProps {
   onConnect: () => void
   onNotNow: () => void
   onPhoneUpgrade?: () => void
+  onRevealPhone?: (profileId: string) => Promise<string | null>
 }
 
-export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, onNotNow, onPhoneUpgrade }: MatrimonyProfileModalProps) {
+export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, onNotNow, onPhoneUpgrade, onRevealPhone }: MatrimonyProfileModalProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
-  const displayPhone = profile.canRevealPhone ? profile.phone || profile.phoneMasked : profile.phoneMasked
+  const [revealedPhone, setRevealedPhone] = useState<string | null>(profile.phone || null)
+  const phoneIsRevealed = Boolean(revealedPhone || profile.phone)
+  const displayPhone = revealedPhone || profile.phone || profile.phoneMasked
+
+  useEffect(() => {
+    setRevealedPhone(profile.phone || null)
+  }, [profile.id, profile.phone])
 
   const handlePhotoClick = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -189,12 +196,18 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                   {displayPhone && (
                     <button
                       type="button"
-                      onClick={() => {
-                        if (!profile.canRevealPhone) onPhoneUpgrade?.()
+                      onClick={async () => {
+                        if (phoneIsRevealed) return
+                        if (profile.canRevealPhone && onRevealPhone) {
+                          const nextPhone = await onRevealPhone(profile.id)
+                          if (nextPhone) setRevealedPhone(nextPhone)
+                          return
+                        }
+                        onPhoneUpgrade?.()
                       }}
                       className={cn(
                         "mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold",
-                        profile.canRevealPhone
+                        phoneIsRevealed
                           ? "border-[#97011A]/20 bg-[#97011A]/8 text-[#97011A]"
                           : "border-gray-200 bg-gray-50 text-gray-700 hover:border-[#97011A]/30",
                       )}

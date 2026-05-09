@@ -26,7 +26,7 @@ export function PaymentScreen({ planId, onCancel }: { planId: string; onSuccess?
           <CardContent className="space-y-5">
             <p className="text-base leading-7 text-[#685f58]">
               The selected plan is <span className="font-bold text-[#18110d]">{plan.name}</span> for{" "}
-              <span className="font-bold text-[#18110d]">{plan.priceLabel}</span>. Before launch, this screen should be connected to a real payment provider with subscriptions,
+              <span className="font-bold text-[#18110d]">{plan.priceLabel}</span> with the 70% forever discount. Before launch, this screen should be connected to a real payment provider with subscriptions,
               invoices, refunds, and webhook-based entitlement updates. Until then, Lovesathi will not collect card details.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">

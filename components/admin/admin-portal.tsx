@@ -827,7 +827,7 @@ export function AdminPortal() {
                             variant="outline"
                             className="rounded-full border-[#d8c79f]/30 bg-[#f7f5f1] text-[#8f001c]"
                             disabled={Boolean(actionKey)}
-                            onClick={() => handleAction("entitlement", item.id, "active", { planId: "quarterly" })}
+                            onClick={() => handleAction("entitlement", item.id, "active", { planId: "signature" })}
                           >
                             <Crown className="mr-2 h-4 w-4" />
                             Grant Signature

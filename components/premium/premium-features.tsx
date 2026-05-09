@@ -7,13 +7,14 @@ import { StaticBackground } from "@/components/discovery/static-background"
 
 export function PremiumFeatures({ onBack }: { onBack?: () => void }) {
   const features = [
-    "Unlimited discovery swipes and interests",
-    "Unlimited shortlist saves",
-    "Profile phone number reveal",
+    "70% forever discount on every paid plan",
+    "Plan-based shortlist capacity from 30 to unlimited",
+    "Plan-based contact reveal allowance from 15 to unlimited",
     "Monthly Super Like allowance based on your plan",
     "Verified-only filter after the free allowance",
-    "Unlimited conversations within matches",
+    "Basic chat with 50 profiles, higher plans with unlimited chat",
     "Premium-only discovery filter",
+    "Heritage concierge with an assigned Relationship Executive",
   ]
 
   return (

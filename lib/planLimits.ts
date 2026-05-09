@@ -1,5 +1,10 @@
 import { supabase } from "@/lib/supabaseClient"
-import { getPlanMonthlySuperLikes } from "@/lib/subscriptionPlans"
+import {
+  getPlanChatProfileLimit,
+  getPlanMonthlySuperLikes,
+  getPlanShortlistLimit,
+  getSubscriptionPlan,
+} from "@/lib/subscriptionPlans"
 
 export const FREE_PLAN_LIMITS = {
   swipeActions: 15,
@@ -24,6 +29,7 @@ export interface EntitlementStatus {
   planId: string | null
   status: string | null
   activeUntil: string | null
+  createdAt: string | null
   daysRemaining: number | null
 }
 
@@ -77,7 +83,7 @@ export async function isPremiumUser(userId: string): Promise<boolean> {
 export async function getUserEntitlementStatus(userId: string): Promise<EntitlementStatus> {
   const { data, error } = await supabase
     .from("user_entitlements")
-    .select("plan_id,status,active_until,updated_at")
+    .select("plan_id,status,active_until,created_at,updated_at")
     .eq("user_id", userId)
     .in("status", ["active", "trialing", "past_due"])
     .order("updated_at", { ascending: false })
@@ -87,7 +93,7 @@ export async function getUserEntitlementStatus(userId: string): Promise<Entitlem
     if (!tableMissing(error)) {
       console.warn("[getUserEntitlementStatus] Unable to read entitlement:", error.message)
     }
-    return { isPremium: false, planId: null, status: null, activeUntil: null, daysRemaining: null }
+    return { isPremium: false, planId: null, status: null, activeUntil: null, createdAt: null, daysRemaining: null }
   }
 
   const now = Date.now()
@@ -104,6 +110,7 @@ export async function getUserEntitlementStatus(userId: string): Promise<Entitlem
     planId: fallback?.plan_id || null,
     status: fallback?.status || null,
     activeUntil: fallback?.active_until || null,
+    createdAt: fallback?.created_at || null,
     daysRemaining: activeUntilMs ? Math.max(0, Math.ceil((activeUntilMs - now) / 86400000)) : active ? null : 0,
   }
 }
@@ -137,8 +144,41 @@ export async function getSwipeLimitStatus(userId: string): Promise<UsageLimitSta
 }
 
 export async function getMessageSendLimitStatus(senderId: string, receiverId: string): Promise<UsageLimitStatus> {
-  const isPremium = await isPremiumUser(senderId)
-  if (isPremium) return { allowed: true, isPremium }
+  const entitlement = await getUserEntitlementStatus(senderId)
+  if (entitlement.isPremium) {
+    const chatProfileLimit = getPlanChatProfileLimit(entitlement.planId)
+    if (chatProfileLimit === null) return { allowed: true, isPremium: true }
+
+    const { data: peopleRows, error: peopleError } = await supabase
+      .from("messages")
+      .select("receiver_id")
+      .eq("sender_id", senderId)
+      .gte("created_at", entitlement.createdAt || "1970-01-01T00:00:00.000Z")
+
+    if (peopleError) {
+      if (!tableMissing(peopleError)) {
+        console.warn("[getMessageSendLimitStatus] Unable to read premium message usage:", peopleError.message)
+      }
+      return { allowed: true, isPremium: true }
+    }
+
+    const contactedPeople = new Set((peopleRows || []).map((row: { receiver_id: string }) => row.receiver_id))
+    if (contactedPeople.size >= chatProfileLimit && !contactedPeople.has(receiverId)) {
+      return {
+        allowed: false,
+        isPremium: true,
+        remaining: 0,
+        kind: "messagePeople",
+        error: `${getSubscriptionPlan(entitlement.planId).name} includes chat with ${chatProfileLimit} profiles. Upgrade for unlimited chat.`,
+      }
+    }
+
+    return {
+      allowed: true,
+      isPremium: true,
+      remaining: Math.max(chatProfileLimit - contactedPeople.size, 0),
+    }
+  }
 
   const since = windowStartIso()
   const [{ count: samePersonCount, error: samePersonError }, { data: peopleRows, error: peopleError }] =
@@ -193,8 +233,10 @@ export async function getMessageSendLimitStatus(senderId: string, receiverId: st
 }
 
 export async function getShortlistLimitStatus(userId: string, targetUserId?: string): Promise<UsageLimitStatus> {
-  const isPremium = await isPremiumUser(userId)
-  if (isPremium) return { allowed: true, isPremium }
+  const entitlement = await getUserEntitlementStatus(userId)
+  const isPremium = entitlement.isPremium
+  const shortlistLimit = isPremium ? getPlanShortlistLimit(entitlement.planId) : FREE_PLAN_LIMITS.shortlists
+  if (isPremium && shortlistLimit === null) return { allowed: true, isPremium }
 
   if (targetUserId) {
     const { data: existing, error: existingError } = await supabase
@@ -226,13 +268,19 @@ export async function getShortlistLimitStatus(userId: string, targetUserId?: str
   }
 
   const used = count || 0
-  const remaining = Math.max(FREE_PLAN_LIMITS.shortlists - used, 0)
+  const limit = shortlistLimit || FREE_PLAN_LIMITS.shortlists
+  const remaining = Math.max(limit - used, 0)
+  const planName = isPremium ? getSubscriptionPlan(entitlement.planId).name : "Free plan"
   return {
-    allowed: used < FREE_PLAN_LIMITS.shortlists,
-    isPremium: false,
+    allowed: used < limit,
+    isPremium,
     remaining,
-    kind: used < FREE_PLAN_LIMITS.shortlists ? undefined : "shortlist",
-    error: used < FREE_PLAN_LIMITS.shortlists ? undefined : getLimitMessage("shortlist"),
+    kind: used < limit ? undefined : "shortlist",
+    error: used < limit
+      ? undefined
+      : isPremium
+        ? `${planName} shortlist limit reached. Your plan includes ${limit} shortlist saves.`
+        : getLimitMessage("shortlist"),
   }
 }
 
@@ -254,6 +302,10 @@ export async function getSuperLikeLimitStatus(userId: string): Promise<UsageLimi
   }
 
   const monthlyLimit = getPlanMonthlySuperLikes(entitlement.planId)
+  if (monthlyLimit === null) {
+    return { allowed: true, isPremium: true }
+  }
+
   const { count, error } = await supabase
     .from("matrimony_likes")
     .select("*", { count: "exact", head: true })

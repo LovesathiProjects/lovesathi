@@ -282,7 +282,7 @@ export async function POST(request: Request) {
     }
 
     const notes = cleanText(body.notes)
-    const planId = typeof body.planId === "string" ? body.planId : "quarterly"
+    const planId = typeof body.planId === "string" ? body.planId : "signature"
     const plan = getSubscriptionPlan(planId)
     const { data: currentRows } = await supabase
       .from("user_entitlements")

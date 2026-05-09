@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Crown, Eye, MessageCircle, Zap, Star, Check, ArrowLeft } from "lucide-react"
+import { Crown, Eye, MessageCircle, Zap, Star, Check, ArrowLeft, Headphones, HeartHandshake } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getUserEntitlementStatus, type EntitlementStatus } from "@/lib/planLimits"
 import { supabase } from "@/lib/supabaseClient"
@@ -16,12 +16,12 @@ const premiumFeatures = [
   {
     icon: Star,
     title: "Super Likes",
-    description: "Send standout interest with monthly Super Like allowances by plan",
+    description: "Send standout interest with plan-based monthly Super Like allowances",
   },
   {
     icon: Eye,
     title: "Contact Reveal",
-    description: "Reveal masked phone numbers safely from premium profile cards",
+    description: "Reveal masked phone numbers with plan-based contact view limits",
   },
   {
     icon: Zap,
@@ -35,13 +35,18 @@ const premiumFeatures = [
   },
   {
     icon: MessageCircle,
-    title: "Advanced Filters",
-    description: "Filter by education, lifestyle, family context, and preferences",
+    title: "Controlled Conversations",
+    description: "Chat access scales by plan, with unlimited chat on higher tiers",
+  },
+  {
+    icon: Headphones,
+    title: "Concierge Support",
+    description: "Heritage includes an assigned Relationship Executive for guided matching",
   },
 ]
 
 export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSelect?: (planId: string) => void; onSubscribe?: (planId: string) => void; onBack?: () => void; mode?: 'matrimony' }) {
-  const [selectedPlan, setSelectedPlan] = useState<string>("quarterly")
+  const [selectedPlan, setSelectedPlan] = useState<string>("essential")
   const [entitlement, setEntitlement] = useState<EntitlementStatus | null>(null)
   const isMatrimony = true
   const activePlan = entitlement?.planId ? getSubscriptionPlan(entitlement.planId) : null
@@ -112,6 +117,9 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
               <p className="luxe-kicker mb-3 text-[#d8c79f]">premium matrimony</p>
               <h1 className="font-serif text-5xl font-bold tracking-[-0.05em] text-[#ffffff]">A more intentional path to the right family.</h1>
               <p className="mx-auto mt-4 max-w-xl text-[#d8c79f]">Unlock refined discovery, richer signals, and priority trust features without turning matrimony into noise.</p>
+              <Badge className="mt-4 border border-[#d8c79f]/40 bg-[#ffffff]/14 px-4 py-2 text-sm font-black uppercase tracking-[0.18em] text-[#fff7df]">
+                Every plan includes 70% off forever
+              </Badge>
               {entitlement?.isPremium && activePlan && (
                 <div className="mx-auto mt-5 max-w-xl rounded-[1.4rem] border border-[#d8c79f]/30 bg-white/12 p-4 text-left backdrop-blur-xl">
                   <p className="luxe-kicker text-[#d8c79f]">currently active</p>
@@ -157,8 +165,14 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
 
           {/* Plans Section */}
           <div className="space-y-4">
-            <h2 className={cn("text-center font-serif text-4xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#18110d]" : "text-white")}>Choose Your Plan</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="text-center">
+              <p className="luxe-kicker text-[0.68rem] text-[#8f001c]">launch offer</p>
+              <h2 className={cn("font-serif text-4xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#18110d]" : "text-white")}>Choose Your Plan</h2>
+              <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-[#685f58]">
+                The 70% launch discount is locked forever for every tier. Upgrade later if your search needs more contact reveals, shortlist capacity, or concierge support.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               {SUBSCRIPTION_PLANS.map((plan) => (
                 <Card
                   key={plan.id}
@@ -171,7 +185,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
                       : selectedPlan === plan.id
                         ? "ring-2 ring-[#97011A] border-[#97011A] bg-[#14161B]/50"
                         : "border-white/20 bg-[#14161B]/50 hover:border-[#97011A]/50",
-                    plan.popular ? "relative" : ""
+                    plan.popular || plan.id === "heritage" ? "relative" : ""
                   )}
                   onClick={() => setSelectedPlan(plan.id)}
                 >
@@ -180,17 +194,22 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
                       Most Popular
                     </Badge>
                   )}
+                  {plan.id === "heritage" && (
+                    <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-[#2b211b] text-[#fff7df]">
+                      Concierge
+                    </Badge>
+                  )}
 
                   <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
+                    <div className="space-y-4">
                       <div>
                         <CardTitle className={cn("text-lg", isMatrimony ? "text-black" : "text-white")}>{plan.name}</CardTitle>
                         <p className={cn("text-sm", isMatrimony ? "text-[#666666]" : "text-[#A1A1AA]")}>{plan.durationLabel}</p>
                       </div>
-                      <div className="text-right">
+                      <div>
                         <div className={cn("text-2xl font-bold", isMatrimony ? "text-black" : "text-white")}>{plan.priceLabel}</div>
                         {plan.originalPriceLabel && (
-                          <div className="space-y-1">
+                          <div className="mt-1 flex flex-wrap items-center gap-2">
                             <div className={cn("text-sm line-through", isMatrimony ? "text-[#666666]" : "text-[#A1A1AA]")}>{plan.originalPriceLabel}</div>
                             <Badge variant="secondary" className="text-xs bg-[#97011A]/10 text-[#97011A] border-[#97011A]/20">
                               {plan.discountLabel}
@@ -209,6 +228,23 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
                           <span className={cn("text-sm", isMatrimony ? "text-black" : "text-white")}>{feature}</span>
                         </div>
                       ))}
+                      {plan.concierge && (
+                        <div className="mt-3 rounded-2xl border border-[#d8c79f]/30 bg-[#fffaf0] p-3">
+                          <div className="mb-2 flex items-center gap-2">
+                            <HeartHandshake className="h-4 w-4 text-[#8f001c]" />
+                            <p className="text-sm font-black text-[#18110d]">{plan.concierge.title}</p>
+                          </div>
+                          <p className="text-xs leading-5 text-[#685f58]">{plan.concierge.description}</p>
+                          <div className="mt-3 space-y-2">
+                            {plan.concierge.highlights.map((highlight) => (
+                              <p key={highlight} className="text-xs leading-5 text-[#18110d]">
+                                <Check className="mr-1 inline h-3.5 w-3.5 text-[#8f001c]" />
+                                {highlight}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       <div className="pt-2 mt-auto">
                         <Button
                           variant={selectedPlan === plan.id ? "default" : "outline"}
