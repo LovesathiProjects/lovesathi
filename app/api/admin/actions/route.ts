@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/adminAuth"
-import { getPlanActiveUntil, getSubscriptionPlan } from "@/lib/subscriptionPlans"
+import { getPlanActiveUntil, getPlanGraceUntil, getSubscriptionPlan, SUBSCRIPTION_GRACE_DAYS } from "@/lib/subscriptionPlans"
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const verificationStatuses = new Set(["approved", "rejected", "in_review"])
 const reportStatuses = new Set(["reviewed", "resolved", "dismissed"])
 const profileReviewStatuses = new Set(["approved", "rejected", "in_review", "pending"])
 const userStatuses = new Set(["suspended", "active"])
-const entitlementStatuses = new Set(["active", "canceled"])
+const entitlementStatuses = new Set(["active", "past_due", "canceled"])
 const authEmailStatuses = new Set(["resend_confirmation"])
 
 function cleanText(value: unknown) {
@@ -286,14 +286,19 @@ export async function POST(request: Request) {
     const plan = getSubscriptionPlan(planId)
     const { data: currentRows } = await supabase
       .from("user_entitlements")
-      .select("id,plan_id,status,active_until")
+      .select("id,plan_id,status,active_until,renewal_due_at,grace_until")
       .eq("user_id", id)
-      .in("status", ["active", "trialing"])
+      .in("status", ["active", "trialing", "past_due"])
       .order("updated_at", { ascending: false })
 
     const currentActive = (currentRows || []).find(
-      (item: any) => !item.active_until || new Date(item.active_until).getTime() > Date.now(),
+      (item: any) => {
+        const activeUntil = item.active_until ? new Date(item.active_until).getTime() : null
+        const graceUntil = item.grace_until ? new Date(item.grace_until).getTime() : null
+        return !activeUntil || activeUntil > Date.now() || Boolean(graceUntil && graceUntil > Date.now())
+      },
     )
+    const currentEntitlement = currentActive || currentRows?.[0]
 
     if (status === "canceled") {
       const { error } = await supabase
@@ -301,6 +306,7 @@ export async function POST(request: Request) {
         .update({
           status: "canceled",
           active_until: new Date().toISOString(),
+          canceled_at: new Date().toISOString(),
           notes,
           metadata: {
             canceledBy: user.email || user.id,
@@ -308,7 +314,7 @@ export async function POST(request: Request) {
           },
         })
         .eq("user_id", id)
-        .in("status", ["active", "trialing"])
+        .in("status", ["active", "trialing", "past_due"])
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 400 })
@@ -330,15 +336,62 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true })
     }
 
+    if (status === "past_due") {
+      if (!currentEntitlement) {
+        return NextResponse.json({ error: "No active entitlement is available to mark payment due." }, { status: 404 })
+      }
+
+      const renewalDueAt = currentEntitlement?.active_until ? new Date(currentEntitlement.active_until) : new Date()
+      const graceUntil = getPlanGraceUntil(renewalDueAt).toISOString()
+      const { data, error } = await supabase
+        .from("user_entitlements")
+        .update({
+          status: "past_due",
+          renewal_due_at: renewalDueAt.toISOString(),
+          grace_until: graceUntil,
+          payment_failed_at: new Date().toISOString(),
+          notes: notes || "Renewal payment is pending. Premium access remains during the grace period.",
+          metadata: {
+            markedPastDueBy: user.email || user.id,
+            graceDays: SUBSCRIPTION_GRACE_DAYS,
+            planId: currentEntitlement?.plan_id || plan.id,
+          },
+        })
+        .eq("id", currentEntitlement?.id || "")
+        .select("id,user_id,plan_id,status,active_until,renewal_due_at,grace_until")
+        .single()
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 400 })
+      }
+
+      await writeAdminAuditLog(supabase, {
+        actorId: user.id,
+        actorEmail: user.email || null,
+        resource: "entitlement",
+        recordId: id,
+        previousStatus: currentEntitlement?.status || null,
+        nextStatus: "past_due",
+        notes,
+        metadata: {
+          planId: currentEntitlement?.plan_id || plan.id,
+          graceUntil,
+        },
+      })
+
+      return NextResponse.json({ ok: true, record: data })
+    }
+
     await supabase
       .from("user_entitlements")
       .update({
         status: "canceled",
         active_until: new Date().toISOString(),
+        canceled_at: new Date().toISOString(),
         notes: "Superseded by a newer admin-granted entitlement.",
       })
       .eq("user_id", id)
-      .in("status", ["active", "trialing"])
+      .in("status", ["active", "trialing", "past_due"])
 
     const activeUntil = getPlanActiveUntil(plan.id).toISOString()
     const { data, error } = await supabase
@@ -348,6 +401,11 @@ export async function POST(request: Request) {
         plan_id: plan.id,
         status: "active",
         active_until: activeUntil,
+        renewal_due_at: activeUntil,
+        grace_until: null,
+        payment_failed_at: null,
+        last_payment_reminder_at: null,
+        canceled_at: null,
         source: "admin",
         granted_by: user.id,
         notes,
@@ -355,9 +413,10 @@ export async function POST(request: Request) {
           grantedByEmail: user.email || null,
           planName: plan.name,
           durationDays: plan.durationDays,
+          graceDays: SUBSCRIPTION_GRACE_DAYS,
         },
       })
-      .select("id,user_id,plan_id,status,active_until")
+      .select("id,user_id,plan_id,status,active_until,renewal_due_at,grace_until")
       .single()
 
     if (error) {

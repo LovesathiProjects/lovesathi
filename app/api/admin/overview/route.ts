@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/adminAuth"
 import { getSubscriptionPlan } from "@/lib/subscriptionPlans"
+import { isEntitlementPaymentDue, isEntitlementPremium } from "@/lib/subscriptionLifecycle"
 
 type CountResult = {
   label: string
@@ -60,6 +61,9 @@ type AdminUserItem = {
     planName: string | null
     status: string | null
     activeUntil: string | null
+    renewalDueAt: string | null
+    graceUntil: string | null
+    paymentDue: boolean
     source: string | null
   }
   profileName: string | null
@@ -431,7 +435,7 @@ async function loadEntitlementRows(supabase: any, userIds: string[]): Promise<Qu
   return safeRows<any>(() =>
     supabase
       .from("user_entitlements")
-      .select("id,user_id,plan_id,status,active_until,source,updated_at")
+      .select("id,user_id,plan_id,status,active_until,renewal_due_at,grace_until,source,updated_at")
       .in("user_id", userIds)
       .order("updated_at", { ascending: false }),
   )
@@ -456,10 +460,7 @@ function mapAuthUser(user: any, profile?: any, entitlement?: any): AdminUserItem
   const suspendedUntil = typeof user?.banned_until === "string" ? user.banned_until : null
   const isSuspended = suspendedUntil ? new Date(suspendedUntil).getTime() > Date.now() : false
   const status = isSuspended ? "suspended" : user?.email_confirmed_at ? "active" : "unconfirmed"
-  const isPremium =
-    Boolean(entitlement) &&
-    ["active", "trialing"].includes(entitlement.status) &&
-    (!entitlement.active_until || new Date(entitlement.active_until).getTime() > Date.now())
+  const isPremium = Boolean(entitlement) && isEntitlementPremium(entitlement)
   const plan = entitlement?.plan_id ? getSubscriptionPlan(entitlement.plan_id) : null
 
   return {
@@ -476,6 +477,9 @@ function mapAuthUser(user: any, profile?: any, entitlement?: any): AdminUserItem
       planName: plan?.name || null,
       status: entitlement?.status || null,
       activeUntil: entitlement?.active_until || null,
+      renewalDueAt: entitlement?.renewal_due_at || null,
+      graceUntil: entitlement?.grace_until || null,
+      paymentDue: Boolean(entitlement) && isEntitlementPaymentDue(entitlement),
       source: entitlement?.source || null,
     },
     profileName: profile?.name || null,
@@ -607,6 +611,8 @@ export async function GET(request: Request) {
   const host = getHost(request)
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
+  await supabase.rpc("expire_lovesathi_past_due_entitlements")
+
   const [metrics, authEmailTelemetry, authUserRows] = await Promise.all([
     Promise.all([
       safeCount(supabase, "Registered users", "user_profiles"),
@@ -626,7 +632,7 @@ export async function GET(request: Request) {
       safeCount(supabase, "Messages", "messages"),
       safeCount(supabase, "Shortlists", "shortlists"),
       safeCount(supabase, "Active premium", "user_entitlements", (query) =>
-        query.in("status", ["active", "trialing"]),
+        query.in("status", ["active", "trialing", "past_due"]),
       ),
       safeCount(supabase, "New profiles 7d", "matrimony_profile_full", (query) => query.gte("created_at", sevenDaysAgo)),
       safeCount(supabase, "Admin actions 7d", "admin_audit_logs", (query) => query.gte("created_at", sevenDaysAgo)),
@@ -671,14 +677,9 @@ export async function GET(request: Request) {
   const userProfileMap = new Map(userProfileRows.items.map((item) => [item.user_id, item]))
   const entitlementMap = new Map<string, any>()
   entitlementRows.items.forEach((item) => {
-    const isActive =
-      ["active", "trialing"].includes(item.status) &&
-      (!item.active_until || new Date(item.active_until).getTime() > Date.now())
+    const isActive = isEntitlementPremium(item)
     const current = entitlementMap.get(item.user_id)
-    const currentIsActive =
-      current &&
-      ["active", "trialing"].includes(current.status) &&
-      (!current.active_until || new Date(current.active_until).getTime() > Date.now())
+    const currentIsActive = current && isEntitlementPremium(current)
     if (!current || (isActive && !currentIsActive)) {
       entitlementMap.set(item.user_id, item)
     }

@@ -100,6 +100,9 @@ type AdminUserItem = {
     planName: string | null
     status: string | null
     activeUntil: string | null
+    renewalDueAt: string | null
+    graceUntil: string | null
+    paymentDue: boolean
     source: string | null
   }
   profileName: string | null
@@ -232,7 +235,7 @@ function statusLabel(value: string) {
 function StatusBadge({ status }: { status: string }) {
   const safeStatus = status.toLowerCase()
   const isGood = ["ok", "approved", "resolved", "active", "premium"].includes(safeStatus)
-  const isWarning = ["pending", "in_review", "reviewed", "warning", "unconfirmed", "free"].includes(safeStatus)
+  const isWarning = ["pending", "in_review", "reviewed", "warning", "unconfirmed", "free", "past_due"].includes(safeStatus)
 
   return (
     <Badge
@@ -767,7 +770,16 @@ export function AdminPortal() {
                         {item.premium.planName && (
                           <Badge variant="outline" className="border-[#C2A574]/30 bg-[#EFE7DB] text-[#C2A574]">
                             {item.premium.planName}
-                            {item.premium.activeUntil ? ` until ${formatDate(item.premium.activeUntil)}` : ""}
+                            {item.premium.paymentDue && item.premium.graceUntil
+                              ? ` grace until ${formatDate(item.premium.graceUntil)}`
+                              : item.premium.activeUntil
+                                ? ` until ${formatDate(item.premium.activeUntil)}`
+                                : ""}
+                          </Badge>
+                        )}
+                        {item.premium.paymentDue && (
+                          <Badge variant="outline" className="border-[#b45309]/25 bg-[#fff7ed] text-[#9a3412]">
+                            Renewal payment due
                           </Badge>
                         )}
                         {item.suspendedUntil && (
@@ -821,6 +833,18 @@ export function AdminPortal() {
                           >
                             <UserX className="mr-2 h-4 w-4" />
                             Revoke premium
+                          </Button>
+                        )}
+                        {item.premium.isPremium && !item.premium.paymentDue && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="rounded-full border-[#b45309]/24 bg-[#fff7ed] text-[#9a3412]"
+                            disabled={Boolean(actionKey)}
+                            onClick={() => handleAction("entitlement", item.id, "past_due")}
+                          >
+                            <Clock3 className="mr-2 h-4 w-4" />
+                            Mark payment due
                           </Button>
                         )}
                         <div className="flex flex-wrap gap-2">

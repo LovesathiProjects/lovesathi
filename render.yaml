@@ -19,6 +19,8 @@ services:
         value: https://socket.lovesathi.com
       - key: ADMIN_EMAILS
         sync: false
+      - key: SUBSCRIPTION_MAINTENANCE_SECRET
+        sync: false
 
   - type: web
     name: lovesathi-socket
@@ -36,3 +38,16 @@ services:
         value: https://lovesathi.com
       - key: SOCKET_PORT
         value: 10000
+
+  - type: cron
+    name: lovesathi-subscription-maintenance
+    runtime: node
+    rootDir: .
+    schedule: "0 */6 * * *"
+    buildCommand: npm install
+    startCommand: node scripts/run-subscription-maintenance.mjs
+    envVars:
+      - key: NEXT_PUBLIC_SITE_URL
+        value: https://lovesathi.com
+      - key: SUBSCRIPTION_MAINTENANCE_SECRET
+        sync: false

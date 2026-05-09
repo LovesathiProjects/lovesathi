@@ -1,5 +1,7 @@
 export type SubscriptionPlanId = "basic" | "essential" | "signature" | "heritage"
 
+export const SUBSCRIPTION_GRACE_DAYS = 15
+
 export type SubscriptionPlan = {
   id: SubscriptionPlanId
   name: string
@@ -139,6 +141,12 @@ export function getPlanActiveUntil(planId?: string | null, from = new Date()) {
   const activeUntil = new Date(from)
   activeUntil.setDate(activeUntil.getDate() + plan.durationDays)
   return activeUntil
+}
+
+export function getPlanGraceUntil(renewalDueAt: Date) {
+  const graceUntil = new Date(renewalDueAt)
+  graceUntil.setDate(graceUntil.getDate() + SUBSCRIPTION_GRACE_DAYS)
+  return graceUntil
 }
 
 export function getPlanMonthlySuperLikes(planId?: string | null) {

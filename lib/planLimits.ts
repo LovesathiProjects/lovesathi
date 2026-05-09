@@ -5,6 +5,12 @@ import {
   getPlanShortlistLimit,
   getSubscriptionPlan,
 } from "@/lib/subscriptionPlans"
+import {
+  getEntitlementAccessUntilMs,
+  getEntitlementDaysRemaining,
+  isEntitlementPaymentDue,
+  isEntitlementPremium,
+} from "@/lib/subscriptionLifecycle"
 
 export const FREE_PLAN_LIMITS = {
   swipeActions: 15,
@@ -29,6 +35,11 @@ export interface EntitlementStatus {
   planId: string | null
   status: string | null
   activeUntil: string | null
+  accessUntil: string | null
+  renewalDueAt: string | null
+  graceUntil: string | null
+  paymentDue: boolean
+  graceDaysRemaining: number | null
   createdAt: string | null
   daysRemaining: number | null
 }
@@ -47,6 +58,26 @@ function windowStartIso() {
 
 function tableMissing(error: any) {
   return error?.code === "42P01" || /does not exist/i.test(error?.message || "")
+}
+
+function routineMissing(error: any) {
+  return error?.code === "PGRST202" || /function .* not found|could not find the function/i.test(error?.message || "")
+}
+
+function emptyEntitlementStatus(): EntitlementStatus {
+  return {
+    isPremium: false,
+    planId: null,
+    status: null,
+    activeUntil: null,
+    accessUntil: null,
+    renewalDueAt: null,
+    graceUntil: null,
+    paymentDue: false,
+    graceDaysRemaining: null,
+    createdAt: null,
+    daysRemaining: null,
+  }
 }
 
 export function getLimitMessage(kind: LimitKind) {
@@ -81,9 +112,14 @@ export async function isPremiumUser(userId: string): Promise<boolean> {
 }
 
 export async function getUserEntitlementStatus(userId: string): Promise<EntitlementStatus> {
+  const { error: syncError } = await supabase.rpc("sync_lovesathi_entitlement_lifecycle", { p_user_id: userId })
+  if (syncError && !routineMissing(syncError)) {
+    console.warn("[getUserEntitlementStatus] Unable to sync entitlement lifecycle:", syncError.message)
+  }
+
   const { data, error } = await supabase
     .from("user_entitlements")
-    .select("plan_id,status,active_until,created_at,updated_at")
+    .select("plan_id,status,active_until,renewal_due_at,grace_until,payment_failed_at,last_payment_reminder_at,created_at,updated_at")
     .eq("user_id", userId)
     .in("status", ["active", "trialing", "past_due"])
     .order("updated_at", { ascending: false })
@@ -93,25 +129,31 @@ export async function getUserEntitlementStatus(userId: string): Promise<Entitlem
     if (!tableMissing(error)) {
       console.warn("[getUserEntitlementStatus] Unable to read entitlement:", error.message)
     }
-    return { isPremium: false, planId: null, status: null, activeUntil: null, createdAt: null, daysRemaining: null }
+    return emptyEntitlementStatus()
   }
 
   const now = Date.now()
-  const active = (data || []).find((row) => {
-    const validStatus = row.status === "active" || row.status === "trialing"
-    const activeUntil = row.active_until ? new Date(row.active_until).getTime() : null
-    return validStatus && (!activeUntil || activeUntil > now)
-  })
+  const active = (data || []).find((row) => isEntitlementPremium(row, now))
   const fallback = active || data?.[0]
-  const activeUntilMs = fallback?.active_until ? new Date(fallback.active_until).getTime() : null
+  if (!fallback) return emptyEntitlementStatus()
+
+  const accessUntilMs = getEntitlementAccessUntilMs(fallback)
+  const paymentDue = isEntitlementPaymentDue(fallback, now)
+  const accessUntil = accessUntilMs ? new Date(accessUntilMs).toISOString() : null
+  const daysRemaining = getEntitlementDaysRemaining(fallback, now)
 
   return {
     isPremium: Boolean(active),
     planId: fallback?.plan_id || null,
     status: fallback?.status || null,
     activeUntil: fallback?.active_until || null,
+    accessUntil,
+    renewalDueAt: fallback?.renewal_due_at || null,
+    graceUntil: fallback?.grace_until || null,
+    paymentDue,
+    graceDaysRemaining: paymentDue ? daysRemaining : null,
     createdAt: fallback?.created_at || null,
-    daysRemaining: activeUntilMs ? Math.max(0, Math.ceil((activeUntilMs - now) / 86400000)) : active ? null : 0,
+    daysRemaining,
   }
 }
 

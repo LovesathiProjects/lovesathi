@@ -34,7 +34,7 @@ import {
   getMatrimonyLikedProfiles,
   recordMatrimonyLike,
 } from "@/lib/matchmakingService"
-import { getSuperLikeLimitStatus, getUserEntitlementStatus, type UsageLimitStatus } from "@/lib/planLimits"
+import { getSuperLikeLimitStatus, getUserEntitlementStatus, type EntitlementStatus, type UsageLimitStatus } from "@/lib/planLimits"
 import { getProfileContacts, revealProfileContact } from "@/lib/profileContacts"
 import { MatchNotification } from "@/components/chat/match-notification"
 import type { FilterState } from "@/components/matrimony/matrimony-filter-sheet"
@@ -98,6 +98,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
   const [shortlistModalProfile, setShortlistModalProfile] = useState<MatrimonyProfile | null>(null)
   const [swipeLimitStatus, setSwipeLimitStatus] = useState<UsageLimitStatus | null>(null)
   const [viewerIsPremium, setViewerIsPremium] = useState(false)
+  const [viewerEntitlement, setViewerEntitlement] = useState<EntitlementStatus | null>(null)
   const [premiumBackTarget, setPremiumBackTarget] = useState<"discover" | "profile" | "activity">("profile")
   const { toast } = useToast()
   const {
@@ -279,6 +280,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         if (!user) {
           setProfiles([])
           setSwipeLimitStatus(null)
+          setViewerEntitlement(null)
           setLoading(false)
           return
         }
@@ -286,6 +288,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         await refreshSwipeLimitStatus(user.id)
         const entitlement = await getUserEntitlementStatus(user.id)
         setViewerIsPremium(entitlement.isPremium)
+        setViewerEntitlement(entitlement)
 
         // Fetch current user's gender from user_profiles
         const { data: currentUserProfile, error: currentUserError } = await supabase
@@ -862,6 +865,21 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
               setCurrentScreen("premium")
             }}
           />
+          {viewerEntitlement?.paymentDue && (
+            <button
+              type="button"
+              className="fixed left-1/2 top-[calc(5.6rem+env(safe-area-inset-top))] z-40 w-[min(92vw,28rem)] -translate-x-1/2 rounded-full border border-[#C2A574]/35 bg-[#3A2B24]/92 px-4 py-3 text-left shadow-[0_24px_70px_rgba(24,17,13,0.22)] backdrop-blur-2xl sm:top-[calc(5rem+env(safe-area-inset-top))]"
+              onClick={() => {
+                setPremiumBackTarget("discover")
+                setCurrentScreen("premium")
+              }}
+            >
+              <span className="block luxe-kicker text-[0.55rem] text-[#C2A574]">subscription renewal due</span>
+              <span className="block text-sm font-bold text-[#fff7df]">
+                {viewerEntitlement.graceDaysRemaining || 0} day{viewerEntitlement.graceDaysRemaining === 1 ? "" : "s"} of grace left. Tap to renew.
+              </span>
+            </button>
+          )}
         </>
       )}
 

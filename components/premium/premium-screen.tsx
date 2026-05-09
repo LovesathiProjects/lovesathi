@@ -45,6 +45,11 @@ const premiumFeatures = [
   },
 ]
 
+function formatEntitlementDate(value?: string | null) {
+  if (!value) return null
+  return new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(new Date(value))
+}
+
 export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSelect?: (planId: string) => void; onSubscribe?: (planId: string) => void; onBack?: () => void; mode?: 'matrimony' }) {
   const [selectedPlan, setSelectedPlan] = useState<string>("essential")
   const [entitlement, setEntitlement] = useState<EntitlementStatus | null>(null)
@@ -122,10 +127,12 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
               </Badge>
               {entitlement?.isPremium && activePlan && (
                 <div className="mx-auto mt-5 max-w-xl rounded-[1.4rem] border border-[#C2A574]/30 bg-white/12 p-4 text-left backdrop-blur-xl">
-                  <p className="luxe-kicker text-[#C2A574]">currently active</p>
+                  <p className="luxe-kicker text-[#C2A574]">{entitlement.paymentDue ? "renewal payment due" : "currently active"}</p>
                   <p className="mt-1 font-serif text-2xl font-bold tracking-[-0.04em] text-white">{activePlan.name}</p>
                   <p className="mt-1 text-sm text-[#f2dfbd]">
-                    {entitlement.daysRemaining === null
+                    {entitlement.paymentDue
+                      ? `Premium continues during grace. Renew before ${formatEntitlementDate(entitlement.graceUntil || entitlement.accessUntil) || "the grace period ends"} to avoid automatic cancellation.`
+                      : entitlement.daysRemaining === null
                       ? "Premium access is active."
                       : `${entitlement.daysRemaining} day${entitlement.daysRemaining === 1 ? "" : "s"} remaining.`}
                   </p>
@@ -288,7 +295,11 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
               onClick={() => onSubscribe?.(selectedPlan)}
             >
               <Crown className="w-5 h-5 mr-2" style={{ color: '#FFFFFF' }} />
-              {entitlement?.isPremium ? "Manage premium plan" : `Subscribe to ${getSubscriptionPlan(selectedPlan).name}`}
+              {entitlement?.paymentDue
+                ? `Renew ${activePlan?.name || "premium"}`
+                : entitlement?.isPremium
+                  ? "Manage premium plan"
+                  : `Subscribe to ${getSubscriptionPlan(selectedPlan).name}`}
             </Button>
 
             <div className="text-center space-y-2">
