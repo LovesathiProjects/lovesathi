@@ -49,12 +49,12 @@ export function QuickActions({
   return (
     <div
       className={cn(
-        "fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 z-50 -translate-x-1/2",
+        "fixed bottom-[calc(0.85rem+env(safe-area-inset-bottom))] left-1/2 z-50 w-[min(calc(100vw-1rem),28rem)] -translate-x-1/2 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]",
         className,
       )}
     >
       <div className={cn(
-        "flex items-center gap-3 rounded-[2rem] border border-[#C2A574]/34 bg-[#ffffff]/88 px-5 py-3 shadow-[0_22px_70px_rgba(24,17,13,0.2)] ring-1 ring-white/60 backdrop-blur-2xl sm:gap-4 sm:px-8",
+        "flex w-full items-center justify-between gap-1 rounded-[2rem] border border-[#C2A574]/34 bg-[#ffffff]/90 px-3 py-2.5 shadow-[0_22px_70px_rgba(24,17,13,0.2)] ring-1 ring-white/60 backdrop-blur-2xl sm:gap-4 sm:px-8 sm:py-3",
       )}>
         {tabs.map((tab) => {
           const Icon = tab.icon
@@ -65,7 +65,7 @@ export function QuickActions({
               key={tab.id}
               onClick={tab.onClick}
               className={cn(
-                "relative flex h-11 w-11 items-center justify-center rounded-full transition-all duration-150 ease-in-out",
+                "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-150 ease-in-out sm:h-11 sm:w-11",
                 isActive ? "bg-[#C2A574] shadow-[0_14px_34px_rgba(194,165,116,0.28)]" : "cursor-pointer hover:bg-[#C2A574]/8"
               )}
             >

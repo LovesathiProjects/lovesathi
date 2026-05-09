@@ -46,11 +46,11 @@ export function BottomTabs({ activeTab = "discover", onTabChange }: BottomTabsPr
       <nav 
         data-bottom-nav 
         className={cn(
-          "fixed bottom-0 left-0 right-0 backdrop-blur-xl border-t z-50",
-          "bg-white border-[#E5E5E5] shadow-[0_-2px_8px_rgba(0,0,0,0.08)]"
+          "fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-xl",
+          "border-[#C2A574]/24 bg-[#F7F3EE]/92 shadow-[0_-18px_50px_rgba(24,17,13,0.08)]"
         )}
       >
-        <div className="flex items-center justify-around py-2 px-2">
+        <div className="mx-auto flex max-w-xl items-center justify-around px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2">
           {allTabs.map((tab) => {
             const Icon = tab.icon
             const isActive = currentTab === tab.id
@@ -60,25 +60,25 @@ export function BottomTabs({ activeTab = "discover", onTabChange }: BottomTabsPr
                 key={tab.id}
                 onClick={() => handleTabClick(tab.id)}
                 className={cn(
-                  "flex flex-col items-center justify-center p-2 min-w-0 flex-1 transition-all duration-150 ease-in-out",
-                  isActive ? "" : "hover:bg-black/4 cursor-pointer"
+                  "flex min-w-0 flex-1 flex-col items-center justify-center rounded-2xl p-2 transition-all duration-150 ease-in-out",
+                  isActive ? "" : "cursor-pointer hover:bg-[#C2A574]/8"
                 )}
               >
                 <div className={cn(
                   "relative flex items-center justify-center",
-                  isActive && "p-2 rounded-full bg-black/8 backdrop-blur-[8px] shadow-[0_4px_10px_rgba(0,0,0,0.08)]"
+                  isActive && "rounded-full bg-[#C2A574]/18 p-2 shadow-[0_8px_22px_rgba(194,165,116,0.16)] backdrop-blur-[8px]"
                 )}>
                   <Icon 
                     className={cn(
                       "w-5 h-5 sm:w-6 sm:h-6 mb-1 transition-all duration-150 ease-in-out",
                       isActive && "stroke-[2.5]"
                     )}
-                    stroke={isActive ? "#000000" : "rgba(0,0,0,0.75)"}
+                    stroke={isActive ? "#3A2B24" : "#8B7B70"}
                     strokeWidth={isActive ? 2.5 : 2}
                     fill="none"
                     style={{
-                      color: isActive ? '#000000' : 'rgba(0,0,0,0.75)',
-                      stroke: isActive ? '#000000' : 'rgba(0,0,0,0.75)',
+                      color: isActive ? '#3A2B24' : '#8B7B70',
+                      stroke: isActive ? '#3A2B24' : '#8B7B70',
                       fill: 'none',
                       opacity: isActive ? 1 : 0.75
                     }}
@@ -105,7 +105,7 @@ export function BottomTabs({ activeTab = "discover", onTabChange }: BottomTabsPr
                 <span 
                   className={cn(
                     "text-xs font-semibold truncate transition-colors duration-150 ease-in-out",
-                    isActive ? "text-black" : "text-black/75"
+                    isActive ? "text-[#3A2B24]" : "text-[#8B7B70]"
                   )}
                 >
                   {tab.label}

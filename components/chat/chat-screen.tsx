@@ -841,7 +841,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
 
   if (loading) {
     return (
-      <div className={cn("flex flex-col h-screen relative", isMatrimony ? "bg-[#ffffff]" : "bg-[#0E0F12]")}>
+      <div className={cn("relative flex min-h-[100dvh] flex-col", isMatrimony ? "bg-[#ffffff]" : "bg-[#0E0F12]")}>
         <StaticBackground />
         <div className="flex items-center justify-center h-full">
           <div className="text-center space-y-4">
@@ -855,7 +855,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
 
   if (!matchId || !chatUser) {
     return (
-      <div className={cn("flex flex-col h-screen relative", isMatrimony ? "bg-white" : "bg-[#0E0F12]")}>
+      <div className={cn("relative flex min-h-[100dvh] flex-col", isMatrimony ? "bg-white" : "bg-[#0E0F12]")}>
         <StaticBackground />
         <div className="flex items-center justify-center h-full">
           <div className="text-center space-y-4">

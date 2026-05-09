@@ -91,6 +91,13 @@ const settingsSections: SettingsSection[] = [
         type: "navigation",
       },
       {
+        id: "help_faq",
+        label: "FAQ",
+        description: "Answers about profiles, privacy, premium, and verification",
+        icon: HelpCircle,
+        type: "navigation",
+      },
+      {
         id: "help_safety",
         label: "Safety Centre",
         description: "Read verification, reporting, and safe matrimony guidance",
@@ -302,40 +309,40 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
   }
 
   return (
-    <div className={cn("relative flex h-full flex-col", isMatrimony ? "luxe-light-page" : "bg-[#0E0F12]")}>
+    <div className={cn("relative flex min-h-[100dvh] w-full flex-col overflow-x-hidden", isMatrimony ? "luxe-light-page" : "bg-[#0E0F12]")}>
       {/* Static Background */}
       <StaticBackground />
 
       {/* Header */}
       <div className={cn(
-        "flex-shrink-0 p-6 border-b backdrop-blur-xl relative z-10",
+        "sticky top-0 z-20 flex-shrink-0 border-b px-4 pb-4 pt-[calc(0.85rem+env(safe-area-inset-top))] backdrop-blur-xl sm:px-6 sm:pb-5",
         isMatrimony ? "border-[#482b1a]/10 bg-[#ffffff]/84 shadow-[0_18px_55px_rgba(24,17,13,0.08)]" : "border-white/20 bg-[#14161B]/50"
       )}>
-        <div className="flex items-center space-x-4">
+        <div className="mx-auto flex w-full max-w-6xl items-center gap-3 sm:gap-4">
           {onBack && (
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                "p-2 rounded-full",
-                isMatrimony ? "hover:bg-gray-50 text-black" : "hover:bg-white/10 text-white"
+                "h-11 w-11 shrink-0 rounded-full border p-0",
+                isMatrimony ? "border-[#C2A574]/24 bg-white/76 text-[#3A2B24] hover:bg-white" : "border-white/20 bg-white/10 text-white hover:bg-white/10"
               )}
               onClick={onBack}
             >
-              <ArrowLeft className={cn("w-5 h-5", isMatrimony ? "text-black" : "text-white")} />
+              <ArrowLeft className="h-5 w-5" />
             </Button>
           )}
-          <Avatar className={cn("h-16 w-16 border-2 shadow-lg", isMatrimony ? "border-[#C2A574]/50" : "border-white/30")}>
+          <Avatar className={cn("h-14 w-14 shrink-0 border-2 shadow-lg sm:h-16 sm:w-16", isMatrimony ? "border-[#C2A574]/50" : "border-white/30")}>
             <AvatarImage src={userInfo.photo || "/placeholder-user.jpg"} alt="Profile" />
             <AvatarFallback className={cn("font-semibold", isMatrimony ? "bg-gray-100 text-black" : "bg-white/20 text-white")}>
               {getInitials(userInfo.name)}
             </AvatarFallback>
           </Avatar>
-          <div className="space-y-1">
-            <h1 className={cn("font-serif text-3xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#3A2B24]" : "text-white")}>{userInfo.name}</h1>
-            <p className={cn("text-sm font-medium", isMatrimony ? "text-[#444444]" : "text-white/75")}>{userInfo.email}</p>
+          <div className="min-w-0 flex-1 space-y-1">
+            <h1 className={cn("truncate font-serif text-2xl font-bold tracking-[-0.05em] sm:text-3xl", isMatrimony ? "text-[#3A2B24]" : "text-white")}>{userInfo.name}</h1>
+            <p className={cn("truncate text-sm font-medium", isMatrimony ? "text-[#8B7B70]" : "text-white/75")}>{userInfo.email}</p>
             <Badge variant="secondary" className={cn(
-              "text-xs font-semibold",
+              "max-w-full truncate text-xs font-semibold",
               isMatrimony
                 ? "border-[#C2A574]/35 bg-[#ffffff] text-[#C2A574]"
                 : "bg-white/20 text-white border-white/30"
@@ -347,16 +354,16 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
       </div>
 
       {/* Settings */}
-      <div className="flex-1 overflow-y-auto relative z-10">
-        <div className="p-6 space-y-6">
+      <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 py-5 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 lg:py-8">
+        <div className="mx-auto grid w-full max-w-6xl gap-4 lg:grid-cols-2 xl:gap-5">
           {settingsSections.map((section) => (
             <div key={section.title} className="space-y-3">
-              <h2 className={cn("luxe-kicker", isMatrimony ? "text-[#C2A574]" : "text-white/75")}>
+              <h2 className={cn("px-1 luxe-kicker", isMatrimony ? "text-[#C2A574]" : "text-white/75")}>
                 {section.title}
               </h2>
 
               <Card className={cn(
-                "overflow-hidden backdrop-blur-sm",
+                "overflow-hidden rounded-[1.75rem] backdrop-blur-sm",
                 isMatrimony
                   ? "luxe-card border-[#C2A574]/24"
                   : "bg-[#14161B] border-white/20"
@@ -366,22 +373,22 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
                     <div key={item.id}>
                       <div
                         className={cn(
-                          "flex items-center justify-between p-4 transition-colors",
-                          item.type !== "toggle" && (isMatrimony ? "cursor-pointer hover:bg-gray-50" : "cursor-pointer hover:bg-white/10")
+                          "flex items-center justify-between gap-3 p-4 transition-colors sm:p-5",
+                          item.type !== "toggle" && (isMatrimony ? "cursor-pointer hover:bg-white/54" : "cursor-pointer hover:bg-white/10")
                         )}
                         onClick={() => {
                           if (item.type === "navigation") handleNavigation(item.id)
                           if (item.type === "action") handleAction(item.id)
                         }}
                       >
-                        <div className="flex items-center space-x-3">
+                        <div className="flex min-w-0 items-start gap-3">
                           <div
                             className={cn(
-                              "w-10 h-10 rounded-full flex items-center justify-center",
+                              "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border",
                               item.destructive
-                                ? "bg-[#C2A574]/20"
+                                ? "border-[#b91c1c]/16 bg-[#b91c1c]/8"
                                 : isMatrimony
-                                  ? "bg-gray-100"
+                                  ? "border-[#C2A574]/24 bg-[#F7F3EE]"
                                   : "bg-white/10"
                             )}
                           >
@@ -397,12 +404,12 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
                             />
                           </div>
 
-                          <div className="space-y-1">
-                            <div className="flex items-center space-x-2">
+                          <div className="min-w-0 space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
                               <span className={cn(
                                 "font-semibold",
                                 item.destructive
-                                  ? "text-[#C2A574]"
+                                  ? "text-[#b91c1c]"
                                   : isMatrimony
                                     ? "text-black"
                                     : "text-white"
@@ -443,7 +450,7 @@ export function SettingsScreen({ onNavigate, onLogout, onBack }: { onNavigate?: 
                           </div>
                         </div>
 
-                        <div className="flex items-center">
+                        <div className="flex shrink-0 items-center">
                           {item.type === "navigation" && <ChevronRight className="w-5 h-5" style={{ color: isMatrimony ? '#C2A574' : 'rgba(255, 255, 255, 0.7)' }} />}
                         </div>
                       </div>

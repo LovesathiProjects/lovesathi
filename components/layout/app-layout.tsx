@@ -31,28 +31,26 @@ export function AppLayout({
   
   return (
     <div className={cn(
-      "min-h-[100dvh]",
+      "min-h-[100dvh] w-full overflow-x-hidden",
       "luxe-light-page",
       isDiscoverScreen && "h-[100dvh] overflow-hidden"
     )}>
       {/* Settings Icon - Only show on profile page */}
       {showSettingsButton && onSettingsClick && currentScreen === "profile" && (
-        <div className="fixed top-4 right-4 z-40">
-          <Settings 
-            className="w-6 h-6 cursor-pointer" 
+        <div className="fixed right-4 top-[calc(1rem+env(safe-area-inset-top))] z-40">
+          <button
+            type="button"
+            aria-label="Open settings"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-[#C2A574]/30 bg-white/82 shadow-[0_16px_45px_rgba(24,17,13,0.12)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-[#C2A574]"
             onClick={onSettingsClick}
-            style={{ 
-              color: '#000000',
-              stroke: '#000000',
-              fill: 'none' 
-            }}
-            strokeWidth={2}
-          />
+          >
+            <Settings className="h-5 w-5 text-[#3A2B24]" strokeWidth={2.2} />
+          </button>
         </div>
       )}
 
       <main className={cn(
-        "pb-16 sm:pb-20", 
+        "min-h-[100dvh] w-full pb-16 sm:pb-20",
         !showBottomTabs && "pb-0",
         isDiscoverScreen && "h-full overflow-hidden"
       )}>{children}</main>

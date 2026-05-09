@@ -77,15 +77,15 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
   }, [])
 
   return (
-    <div className={cn("relative min-h-screen", isMatrimony ? "luxe-light-page" : "bg-[#0E0F12]")}>
+    <div className={cn("relative min-h-[100dvh] overflow-x-hidden", isMatrimony ? "luxe-light-page" : "bg-[#0E0F12]")}>
       {/* Header */}
       <div className={cn(
-        "sticky top-0 border-b shadow-lg z-10",
+        "sticky top-0 z-10 border-b shadow-lg",
         isMatrimony
           ? "border-[#E5E5E5] bg-white"
           : "backdrop-blur-xl border-white/20 bg-[#14161B]/50"
       )}>
-        <div className="flex items-center justify-between p-4">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 p-4">
           {onBack && (
             <Button
               variant="ghost"
@@ -142,7 +142,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
           </div>
         </div>
         {/* Features Section */}
-        <div className={cn("p-6 space-y-6", isMatrimony ? "bg-white" : "")}>
+        <div className={cn("mx-auto max-w-7xl space-y-6 p-4 sm:p-6", isMatrimony ? "bg-white/0" : "")}>
           <div className="space-y-4">
             <h2 className={cn("text-center font-serif text-4xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#3A2B24]" : "text-white")}>Premium Features</h2>
             <div className="grid gap-4">
@@ -283,7 +283,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
 
         {/* Bottom Action */}
         <div className={cn(
-          "p-6 border-t",
+          "border-t p-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:p-6",
           isMatrimony
             ? "border-[#E5E5E5] bg-white"
             : "border-white/20 bg-[#14161B]/50 backdrop-blur-xl"

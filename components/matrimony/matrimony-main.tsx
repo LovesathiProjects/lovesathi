@@ -1166,6 +1166,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             }
             else if (id === "verification") setCurrentScreen("verification-status")
             else if (id === "app_settings") setCurrentScreen("app-settings")
+            else if (id === "help_faq") router.push("/faq")
             else if (id === "help_safety") router.push("/safety")
             else if (id === "help_contact") router.push("/contact")
             else if (id === "help_report_bug") router.push("/contact")
@@ -1319,11 +1320,12 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {currentScreen === "app-settings" && (
-        <div className="p-0 pb-0 mt-0">
+        <div className="min-h-[100dvh] p-0 pb-0 mt-0">
           <AppSettings
             mode="matrimony"
             onNavigate={(id) => {
-              if (id === "help_faq") router.push("/safety")
+              if (id === "help_faq") router.push("/faq")
+              else if (id === "help_safety") router.push("/safety")
               else if (id === "help_contact") router.push("/contact")
               else if (id === "help_report_bug") router.push("/contact")
               else if (id === "app_settings") {
