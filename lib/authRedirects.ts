@@ -1,4 +1,5 @@
 export const EMAIL_VERIFICATION_STORAGE_KEY = "lovesathi.pendingVerificationEmail"
+export const PHONE_VERIFICATION_STORAGE_KEY = "lovesathi.pendingVerificationPhone"
 
 export function getClientSiteUrl() {
   const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL

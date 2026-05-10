@@ -9,7 +9,7 @@ export async function completeOnboarding(userId: string) {
   try {
     const { data: profile, error: profileFetchError } = await supabase
       .from('user_profiles')
-      .select('phone')
+      .select('phone, phone_verified_at')
       .eq('user_id', userId)
       .maybeSingle()
 
@@ -18,6 +18,10 @@ export async function completeOnboarding(userId: string) {
     const phoneError = getPhoneValidationMessage(profile?.phone || '')
     if (phoneError) {
       throw new Error('Please add a valid phone number before completing onboarding.')
+    }
+
+    if (!profile?.phone_verified_at) {
+      throw new Error('Please verify your phone number before completing onboarding.')
     }
 
     const { data, error } = await supabase

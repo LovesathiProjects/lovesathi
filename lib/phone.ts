@@ -30,3 +30,12 @@ export function getUserPhoneVerifiedAt(user: any, phone: string) {
   if (!user?.phone_confirmed_at) return null
   return phonesMatch(user.phone, phone) ? String(user.phone_confirmed_at) : null
 }
+
+export function getAuthUserPhone(user: any) {
+  return normalizePhoneNumber(String(user?.phone || user?.user_metadata?.phone || ""))
+}
+
+export function isAuthUserPhoneVerified(user: any) {
+  const phone = getAuthUserPhone(user)
+  return Boolean(phone && getUserPhoneVerifiedAt(user, phone))
+}

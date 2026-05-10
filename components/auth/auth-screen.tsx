@@ -12,11 +12,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
   EMAIL_VERIFICATION_STORAGE_KEY,
+  PHONE_VERIFICATION_STORAGE_KEY,
   getEmailVerificationRedirectUrl,
   isEmailNotConfirmedError,
   normalizeEmail,
 } from "@/lib/authRedirects"
-import { getPhoneValidationMessage, normalizePhoneNumber } from "@/lib/phone"
+import { getPhoneValidationMessage, isAuthUserPhoneVerified, normalizePhoneNumber } from "@/lib/phone"
 import { supabase } from "@/lib/supabaseClient"
 
 interface AuthScreenProps {
@@ -152,6 +153,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
       })
       if (signUpError) throw signUpError
       window.sessionStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, email)
+      window.sessionStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, phone)
       router.push("/auth/verify-email")
     } catch (err: any) {
       setError(err.message || "Something went wrong")
@@ -168,7 +170,19 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
 
       if (user && !user.email_confirmed_at) {
         window.sessionStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, normalizeEmail(user.email || ""))
+        if (user.user_metadata?.phone || user.phone) {
+          window.sessionStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, normalizePhoneNumber(String(user.user_metadata?.phone || user.phone || "")))
+        }
         router.push("/auth/verify-email?reason=unconfirmed")
+        return
+      }
+
+      if (user && !isAuthUserPhoneVerified(user)) {
+        if (user.email) window.sessionStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, normalizeEmail(user.email))
+        if (user.user_metadata?.phone || user.phone) {
+          window.sessionStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, normalizePhoneNumber(String(user.user_metadata?.phone || user.phone || "")))
+        }
+        router.push("/auth/verify-email?reason=phone")
         return
       }
 
@@ -217,6 +231,9 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
       if (isEmailNotConfirmedError(err)) {
         const email = normalizeEmail(formData.email)
         window.sessionStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, email)
+        if (formData.phone) {
+          window.sessionStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, normalizePhoneNumber(formData.phone))
+        }
         router.push("/auth/verify-email?reason=unconfirmed")
         return
       }
