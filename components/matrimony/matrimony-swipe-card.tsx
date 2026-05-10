@@ -737,7 +737,7 @@ export function MatrimonySwipeCard({
 
       {isTopCard && !isFlipped && (
         <motion.div
-          className="pointer-events-none absolute bottom-[5.15rem] left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[#C2A574]/36 bg-[#FBF8F3]/82 px-3.5 py-2 text-[0.58rem] font-black uppercase tracking-[0.18em] text-[#8f6f37] shadow-[0_18px_42px_rgba(24,17,13,0.18)] backdrop-blur-xl"
+          className="pointer-events-none absolute bottom-[4.55rem] left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[#C2A574]/36 bg-[#FBF8F3]/82 px-3.5 py-2 text-[0.58rem] font-black uppercase tracking-[0.18em] text-[#8f6f37] shadow-[0_18px_42px_rgba(24,17,13,0.18)] backdrop-blur-xl"
           animate={superLikeCue ? { scale: [1, 1.08, 1], y: [0, -6, 0] } : { scale: 1, y: 0 }}
           transition={{ duration: 0.42, ease: "easeOut" }}
         >
