@@ -115,10 +115,6 @@ export async function saveDateOfBirth(dob: string, phoneInput?: string) {
       getUserPhoneVerifiedAt(user, normalizedPhone) ||
       (phonesMatch(existingProfile?.phone, normalizedPhone) ? existingProfile?.phone_verified_at : null)
 
-    if (!phoneVerifiedAt) {
-      throw new Error('Please verify your phone number with OTP before continuing.')
-    }
-
     let result
 
     if (existingProfile) {
@@ -128,7 +124,7 @@ export async function saveDateOfBirth(dob: string, phoneInput?: string) {
         .update({ 
           date_of_birth: dob,
           phone: normalizedPhone,
-          phone_verified_at: phoneVerifiedAt,
+          ...(phoneVerifiedAt ? { phone_verified_at: phoneVerifiedAt } : {}),
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id)
@@ -142,7 +138,7 @@ export async function saveDateOfBirth(dob: string, phoneInput?: string) {
           user_id: user.id,
           date_of_birth: dob,
           phone: normalizedPhone,
-          phone_verified_at: phoneVerifiedAt,
+          ...(phoneVerifiedAt ? { phone_verified_at: phoneVerifiedAt } : {}),
           gender: 'prefer_not_to_say' // temporary default
         })
         .select()
@@ -216,10 +212,6 @@ export async function saveGender(gender: 'male' | 'female' | 'prefer_not_to_say'
       getUserPhoneVerifiedAt(user, profilePhone) ||
       (phonesMatch(existingProfile?.phone, profilePhone) ? existingProfile?.phone_verified_at : null)
 
-    if (!phoneVerifiedAt) {
-      throw new Error('Please verify your phone number with OTP before continuing.')
-    }
-
     let result
 
     if (existingProfile) {
@@ -229,7 +221,7 @@ export async function saveGender(gender: 'male' | 'female' | 'prefer_not_to_say'
         .update({ 
           gender,
           phone: profilePhone,
-          phone_verified_at: phoneVerifiedAt,
+          ...(phoneVerifiedAt ? { phone_verified_at: phoneVerifiedAt } : {}),
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id)
@@ -247,7 +239,7 @@ export async function saveGender(gender: 'male' | 'female' | 'prefer_not_to_say'
           user_id: user.id,
           date_of_birth: defaultDob.toISOString().split('T')[0],
           phone: profilePhone,
-          phone_verified_at: phoneVerifiedAt,
+          ...(phoneVerifiedAt ? { phone_verified_at: phoneVerifiedAt } : {}),
           gender
         })
         .select()

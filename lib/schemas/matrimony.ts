@@ -1,12 +1,6 @@
 import { z } from "zod"
-import { getPhoneValidationMessage } from "@/lib/phone"
-
 export const welcomeIdentitySchema = z.object({
   name: z.string().min(2, "Name is too short"),
-  phone: z
-    .string()
-    .min(1, "Phone number is required")
-    .refine((value) => !getPhoneValidationMessage(value), "Please enter a valid phone number"),
   age: z.number({ invalid_type_error: "Enter a valid age" }).int().min(18).max(80),
   gender: z.enum(["Male", "Female", "Other"], { required_error: "Select gender" }),
   createdBy: z.enum(["Self", "Parent", "Sibling", "Other"], { required_error: "Select who created the profile" }),

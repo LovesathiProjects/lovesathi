@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient'
 import type { MatrimonyProfile, MatrimonyPreferences, VerificationPayload } from "@/lib/types"
-import { getPhoneValidationMessage, normalizePhoneNumber, phonesMatch } from "@/lib/phone"
+import { getPhoneValidationMessage, normalizePhoneNumber } from "@/lib/phone"
 
 // ============================================
 // TYPE DEFINITIONS
@@ -176,7 +176,6 @@ export async function saveStep1(
   userId: string,
   data: {
     name: string
-    phone: string
     age: number
     gender: 'Male' | 'Female' | 'Other'
     createdBy: 'Self' | 'Parent' | 'Sibling' | 'Other'
@@ -184,15 +183,9 @@ export async function saveStep1(
   }
 ): Promise<ServiceResponse> {
   try {
-    const normalizedPhone = normalizePhoneNumber(data.phone)
-    const phoneError = getPhoneValidationMessage(normalizedPhone)
-    if (phoneError) {
-      throw new Error(phoneError)
-    }
-
     const { data: userProfile, error: userProfileError } = await supabase
       .from('user_profiles')
-      .select('user_id, phone, phone_verified_at')
+      .select('user_id, phone')
       .eq('user_id', userId)
       .maybeSingle()
 
@@ -201,11 +194,12 @@ export async function saveStep1(
     }
 
     if (!userProfile) {
-      throw new Error('Please complete age and phone verification before profile setup.')
+      throw new Error('Please complete age verification before profile setup.')
     }
 
-    if (!userProfile.phone_verified_at || !phonesMatch(userProfile.phone, normalizedPhone)) {
-      throw new Error('Please verify your phone number with OTP before profile setup.')
+    const phoneError = getPhoneValidationMessage(normalizePhoneNumber(userProfile.phone || ''))
+    if (phoneError) {
+      throw new Error('Please create your account with a valid phone number before profile setup.')
     }
 
     // Get existing profile to preserve other fields
@@ -253,19 +247,6 @@ export async function saveStep1(
     if (error) {
       console.error('Supabase error saving step 1:', error)
       throw error
-    }
-
-    const { error: phoneUpdateError } = await supabase
-      .from('user_profiles')
-      .update({
-        phone: normalizedPhone,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('user_id', userId)
-
-    if (phoneUpdateError) {
-      console.error('Supabase error saving profile phone:', phoneUpdateError)
-      throw phoneUpdateError
     }
 
     return { success: true }
