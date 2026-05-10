@@ -85,6 +85,8 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
   const [age, setAge] = useState("")
   const [dateOfBirth, setDateOfBirth] = useState("")
   const [phone, setPhone] = useState("")
+  const [initialPhone, setInitialPhone] = useState("")
+  const [phoneVerifiedAt, setPhoneVerifiedAt] = useState<string | null>(null)
   const [gender, setGender] = useState("")
   const [createdBy, setCreatedBy] = useState("")
   const [bio, setBio] = useState("")
@@ -120,11 +122,14 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
 
       const { data: userProfile } = await supabase
         .from("user_profiles")
-        .select("phone")
+        .select("phone, phone_verified_at")
         .eq("user_id", user.id)
         .maybeSingle()
 
-      setPhone(normalizePhoneNumber(userProfile?.phone || user.user_metadata?.phone || user.phone || ""))
+      const hydratedPhone = normalizePhoneNumber(userProfile?.phone || user.user_metadata?.phone || user.phone || "")
+      setPhone(hydratedPhone)
+      setInitialPhone(hydratedPhone)
+      setPhoneVerifiedAt(userProfile?.phone_verified_at || null)
 
       if (data) {
         const typed = data as MatrimonyProfileFull
@@ -230,6 +235,9 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
       const normalizedPhone = normalizePhoneNumber(phone)
       const phoneError = getPhoneValidationMessage(normalizedPhone)
       if (phoneError) throw new Error(phoneError)
+      if (normalizedPhone !== initialPhone) {
+        throw new Error("Phone number changes must be verified with OTP before they can be saved.")
+      }
       if (uploadedPhotoUrls.length < 2) throw new Error("Please keep at least 2 profile photos.")
       if (bio.trim().length > 0 && bio.trim().length < 20) {
         throw new Error("About Me should be at least 20 characters.")
@@ -267,15 +275,17 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
 
       if (error) throw error
 
-      const { error: profileError } = await supabase
-        .from("user_profiles")
-        .update({
-          phone: normalizedPhone,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", user.id)
+      if (phoneVerifiedAt) {
+        const { error: profileError } = await supabase
+          .from("user_profiles")
+          .update({
+            phone: normalizedPhone,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", user.id)
 
-      if (profileError) throw profileError
+        if (profileError) throw profileError
+      }
 
       toast({
         title: "Saved",
@@ -399,8 +409,14 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                     onBlur={() => setPhone((value) => normalizePhoneNumber(value))}
                     placeholder="+91 98765 43210"
                     autoComplete="tel"
+                    readOnly={Boolean(phoneVerifiedAt)}
+                    className="read-only:bg-[#F7F3EE] read-only:text-[#8B7B70]"
                   />
-                  <p className="text-xs text-[#8B7B70]">Required. Free users see this masked until they subscribe.</p>
+                  <p className="text-xs text-[#8B7B70]">
+                    {phoneVerifiedAt
+                      ? "Verified by OTP. Contact support if you need to change this number."
+                      : "Phone changes require OTP verification before saving."}
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label>{dateOfBirth ? "Verified Age" : "Age"}</Label>

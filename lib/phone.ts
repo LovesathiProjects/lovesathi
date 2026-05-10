@@ -9,6 +9,12 @@ export function getPhoneDigits(value: string) {
   return value.replace(/\D/g, "")
 }
 
+export function phonesMatch(left?: string | null, right?: string | null) {
+  const leftDigits = getPhoneDigits(left || "")
+  const rightDigits = getPhoneDigits(right || "")
+  return Boolean(leftDigits && rightDigits && leftDigits === rightDigits)
+}
+
 export function isValidPhoneNumber(value: string) {
   const digits = getPhoneDigits(value)
   return digits.length >= 8 && digits.length <= 15
@@ -18,4 +24,9 @@ export function getPhoneValidationMessage(value: string) {
   if (!value.trim()) return "Phone number is required."
   if (!isValidPhoneNumber(value)) return "Please enter a valid phone number."
   return null
+}
+
+export function getUserPhoneVerifiedAt(user: any, phone: string) {
+  if (!user?.phone_confirmed_at) return null
+  return phonesMatch(user.phone, phone) ? String(user.phone_confirmed_at) : null
 }

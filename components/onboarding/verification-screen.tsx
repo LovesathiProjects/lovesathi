@@ -1,14 +1,19 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Shield, Upload, Camera, X, FileText, ArrowLeft } from "lucide-react"
+import { Shield, Upload, Camera, X, FileText, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { FaceScanModal } from "@/components/kyc/FaceScanModal"
 import { supabase } from "@/lib/supabaseClient"
-import { getPhoneValidationMessage, normalizePhoneNumber } from "@/lib/phone"
+import { getPhoneValidationMessage, getUserPhoneVerifiedAt, normalizePhoneNumber } from "@/lib/phone"
+import {
+  requestCurrentUserPhoneOtp,
+  resendCurrentUserPhoneOtp,
+  verifyCurrentUserPhoneOtp,
+} from "@/lib/phoneOtp"
 import { 
   saveDateOfBirth, 
   saveGender, 
@@ -26,6 +31,12 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
   const [gender, setGender] = useState<"male" | "female" | "prefer_not_to_say" | null>(null)
   const [dob, setDob] = useState("")
   const [phone, setPhone] = useState("")
+  const [verifiedPhone, setVerifiedPhone] = useState("")
+  const [phoneVerifiedAt, setPhoneVerifiedAt] = useState<string | null>(null)
+  const [phoneOtpCode, setPhoneOtpCode] = useState("")
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false)
+  const [phoneOtpSending, setPhoneOtpSending] = useState(false)
+  const [phoneOtpVerifying, setPhoneOtpVerifying] = useState(false)
   const [profileValid, setProfileValid] = useState(false)
   const [underageMessage, setUnderageMessage] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -37,6 +48,9 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
   const [facePhotoPreview, setFacePhotoPreview] = useState<string | null>(null)
   const [showFaceScanModal, setShowFaceScanModal] = useState(false)
   const { toast } = useToast()
+  const normalizedPhone = useMemo(() => normalizePhoneNumber(phone), [phone])
+  const phoneValidationMessage = useMemo(() => getPhoneValidationMessage(normalizedPhone), [normalizedPhone])
+  const phoneIsVerified = Boolean(phoneVerifiedAt && verifiedPhone && normalizedPhone === verifiedPhone)
 
   useEffect(() => {
     async function hydratePhone() {
@@ -48,11 +62,18 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
       const metadataPhone = String(user.user_metadata?.phone || user.phone || "")
       const { data: profile } = await supabase
         .from("user_profiles")
-        .select("phone")
+        .select("phone, phone_verified_at")
         .eq("user_id", user.id)
         .maybeSingle()
 
-      setPhone(normalizePhoneNumber(profile?.phone || metadataPhone))
+      const hydratedPhone = normalizePhoneNumber(profile?.phone || metadataPhone)
+      const authVerifiedAt = getUserPhoneVerifiedAt(user, hydratedPhone)
+      const profileVerifiedAt = profile?.phone_verified_at || null
+      setPhone(hydratedPhone)
+      if (hydratedPhone && (profileVerifiedAt || authVerifiedAt)) {
+        setVerifiedPhone(hydratedPhone)
+        setPhoneVerifiedAt(profileVerifiedAt || authVerifiedAt)
+      }
     }
 
     void hydratePhone()
@@ -65,15 +86,6 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
       return
     }
 
-    const phoneError = getPhoneValidationMessage(phone)
-    if (phoneError) {
-      toast({
-        title: "Phone Required",
-        description: phoneError,
-        variant: "destructive",
-      })
-      return
-    }
     const age = calculateAgeFromDate(dob)
     if (age !== null && age < 18) {
       setUnderageMessage("You are not eligible to use Lovesathi according to age criteria (18+).")
@@ -81,6 +93,12 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
       setUnderageMessage(null)
     }
   }, [dob])
+
+  useEffect(() => {
+    if (!normalizedPhone || normalizedPhone === verifiedPhone) return
+    setPhoneOtpSent(false)
+    setPhoneOtpCode("")
+  }, [normalizedPhone, verifiedPhone])
 
   const handleFileUpload = (file: File) => {
     // Validate file type
@@ -172,6 +190,88 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
     return calculateAgeFromDate(dateString) || 0
   }
 
+  const handleSendPhoneOtp = async (resend = false) => {
+    if (phoneValidationMessage) {
+      toast({
+        title: "Check phone number",
+        description: phoneValidationMessage,
+        variant: "destructive",
+      })
+      return
+    }
+
+    setPhoneOtpSending(true)
+
+    try {
+      const result = resend
+        ? await resendCurrentUserPhoneOtp(normalizedPhone)
+        : await requestCurrentUserPhoneOtp(normalizedPhone)
+
+      const alreadyVerifiedResult = result as { phone: string; alreadyVerified?: boolean; verifiedAt?: string | null }
+      if (!resend && alreadyVerifiedResult.alreadyVerified === true) {
+        setVerifiedPhone(alreadyVerifiedResult.phone)
+        setPhoneVerifiedAt(alreadyVerifiedResult.verifiedAt || new Date().toISOString())
+        setPhoneOtpSent(false)
+        setPhoneOtpCode("")
+        toast({
+          title: "Phone already verified",
+          description: "This phone number is already trusted on your account.",
+        })
+        return
+      }
+
+      setPhone(result.phone)
+      setPhoneOtpSent(true)
+      setPhoneOtpCode("")
+      toast({
+        title: resend ? "Code resent" : "OTP sent",
+        description: `We sent a 6-digit verification code to ${result.phone}.`,
+      })
+    } catch (error: any) {
+      toast({
+        title: "Could not send OTP",
+        description: error.message || "Please check SMS settings and try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setPhoneOtpSending(false)
+    }
+  }
+
+  const handleVerifyPhoneOtp = async () => {
+    if (phoneValidationMessage) {
+      toast({
+        title: "Check phone number",
+        description: phoneValidationMessage,
+        variant: "destructive",
+      })
+      return
+    }
+
+    setPhoneOtpVerifying(true)
+
+    try {
+      const result = await verifyCurrentUserPhoneOtp(normalizedPhone, phoneOtpCode)
+      setPhone(result.phone)
+      setVerifiedPhone(result.phone)
+      setPhoneVerifiedAt(result.verifiedAt)
+      setPhoneOtpSent(false)
+      setPhoneOtpCode("")
+      toast({
+        title: "Phone verified",
+        description: "Your number is now trusted for Lovesathi profile activation.",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Invalid or expired OTP",
+        description: error.message || "Please request a fresh code and try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setPhoneOtpVerifying(false)
+    }
+  }
+
   const handleProfileContinue = async () => {
     setUnderageMessage(null)
     
@@ -179,6 +279,24 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
       toast({
         title: "Date Required",
         description: "Please select your date of birth.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (phoneValidationMessage) {
+      toast({
+        title: "Phone Required",
+        description: phoneValidationMessage,
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!phoneIsVerified) {
+      toast({
+        title: "Verify your phone",
+        description: "Please verify your phone number with the 6-digit OTP before continuing.",
         variant: "destructive",
       })
       return
@@ -201,7 +319,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
     
     try {
       // Save DOB to Supabase
-      const result = await saveDateOfBirth(dob, phone)
+      const result = await saveDateOfBirth(dob, normalizedPhone)
       
       if (result.success) {
         toast({
@@ -355,19 +473,78 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                   <Label htmlFor="phone" className="text-sm font-semibold text-[#111] uppercase tracking-wide">
                     PHONE NUMBER
                   </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    onBlur={() => setPhone((value) => normalizePhoneNumber(value))}
-                    placeholder="+91 98765 43210"
-                    autoComplete="tel"
-                    className="block h-14 w-full max-w-full min-w-0 appearance-none rounded-2xl border-black/20 text-base text-[#111] focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20"
-                  />
-                  <p className="text-xs leading-5 text-black/50">
-                    Your number stays masked for free users and is revealed only through premium contact access.
-                  </p>
+                  <div className="space-y-3 rounded-[1.65rem] border border-[#C2A574]/20 bg-[#FBF8F3]/72 p-3 shadow-[0_18px_45px_rgba(58,43,36,0.06)]">
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      onBlur={() => setPhone((value) => normalizePhoneNumber(value))}
+                      placeholder="+91 98765 43210"
+                      autoComplete="tel"
+                      className="block h-14 w-full max-w-full min-w-0 appearance-none rounded-2xl border-black/20 bg-white text-base text-[#111] focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20"
+                    />
+
+                    {phoneIsVerified ? (
+                      <div className="flex items-center gap-2 rounded-2xl border border-[#C2A574]/28 bg-[#C2A574]/12 px-3 py-2 text-sm font-semibold text-[#3A2B24]">
+                        <CheckCircle2 className="h-4 w-4 text-[#C2A574]" />
+                        Phone verified by OTP
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleSendPhoneOtp(phoneOtpSent)}
+                          disabled={phoneOtpSending || Boolean(phoneValidationMessage)}
+                          className="h-12 w-full rounded-full border-[#C2A574]/45 bg-white text-sm font-bold text-[#3A2B24] hover:bg-[#F7F3EE]"
+                        >
+                          {phoneOtpSending ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Sending code...
+                            </>
+                          ) : phoneOtpSent ? (
+                            "Resend phone OTP"
+                          ) : (
+                            "Send phone OTP"
+                          )}
+                        </Button>
+
+                        {phoneOtpSent && (
+                          <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                            <Input
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={phoneOtpCode}
+                              onChange={(e) => setPhoneOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                              placeholder="6-digit OTP"
+                              className="h-12 rounded-2xl border-black/20 bg-white text-center text-lg font-bold tracking-[0.4em] text-[#111] focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20"
+                            />
+                            <Button
+                              type="button"
+                              onClick={handleVerifyPhoneOtp}
+                              disabled={phoneOtpVerifying || phoneOtpCode.length !== 6}
+                              className="h-12 rounded-full bg-[#C2A574] px-5 font-bold text-[#3A2B24] hover:bg-[#B9975E]"
+                            >
+                              {phoneOtpVerifying ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Verifying...
+                                </>
+                              ) : (
+                                "Verify"
+                              )}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <p className="text-xs leading-5 text-black/50">
+                      Your number must be OTP verified. It stays masked for free users and is revealed only through premium contact access.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -380,7 +557,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                   handleProfileContinue()
                 }}
                 className="h-14 w-full rounded-full bg-[#C2A574] text-base font-semibold text-[#3A2B24] shadow-sm transition-colors hover:bg-[#B9975E] disabled:bg-[#d08190] disabled:text-white"
-                disabled={isLoading || !dob || !phone.trim()}
+                disabled={isLoading || !dob || !phone.trim() || !phoneIsVerified}
                 type="button"
               >
                 {isLoading ? "Saving..." : "Continue"}

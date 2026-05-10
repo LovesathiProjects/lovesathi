@@ -27,6 +27,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
   const [isLoading, setIsLoading] = React.useState(false)
   const [verifiedDob, setVerifiedDob] = React.useState<string | null>(null)
   const [verifiedGender, setVerifiedGender] = React.useState<"Male" | "Female" | "Other" | null>(null)
+  const [phoneVerifiedAt, setPhoneVerifiedAt] = React.useState<string | null>(null)
   const router = useRouter()
 
   const form = useForm<FormValues>({
@@ -66,7 +67,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
 
       const { data } = await supabase
         .from("user_profiles")
-        .select("date_of_birth, gender, phone")
+        .select("date_of_birth, gender, phone, phone_verified_at")
         .eq("user_id", user.id)
         .maybeSingle()
 
@@ -93,6 +94,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
         form.setValue("phone", hydratedPhone, { shouldValidate: true })
         setPartial("welcome", { phone: hydratedPhone })
       }
+      setPhoneVerifiedAt(data?.phone_verified_at || null)
     }
 
     void hydrateVerifiedProfile()
@@ -255,17 +257,20 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
                     placeholder="+91 98765 43210"
                     value={field.value || ""}
                     onChange={field.onChange}
+                    readOnly={Boolean(phoneVerifiedAt)}
                     onBlur={() => {
                       const normalized = normalizePhoneNumber(field.value || "")
                       field.onChange(normalized)
                       setPartial("welcome", { phone: normalized })
                     }}
                     autoComplete="tel"
-                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20 rounded-xl"
+                    className="h-12 text-base text-[#111] border-black/20 focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20 rounded-xl read-only:bg-[#F7F3EE] read-only:text-[#8B7B70]"
                   />
                 </FormControl>
                 <p className="text-xs leading-5 text-[#8B7B70]">
-                  Required. Free users see it masked; paid plans reveal it through Lovesathi contact access.
+                  {phoneVerifiedAt
+                    ? "Verified by OTP. Contact support if you need to change this number."
+                    : "Finish phone OTP verification before profile setup can continue."}
                 </p>
                 <FormMessage />
               </FormItem>
