@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { motion, useMotionValue, useTransform, animate } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,6 @@ import { SwipeAnimations, useSwipeAnimation } from "../discovery/swipe-animation
 import { MatrimonyProfileModal } from "./matrimony-profile-modal"
 import { getMatrimonyProfile, type MatrimonyProfileFull } from "@/lib/matrimonyService"
 import { ReportDialog } from "@/components/chat/report-dialog"
-import { supabase } from "@/lib/supabaseClient"
 import { useToast } from "@/hooks/use-toast"
 import { formatPublicProfileName, getDisplayInitial } from "@/lib/displayName"
 
@@ -42,6 +41,7 @@ interface MatrimonySwipeCardProps {
   onRevealPhone?: (profileId: string) => Promise<string | null>
   onPremiumProfileUpgrade?: () => void
   onProfileClick?: () => void
+  currentUserId?: string | null
   stackIndex?: number // 0 is top, then 1,2 for depth visuals
   isShortlisted?: boolean
   onToggleShortlist?: () => Promise<any> | void
@@ -75,7 +75,7 @@ export function MatrimonySwipeCard({
   onPhoneUpgrade,
   onRevealPhone,
   onPremiumProfileUpgrade,
-  onProfileClick,
+  currentUserId,
   stackIndex = 0,
   isShortlisted = false,
   onToggleShortlist,
@@ -86,15 +86,14 @@ export function MatrimonySwipeCard({
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
   const [imageLoadFailed, setImageLoadFailed] = useState(false)
   const [expandedPhotoIndex, setExpandedPhotoIndex] = useState(0)
-  const [showInfo, setShowInfo] = useState(false)
   const [isFlipped, setIsFlipped] = useState(false)
   const [fullProfile, setFullProfile] = useState<MatrimonyProfileFull | null>(null)
   const [loadingProfile, setLoadingProfile] = useState(false)
   const [shortlistBusy, setShortlistBusy] = useState(false)
   const [showReportDialog, setShowReportDialog] = useState(false)
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [revealedPhone, setRevealedPhone] = useState<string | null>(phone || null)
   const { toast } = useToast()
+  const isTopCard = stackIndex === 0
   const safePhotos = useMemo(
     () => photos.filter((photo) => typeof photo === "string" && photo.trim().length > 0),
     [photos],
@@ -115,20 +114,9 @@ export function MatrimonySwipeCard({
     setRevealedPhone(phone || null)
   }, [phone, profileId])
 
-  // Get current user on component mount
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setCurrentUserId(user.id)
-      }
-    }
-    getCurrentUser()
-  }, [])
-
   const handleReportClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (currentUserId) {
+    if (isTopCard && currentUserId) {
       setShowReportDialog(true)
     }
   }
@@ -151,7 +139,7 @@ export function MatrimonySwipeCard({
     }
   }
 
-  const { animation, showHeartBurst, showXBurst, hideAnimation } = useSwipeAnimation()
+  const { animation, showHeartBurst, hideAnimation } = useSwipeAnimation()
   
   // Motion value for 3D rotation
   const rotateY = useMotionValue(0)
@@ -173,11 +161,11 @@ export function MatrimonySwipeCard({
 
   const depthStyles = useMemo(() => {
     // Enhanced visual stacking for realistic deck-of-cards effect
-    const scale = 1 - stackIndex * 0.04 // Slightly less scaling for more subtle effect
-    const translateY = stackIndex * 12 // Vertical offset - cards stack downward
-    const translateX = stackIndex * 8  // Horizontal offset - cards shift right
-    const opacity = Math.max(0.3, 1 - stackIndex * 0.25) // Keep cards more visible
-    const rotate = stackIndex * 1.5 // Slight rotation for natural look
+    const scale = 1 - stackIndex * 0.035
+    const translateY = stackIndex * 10
+    const translateX = stackIndex * 6
+    const opacity = Math.max(0.36, 1 - stackIndex * 0.22)
+    const rotate = stackIndex * 1.2
     
     return { 
       scale, 
@@ -301,7 +289,7 @@ export function MatrimonySwipeCard({
       })
       return
     }
-    if (stackIndex === 0) {
+    if (isTopCard) {
       const newFlippedState = !isFlipped
       setIsFlipped(newFlippedState)
       
@@ -423,7 +411,7 @@ export function MatrimonySwipeCard({
     <>
       {/* Swipe Animations */}
       <SwipeAnimations 
-        show={animation.show} 
+        show={isTopCard && animation.show} 
         type={animation.type} 
         onComplete={hideAnimation}
         hideOverlay={true}
@@ -432,16 +420,16 @@ export function MatrimonySwipeCard({
       <motion.div
         className={cn(
           "w-full max-w-[min(92vw,470px)] cursor-grab active:cursor-grabbing select-none touch-none",
-          "relative rounded-[2.65rem] will-change-transform",
+          "relative rounded-[2.65rem] transform-gpu will-change-transform",
           // 3D perspective container
           "perspective-[1200px]",
           // Base height for card expansion calculation
-          stackIndex === 0 && isFlipped ? "h-[min(78dvh,720px)] sm:h-[min(84dvh,760px)] md:h-[min(84dvh,760px)]" : "h-[min(64svh,610px)] md:h-[min(72dvh,680px)]",
+          isTopCard && isFlipped ? "h-[min(78dvh,720px)] sm:h-[min(84dvh,760px)] md:h-[min(84dvh,760px)]" : "h-[min(64svh,610px)] md:h-[min(72dvh,680px)]",
           // Enhanced shadows for realistic depth
           // Full-view shadow for Matrimony: soft grey shadow when flipped (elevated card appearance)
-          stackIndex === 0 && isFlipped && "shadow-[0_8px_32px_rgba(0,0,0,0.15),0_4px_16px_rgba(0,0,0,0.1)]",
+          isTopCard && isFlipped && "shadow-[0_8px_32px_rgba(0,0,0,0.15),0_4px_16px_rgba(0,0,0,0.1)]",
           // Regular stack shadows when not flipped
-          stackIndex === 0 && !isFlipped && "shadow-[0_40px_120px_-24px_rgba(24,17,13,0.62),0_18px_52px_-18px_rgba(194,165,116,0.34),inset_0_1px_0_rgba(255,255,255,0.38)]",
+          isTopCard && !isFlipped && "shadow-[0_26px_70px_-22px_rgba(24,17,13,0.46),0_12px_34px_-18px_rgba(194,165,116,0.28),inset_0_1px_0_rgba(255,255,255,0.32)]",
           stackIndex === 1 && "shadow-[0_18px_52px_-18px_rgba(24,17,13,0.42),0_8px_25px_-8px_rgba(0,0,0,0.25)]",
           stackIndex === 2 && "shadow-[0_12px_38px_-14px_rgba(24,17,13,0.34),0_6px_20px_-6px_rgba(0,0,0,0.2)]",
           stackIndex > 2 && "shadow-[0_8px_25px_-8px_rgba(0,0,0,0.25),0_4px_15px_-4px_rgba(0,0,0,0.15)]",
@@ -451,18 +439,18 @@ export function MatrimonySwipeCard({
         style={{
           x,
           y,
-          rotate: stackIndex === 0 ? rotate : depthStyles.rotate,
-          scale: stackIndex === 0 ? combinedScale : depthStyles.scale,
+          rotate: isTopCard ? rotate : depthStyles.rotate,
+          scale: isTopCard ? combinedScale : depthStyles.scale,
           translateY: depthStyles.translateY,
           translateX: depthStyles.translateX,
           zIndex: depthStyles.zIndex,
-          opacity: stackIndex === 0 ? combinedOpacity : depthStyles.opacity,
+          opacity: isTopCard ? combinedOpacity : depthStyles.opacity,
         }}
-        drag={stackIndex === 0 && !isFlipped ? true : false}
+        drag={isTopCard && !isFlipped}
         dragConstraints={{ left: -500, right: 500, top: -200, bottom: 200 }}
-        dragElastic={0.7}
-        dragMomentum={true}
-        dragTransition={{ bounceStiffness: 300, bounceDamping: 30 }}
+        dragElastic={0.28}
+        dragMomentum={false}
+        dragTransition={{ bounceStiffness: 420, bounceDamping: 38 }}
         onDragEnd={handleDragEnd}
         transition={{
           type: "spring",
@@ -476,14 +464,8 @@ export function MatrimonySwipeCard({
           className="relative h-full w-full rounded-[2.65rem]"
           style={{
             rotateY: rotateY,
-            scale: stackIndex === 0 ? scaleValue : depthStyles.scale,
+            scale: isTopCard ? scaleValue : depthStyles.scale,
             transformStyle: "preserve-3d",
-          }}
-          animate={stackIndex === 0 && !isFlipped ? { y: [0, -4, 0] } : { y: 0 }}
-          transition={{
-            duration: 6,
-            repeat: stackIndex === 0 && !isFlipped ? Infinity : 0,
-            ease: "easeInOut",
           }}
         >
           {/* Front Side */}
@@ -494,11 +476,11 @@ export function MatrimonySwipeCard({
               "backface-hidden"
             )}
             style={{
-              opacity: stackIndex === 0 ? frontOpacity : 1,
+              opacity: isTopCard ? frontOpacity : 1,
               rotateY: 0,
               transformStyle: "preserve-3d",
             }}
-            onClick={handlePhotoClick}
+            onClick={isTopCard ? handlePhotoClick : undefined}
           >
       {/* Background photo fills the card */}
       {activePhoto && !imageLoadFailed ? (
@@ -506,14 +488,15 @@ export function MatrimonySwipeCard({
           src={activePhoto}
           alt=""
           className={cn(
-            "absolute inset-0 h-full w-full object-cover transition-all duration-500",
-            premiumLocked && "scale-110 blur-[24px] brightness-90 saturate-75",
-            stackIndex === 1 && "blur-[2px] brightness-75 contrast-90",
-            stackIndex === 2 && "blur-[4px] brightness-65 contrast-80",
-            stackIndex > 2 && "blur-[6px] brightness-60 contrast-75",
+            "absolute inset-0 h-full w-full object-cover transition-opacity duration-300",
+            premiumLocked && isTopCard && "scale-105 blur-[14px] brightness-90 saturate-75",
+            !isTopCard && "brightness-75 saturate-90",
           )}
           onError={() => setImageLoadFailed(true)}
           crossOrigin="anonymous"
+          decoding="async"
+          loading={isTopCard ? "eager" : "lazy"}
+          fetchPriority={isTopCard ? "high" : "low"}
         />
       ) : (
         <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_28%_14%,rgba(255,255,255,0.84),transparent_18rem),radial-gradient(circle_at_76%_0%,rgba(216,199,159,0.34),transparent_20rem),linear-gradient(145deg,#eceae5,#c8c3ba_48%,#8B7B70_100%)]">
@@ -529,7 +512,7 @@ export function MatrimonySwipeCard({
         </div>
       )}
 
-      {premiumLocked && (
+      {premiumLocked && isTopCard && (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-[#3A2B24]/18 backdrop-blur-[1px]">
           <div className="mx-8 rounded-[1.7rem] border border-[#C2A574]/45 bg-[#FBF8F3]/88 p-5 text-center shadow-[0_24px_70px_rgba(58,43,36,0.18)] backdrop-blur-xl">
             <Crown className="mx-auto h-7 w-7 text-[#C2A574]" />
@@ -545,7 +528,7 @@ export function MatrimonySwipeCard({
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.26),transparent_17rem),linear-gradient(to_bottom,rgba(24,17,13,0.06),rgba(24,17,13,0.10)_34%,rgba(24,17,13,0.88))]" />
       
       {/* Subtle frosted glass effect on top portion */}
-      {stackIndex === 0 && (
+      {isTopCard && (
         <>
           <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] via-transparent to-transparent backdrop-blur-[0.35px]" />
           <div className="pointer-events-none absolute inset-[1px] z-10 rounded-[2.58rem] border border-white/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.32),inset_0_-18px_55px_rgba(194,165,116,0.10)]" />
@@ -560,7 +543,7 @@ export function MatrimonySwipeCard({
       )}
 
       {/* Top-right controls */}
-      {stackIndex === 0 && (
+      {isTopCard && (
         <div className="absolute left-4 right-4 top-4 z-20 flex items-start justify-between gap-3">
           <div className="flex flex-wrap gap-2">
             {verified && (
@@ -604,7 +587,7 @@ export function MatrimonySwipeCard({
         </div>
       )}
 
-      {stackIndex === 0 && safePhotos.length > 1 && (
+      {isTopCard && safePhotos.length > 1 && (
         <div className="absolute left-5 right-5 top-[4.7rem] z-20 flex gap-1.5">
           {safePhotos.map((_, index) => (
             <span
@@ -619,7 +602,7 @@ export function MatrimonySwipeCard({
       )}
 
       {/* Bottom profile information overlay - Simplified design - hidden when flipped */}
-      {stackIndex === 0 && !isFlipped && (
+      {isTopCard && !isFlipped && (
         <div className="absolute bottom-0 left-0 right-0 z-20">
           {/* Dark gradient overlay - strengthened for better text readability */}
           <div className="h-60 rounded-b-[2.65rem] bg-[linear-gradient(to_top,rgba(24,17,13,0.95)_0%,rgba(24,17,13,0.72)_42%,rgba(24,17,13,0.22)_78%,transparent_100%)]" />
@@ -720,7 +703,7 @@ export function MatrimonySwipeCard({
       )}
 
       {/* Glass circle with X mark in bottom left corner */}
-      {stackIndex === 0 && (
+      {isTopCard && (
         <div className="absolute bottom-4 left-4 z-30">
           <motion.button
             type="button"
@@ -753,7 +736,7 @@ export function MatrimonySwipeCard({
       )}
 
       {/* Super Like action */}
-      {stackIndex === 0 && (
+      {isTopCard && (
         <div className="absolute bottom-8 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-1">
           <motion.button
             type="button"
@@ -773,7 +756,7 @@ export function MatrimonySwipeCard({
       )}
 
       {/* Glass circle with tick mark in bottom right corner */}
-      {stackIndex === 0 && (
+      {isTopCard && (
         <div className="absolute bottom-4 right-4 z-30">
           <motion.button
             type="button"
@@ -803,7 +786,7 @@ export function MatrimonySwipeCard({
 
 
             {/* Visible card edges for stacked cards */}
-            {stackIndex > 0 && (
+            {!isTopCard && (
               <>
                 {/* Right edge highlight */}
                 <div className="absolute -right-1 top-2 bottom-2 w-2 rounded-r-full bg-gradient-to-b from-[#C2A574]/60 via-[#C2A574]/70 to-[#C2A574]/60 shadow-lg" />
@@ -813,11 +796,11 @@ export function MatrimonySwipeCard({
             )}
 
             {/* Dim overlay for behind cards to hide details */}
-            {stackIndex > 0 && <div className="absolute inset-0 rounded-[2.65rem] bg-white/30" />}
+            {!isTopCard && <div className="absolute inset-0 rounded-[2.65rem] bg-white/30" />}
           </motion.div>
 
           {/* Back Side - Full Profile */}
-          {stackIndex === 0 && (
+          {isTopCard && (
             <motion.div
               className={cn(
                 "absolute inset-0 w-full h-full overflow-y-auto overflow-x-hidden",
@@ -1299,6 +1282,7 @@ export function MatrimonySwipeCard({
       </motion.div>
 
     {/* Profile Modal */}
+    {isTopCard && (
     <MatrimonyProfileModal
       profile={{
         id: profileId,
@@ -1342,9 +1326,10 @@ export function MatrimonySwipeCard({
         void onNotNow()
       }}
     />
+    )}
 
     {/* Report Dialog */}
-    {currentUserId && (
+    {isTopCard && currentUserId && (
       <ReportDialog
         open={showReportDialog}
         onOpenChange={setShowReportDialog}

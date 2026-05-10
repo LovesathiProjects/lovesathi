@@ -141,22 +141,17 @@ export async function recordMatrimonyLike(
     }
 
     if (action === "like" || action === "connect" || action === "super_like") {
-      await new Promise((resolve) => setTimeout(resolve, 200))
-      const { data: matches, error: matchError } = await supabase
+      const [user1Id, user2Id] = [likerId, likedId].sort()
+      const { data: match, error: matchError } = await supabase
         .from("matrimony_matches")
-        .select("*")
+        .select("id")
         .eq("is_active", true)
+        .eq("user1_id", user1Id)
+        .eq("user2_id", user2Id)
+        .maybeSingle()
 
-      if (!matchError) {
-        const match = matches?.find(
-          (item) =>
-            (item.user1_id === likerId && item.user2_id === likedId) ||
-            (item.user1_id === likedId && item.user2_id === likerId),
-        )
-
-        if (match) {
-          return { success: true, isMatch: true, matchId: match.id }
-        }
+      if (!matchError && match) {
+        return { success: true, isMatch: true, matchId: match.id }
       }
     }
 

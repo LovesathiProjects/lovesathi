@@ -12,7 +12,6 @@ import { MatrimonySwipeCard } from "@/components/matrimony/matrimony-swipe-card"
 import { MatrimonyChatList } from "@/components/matrimony/matrimony-chat-list"
 import { ChatScreen } from "@/components/chat/chat-screen"
 import { MatrimonyFilterSheet } from "@/components/matrimony/matrimony-filter-sheet"
-import { DynamicBackground } from "@/components/discovery/dynamic-background"
 import { StaticBackground } from "@/components/discovery/static-background"
 import { BackFloatingButton } from "@/components/navigation/back-floating-button"
 import { SettingsScreen } from "@/components/settings/settings-screen"
@@ -34,7 +33,7 @@ import {
   getMatrimonyLikedProfiles,
   recordMatrimonyLike,
 } from "@/lib/matchmakingService"
-import { getSuperLikeLimitStatus, getUserEntitlementStatus, type EntitlementStatus, type UsageLimitStatus } from "@/lib/planLimits"
+import { getLimitMessage, getSuperLikeLimitStatus, getUserEntitlementStatus, type EntitlementStatus, type UsageLimitStatus } from "@/lib/planLimits"
 import { getProfileContacts, revealProfileContact } from "@/lib/profileContacts"
 import { MatchNotification } from "@/components/chat/match-notification"
 import type { FilterState } from "@/components/matrimony/matrimony-filter-sheet"
@@ -87,6 +86,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
   >(initialScreen)
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
   const [viewedUserId, setViewedUserId] = useState<string | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [cameFromChat, setCameFromChat] = useState<boolean>(false)
   const [cameFromShortlist, setCameFromShortlist] = useState<boolean>(false)
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
@@ -274,18 +274,21 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         if (authError) {
           console.error("Auth error:", authError)
           setProfiles([])
+          setCurrentUserId(null)
           setLoading(false)
           return
         }
 
         if (!user) {
           setProfiles([])
+          setCurrentUserId(null)
           setSwipeLimitStatus(null)
           setViewerEntitlement(null)
           setLoading(false)
           return
         }
 
+        setCurrentUserId(user.id)
         await refreshSwipeLimitStatus(user.id)
         const entitlement = await getUserEntitlementStatus(user.id)
         setViewerIsPremium(entitlement.isPremium)
@@ -631,16 +634,33 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     () =>
       profiles.length === 0
         ? []
-        : Array.from({ length: Math.min(4, profiles.length) }, (_, stackIndex) => {
+        : Array.from({ length: Math.min(3, profiles.length) }, (_, stackIndex) => {
             const profileIndex = (activeProfileIndex + stackIndex) % profiles.length
             return {
               profile: profiles[profileIndex],
-              key: `${profiles[profileIndex].id}-${currentCardIndex}-${stackIndex}`,
+              key: profiles[profileIndex].id,
             }
           }),
-    [activeProfileIndex, currentCardIndex, profiles],
+    [activeProfileIndex, profiles],
   )
   const swipeLocked = Boolean(swipeLimitStatus && !swipeLimitStatus.allowed)
+
+  const consumeSwipeAllowance = useCallback(() => {
+    setSwipeLimitStatus((previousStatus) => {
+      if (!previousStatus || previousStatus.isPremium || typeof previousStatus.remaining !== "number") {
+        return previousStatus
+      }
+
+      const remaining = Math.max(previousStatus.remaining - 1, 0)
+      return {
+        ...previousStatus,
+        allowed: remaining > 0,
+        remaining,
+        kind: remaining > 0 ? undefined : "swipe",
+        error: remaining > 0 ? undefined : getLimitMessage("swipe"),
+      }
+    })
+  }, [])
 
   const removeProfileFromDeck = useCallback((profileId: string) => {
     setProfiles((previousProfiles) => {
@@ -650,7 +670,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     })
   }, [])
 
-  const handleLike = async () => {
+  const handleLike = () => {
     try {
       const currentProfile = profiles[activeProfileIndex]
       if (!currentProfile) {
@@ -662,8 +682,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         return false
       }
 
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+      if (!currentUserId) {
         toast({
           title: "Please sign in",
           description: "You need to be signed in to send interest.",
@@ -672,35 +691,41 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         return false
       }
 
-      const allowed = await ensureSwipeAllowed(user.id)
-      if (!allowed) return false
-
-      // Record the like in database
-      const result = await recordMatrimonyLike(user.id, currentProfile.id, 'like')
-
-      if (!result.success) {
-        if (result.error?.toLowerCase().includes("swipe limit")) {
-          await refreshSwipeLimitStatus(user.id)
-          showSwipePaywall()
-          return false
-        }
-        toast({
-          title: "Could not send interest",
-          description: result.error || "Please try again.",
-          variant: "destructive",
-        })
+      if (swipeLocked) {
+        showSwipePaywall()
         return false
-      }
-      await refreshSwipeLimitStatus(user.id)
-      
-      if (result.success && result.isMatch) {
-        // Show match notification
-        setMatchedProfile(currentProfile)
-        setMatchedMatchId(result.matchId || null)
-        setShowMatchNotification(true)
       }
 
       removeProfileFromDeck(currentProfile.id)
+      consumeSwipeAllowance()
+
+      void (async () => {
+        const result = await recordMatrimonyLike(currentUserId, currentProfile.id, "like")
+
+        if (!result.success) {
+          if (result.error?.toLowerCase().includes("swipe limit")) {
+            await refreshSwipeLimitStatus(currentUserId)
+            showSwipePaywall()
+            return
+          }
+          toast({
+            title: "Could not send interest",
+            description: result.error || "Please try again.",
+            variant: "destructive",
+          })
+          await refreshSwipeLimitStatus(currentUserId)
+          return
+        }
+
+        if (result.isMatch) {
+          setMatchedProfile(currentProfile)
+          setMatchedMatchId(result.matchId || null)
+          setShowMatchNotification(true)
+        }
+
+        void refreshSwipeLimitStatus(currentUserId)
+      })()
+
       return true
     } catch (error) {
       console.error('[handleLike] Unexpected error:', error)
@@ -708,7 +733,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     }
   }
 
-  const handlePass = async () => {
+  const handlePass = () => {
     try {
       const currentProfile = profiles[activeProfileIndex]
       if (!currentProfile) {
@@ -720,8 +745,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         return false
       }
 
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+      if (!currentUserId) {
         toast({
           title: "Please sign in",
           description: "You need to be signed in to update discovery.",
@@ -730,28 +754,35 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         return false
       }
 
-      const allowed = await ensureSwipeAllowed(user.id)
-      if (!allowed) return false
-
-      // Record the pass in database
-      const result = await recordMatrimonyLike(user.id, currentProfile.id, 'pass')
-
-      if (!result.success) {
-        if (result.error?.toLowerCase().includes("swipe limit")) {
-          await refreshSwipeLimitStatus(user.id)
-          showSwipePaywall()
-          return false
-        }
-        toast({
-          title: "Could not update profile",
-          description: result.error || "Please try again.",
-          variant: "destructive",
-        })
+      if (swipeLocked) {
+        showSwipePaywall()
         return false
       }
-      await refreshSwipeLimitStatus(user.id)
 
       removeProfileFromDeck(currentProfile.id)
+      consumeSwipeAllowance()
+
+      void (async () => {
+        const result = await recordMatrimonyLike(currentUserId, currentProfile.id, "pass")
+
+        if (!result.success) {
+          if (result.error?.toLowerCase().includes("swipe limit")) {
+            await refreshSwipeLimitStatus(currentUserId)
+            showSwipePaywall()
+            return
+          }
+          toast({
+            title: "Could not update profile",
+            description: result.error || "Please try again.",
+            variant: "destructive",
+          })
+          await refreshSwipeLimitStatus(currentUserId)
+          return
+        }
+
+        void refreshSwipeLimitStatus(currentUserId)
+      })()
+
       return true
     } catch (error) {
       console.error('[handlePass] Unexpected error:', error)
@@ -771,10 +802,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         return false
       }
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) {
+      if (!currentUserId) {
         toast({
           title: "Please sign in",
           description: "You need to be signed in to send a Super Like.",
@@ -783,7 +811,16 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         return false
       }
 
-      const superLikeStatus = await getSuperLikeLimitStatus(user.id)
+      if (!viewerIsPremium) {
+        showPremiumUpsell(
+          "Unlock Super Likes",
+          "Super Likes are included with paid plans. Choose a plan to send standout interest.",
+          "discover",
+        )
+        return false
+      }
+
+      const superLikeStatus = await getSuperLikeLimitStatus(currentUserId)
       if (!superLikeStatus.allowed) {
         showPremiumUpsell(
           "Unlock Super Likes",
@@ -793,7 +830,8 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         return false
       }
 
-      const result = await recordMatrimonyLike(user.id, currentProfile.id, "super_like")
+      removeProfileFromDeck(currentProfile.id)
+      const result = await recordMatrimonyLike(currentUserId, currentProfile.id, "super_like")
       if (!result.success) {
         toast({
           title: "Could not send Super Like",
@@ -817,7 +855,6 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         setShowMatchNotification(true)
       }
 
-      removeProfileFromDeck(currentProfile.id)
       return true
     } catch (error: any) {
       console.error("[handleSuperLike] Unexpected error:", error)
@@ -891,7 +928,6 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[linear-gradient(to_bottom,rgba(255,253,248,0.96),rgba(255,253,248,0))]" />
           <div className="pointer-events-none absolute left-1/2 top-20 hidden h-[78vh] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[#C2A574]/30 to-transparent lg:block" />
           <div className="pointer-events-none absolute bottom-[-9rem] left-1/2 h-72 w-[52rem] -translate-x-1/2 rounded-full bg-[#C2A574]/20 blur-3xl" />
-          <DynamicBackground imageUrl={currentProfile?.photos?.[0] || null} />
           
           <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center overflow-hidden px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(7.5rem+env(safe-area-inset-top))] sm:px-6 sm:pb-[calc(6.25rem+env(safe-area-inset-bottom))] lg:px-10 lg:pt-28">
             {loading ? (
@@ -957,6 +993,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                               phoneMasked={profile.phoneMasked}
                               phone={profile.phone}
                               canRevealPhone={profile.canRevealPhone}
+                              currentUserId={currentUserId}
                               onConnect={index === 0 ? () => handleLike() : () => {}}
                               onNotNow={index === 0 ? () => handlePass() : () => {}}
                               onSuperLike={index === 0 ? () => handleSuperLike() : () => {}}
