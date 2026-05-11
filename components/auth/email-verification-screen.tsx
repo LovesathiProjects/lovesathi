@@ -6,6 +6,7 @@ import { CheckCircle, Loader2, Mail, Phone } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { PhoneNumberInput } from "@/components/ui/phone-number-input"
 import { useToast } from "@/components/ui/use-toast"
 import {
   EMAIL_VERIFICATION_STORAGE_KEY,
@@ -429,20 +430,16 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
           {stage === "phone" && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="verification-phone">Phone number</Label>
-                <Input
+                <PhoneNumberInput
                   id="verification-phone"
-                  type="tel"
+                  label="Phone number"
                   value={phoneInput}
-                  onChange={(e) => {
-                    setPhoneInput(e.target.value)
+                  onChange={(phone) => {
+                    setPhoneInput(phone)
                     setPhoneOtpSent(false)
                     setPhoneOtpCode("")
                   }}
                   onBlur={() => rememberPhone(phoneInput)}
-                  placeholder="+91 98765 43210"
-                  autoComplete="tel"
-                  className="h-12 rounded-2xl"
                 />
               </div>
 

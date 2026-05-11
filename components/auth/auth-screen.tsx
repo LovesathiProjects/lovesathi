@@ -10,6 +10,7 @@ import GoogleLoginButton from "@/components/auth/GoogleLoginButton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { PhoneNumberInput } from "@/components/ui/phone-number-input"
 import {
   EMAIL_VERIFICATION_STORAGE_KEY,
   PHONE_VERIFICATION_STORAGE_KEY,
@@ -135,11 +136,11 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
     setError(null)
     try {
       const email = normalizeEmail(formData.email)
-      const phoneError = getPhoneValidationMessage(formData.phone)
+      const phone = normalizePhoneNumber(formData.phone)
+      const phoneError = getPhoneValidationMessage(phone)
       if (phoneError) {
         throw new Error(phoneError)
       }
-      const phone = normalizePhoneNumber(formData.phone)
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password: formData.password,
@@ -469,16 +470,12 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="signup-phone">Phone Number</Label>
-              <Input
+              <PhoneNumberInput
                 id="signup-phone"
-                type="tel"
-                placeholder="+91 98765 43210"
+                label="Phone Number"
                 required
                 value={formData.phone}
-                onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
-                autoComplete="tel"
-                className="h-12 rounded-2xl border-[#482b1a]/20 bg-[#ffffff]"
+                onChange={(phone) => setFormData((prev) => ({ ...prev, phone }))}
               />
             </div>
           </div>

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { PhoneNumberInput } from "@/components/ui/phone-number-input"
 import { Textarea } from "@/components/ui/textarea"
 import { TimeInput } from "@/components/ui/time-input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -400,17 +401,15 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                   <Label>Name</Label>
                   <Input value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Phone Number</Label>
-                  <Input
-                    type="tel"
+                <div>
+                  <PhoneNumberInput
+                    id="edit-profile-phone"
+                    label="Phone Number"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={setPhone}
                     onBlur={() => setPhone((value) => normalizePhoneNumber(value))}
-                    placeholder="+91 98765 43210"
-                    autoComplete="tel"
                     readOnly={Boolean(phoneVerifiedAt)}
-                    className="read-only:bg-[#F7F3EE] read-only:text-[#8B7B70]"
+                    helperText={false}
                   />
                   <p className="text-xs text-[#8B7B70]">
                     {phoneVerifiedAt
