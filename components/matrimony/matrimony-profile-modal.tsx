@@ -11,17 +11,20 @@ import { cn } from "@/lib/utils"
 import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
 import { formatPublicProfileName } from "@/lib/displayName"
 
+const SUPER_LIKE_ICON_SRC = "/lovesathi-superlike-star.jpg"
+
 interface MatrimonyProfileModalProps {
   profile: MatrimonyProfile
   open: boolean
   onOpenChange: (open: boolean) => void
   onConnect: () => void
   onNotNow: () => void
+  onSuperLike?: () => void
   onPhoneUpgrade?: () => void
   onRevealPhone?: (profileId: string) => Promise<string | null>
 }
 
-export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, onNotNow, onPhoneUpgrade, onRevealPhone }: MatrimonyProfileModalProps) {
+export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, onNotNow, onSuperLike, onPhoneUpgrade, onRevealPhone }: MatrimonyProfileModalProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
   const [revealedPhone, setRevealedPhone] = useState<string | null>(profile.phone || null)
   const phoneIsRevealed = Boolean(revealedPhone || profile.phone)
@@ -125,6 +128,26 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                   />
                 ))}
               </div>
+            )}
+
+            {/* Header Actions */}
+            {onSuperLike && (
+              <button
+                type="button"
+                aria-label="Send Super Like"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onSuperLike()
+                }}
+                className="absolute left-4 top-4 z-20 flex h-12 w-12 items-center justify-center rounded-[1.15rem] border border-[#C2A574]/45 bg-black p-1.5 shadow-[0_16px_42px_rgba(0,0,0,0.34),0_0_28px_rgba(128,88,255,0.22)] backdrop-blur-xl transition hover:scale-105"
+              >
+                <img
+                  src={SUPER_LIKE_ICON_SRC}
+                  alt=""
+                  className="h-full w-full rounded-[0.85rem] object-cover"
+                  draggable={false}
+                />
+              </button>
             )}
 
             {/* Header Actions */}
@@ -311,6 +334,21 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
               >
                 <X className="w-7 h-7" />
               </Button>
+
+              {onSuperLike && (
+                <Button
+                  size="lg"
+                  className="h-16 w-16 rounded-[1.35rem] border border-[#C2A574]/40 bg-black p-1.5 shadow-[0_14px_34px_rgba(0,0,0,0.24),0_0_24px_rgba(128,88,255,0.20)] hover:bg-black"
+                  onClick={onSuperLike}
+                >
+                  <img
+                    src={SUPER_LIKE_ICON_SRC}
+                    alt="Super Like"
+                    className="h-full w-full rounded-[1rem] object-cover"
+                    draggable={false}
+                  />
+                </Button>
+              )}
 
               <Button
                 size="lg"

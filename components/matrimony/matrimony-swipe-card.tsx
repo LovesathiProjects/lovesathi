@@ -14,6 +14,22 @@ import { ReportDialog } from "@/components/chat/report-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { formatPublicProfileName, getDisplayInitial } from "@/lib/displayName"
 
+const SUPER_LIKE_ICON_SRC = "/lovesathi-superlike-star.jpg"
+
+function SuperLikeIcon({ className }: { className?: string }) {
+  return (
+    <span className={cn("relative block overflow-hidden rounded-[1.05rem] bg-black", className)}>
+      <img
+        src={SUPER_LIKE_ICON_SRC}
+        alt=""
+        className="h-full w-full object-cover"
+        draggable={false}
+      />
+      <span className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-white/18" />
+    </span>
+  )
+}
+
 interface MatrimonySwipeCardProps {
   profileId: string // user_id for fetching full profile
   name: string
@@ -93,7 +109,6 @@ export function MatrimonySwipeCard({
   const [showReportDialog, setShowReportDialog] = useState(false)
   const [revealedPhone, setRevealedPhone] = useState<string | null>(phone || null)
   const [superLikeCue, setSuperLikeCue] = useState(false)
-  const lastTapAtRef = React.useRef(0)
   const { toast } = useToast()
   const isTopCard = stackIndex === 0
   const safePhotos = useMemo(
@@ -414,22 +429,6 @@ export function MatrimonySwipeCard({
     }, 120)
   }
 
-  const handleDoubleTapSuperLike = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isTopCard || isFlipped || swipeLocked) return
-    const target = e.target as HTMLElement
-    if (target.closest("button,a,input,textarea,select,[role='button']")) return
-
-    const now = Date.now()
-    if (now - lastTapAtRef.current < 320) {
-      e.stopPropagation()
-      lastTapAtRef.current = 0
-      triggerSuperLike()
-      return
-    }
-
-    lastTapAtRef.current = now
-  }
-
   const handleSuperLikeClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     triggerSuperLike()
@@ -509,11 +508,6 @@ export function MatrimonySwipeCard({
               transformStyle: "preserve-3d",
             }}
             onClick={isTopCard ? handlePhotoClick : undefined}
-            onDoubleClick={(e) => {
-              e.stopPropagation()
-              if (!swipeLocked) triggerSuperLike()
-            }}
-            onTouchEnd={handleDoubleTapSuperLike}
           >
       {/* Background photo fills the card */}
       {activePhoto && !imageLoadFailed ? (
@@ -575,21 +569,37 @@ export function MatrimonySwipeCard({
         </>
       )}
 
-      {/* Top-right controls */}
+      {/* Top controls */}
       {isTopCard && (
         <div className="absolute left-4 right-4 top-4 z-20 flex items-start justify-between gap-3">
-          <div className="flex flex-wrap gap-2">
-            {verified && (
-              <Badge className="border-white/20 bg-white/18 px-3 py-1 text-[#ffffff] shadow-lg backdrop-blur-xl">
-                <Check className="h-3 w-3" />
-                Verified
-              </Badge>
+          <div className="flex min-w-0 items-start gap-2">
+            {onSuperLike && (
+              <motion.button
+                type="button"
+                aria-label="Send Super Like"
+                whileHover={{ scale: 1.06, y: -2 }}
+                whileTap={{ scale: 0.92 }}
+                animate={superLikeCue ? { scale: [1, 1.12, 1], y: [0, -8, 0] } : { scale: 1, y: 0 }}
+                transition={{ duration: 0.42, ease: "easeOut" }}
+                onClick={handleSuperLikeClick}
+                className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-[1.2rem] border border-[#C2A574]/48 bg-black/86 p-1.5 shadow-[0_16px_42px_rgba(0,0,0,0.34),0_0_28px_rgba(128,88,255,0.24)] backdrop-blur-xl transition hover:border-white/40 hover:shadow-[0_18px_48px_rgba(0,0,0,0.38),0_0_34px_rgba(128,88,255,0.32)]"
+              >
+                <SuperLikeIcon className="h-full w-full rounded-[0.85rem] transition group-hover:scale-105" />
+              </motion.button>
             )}
-            {premium && (
-              <Badge className="border-[#C2A574]/50 bg-[#C2A574]/24 px-3 py-1 text-[#ffffff] shadow-lg backdrop-blur-xl">
-                Premium
-              </Badge>
-            )}
+            <div className="flex min-w-0 flex-wrap gap-2 pt-1">
+              {verified && (
+                <Badge className="border-white/20 bg-white/18 px-3 py-1 text-[#ffffff] shadow-lg backdrop-blur-xl">
+                  <Check className="h-3 w-3" />
+                  Verified
+                </Badge>
+              )}
+              {premium && (
+                <Badge className="border-[#C2A574]/50 bg-[#C2A574]/24 px-3 py-1 text-[#ffffff] shadow-lg backdrop-blur-xl">
+                  Premium
+                </Badge>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2">
           {onToggleShortlist && (
@@ -733,17 +743,6 @@ export function MatrimonySwipeCard({
             </div>
           </div>
         </div>
-      )}
-
-      {isTopCard && !isFlipped && (
-        <motion.div
-          className="pointer-events-none absolute bottom-[4.55rem] left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[#C2A574]/36 bg-[#FBF8F3]/82 px-3.5 py-2 text-[0.58rem] font-black uppercase tracking-[0.18em] text-[#8f6f37] shadow-[0_18px_42px_rgba(24,17,13,0.18)] backdrop-blur-xl"
-          animate={superLikeCue ? { scale: [1, 1.08, 1], y: [0, -6, 0] } : { scale: 1, y: 0 }}
-          transition={{ duration: 0.42, ease: "easeOut" }}
-        >
-          <Sparkles className="h-3.5 w-3.5 text-[#C2A574]" />
-          Double tap to Super Like
-        </motion.div>
       )}
 
       {/* Glass circle with X mark in bottom left corner */}
@@ -898,6 +897,25 @@ export function MatrimonySwipeCard({
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
+                        {onSuperLike && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <motion.button
+                                type="button"
+                                aria-label="Send Super Like"
+                                whileHover={{ scale: 1.06, y: -2 }}
+                                whileTap={{ scale: 0.92 }}
+                                onClick={handleSuperLikeClick}
+                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[1rem] border border-[#C2A574]/34 bg-black p-1.5 shadow-[0_14px_34px_rgba(24,17,13,0.16),0_0_24px_rgba(128,88,255,0.20)]"
+                              >
+                                <SuperLikeIcon className="h-full w-full rounded-[0.7rem]" />
+                              </motion.button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="border-[#C2A574]/28 bg-[#3A2B24] text-white">
+                              <p>Super Like</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -1244,9 +1262,17 @@ export function MatrimonySwipeCard({
                         <button
                           type="button"
                           onClick={handleSuperLikeClick}
-                          className="rounded-full border border-[#C2A574]/36 bg-[#FBF8F3]/86 px-4 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#8f6f37] shadow-[0_14px_34px_rgba(58,43,36,0.12)] transition-colors hover:bg-[#F7F3EE]"
+                          className="group mx-auto flex max-w-xs items-center gap-3 rounded-[1.45rem] border border-[#C2A574]/30 bg-white/72 p-3 pr-4 text-left shadow-[0_16px_40px_rgba(58,43,36,0.10)] transition hover:-translate-y-0.5 hover:bg-white"
                         >
-                          Double tap card to Super Like
+                          <SuperLikeIcon className="h-12 w-12 shrink-0 rounded-[1rem] shadow-[0_10px_26px_rgba(0,0,0,0.16)] transition group-hover:scale-105" />
+                          <span>
+                            <span className="block text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#8f6f37]">
+                              Send Super Like
+                            </span>
+                            <span className="mt-1 block text-xs font-semibold leading-5 text-[#8B7B70]">
+                              Stand out with a stronger, intentional interest.
+                            </span>
+                          </span>
                         </button>
                       </div>
 
@@ -1330,6 +1356,7 @@ export function MatrimonySwipeCard({
       onOpenChange={setShowProfileModal}
       onPhoneUpgrade={onPhoneUpgrade}
       onRevealPhone={onRevealPhone}
+      onSuperLike={triggerSuperLike}
       onConnect={() => {
         if (swipeLocked) {
           onSwipeLocked?.()

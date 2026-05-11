@@ -11,15 +11,15 @@ export default function AccountDeletionPage() {
     <LegalPage
       eyebrow="Account deletion"
       title="Delete your Lovesathi account with clarity."
-      description="Members can delete their Lovesathi account from inside the app, or contact support if they cannot access their account."
+      description="Members can request account deletion through Lovesathi support if they no longer want their profile or account to remain active."
       sections={[
         {
-          title: "Delete from inside Lovesathi",
-          body: "Sign in to Lovesathi, open Profile, go to Settings, choose Account and privacy, then select Delete account. You will be asked to confirm before the deletion request is processed.",
+          title: "Request deletion",
+          body: "Email support@lovesathi.com from the email address used on your account and include the subject Account deletion request. The support team may ask for reasonable verification before processing the request.",
         },
         {
           title: "If you cannot sign in",
-          body: "Email support@lovesathi.com from the email address used on your account and include the subject Account deletion request. The support team may ask for reasonable verification before processing the request.",
+          body: "If you cannot access the registered email address, include any details that can help support identify the account safely. Lovesathi may require additional verification before taking action.",
         },
         {
           title: "What deletion includes",
@@ -31,7 +31,7 @@ export default function AccountDeletionPage() {
         },
         {
           title: "Processing time",
-          body: "In-app deletion begins immediately when available. Manual support requests are reviewed as soon as reasonably possible, and Lovesathi may confirm completion or ask for more information if needed.",
+          body: "Manual support requests are reviewed as soon as reasonably possible, and Lovesathi may confirm completion or ask for more information if needed.",
         },
       ]}
     />
