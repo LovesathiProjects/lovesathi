@@ -14,18 +14,19 @@ import { ReportDialog } from "@/components/chat/report-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { formatPublicProfileName, getDisplayInitial } from "@/lib/displayName"
 
-const SUPER_LIKE_ICON_SRC = "/lovesathi-superlike-star.jpg"
+const SUPER_LIKE_ICON_SRC = "/lovesathi-superlike-star-polished.png"
 
 function SuperLikeIcon({ className }: { className?: string }) {
   return (
-    <span className={cn("relative block overflow-hidden rounded-[1.05rem] bg-black", className)}>
+    <span className={cn("relative isolate block overflow-hidden bg-[#030303]", className)}>
       <img
         src={SUPER_LIKE_ICON_SRC}
         alt=""
-        className="h-full w-full object-cover"
+        className="h-full w-full scale-[1.06] object-cover"
         draggable={false}
       />
-      <span className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-white/18" />
+      <span className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[radial-gradient(circle_at_28%_18%,rgba(255,255,255,0.22),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.16),transparent_42%,rgba(194,165,116,0.12))]" />
+      <span className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-white/24" />
     </span>
   )
 }
@@ -582,9 +583,10 @@ export function MatrimonySwipeCard({
                 animate={superLikeCue ? { scale: [1, 1.12, 1], y: [0, -8, 0] } : { scale: 1, y: 0 }}
                 transition={{ duration: 0.42, ease: "easeOut" }}
                 onClick={handleSuperLikeClick}
-                className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-[1.2rem] border border-[#C2A574]/48 bg-black/86 p-1.5 shadow-[0_16px_42px_rgba(0,0,0,0.34),0_0_28px_rgba(128,88,255,0.24)] backdrop-blur-xl transition hover:border-white/40 hover:shadow-[0_18px_48px_rgba(0,0,0,0.38),0_0_34px_rgba(128,88,255,0.32)]"
+                className="group relative flex h-[3.35rem] w-[3.35rem] shrink-0 items-center justify-center rounded-[1.35rem] border border-white/22 bg-[linear-gradient(145deg,#080706,#18122a_48%,#050505)] p-[3px] shadow-[0_18px_46px_rgba(0,0,0,0.36),0_0_30px_rgba(100,78,255,0.22),inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-[#C2A574]/60 hover:shadow-[0_20px_54px_rgba(0,0,0,0.42),0_0_38px_rgba(100,78,255,0.30)]"
               >
-                <SuperLikeIcon className="h-full w-full rounded-[0.85rem] transition group-hover:scale-105" />
+                <span className="pointer-events-none absolute -inset-1 rounded-[1.55rem] bg-[radial-gradient(circle,rgba(126,94,255,0.24),transparent_66%)] opacity-80 blur-sm transition group-hover:opacity-100" />
+                <SuperLikeIcon className="h-full w-full rounded-[1.1rem] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] transition group-hover:scale-[1.03]" />
               </motion.button>
             )}
             <div className="flex min-w-0 flex-wrap gap-2 pt-1">
@@ -906,9 +908,9 @@ export function MatrimonySwipeCard({
                                 whileHover={{ scale: 1.06, y: -2 }}
                                 whileTap={{ scale: 0.92 }}
                                 onClick={handleSuperLikeClick}
-                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[1rem] border border-[#C2A574]/34 bg-black p-1.5 shadow-[0_14px_34px_rgba(24,17,13,0.16),0_0_24px_rgba(128,88,255,0.20)]"
+                                className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[1rem] border border-[#C2A574]/34 bg-[#050505] p-[3px] shadow-[0_14px_34px_rgba(24,17,13,0.16),0_0_24px_rgba(128,88,255,0.20)]"
                               >
-                                <SuperLikeIcon className="h-full w-full rounded-[0.7rem]" />
+                                <SuperLikeIcon className="h-full w-full rounded-[0.75rem]" />
                               </motion.button>
                             </TooltipTrigger>
                             <TooltipContent side="bottom" className="border-[#C2A574]/28 bg-[#3A2B24] text-white">
@@ -1264,7 +1266,7 @@ export function MatrimonySwipeCard({
                           onClick={handleSuperLikeClick}
                           className="group mx-auto flex max-w-xs items-center gap-3 rounded-[1.45rem] border border-[#C2A574]/30 bg-white/72 p-3 pr-4 text-left shadow-[0_16px_40px_rgba(58,43,36,0.10)] transition hover:-translate-y-0.5 hover:bg-white"
                         >
-                          <SuperLikeIcon className="h-12 w-12 shrink-0 rounded-[1rem] shadow-[0_10px_26px_rgba(0,0,0,0.16)] transition group-hover:scale-105" />
+                          <SuperLikeIcon className="h-12 w-12 shrink-0 rounded-[1rem] shadow-[0_10px_26px_rgba(0,0,0,0.16),0_0_22px_rgba(128,88,255,0.18)] transition group-hover:scale-105" />
                           <span>
                             <span className="block text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#8f6f37]">
                               Send Super Like

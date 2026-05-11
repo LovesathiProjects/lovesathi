@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
 import { formatPublicProfileName } from "@/lib/displayName"
 
-const SUPER_LIKE_ICON_SRC = "/lovesathi-superlike-star.jpg"
+const SUPER_LIKE_ICON_SRC = "/lovesathi-superlike-star-polished.png"
 
 interface MatrimonyProfileModalProps {
   profile: MatrimonyProfile
@@ -139,12 +139,12 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                   e.stopPropagation()
                   onSuperLike()
                 }}
-                className="absolute left-4 top-4 z-20 flex h-12 w-12 items-center justify-center rounded-[1.15rem] border border-[#C2A574]/45 bg-black p-1.5 shadow-[0_16px_42px_rgba(0,0,0,0.34),0_0_28px_rgba(128,88,255,0.22)] backdrop-blur-xl transition hover:scale-105"
+                className="absolute left-4 top-4 z-20 flex h-[3.35rem] w-[3.35rem] items-center justify-center rounded-[1.35rem] border border-white/22 bg-[linear-gradient(145deg,#080706,#18122a_48%,#050505)] p-[3px] shadow-[0_18px_46px_rgba(0,0,0,0.36),0_0_30px_rgba(100,78,255,0.22),inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-xl transition hover:scale-105 hover:border-[#C2A574]/60"
               >
                 <img
                   src={SUPER_LIKE_ICON_SRC}
                   alt=""
-                  className="h-full w-full rounded-[0.85rem] object-cover"
+                  className="h-full w-full scale-[1.06] rounded-[1.1rem] object-cover"
                   draggable={false}
                 />
               </button>
@@ -338,13 +338,13 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
               {onSuperLike && (
                 <Button
                   size="lg"
-                  className="h-16 w-16 rounded-[1.35rem] border border-[#C2A574]/40 bg-black p-1.5 shadow-[0_14px_34px_rgba(0,0,0,0.24),0_0_24px_rgba(128,88,255,0.20)] hover:bg-black"
+                  className="h-16 w-16 rounded-[1.45rem] border border-[#C2A574]/40 bg-[linear-gradient(145deg,#080706,#18122a_48%,#050505)] p-[3px] shadow-[0_14px_34px_rgba(0,0,0,0.24),0_0_24px_rgba(128,88,255,0.20)] hover:bg-black"
                   onClick={onSuperLike}
                 >
                   <img
                     src={SUPER_LIKE_ICON_SRC}
                     alt="Super Like"
-                    className="h-full w-full rounded-[1rem] object-cover"
+                    className="h-full w-full scale-[1.06] rounded-[1.2rem] object-cover"
                     draggable={false}
                   />
                 </Button>
