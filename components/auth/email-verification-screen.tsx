@@ -17,9 +17,9 @@ import {
 import {
   getAuthUserPhone,
   getPhoneValidationMessage,
-  isAuthUserPhoneVerified,
   normalizePhoneNumber,
 } from "@/lib/phone"
+import { isCurrentUserPhoneVerified } from "@/lib/phoneVerificationRecords"
 import {
   PHONE_OTP_LENGTH,
   normalizePhoneOtpCode,
@@ -124,7 +124,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
       return
     }
 
-    if (!isAuthUserPhoneVerified(user)) {
+    if (!(await isCurrentUserPhoneVerified(user))) {
       setStage("phone")
       return
     }

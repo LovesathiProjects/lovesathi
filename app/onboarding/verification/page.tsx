@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { VerificationScreen } from "@/components/onboarding/verification-screen"
 import { supabase } from "@/lib/supabaseClient"
-import { isAuthUserPhoneVerified } from "@/lib/phone"
+import { isCurrentUserPhoneVerified } from "@/lib/phoneVerificationRecords"
 
 export default function VerificationPage() {
   const router = useRouter()
@@ -27,7 +27,7 @@ export default function VerificationPage() {
           return
         }
 
-        if (!isAuthUserPhoneVerified(user)) {
+        if (!(await isCurrentUserPhoneVerified(user))) {
           router.push("/auth/verify-email?reason=phone")
           return
         }

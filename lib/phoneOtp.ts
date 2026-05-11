@@ -73,30 +73,44 @@ export async function verifyCurrentUserPhoneOtp(phoneInput: string, tokenInput: 
     throw new Error("Please enter the 6-digit phone verification code.")
   }
 
-  const { data, error } = await supabase.auth.verifyOtp({
-    phone,
-    token,
-    type: "phone_change",
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (!session?.access_token) {
+    throw new Error("Please sign in before phone verification.")
+  }
+
+  const response = await fetch("/api/auth/phone-otp/verify", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ phone, token }),
   })
 
-  if (error) throw error
+  const payload = await response.json()
+  if (!response.ok || !payload.success) {
+    throw new Error(payload.error || "This phone code is invalid or expired.")
+  }
 
-  let verifiedUser = data.user || null
-
+  let verifiedUser = null
   try {
     const {
       data: { user },
     } = await supabase.auth.refreshSession()
-    verifiedUser = user || verifiedUser
+    verifiedUser = user
   } catch {
     const {
       data: { user },
     } = await supabase.auth.getUser()
-    verifiedUser = user || verifiedUser
+    verifiedUser = user
   }
 
-  const nextPhone = normalizePhoneNumber(getAuthUserPhone(verifiedUser) || phone)
+  const nextPhone = normalizePhoneNumber(payload.phone || getAuthUserPhone(verifiedUser) || phone)
   const verifiedAt =
+    payload.verifiedAt ||
     getUserPhoneVerifiedAt(verifiedUser, phone) ||
     getUserPhoneVerifiedAt(verifiedUser, nextPhone) ||
     new Date().toISOString()

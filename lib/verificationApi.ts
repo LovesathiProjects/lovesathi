@@ -5,6 +5,7 @@
 
 import { supabase } from './supabaseClient'
 import { getPhoneValidationMessage, getUserPhoneVerifiedAt, normalizePhoneNumber, phonesMatch } from '@/lib/phone'
+import { getCurrentUserPhoneVerifiedAt } from '@/lib/phoneVerificationRecords'
 
 // ============================================
 // TYPES
@@ -112,6 +113,7 @@ export async function saveDateOfBirth(dob: string, phoneInput?: string) {
       .maybeSingle() // Use maybeSingle() to avoid error if no row exists
 
     const phoneVerifiedAt =
+      (await getCurrentUserPhoneVerifiedAt(user, normalizedPhone)) ||
       getUserPhoneVerifiedAt(user, normalizedPhone) ||
       (phonesMatch(existingProfile?.phone, normalizedPhone) ? existingProfile?.phone_verified_at : null)
 
@@ -209,6 +211,7 @@ export async function saveGender(gender: 'male' | 'female' | 'prefer_not_to_say'
     }
 
     const phoneVerifiedAt =
+      (await getCurrentUserPhoneVerifiedAt(user, profilePhone)) ||
       getUserPhoneVerifiedAt(user, profilePhone) ||
       (phonesMatch(existingProfile?.phone, profilePhone) ? existingProfile?.phone_verified_at : null)
 
