@@ -28,7 +28,12 @@ export function getPhoneValidationMessage(value: string) {
 
 export function getUserPhoneVerifiedAt(user: any, phone: string) {
   if (!user?.phone_confirmed_at) return null
-  return phonesMatch(user.phone, phone) ? String(user.phone_confirmed_at) : null
+  const confirmedPhone = normalizePhoneNumber(String(user?.phone || ""))
+  const metadataPhone = normalizePhoneNumber(String(user?.user_metadata?.phone || ""))
+  if (confirmedPhone) {
+    return phonesMatch(confirmedPhone, phone) ? String(user.phone_confirmed_at) : null
+  }
+  return metadataPhone && phonesMatch(metadataPhone, phone) ? String(user.phone_confirmed_at) : null
 }
 
 export function getAuthUserPhone(user: any) {

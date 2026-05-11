@@ -73,7 +73,7 @@ export async function verifyCurrentUserPhoneOtp(phoneInput: string, tokenInput: 
     throw new Error("Please enter the 6-digit phone verification code.")
   }
 
-  const { error } = await supabase.auth.verifyOtp({
+  const { data, error } = await supabase.auth.verifyOtp({
     phone,
     token,
     type: "phone_change",
@@ -81,12 +81,25 @@ export async function verifyCurrentUserPhoneOtp(phoneInput: string, tokenInput: 
 
   if (error) throw error
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let verifiedUser = data.user || null
 
-  const nextPhone = getAuthUserPhone(user) || phone
-  const verifiedAt = getUserPhoneVerifiedAt(user, nextPhone) || new Date().toISOString()
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.refreshSession()
+    verifiedUser = user || verifiedUser
+  } catch {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    verifiedUser = user || verifiedUser
+  }
 
-  return { phone: nextPhone, verifiedAt, user }
+  const nextPhone = normalizePhoneNumber(getAuthUserPhone(verifiedUser) || phone)
+  const verifiedAt =
+    getUserPhoneVerifiedAt(verifiedUser, phone) ||
+    getUserPhoneVerifiedAt(verifiedUser, nextPhone) ||
+    new Date().toISOString()
+
+  return { phone: nextPhone || phone, verifiedAt, user: verifiedUser }
 }

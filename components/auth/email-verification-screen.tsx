@@ -53,6 +53,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
   const [phoneInput, setPhoneInput] = useState("")
   const [phoneOtpCode, setPhoneOtpCode] = useState("")
   const [phoneOtpSent, setPhoneOtpSent] = useState(false)
+  const [phoneOtpTarget, setPhoneOtpTarget] = useState("")
   const [isEmailBusy, setIsEmailBusy] = useState(false)
   const [isPhoneBusy, setIsPhoneBusy] = useState(false)
   const [isPhoneSending, setIsPhoneSending] = useState(false)
@@ -255,11 +256,13 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
 
       if ("alreadyVerified" in result && result.alreadyVerified) {
         rememberPhone(result.phone)
+        setPhoneOtpTarget("")
         continueToOnboarding()
         return
       }
 
       rememberPhone(result.phone)
+      setPhoneOtpTarget(result.phone)
       setPhoneOtpSent(true)
       setPhoneOtpCode("")
       toast({
@@ -279,10 +282,12 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
 
   const handleVerifyPhoneCode = async () => {
     const token = normalizePhoneOtpCode(phoneOtpCode)
-    if (phoneError) {
+    const phoneForVerification = normalizePhoneNumber(phoneOtpTarget || normalizedPhone)
+    const phoneVerificationError = getPhoneValidationMessage(phoneForVerification)
+    if (phoneVerificationError) {
       toast({
         title: "Check phone number",
-        description: phoneError,
+        description: phoneVerificationError,
         variant: "destructive",
       })
       return
@@ -299,8 +304,9 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
 
     setIsPhoneBusy(true)
     try {
-      const result = await verifyCurrentUserPhoneOtp(normalizedPhone, token)
+      const result = await verifyCurrentUserPhoneOtp(phoneForVerification, token)
       rememberPhone(result.phone)
+      setPhoneOtpTarget("")
       toast({
         title: "Phone verified",
         description: "Your account is ready. Continuing to profile setup.",
@@ -436,6 +442,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
                   value={phoneInput}
                   onChange={(phone) => {
                     setPhoneInput(phone)
+                    setPhoneOtpTarget("")
                     setPhoneOtpSent(false)
                     setPhoneOtpCode("")
                   }}
