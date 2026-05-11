@@ -54,6 +54,8 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
   const [phoneOtpCode, setPhoneOtpCode] = useState("")
   const [phoneOtpSent, setPhoneOtpSent] = useState(false)
   const [phoneOtpTarget, setPhoneOtpTarget] = useState("")
+  const [phoneStatusMessage, setPhoneStatusMessage] = useState("")
+  const [phoneErrorMessage, setPhoneErrorMessage] = useState("")
   const [isEmailBusy, setIsEmailBusy] = useState(false)
   const [isPhoneBusy, setIsPhoneBusy] = useState(false)
   const [isPhoneSending, setIsPhoneSending] = useState(false)
@@ -239,7 +241,11 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
   }
 
   const handleSendPhoneOtp = async (resend = false) => {
+    setPhoneErrorMessage("")
+    setPhoneStatusMessage("")
+
     if (phoneError) {
+      setPhoneErrorMessage(phoneError)
       toast({
         title: "Check phone number",
         description: phoneError,
@@ -249,6 +255,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
     }
 
     setIsPhoneSending(true)
+    setPhoneStatusMessage("Sending your phone code...")
     try {
       const result = resend
         ? await resendCurrentUserPhoneOtp(normalizedPhone)
@@ -265,14 +272,18 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
       setPhoneOtpTarget(result.phone)
       setPhoneOtpSent(true)
       setPhoneOtpCode("")
+      setPhoneStatusMessage(`Code sent to ${result.phone}. Enter it below to continue.`)
       toast({
         title: resend ? "Phone code resent" : "Phone code sent",
         description: `We sent a 6-digit OTP to ${result.phone}.`,
       })
     } catch (error: any) {
+      const message = error.message || "Please check Supabase SMS settings and try again."
+      setPhoneStatusMessage("")
+      setPhoneErrorMessage(message)
       toast({
         title: "Could not send phone OTP",
-        description: error.message || "Please check Supabase SMS settings and try again.",
+        description: message,
         variant: "destructive",
       })
     } finally {
@@ -281,10 +292,14 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
   }
 
   const handleVerifyPhoneCode = async () => {
+    setPhoneErrorMessage("")
+    setPhoneStatusMessage("")
+
     const token = normalizePhoneOtpCode(phoneOtpCode)
     const phoneForVerification = normalizePhoneNumber(phoneOtpTarget || normalizedPhone)
     const phoneVerificationError = getPhoneValidationMessage(phoneForVerification)
     if (phoneVerificationError) {
+      setPhoneErrorMessage(phoneVerificationError)
       toast({
         title: "Check phone number",
         description: phoneVerificationError,
@@ -294,6 +309,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
     }
 
     if (token.length !== PHONE_OTP_LENGTH) {
+      setPhoneErrorMessage("Please enter the complete 6-digit code from your phone.")
       toast({
         title: "Enter the phone code",
         description: "Please enter the complete 6-digit code from your phone.",
@@ -303,6 +319,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
     }
 
     setIsPhoneBusy(true)
+    setPhoneStatusMessage("Verifying your phone code...")
     try {
       const result = await verifyCurrentUserPhoneOtp(phoneForVerification, token)
       rememberPhone(result.phone)
@@ -313,9 +330,12 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
       })
       continueToOnboarding()
     } catch (error: any) {
+      const message = error.message || "This code is invalid or expired."
+      setPhoneStatusMessage("")
+      setPhoneErrorMessage(message)
       toast({
         title: "Could not verify phone code",
-        description: error.message || "This code is invalid or expired.",
+        description: message,
         variant: "destructive",
       })
     } finally {
@@ -411,6 +431,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
               </div>
 
               <Button
+                type="button"
                 onClick={handleVerifyEmailCode}
                 className="w-full font-semibold"
                 size="lg"
@@ -421,6 +442,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
               </Button>
 
               <Button
+                type="button"
                 onClick={handleResendEmail}
                 variant="outline"
                 className="w-full font-semibold"
@@ -445,12 +467,15 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
                     setPhoneOtpTarget("")
                     setPhoneOtpSent(false)
                     setPhoneOtpCode("")
+                    setPhoneStatusMessage("")
+                    setPhoneErrorMessage("")
                   }}
                   onBlur={() => rememberPhone(phoneInput)}
                 />
               </div>
 
               <Button
+                type="button"
                 onClick={() => handleSendPhoneOtp(phoneOtpSent)}
                 variant="outline"
                 className="w-full font-semibold"
@@ -460,6 +485,19 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
                 {isPhoneSending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Phone className="mr-2 h-5 w-5" />}
                 {phoneOtpSent ? "Resend Phone Code" : "Send Phone Code"}
               </Button>
+
+              {(phoneStatusMessage || phoneErrorMessage || phoneError) && (
+                <div
+                  role={phoneErrorMessage || phoneError ? "alert" : "status"}
+                  className={`rounded-2xl border px-4 py-3 text-sm leading-5 ${
+                    phoneErrorMessage || phoneError
+                      ? "border-red-200 bg-red-50 text-red-700"
+                      : "border-[#C2A574]/30 bg-[#F7F3EE] text-[#3A2B24]"
+                  }`}
+                >
+                  {phoneErrorMessage || phoneError || phoneStatusMessage}
+                </div>
+              )}
 
               {phoneOtpSent && (
                 <>
@@ -479,6 +517,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
                   </div>
 
                   <Button
+                    type="button"
                     onClick={handleVerifyPhoneCode}
                     className="w-full font-semibold"
                     size="lg"
