@@ -1,12 +1,14 @@
 # Supabase + MSG91 Phone OTP
 
-Lovesathi uses Supabase to generate and verify phone OTPs. MSG91 is only the SMS delivery provider.
+Lovesathi uses a Supabase Edge Function to generate, send, and verify phone OTPs. MSG91 is only the SMS delivery provider.
 
 ## Deployed Function
 
 - Supabase project: `bysvtucftcclrdyfihsx`
 - Edge Function: `send-sms`
 - Hook URL: `https://bysvtucftcclrdyfihsx.supabase.co/functions/v1/send-sms`
+- Edge Function: `phone-otp`
+- Client URL: `https://bysvtucftcclrdyfihsx.supabase.co/functions/v1/phone-otp`
 
 ## Required Supabase Secrets
 
@@ -16,6 +18,10 @@ These secrets are configured in Supabase Edge Functions, not in the repository:
 - `SEND_SMS_HOOK_SECRET`
 - `MSG91_OTP_EXPIRY_MINUTES`
 - `MSG91_OTP_MESSAGE`
+- `PHONE_OTP_PEPPER`
+- `LOVESATHI_SUPABASE_URL`
+- `LOVESATHI_SUPABASE_ANON_KEY`
+- `LOVESATHI_SUPABASE_SERVICE_ROLE_KEY`
 
 Optional production SMS template support:
 
@@ -43,12 +49,11 @@ supabase secrets set --project-ref bysvtucftcclrdyfihsx SEND_SMS_HOOK_SECRET="PA
 ## How The Flow Works
 
 1. User enters phone number in Lovesathi signup.
-2. Lovesathi asks Supabase to send a phone OTP.
-3. Supabase creates the OTP and calls the `send-sms` Auth Hook.
-4. The Edge Function verifies Supabase's webhook signature.
-5. The Edge Function sends Supabase's OTP through MSG91.
-6. The Edge Function returns an empty `200` response, which Supabase treats as successful delivery.
-7. User enters the OTP.
-8. Supabase verifies the OTP and marks the phone as confirmed.
+2. Lovesathi calls the `phone-otp` Edge Function with the signed-in user's Supabase session.
+3. The Edge Function creates the OTP, stores only a hash in `phone_verifications`, and sends the OTP through MSG91.
+4. User enters the OTP.
+5. The Edge Function verifies the OTP hash, marks the row verified, and marks the Supabase Auth phone as confirmed with the service role.
 
-Do not verify OTPs through MSG91. Verification must remain in Supabase so the Supabase Auth session and phone confirmation stay correct.
+Do not verify OTPs through MSG91. Verification remains inside Supabase so Lovesathi can trust the Supabase database and Auth user state.
+
+The `send-sms` Auth Hook remains deployed for compatibility, but Lovesathi's phone verification screen uses `phone-otp` directly. This avoids Supabase's `phone_change` Auth Hook payload issue for newly created email-first accounts.

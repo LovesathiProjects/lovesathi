@@ -23,6 +23,44 @@ async function getSignedInUser() {
   return user
 }
 
+async function getAccessToken() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (!session?.access_token) {
+    throw new Error("Please sign in before phone verification.")
+  }
+
+  return session.access_token
+}
+
+async function callPhoneOtpFunction(body: Record<string, string>) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "")
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!supabaseUrl || !anonKey) {
+    throw new Error("Supabase phone verification is not configured.")
+  }
+
+  const token = await getAccessToken()
+  const response = await fetch(`${supabaseUrl}/functions/v1/phone-otp`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: anonKey,
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  })
+
+  const payload = await response.json().catch(() => null)
+  if (!response.ok || !payload?.success) {
+    throw new Error(payload?.error || "Phone verification failed. Please try again.")
+  }
+
+  return payload
+}
+
 export async function requestCurrentUserPhoneOtp(phoneInput: string) {
   const phone = normalizePhoneNumber(phoneInput)
   const phoneError = getPhoneValidationMessage(phone)
@@ -34,17 +72,12 @@ export async function requestCurrentUserPhoneOtp(phoneInput: string) {
     return { phone, alreadyVerified: true, verifiedAt }
   }
 
-  const { error } = await supabase.auth.updateUser({
-    phone,
-    data: {
-      ...(user.user_metadata || {}),
-      phone,
-    },
-  })
-
-  if (error) throw error
-
-  return { phone, alreadyVerified: false, verifiedAt: null }
+  const payload = await callPhoneOtpFunction({ action: "send", phone })
+  return {
+    phone: normalizePhoneNumber(payload.phone || phone),
+    alreadyVerified: Boolean(payload.alreadyVerified),
+    verifiedAt: payload.verifiedAt || null,
+  }
 }
 
 export async function resendCurrentUserPhoneOtp(phoneInput: string) {
@@ -52,15 +85,8 @@ export async function resendCurrentUserPhoneOtp(phoneInput: string) {
   const phoneError = getPhoneValidationMessage(phone)
   if (phoneError) throw new Error(phoneError)
 
-  await getSignedInUser()
-
-  const { error } = await supabase.auth.resend({
-    type: "phone_change",
-    phone,
-  })
-
-  if (error) throw error
-  return { phone }
+  const payload = await callPhoneOtpFunction({ action: "send", phone })
+  return { phone: normalizePhoneNumber(payload.phone || phone) }
 }
 
 export async function verifyCurrentUserPhoneOtp(phoneInput: string, tokenInput: string) {
@@ -73,27 +99,7 @@ export async function verifyCurrentUserPhoneOtp(phoneInput: string, tokenInput: 
     throw new Error("Please enter the 6-digit phone verification code.")
   }
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  if (!session?.access_token) {
-    throw new Error("Please sign in before phone verification.")
-  }
-
-  const response = await fetch("/api/auth/phone-otp/verify", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({ phone, token }),
-  })
-
-  const payload = await response.json()
-  if (!response.ok || !payload.success) {
-    throw new Error(payload.error || "This phone code is invalid or expired.")
-  }
+  const payload = await callPhoneOtpFunction({ action: "verify", phone, token })
 
   let verifiedUser = null
   try {
