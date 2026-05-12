@@ -15,12 +15,14 @@ type HookError = {
   httpCode?: number;
 };
 
-const jsonHeaders = { "Content-Type": "application/json" };
+function emptyResponse(status = 200) {
+  return new Response(null, { status });
+}
 
-function jsonResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
+function textResponse(message: string, status = 500) {
+  return new Response(message, {
     status,
-    headers: jsonHeaders,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
   });
 }
 
@@ -120,7 +122,7 @@ async function sendViaMsg91(mobile: string, otp: string) {
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
-    return jsonResponse({ error: { message: "Method not allowed" } }, 405);
+    return textResponse("Method not allowed", 405);
   }
 
   try {
@@ -138,20 +140,12 @@ Deno.serve(async (req) => {
     await sendViaMsg91(mobile, otp);
 
     console.log(`Lovesathi phone OTP sent through MSG91 to ${maskMobile(mobile)}`);
-    return jsonResponse({});
+    return emptyResponse();
   } catch (error) {
     const message = error instanceof Error ? error.message : (error as HookError).message || "SMS hook failed";
     const status = (error as HookError).httpCode || 500;
     console.error("Lovesathi Send SMS hook failed:", message);
 
-    return jsonResponse(
-      {
-        error: {
-          http_code: status,
-          message,
-        },
-      },
-      status,
-    );
+    return textResponse(message, status);
   }
 });

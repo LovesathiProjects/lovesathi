@@ -47,7 +47,8 @@ supabase secrets set --project-ref bysvtucftcclrdyfihsx SEND_SMS_HOOK_SECRET="PA
 3. Supabase creates the OTP and calls the `send-sms` Auth Hook.
 4. The Edge Function verifies Supabase's webhook signature.
 5. The Edge Function sends Supabase's OTP through MSG91.
-6. User enters the OTP.
-7. Supabase verifies the OTP and marks the phone as confirmed.
+6. The Edge Function returns an empty `200` response, which Supabase treats as successful delivery.
+7. User enters the OTP.
+8. Supabase verifies the OTP and marks the phone as confirmed.
 
 Do not verify OTPs through MSG91. Verification must remain in Supabase so the Supabase Auth session and phone confirmation stay correct.
