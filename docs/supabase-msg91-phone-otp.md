@@ -30,6 +30,10 @@ Optional production SMS template support:
 
 If MSG91 requires an approved OTP template, set `MSG91_OTP_TEMPLATE_ID` to the MSG91 OTP template ID. Without that value, the function uses MSG91's legacy SendOTP API with the provided message text.
 
+Current production template:
+
+- `MSG91_OTP_TEMPLATE_ID=global_otp`
+
 ## Dashboard Wiring
 
 1. Open Supabase Dashboard for `bysvtucftcclrdyfihsx`.
