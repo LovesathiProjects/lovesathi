@@ -77,10 +77,10 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm sm:max-w-md p-0 gap-0 max-h-[95vh] sm:max-h-[90vh] overflow-hidden bg-white mx-2 sm:mx-0 rounded-2xl sm:rounded-3xl shadow-2xl" showCloseButton={false}>
-        <div className="flex min-h-0 flex-col h-full overflow-hidden rounded-2xl sm:rounded-3xl">
+      <DialogContent className="!flex h-[min(92dvh,860px)] max-w-sm gap-0 overflow-hidden rounded-2xl bg-white p-0 shadow-2xl sm:max-w-md sm:rounded-3xl" showCloseButton={false}>
+        <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-2xl sm:rounded-3xl">
           {/* Photo Section */}
-          <div className="relative h-80 sm:h-96 flex-shrink-0 overflow-hidden rounded-t-2xl sm:rounded-t-3xl" onClick={handlePhotoClick}>
+          <div className="relative h-[34dvh] min-h-[14rem] max-h-80 flex-shrink-0 overflow-hidden rounded-t-2xl sm:h-[36dvh] sm:max-h-96 sm:rounded-t-3xl" onClick={handlePhotoClick}>
             <img
               src={currentPhoto || getProfileFallbackImage(profile.name, profile.id)}
               alt={`${profile.name} photo ${currentPhotoIndex + 1}`}
@@ -207,7 +207,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
           </div>
 
           {/* Content Section */}
-          <div className="min-h-0 flex-1 overflow-y-auto bg-white">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white [-webkit-overflow-scrolling:touch]">
             <div className="p-5 sm:p-6 space-y-5">
               {/* Basic Info */}
               <div className="space-y-4">
@@ -329,7 +329,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
           </div>
 
           {/* Action Buttons */}
-          <div className="flex-shrink-0 p-5 sm:p-6 border-t border-gray-200 bg-gray-50/50 rounded-b-2xl sm:rounded-b-3xl">
+          <div className="flex-shrink-0 rounded-b-2xl border-t border-gray-200 bg-gray-50/50 p-4 sm:rounded-b-3xl sm:p-5">
             <div className="flex items-center justify-center space-x-4">
               <Button
                 variant="outline"

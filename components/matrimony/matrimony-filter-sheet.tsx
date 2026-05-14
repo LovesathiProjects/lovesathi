@@ -296,8 +296,8 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[88dvh] w-[min(94vw,760px)] overflow-hidden rounded-[1.1rem] border-0 bg-white p-0 shadow-[0_30px_90px_rgba(31,44,60,0.28)]" showCloseButton={false}>
-        <div className="relative flex max-h-[88dvh] flex-col">
+      <DialogContent className="!flex h-[min(88dvh,760px)] w-[min(94vw,760px)] overflow-hidden rounded-[1.1rem] border-0 bg-white p-0 shadow-[0_30px_90px_rgba(31,44,60,0.28)]" showCloseButton={false}>
+        <div className="relative flex min-h-0 w-full flex-1 flex-col">
           <button
             type="button"
             onClick={() => onOpenChange(false)}
@@ -338,12 +338,12 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
               })}
             </nav>
 
-            <section className="min-h-0 overflow-y-auto px-5 py-5 pb-28 sm:px-7">
+            <section className="min-h-0 overflow-y-auto px-5 py-5 sm:px-7">
               {content}
             </section>
           </div>
 
-          <div className="absolute inset-x-0 bottom-0 border-t border-[#EEF1F6] bg-white/96 px-5 py-4 backdrop-blur sm:px-7">
+          <div className="shrink-0 border-t border-[#EEF1F6] bg-white/96 px-5 py-4 backdrop-blur sm:px-7">
             <Button onClick={applyFilters} className="h-12 w-full rounded-xl bg-[#E83262] text-base font-black text-white shadow-[0_14px_30px_rgba(232,50,98,0.18)] hover:bg-[#C3264E]">
               Show Matches
             </Button>
