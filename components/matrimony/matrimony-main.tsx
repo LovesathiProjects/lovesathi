@@ -69,6 +69,7 @@ import { getLocationCity } from "@/lib/location"
 import { formatPublicProfileName } from "@/lib/displayName"
 import { getPublicProfileId } from "@/lib/profileIdentity"
 import { getProfileFallbackImage, getSafeProfilePhotos } from "@/lib/profileImages"
+import { cn } from "@/lib/utils"
 
 interface MatrimonyMainProps {
   onExit?: () => void
@@ -256,6 +257,7 @@ function MatrimonyDiscoveryList({
   loading,
   profiles,
   viewerIsPremium,
+  viewerCity,
   shortlistedIds,
   swipeLimitStatus,
   appliedFilters,
@@ -271,6 +273,7 @@ function MatrimonyDiscoveryList({
   loading: boolean
   profiles: MatrimonyProfile[]
   viewerIsPremium: boolean
+  viewerCity?: string | null
   shortlistedIds: Set<string>
   swipeLimitStatus: UsageLimitStatus | null
   appliedFilters: FilterState | null
@@ -284,20 +287,37 @@ function MatrimonyDiscoveryList({
   onChat: (profile: MatrimonyProfile) => void
 }) {
   const [searchQuery, setSearchQuery] = useState("")
+  const [quickFilters, setQuickFilters] = useState({
+    nearby: false,
+    withPhotos: false,
+    selfProfiles: false,
+  })
   const visibleProfiles = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
-    if (!query) return profiles
+    const viewerCityValue = String(viewerCity || "").trim().toLowerCase()
     return profiles.filter((profile) => {
       const searchable = [profile.name, profile.location, profile.profession, profile.education, profile.community]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
-      return searchable.includes(query)
+      const matchesSearch = query ? searchable.includes(query) : true
+      const profileCity = getLocationCity(profile.location).toLowerCase()
+      const matchesNearby = quickFilters.nearby
+        ? viewerCityValue
+          ? profileCity === viewerCityValue || profile.location.toLowerCase().includes(viewerCityValue)
+          : profile.location.toLowerCase().includes("mumbai")
+        : true
+      const matchesPhotos = quickFilters.withPhotos ? profile.hasRealPhotos !== false && profile.photos.length > 0 : true
+      const matchesSelf = quickFilters.selfProfiles ? String(profile.createdBy || "Self").toLowerCase() === "self" : true
+
+      return matchesSearch && matchesNearby && matchesPhotos && matchesSelf
     })
-  }, [profiles, searchQuery])
+  }, [profiles, quickFilters.nearby, quickFilters.selfProfiles, quickFilters.withPhotos, searchQuery, viewerCity])
+  const quickFilterCount = Number(quickFilters.nearby) + Number(quickFilters.withPhotos) + Number(quickFilters.selfProfiles)
   const hasFilters = Boolean(
-    appliedFilters &&
-      (appliedFilters.locations.length ||
+    quickFilterCount ||
+      (appliedFilters &&
+        (appliedFilters.locations.length ||
         appliedFilters.communities.length ||
         appliedFilters.educationPrefs.length ||
         appliedFilters.professionPrefs.length ||
@@ -305,8 +325,17 @@ function MatrimonyDiscoveryList({
         appliedFilters.dietPrefs.length ||
         appliedFilters.lifestylePrefs.length ||
         appliedFilters.verifiedOnly ||
-        appliedFilters.premiumOnly),
+          appliedFilters.premiumOnly)),
   )
+  const clearAllFilters = () => {
+    setQuickFilters({ nearby: false, withPhotos: false, selfProfiles: false })
+    onClearFilters()
+  }
+  const quickFilterChips = [
+    { key: "nearby" as const, label: viewerCity ? `Nearby ${viewerCity}` : "Nearby" },
+    { key: "withPhotos" as const, label: "With Photos" },
+    { key: "selfProfiles" as const, label: "Self Profiles" },
+  ]
 
   return (
     <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#F6F7FB] text-[#26364A]">
@@ -338,19 +367,27 @@ function MatrimonyDiscoveryList({
             Filters
             {hasFilters && <span className="h-2 w-2 rounded-full bg-[#E83262]" />}
           </button>
-          {["Nearby", "With Photos", "Self Profiles"].map((chip) => (
-            <button
-              key={chip}
-              type="button"
-              onClick={chip === "Nearby" ? onOpenFilters : undefined}
-              className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#D9DFE8] bg-white px-4 py-2 text-sm font-bold text-[#526173] shadow-sm"
-            >
-              {chip}
-              {chip !== "Self Profiles" && <X className="h-3.5 w-3.5 text-[#E83262]" />}
-            </button>
-          ))}
+          {quickFilterChips.map((chip) => {
+            const active = quickFilters[chip.key]
+            return (
+              <button
+                key={chip.key}
+                type="button"
+                onClick={() => setQuickFilters((previous) => ({ ...previous, [chip.key]: !previous[chip.key] }))}
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold shadow-sm transition",
+                  active
+                    ? "border-[#E83262]/40 bg-[#FFF3F7] text-[#E83262]"
+                    : "border-[#D9DFE8] bg-white text-[#526173] hover:border-[#E83262]/30",
+                )}
+              >
+                {chip.label}
+                {active && <X className="h-3.5 w-3.5 text-[#E83262]" />}
+              </button>
+            )
+          })}
           {hasFilters && (
-            <button type="button" onClick={onClearFilters} className="shrink-0 rounded-full px-4 py-2 text-sm font-black text-[#E83262]">
+            <button type="button" onClick={clearAllFilters} className="shrink-0 rounded-full px-4 py-2 text-sm font-black text-[#E83262]">
               Reset
             </button>
           )}
@@ -399,7 +436,7 @@ function MatrimonyDiscoveryList({
                 <p className="mx-auto mt-2 max-w-md text-sm font-semibold leading-6 text-[#6F7C8B]">
                   Try relaxing filters or searching a wider city, education, or community.
                 </p>
-                <Button type="button" onClick={onClearFilters} className="mt-5 rounded-xl bg-[#E83262] px-6 font-black text-white hover:bg-[#C3264E]">
+                <Button type="button" onClick={clearAllFilters} className="mt-5 rounded-xl bg-[#E83262] px-6 font-black text-white hover:bg-[#C3264E]">
                   Clear filters
                 </Button>
               </div>
@@ -470,6 +507,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
   const [viewedUserId, setViewedUserId] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [viewerCity, setViewerCity] = useState<string | null>(null)
   const [cameFromChat, setCameFromChat] = useState<boolean>(false)
   const [cameFromShortlist, setCameFromShortlist] = useState<boolean>(false)
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
@@ -658,6 +696,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           console.error("Auth error:", authError)
           setProfiles([])
           setCurrentUserId(null)
+          setViewerCity(null)
           setLoading(false)
           return
         }
@@ -665,6 +704,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         if (!user) {
           setProfiles([])
           setCurrentUserId(null)
+          setViewerCity(null)
           setSwipeLimitStatus(null)
           setViewerEntitlement(null)
           setLoading(false)
@@ -698,11 +738,13 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             name,
             age,
             gender,
+            created_by,
             photos,
             personal,
             career,
             cultural,
             family,
+            partner_preferences,
             bio,
             profile_hidden,
             is_seeded_profile,
@@ -754,6 +796,15 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
         // Get current user's gender for filtering
         const currentUserGender = currentUserProfile?.gender?.toLowerCase()
+        const currentMatrimonyProfile = profileRows.find((profile) => profile.user_id === user.id)
+        const currentCareer = (currentMatrimonyProfile?.career as any) || {}
+        const currentCultural = (currentMatrimonyProfile?.cultural as any) || {}
+        const currentWorkLocation = currentCareer?.work_location || {}
+        setViewerCity(
+          currentWorkLocation.city ||
+            (typeof currentCultural.place_of_birth === "string" ? currentCultural.place_of_birth.split(",")[0]?.trim() : null) ||
+            null,
+        )
 
         // Hide profiles the user has already liked, passed, or connected with.
         const actedProfileIds = await getMatrimonyLikedProfiles(user.id)
@@ -767,6 +818,8 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             const personalData = (matrimonyProfile.personal as any) || {}
             const careerData = (matrimonyProfile.career as any) || {}
             const culturalData = (matrimonyProfile.cultural as any) || {}
+            const familyData = (matrimonyProfile.family as any) || {}
+            const preferenceData = (matrimonyProfile.partner_preferences as any) || {}
             const bioText = matrimonyProfile.bio || null
             const verification = verifications?.find((v) => v.user_id === matrimonyProfile.user_id)
             const contact = contactMap.get(matrimonyProfile.user_id)
@@ -961,17 +1014,28 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
               publicProfileId: matrimonyProfile.public_profile_id || getPublicProfileId({ user_id: matrimonyProfile.user_id }),
               name: matrimonyProfile.name,
               age: calculatedAge,
+              gender: matrimonyProfile.gender || personalData?.gender || undefined,
               education: careerData?.highest_education || "",
               profession: careerData?.job_title || "",
+              income: careerData?.annual_income || undefined,
               location: location,
               community: culturalData?.community || undefined,
+              religion: culturalData?.religion || undefined,
               photos: getSafeProfilePhotos(photosData, matrimonyProfile.name, matrimonyProfile.user_id),
+              hasRealPhotos: photosData.length > 0,
               bio: bioText || undefined,
               interests: [], // Not in current schema, can be added later
               verified: verification?.verification_status === "approved",
               premium: premiumUserIds.has(matrimonyProfile.user_id),
               demo: Boolean(matrimonyProfile.is_seeded_profile),
               height, // Add height to profile
+              maritalStatus: personalData?.marital_status || undefined,
+              createdBy: matrimonyProfile.created_by || "Self",
+              personal: personalData,
+              career: careerData,
+              cultural: culturalData,
+              family: familyData,
+              partnerPreferences: preferenceData,
               phoneMasked: contact?.phoneMasked || undefined,
               phone: contact?.phoneRevealed || undefined,
               canRevealPhone: contact?.canReveal,
@@ -1407,6 +1471,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           loading={loading}
           profiles={profiles}
           viewerIsPremium={viewerIsPremium}
+          viewerCity={viewerCity}
           shortlistedIds={shortlistedIds}
           swipeLimitStatus={swipeLimitStatus}
           appliedFilters={appliedFilters}

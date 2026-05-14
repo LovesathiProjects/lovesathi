@@ -5,7 +5,6 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { Separator } from "@/components/ui/separator"
 import { X, MapPin, Briefcase, GraduationCap, Users, Share, Flag, Heart, ChevronLeft, ChevronRight, Phone } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
@@ -28,6 +27,49 @@ interface MatrimonyProfileModalProps {
   isMatched?: boolean
 }
 
+function cleanText(value: unknown) {
+  if (value === null || value === undefined || value === "") return null
+  if (typeof value === "boolean") return value ? "Yes" : "No"
+  if (Array.isArray(value)) return value.filter(Boolean).join(", ") || null
+  return String(value)
+}
+
+function compactList(values: unknown[]) {
+  return values.map(cleanText).filter(Boolean).join(", ") || null
+}
+
+function InfoLine({ label, value }: { label: string; value: unknown }) {
+  const displayValue = cleanText(value)
+  if (!displayValue) return null
+
+  return (
+    <div className="min-w-0">
+      <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[#9AA5B2]">{label}</p>
+      <p className="mt-1 break-words text-sm font-semibold leading-6 text-[#26364A]">{displayValue}</p>
+    </div>
+  )
+}
+
+function DossierSection({
+  title,
+  icon,
+  children,
+}: {
+  title: string
+  icon?: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+    <section className="rounded-[1.35rem] border border-[#F1D5DD] bg-white p-4 shadow-[0_14px_36px_rgba(31,44,60,0.04)]">
+      <h3 className="flex items-center gap-2 text-base font-black text-[#26364A]">
+        {icon}
+        {title}
+      </h3>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">{children}</div>
+    </section>
+  )
+}
+
 export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, onNotNow, onSuperLike, onPhoneUpgrade, onRevealPhone, viewerIsPremium = false, isMatched = false }: MatrimonyProfileModalProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
   const [photoFailed, setPhotoFailed] = useState(false)
@@ -38,6 +80,37 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
   const publicProfileId = getPublicProfileId(profile)
   const visiblePhotos = getSafeProfilePhotos(profile.photos, profile.name, profile.id, viewerIsPremium || isMatched ? undefined : 1)
   const currentPhoto = photoFailed ? getProfileFallbackImage(profile.name, profile.id) : visiblePhotos[currentPhotoIndex]
+  const personal = profile.personal || {}
+  const career = profile.career || {}
+  const cultural = profile.cultural || {}
+  const family = profile.family || {}
+  const preferences = profile.partnerPreferences || {}
+  const workLocation = career.work_location || {}
+  const workLocationLabel = compactList([workLocation.city, workLocation.state, workLocation.country])
+  const birthLocation =
+    cultural.place_of_birth ||
+    compactList([
+      cultural.birth_city || cultural.birthCity,
+      cultural.birth_state || cultural.birthState,
+      cultural.birth_country || cultural.birthCountry,
+    ])
+  const heightDisplay = profile.height || (personal.height_cm ? `${personal.height_cm} cm` : null)
+  const maritalStatus = profile.maritalStatus || personal.marital_status
+  const income = profile.income || career.annual_income
+  const education = profile.education || career.highest_education
+  const profession = profile.profession || career.job_title
+  const hasAnyPreferences = Boolean(
+    preferences.min_age ||
+      preferences.max_age ||
+      preferences.min_height ||
+      preferences.max_height ||
+      (Array.isArray(preferences.locations) && preferences.locations.length) ||
+      (Array.isArray(preferences.communities) && preferences.communities.length) ||
+      (Array.isArray(preferences.education_prefs) && preferences.education_prefs.length) ||
+      (Array.isArray(preferences.profession_prefs) && preferences.profession_prefs.length) ||
+      (Array.isArray(preferences.diet_prefs) && preferences.diet_prefs.length) ||
+      (Array.isArray(preferences.marital_status_prefs) && preferences.marital_status_prefs.length),
+  )
 
   useEffect(() => {
     setRevealedPhone(profile.phone || null)
@@ -208,13 +281,12 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
 
           {/* Content Section */}
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white [-webkit-overflow-scrolling:touch]">
-            <div className="p-5 sm:p-6 space-y-5">
+            <div className="space-y-5 p-5 sm:p-6">
               {/* Basic Info */}
               <div className="space-y-4">
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                    {displayName}, {profile.age}
-                    {profile.height && <span className="text-xl sm:text-2xl font-normal text-gray-600"> • {profile.height}</span>}
+                  <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:text-3xl">
+                    {displayName}, {profile.age}{heightDisplay ? ` - ${heightDisplay}` : ""}
                   </h1>
                   <p className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-[#9AA5B2]">ID - {publicProfileId}</p>
                   {profile.location && (
@@ -292,38 +364,79 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                 </div>
               </div>
 
-              {/* Bio */}
               {profile.bio && (
-                <>
-                  <Separator className="my-6" />
-                  <div className="space-y-3">
-                    <h3 className="font-semibold text-base sm:text-lg text-gray-900">About</h3>
-                    <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
-                      {profile.bio}
-                    </p>
-                  </div>
-                </>
+                <DossierSection title="About Me" icon={<Heart className="h-4 w-4 text-[#E83262]" />}>
+                  <p className="whitespace-pre-wrap text-sm font-medium leading-7 text-[#5A6878] sm:col-span-2">{profile.bio}</p>
+                </DossierSection>
               )}
 
-              {/* Interests */}
+              <DossierSection title="Career & Education" icon={<Briefcase className="h-4 w-4 text-[#E83262]" />}>
+                <InfoLine label="Education" value={education} />
+                <InfoLine label="College" value={career.college} />
+                <InfoLine label="Profession" value={profession} />
+                <InfoLine label="Company" value={career.company} />
+                <InfoLine label="Income" value={income} />
+                <InfoLine label="Work Location" value={workLocationLabel} />
+              </DossierSection>
+
+              <DossierSection title="Family & Cultural Details" icon={<Users className="h-4 w-4 text-[#E83262]" />}>
+                <InfoLine label="Family Type" value={family.family_type} />
+                <InfoLine label="Family Values" value={family.family_values} />
+                <InfoLine label="Religion" value={profile.religion || cultural.religion} />
+                <InfoLine label="Community" value={profile.community || cultural.community} />
+                <InfoLine label="Sub-community" value={cultural.sub_caste || cultural.sub_community} />
+                <InfoLine label="Mother Tongue" value={cultural.mother_tongue} />
+                <InfoLine label="Birth Place" value={birthLocation} />
+                <InfoLine label="Time of Birth" value={cultural.time_of_birth} />
+                <InfoLine label="Star / Raashi" value={cultural.star_raashi} />
+                <InfoLine label="Gotra" value={cultural.gotra} />
+              </DossierSection>
+
+              <DossierSection title="Lifestyle & Personal Details" icon={<Users className="h-4 w-4 text-[#E83262]" />}>
+                <InfoLine label="Height" value={heightDisplay} />
+                <InfoLine label="Marital Status" value={maritalStatus} />
+                <InfoLine label="Complexion" value={personal.complexion} />
+                <InfoLine label="Body Type" value={personal.body_type} />
+                <InfoLine label="Diet" value={personal.diet} />
+                <InfoLine
+                  label="Lifestyle"
+                  value={compactList([
+                    personal.smoker === false ? "Non-smoker" : personal.smoker ? "Smoker" : null,
+                    personal.drinker === false ? "Non-drinker" : personal.drinker ? "Drinker" : null,
+                  ])}
+                />
+              </DossierSection>
+
+              {hasAnyPreferences && (
+                <DossierSection title="Partner Preferences" icon={<Heart className="h-4 w-4 text-[#E83262]" />}>
+                  <InfoLine
+                    label="Age Range"
+                    value={preferences.min_age || preferences.max_age ? `${preferences.min_age || "?"} - ${preferences.max_age || "?"}` : null}
+                  />
+                  <InfoLine
+                    label="Height Range"
+                    value={preferences.min_height || preferences.max_height ? `${preferences.min_height || "?"} - ${preferences.max_height || "?"}` : null}
+                  />
+                  <InfoLine label="Locations" value={preferences.locations} />
+                  <InfoLine label="Communities" value={preferences.communities} />
+                  <InfoLine label="Education" value={preferences.education_prefs} />
+                  <InfoLine label="Profession" value={preferences.profession_prefs} />
+                  <InfoLine label="Diet" value={preferences.diet_prefs} />
+                  <InfoLine label="Marital Status" value={preferences.marital_status_prefs} />
+                </DossierSection>
+              )}
+
               {profile.interests && profile.interests.length > 0 && (
-                <>
-                  <Separator className="my-6" />
-                  <div className="space-y-3">
-                    <h3 className="font-semibold text-base sm:text-lg text-gray-900">Interests</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {profile.interests.map((interest) => (
-                        <Badge 
-                          key={interest} 
-                          variant="secondary" 
-                          className="text-xs sm:text-sm px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 font-normal"
-                        >
-                          {interest}
-                        </Badge>
-                      ))}
-                    </div>
+                <section className="rounded-[1.35rem] border border-[#F1D5DD] bg-white p-4 shadow-[0_14px_36px_rgba(31,44,60,0.04)]">
+                  <h3 className="text-base font-black text-[#26364A]">Interests</h3>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {profile.interests.map((interest) => (
+                      <Badge key={interest} variant="secondary" className="rounded-full bg-[#F6F7FB] px-3 py-1.5 text-xs font-bold text-[#526173]">
+                        {interest}
+                      </Badge>
+                    ))}
                   </div>
-                </>
+                </section>
               )}
             </div>
           </div>

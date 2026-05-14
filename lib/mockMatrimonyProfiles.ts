@@ -3,6 +3,7 @@ export interface MatrimonyProfile {
   publicProfileId?: string
   name: string
   age: number
+  gender?: string
   education?: string
   profession: string
   location: string
@@ -16,6 +17,15 @@ export interface MatrimonyProfile {
   demo?: boolean
   visibilityLabel?: string
   height?: string // Height in format like "5'6""
+  maritalStatus?: string
+  income?: string
+  createdBy?: string
+  hasRealPhotos?: boolean
+  personal?: Record<string, any>
+  career?: Record<string, any>
+  cultural?: Record<string, any>
+  family?: Record<string, any>
+  partnerPreferences?: Record<string, any>
   phoneMasked?: string
   phone?: string
   canRevealPhone?: boolean
