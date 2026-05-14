@@ -31,7 +31,7 @@ export function MatchNotification({ match, onStartChat, onKeepSwiping, onClose }
       <Card className="w-full max-w-sm mx-auto overflow-hidden">
         <CardContent className="p-0">
           {/* Header */}
-          <div className="relative bg-gradient-to-br from-[#C2A574] to-[#B9975E] p-6 text-white text-center">
+          <div className="relative bg-gradient-to-br from-[#E83262] to-[#C3264E] p-6 text-white text-center">
             <Button
               variant="ghost"
               size="sm"
@@ -73,7 +73,7 @@ export function MatchNotification({ match, onStartChat, onKeepSwiping, onClose }
                   <p className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>You both like:</p>
                   <div className="flex flex-wrap justify-center gap-2">
                     {match.mutualInterests.slice(0, 3).map((interest) => (
-                      <span key={interest} className="px-3 py-1 bg-[#C2A574]/10 text-[#C2A574] text-xs rounded-full font-semibold">
+                      <span key={interest} className="px-3 py-1 bg-[#E83262]/10 text-[#E83262] text-xs rounded-full font-semibold">
                         {interest}
                       </span>
                     ))}

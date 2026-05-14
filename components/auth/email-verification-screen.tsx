@@ -347,7 +347,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
     return (
       <div className="flex min-h-screen items-center justify-center bg-white p-6">
         <div className="space-y-4 text-center">
-          <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#C2A574]" />
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#E83262]" />
           <p className="text-sm font-medium text-black/70">Preparing verification...</p>
         </div>
       </div>
@@ -369,11 +369,11 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
                   <CheckCircle className="h-16 w-16 text-green-500" />
                 </div>
               ) : (
-                <div className="rounded-full bg-[#C2A574]/10 p-6">
+                <div className="rounded-full bg-[#E83262]/10 p-6">
                   {stage === "phone" ? (
-                    <Phone className="h-16 w-16 text-[#C2A574]" />
+                    <Phone className="h-16 w-16 text-[#E83262]" />
                   ) : (
-                    <Mail className="h-16 w-16 text-[#C2A574]" />
+                    <Mail className="h-16 w-16 text-[#E83262]" />
                   )}
                 </div>
               )}
@@ -492,7 +492,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
                   className={`rounded-2xl border px-4 py-3 text-sm leading-5 ${
                     phoneErrorMessage || phoneError
                       ? "border-red-200 bg-red-50 text-red-700"
-                      : "border-[#C2A574]/30 bg-[#F7F3EE] text-[#3A2B24]"
+                      : "border-[#E83262]/30 bg-[#F6F7FB] text-[#26364A]"
                   }`}
                 >
                   {phoneErrorMessage || phoneError || phoneStatusMessage}

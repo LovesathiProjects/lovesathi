@@ -386,7 +386,7 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
         <StaticBackground />
         <div className="flex items-center justify-center h-full">
           <div className="text-center space-y-4">
-            <div className="w-12 h-12 mx-auto border-4 border-[#C2A574] border-t-transparent rounded-full animate-spin" />
+            <div className="w-12 h-12 mx-auto border-4 border-[#E83262] border-t-transparent rounded-full animate-spin" />
             <p className="text-sm text-black">Loading matches...</p>
           </div>
         </div>
@@ -395,27 +395,27 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
   }
 
   return (
-    <div className="relative flex h-full flex-col bg-[linear-gradient(145deg,#ffffff,#F7F3EE_58%,#f5f4f0)]">
+    <div className="relative flex h-full flex-col bg-[linear-gradient(145deg,#ffffff,#F6F7FB_58%,#f5f4f0)]">
       {/* Static Background */}
       <StaticBackground />
       
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-[#C2A574]/24 bg-[#F7F3EE]/86 p-4 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur-xl">
+      <div className="flex-shrink-0 border-b border-[#E83262]/24 bg-[#F6F7FB]/86 p-4 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur-xl">
         <div className="space-y-4">
           <div className="flex items-center space-x-4">
             {onBack && (
                 <Button 
                 variant="ghost" 
                 size="sm" 
-                className="rounded-full border border-[#C2A574]/28 bg-white/72 p-2 hover:bg-[#EFE7DB]"
+                className="rounded-full border border-[#E83262]/28 bg-white/72 p-2 hover:bg-[#F2F5FA]"
                 onClick={onBack}
               >
                 <ArrowLeft className="w-5 h-5 text-black" />
               </Button>
             )}
             <div>
-              <p className="luxe-kicker text-[0.62rem] text-[#C2A574]">connection lounge</p>
-              <h1 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#3A2B24]">Messages</h1>
+              <p className="luxe-kicker text-[0.62rem] text-[#E83262]">connection lounge</p>
+              <h1 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#26364A]">Messages</h1>
             </div>
             <div className="flex-1" />
             <div className="flex items-center gap-2">
@@ -428,7 +428,7 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
                       setIsSelectMode(false)
                       setSelectedChats(new Set())
                     }}
-                    className="text-[#3A2B24]"
+                    className="text-[#26364A]"
                   >
                     Cancel
                   </Button>
@@ -437,7 +437,7 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowDeleteDialog(true)}
-                    className="text-[#C2A574] hover:text-[#B9975E]"
+                    className="text-[#E83262] hover:text-[#C3264E]"
                     >
                       <Trash2 className="w-4 h-4 mr-1" />
                       Delete ({selectedChats.size})
@@ -451,21 +451,21 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
                     variant="ghost"
                     size="sm"
                     onClick={() => setIsHeaderMenuOpen(!isHeaderMenuOpen)}
-                    className="text-[#3A2B24]"
+                    className="text-[#26364A]"
                   >
                     <MoreVertical className="w-5 h-5 text-black" />
                   </Button>
 
                   {/* Header Menu */}
                   {isHeaderMenuOpen && (
-                    <div className="absolute right-0 top-full z-50 mt-2 min-w-[160px] rounded-2xl border border-[#C2A574]/24 bg-[#F7F3EE]/96 text-sm text-[#3A2B24] shadow-[0_18px_60px_rgba(24,17,13,0.14)] backdrop-blur-xl">
+                    <div className="absolute right-0 top-full z-50 mt-2 min-w-[160px] rounded-2xl border border-[#E83262]/24 bg-[#F6F7FB]/96 text-sm text-[#26364A] shadow-[0_18px_60px_rgba(24,17,13,0.14)] backdrop-blur-xl">
                       <div className="flex flex-col py-1">
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
                             toggleSelectMode()
                           }}
-                          className="flex w-full items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-[#EFE7DB] active:bg-[#EFE7DB]"
+                          className="flex w-full items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-[#F2F5FA] active:bg-[#F2F5FA]"
                         >
                           <CheckSquare className="w-4 h-4" />
                           <span>Select</span>
@@ -480,12 +480,12 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#C2A574]" />
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#E83262]" />
             <Input
               placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-12 rounded-full border-[#C2A574]/24 bg-white/88 pl-11 text-[#3A2B24] shadow-[0_10px_28px_rgba(24,17,13,0.05)] placeholder:text-[#8B7B70]"
+              className="h-12 rounded-full border-[#E83262]/24 bg-white/88 pl-11 text-[#26364A] shadow-[0_10px_28px_rgba(24,17,13,0.05)] placeholder:text-[#6F7C8B]"
             />
           </div>
         </div>
@@ -495,11 +495,11 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
       <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
         {filteredChats.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[#C2A574]/24 bg-[#EFE7DB] shadow-[0_18px_48px_rgba(24,17,13,0.08)]">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[#E83262]/24 bg-[#F2F5FA] shadow-[0_18px_48px_rgba(24,17,13,0.08)]">
               <Search className="w-8 h-8 text-[#444444]" />
             </div>
-            <h3 className="mb-2 font-serif text-3xl font-bold tracking-[-0.05em] text-[#3A2B24]">No conversations found</h3>
-            <p className="text-sm text-[#8B7B70]">Connect with profiles to start thoughtful conversations.</p>
+            <h3 className="mb-2 font-serif text-3xl font-bold tracking-[-0.05em] text-[#26364A]">No conversations found</h3>
+            <p className="text-sm text-[#6F7C8B]">Connect with profiles to start thoughtful conversations.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -512,7 +512,7 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
                   key={chat.matchId}
                   className={cn(
                     "relative rounded-[1.6rem] border p-4 shadow-[0_14px_38px_rgba(24,17,13,0.07)] backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_52px_rgba(24,17,13,0.11)]",
-                    isSelected ? "border-[#C2A574] bg-[#C2A574]/10" : "border-[#C2A574]/24 bg-[#F7F3EE]/88 hover:bg-white",
+                    isSelected ? "border-[#E83262] bg-[#E83262]/10" : "border-[#E83262]/24 bg-[#F6F7FB]/88 hover:bg-white",
                     isSelectMode ? "cursor-pointer" : "cursor-pointer"
                   )}
                   onClick={(e) => {
@@ -536,8 +536,8 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
                           className={cn(
                             "w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all",
                             isSelected
-                              ? "bg-[#C2A574] border-[#C2A574]"
-                              : "border-[#C2A574]/28 bg-[#EFE7DB] hover:bg-[#EFE7DB]"
+                              ? "bg-[#E83262] border-[#E83262]"
+                              : "border-[#E83262]/28 bg-[#F2F5FA] hover:bg-[#F2F5FA]"
                           )}
                         >
                           {isSelected ? (
@@ -548,9 +548,9 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
                         </button>
                       ) : (
                         <>
-                          <Avatar className="h-12 w-12 border-2 border-[#C2A574]/35 shadow-[0_10px_28px_rgba(24,17,13,0.12)]">
+                          <Avatar className="h-12 w-12 border-2 border-[#E83262]/35 shadow-[0_10px_28px_rgba(24,17,13,0.12)]">
                             <AvatarImage src={chat.avatar || "/placeholder.svg"} alt={displayName} />
-                            <AvatarFallback className="bg-[#EFE7DB] text-[#3A2B24]">{getDisplayInitial(chat.name)}</AvatarFallback>
+                            <AvatarFallback className="bg-[#F2F5FA] text-[#26364A]">{getDisplayInitial(chat.name)}</AvatarFallback>
                           </Avatar>
                           {chat.isOnline && (
                             <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-white rounded-full" />
@@ -563,9 +563,9 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center space-x-2">
-                          <h3 className="truncate font-serif text-xl font-bold tracking-[-0.04em] text-[#3A2B24]">{displayName}</h3>
+                          <h3 className="truncate font-serif text-xl font-bold tracking-[-0.04em] text-[#26364A]">{displayName}</h3>
                           {chat.isPremium && (
-                            <Badge className="bg-[#C2A574] text-[#3A2B24] text-xs px-1.5 py-0.5 border border-[#C2A574]">
+                            <Badge className="bg-[#E83262] text-white text-xs px-1.5 py-0.5 border border-[#E83262]">
                               Premium
                             </Badge>
                           )}
@@ -574,9 +574,9 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
                         <div className="flex items-center space-x-2 flex-shrink-0">
                           {!isSelectMode && (
                             <>
-                              <span className="text-xs font-semibold text-[#8B7B70]">{formatRelativeTime(chat.timestamp)}</span>
+                              <span className="text-xs font-semibold text-[#6F7C8B]">{formatRelativeTime(chat.timestamp)}</span>
                               {chat.unreadCount > 0 && (
-                                <Badge className="w-5 h-5 rounded-full p-0 flex items-center justify-center text-xs bg-[#C2A574] text-[#3A2B24] border border-[#C2A574]">
+                                <Badge className="w-5 h-5 rounded-full p-0 flex items-center justify-center text-xs bg-[#E83262] text-white border border-[#E83262]">
                                   {chat.unreadCount}
                                 </Badge>
                               )}
@@ -588,7 +588,7 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
                         <p
                           className={cn(
                             "text-sm truncate",
-                            chat.unreadCount > 0 ? "font-semibold text-[#3A2B24]" : "text-[#8B7B70]",
+                            chat.unreadCount > 0 ? "font-semibold text-[#26364A]" : "text-[#6F7C8B]",
                           )}
                         >
                           {chat.lastMessage}

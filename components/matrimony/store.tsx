@@ -245,9 +245,9 @@ export function MatrimonySetupProvider({ children }: { children: React.ReactNode
   if (hydrating) {
     return (
       <div className="flex min-h-[26rem] items-center justify-center">
-        <div className="rounded-[2rem] border border-[#C2A574]/24 bg-white/80 p-7 text-center shadow-[0_20px_70px_rgba(24,17,13,0.08)]">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#C2A574] border-t-transparent" />
-          <p className="mt-4 font-semibold text-[#3A2B24]">Restoring your saved profile details...</p>
+        <div className="rounded-[2rem] border border-[#E83262]/24 bg-white/80 p-7 text-center shadow-[0_20px_70px_rgba(24,17,13,0.08)]">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#E83262] border-t-transparent" />
+          <p className="mt-4 font-semibold text-[#26364A]">Restoring your saved profile details...</p>
         </div>
       </div>
     )

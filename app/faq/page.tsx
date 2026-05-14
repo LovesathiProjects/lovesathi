@@ -98,56 +98,56 @@ export default function FAQPage() {
     <main className="luxe-light-page min-h-[100dvh] overflow-x-hidden px-4 py-5 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-6xl">
         <div className="mb-5 flex items-center justify-between gap-3">
-          <Button asChild variant="outline" className="rounded-full border-[#C2A574]/28 bg-white/74 text-[#3A2B24]">
+          <Button asChild variant="outline" className="rounded-full border-[#E83262]/28 bg-white/74 text-[#26364A]">
             <Link href="/matrimony/discovery">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Link>
           </Button>
-          <Badge className="hidden border border-[#C2A574]/24 bg-white/72 px-3 py-1.5 text-[#3A2B24] sm:inline-flex">
+          <Badge className="hidden border border-[#E83262]/24 bg-white/72 px-3 py-1.5 text-[#26364A] sm:inline-flex">
             Lovesathi help
           </Badge>
         </div>
 
-        <section className="luxe-card relative overflow-hidden rounded-[2rem] border-[#C2A574]/24 p-6 shadow-[0_28px_90px_rgba(24,17,13,0.1)] sm:p-8 lg:p-10">
-          <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#C2A574]/16 blur-3xl" />
+        <section className="luxe-card relative overflow-hidden rounded-[2rem] border-[#E83262]/24 p-6 shadow-[0_28px_90px_rgba(24,17,13,0.1)] sm:p-8 lg:p-10">
+          <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#E83262]/16 blur-3xl" />
           <div className="relative grid gap-8 lg:grid-cols-[0.82fr_1.18fr]">
             <div>
-              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#C2A574] text-[#3A2B24] shadow-[0_18px_42px_rgba(194,165,116,0.2)]">
+              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#E83262] text-white shadow-[0_18px_42px_rgba(194,165,116,0.2)]">
                 <HelpCircle className="h-7 w-7" />
               </div>
-              <p className="luxe-kicker text-[0.68rem] text-[#C2A574]">frequently asked questions</p>
-              <h1 className="mt-3 font-serif text-4xl font-bold leading-[0.95] tracking-[-0.06em] text-[#3A2B24] sm:text-5xl lg:text-6xl">
+              <p className="luxe-kicker text-[0.68rem] text-[#E83262]">frequently asked questions</p>
+              <h1 className="mt-3 font-serif text-4xl font-bold leading-[0.95] tracking-[-0.06em] text-[#26364A] sm:text-5xl lg:text-6xl">
                 Clear answers for serious matrimony.
               </h1>
-              <p className="mt-5 max-w-xl text-base leading-7 text-[#8B7B70]">
+              <p className="mt-5 max-w-xl text-base leading-7 text-[#6F7C8B]">
                 A concise guide to how Lovesathi handles profiles, privacy, discovery, premium access, and safe communication.
               </p>
               <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                <div className="rounded-2xl border border-[#C2A574]/24 bg-white/62 p-4">
-                  <ShieldCheck className="mb-3 h-5 w-5 text-[#C2A574]" />
-                  <p className="text-sm font-bold text-[#3A2B24]">Trust signals are not guarantees.</p>
-                  <p className="mt-1 text-xs leading-5 text-[#8B7B70]">Always verify independently before making family or financial decisions.</p>
+                <div className="rounded-2xl border border-[#E83262]/24 bg-white/62 p-4">
+                  <ShieldCheck className="mb-3 h-5 w-5 text-[#E83262]" />
+                  <p className="text-sm font-bold text-[#26364A]">Trust signals are not guarantees.</p>
+                  <p className="mt-1 text-xs leading-5 text-[#6F7C8B]">Always verify independently before making family or financial decisions.</p>
                 </div>
-                <div className="rounded-2xl border border-[#C2A574]/24 bg-white/62 p-4">
-                  <Sparkles className="mb-3 h-5 w-5 text-[#C2A574]" />
-                  <p className="text-sm font-bold text-[#3A2B24]">Premium access is plan-based.</p>
-                  <p className="mt-1 text-xs leading-5 text-[#8B7B70]">Each tier controls contact reveals, chat access, shortlist capacity, and concierge support.</p>
+                <div className="rounded-2xl border border-[#E83262]/24 bg-white/62 p-4">
+                  <Sparkles className="mb-3 h-5 w-5 text-[#E83262]" />
+                  <p className="text-sm font-bold text-[#26364A]">Premium access is plan-based.</p>
+                  <p className="mt-1 text-xs leading-5 text-[#6F7C8B]">Each tier controls contact reveals, chat access, shortlist capacity, and concierge support.</p>
                 </div>
               </div>
             </div>
 
             <div className="space-y-5">
               {faqSections.map((section) => (
-                <div key={section.title} className="rounded-[1.5rem] border border-[#C2A574]/20 bg-white/62 p-4 sm:p-5">
-                  <p className="luxe-kicker mb-2 text-[0.62rem] text-[#C2A574]">{section.title}</p>
+                <div key={section.title} className="rounded-[1.5rem] border border-[#E83262]/20 bg-white/62 p-4 sm:p-5">
+                  <p className="luxe-kicker mb-2 text-[0.62rem] text-[#E83262]">{section.title}</p>
                   <Accordion type="single" collapsible className="w-full">
                     {section.questions.map((item, index) => (
                       <AccordionItem key={item.question} value={`${section.title}-${index}`} className="border-[#482b1a]/10">
-                        <AccordionTrigger className="text-left font-bold text-[#3A2B24] hover:text-[#C2A574]">
+                        <AccordionTrigger className="text-left font-bold text-[#26364A] hover:text-[#E83262]">
                           {item.question}
                         </AccordionTrigger>
-                        <AccordionContent className="text-sm leading-6 text-[#8B7B70]">
+                        <AccordionContent className="text-sm leading-6 text-[#6F7C8B]">
                           {item.answer}
                         </AccordionContent>
                       </AccordionItem>
@@ -159,10 +159,10 @@ export default function FAQPage() {
           </div>
         </section>
 
-        <section className="mt-5 grid gap-4 rounded-[1.75rem] border border-[#C2A574]/20 bg-white/58 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+        <section className="mt-5 grid gap-4 rounded-[1.75rem] border border-[#E83262]/20 bg-white/58 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
           <div>
-            <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#3A2B24]">Still need help?</p>
-            <p className="mt-1 text-sm leading-6 text-[#8B7B70]">Contact support if your account, profile, verification, or subscription needs a manual review.</p>
+            <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#26364A]">Still need help?</p>
+            <p className="mt-1 text-sm leading-6 text-[#6F7C8B]">Contact support if your account, profile, verification, or subscription needs a manual review.</p>
           </div>
           <Button asChild className="luxe-button rounded-full">
             <Link href="/contact">

@@ -7,7 +7,26 @@ import { Button } from "@/components/ui/button"
 import { AppLayout } from "@/components/layout/app-layout"
 import { QuickActions } from "@/components/navigation/quick-actions"
 // Removed TopBackButton usage
-import { Filter, ArrowLeft, Heart, ShieldCheck, Sparkles, Crown } from "lucide-react"
+import {
+  Filter,
+  ArrowLeft,
+  Heart,
+  ShieldCheck,
+  Sparkles,
+  Crown,
+  MessageCircle,
+  Star,
+  X,
+  Send,
+  Briefcase,
+  GraduationCap,
+  ImageIcon,
+  BadgeCheck,
+  IndianRupee,
+  Search,
+  SlidersHorizontal,
+  Users,
+} from "lucide-react"
 import { MatrimonySwipeCard } from "@/components/matrimony/matrimony-swipe-card"
 import { MatrimonyChatList } from "@/components/matrimony/matrimony-chat-list"
 import { ChatScreen } from "@/components/chat/chat-screen"
@@ -15,6 +34,7 @@ import { MatrimonyFilterSheet } from "@/components/matrimony/matrimony-filter-sh
 import { StaticBackground } from "@/components/discovery/static-background"
 import { BackFloatingButton } from "@/components/navigation/back-floating-button"
 import { SettingsScreen } from "@/components/settings/settings-screen"
+import { MatrimonyInfoScreen, type MatrimonyInfoScreenId } from "@/components/settings/matrimony-info-screen"
 import { ActivityScreen } from "@/components/activity/activity-screen"
 import { AppSettings } from "@/components/settings/app-settings"
 import { PremiumScreen } from "@/components/premium/premium-screen"
@@ -62,6 +82,348 @@ interface MatrimonyMainProps {
     | "app-settings"
     | "shortlist"
     | "view-profile"
+    | "partner-preferences"
+    | "astrology"
+    | "phonebook"
+    | "safety-centre"
+    | "help-support"
+    | "success-stories"
+}
+
+function MatrimonyListProfileCard({
+  profile,
+  viewerIsPremium,
+  isShortlisted,
+  onOpen,
+  onInterest,
+  onIgnore,
+  onShortlist,
+  onChat,
+  onUpgrade,
+}: {
+  profile: MatrimonyProfile
+  viewerIsPremium: boolean
+  isShortlisted: boolean
+  onOpen: () => void
+  onInterest: () => void
+  onIgnore: () => void
+  onShortlist: () => void
+  onChat: () => void
+  onUpgrade: () => void
+}) {
+  const primaryPhoto = profile.photos?.[0]
+  const isPremiumLocked = Boolean(profile.premium && !viewerIsPremium)
+  const profileCity = profile.location?.split(",")?.[0]?.trim() || profile.location
+  const salary = (profile as MatrimonyProfile & { income?: string }).income || "Rs. 3 - 4 Lakh p.a"
+  const education = profile.education || "Education shared"
+  const maritalStatus = (profile as MatrimonyProfile & { maritalStatus?: string }).maritalStatus || "Never Married"
+  const compatibilityLabel = profile.verified ? "Most Compatible" : profile.premium ? "Top Profile" : null
+
+  const handleOpen = () => {
+    if (isPremiumLocked) {
+      onUpgrade()
+      return
+    }
+    onOpen()
+  }
+
+  return (
+    <article className="overflow-hidden rounded-[1.25rem] border border-[#E7EAF0] bg-white shadow-[0_10px_30px_rgba(30,43,58,0.06)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(30,43,58,0.10)]">
+      <div className="grid min-h-[13.5rem] grid-cols-[8.7rem_1fr] sm:grid-cols-[12.5rem_1fr]">
+        <button
+          type="button"
+          onClick={handleOpen}
+          className="relative min-h-full overflow-hidden bg-[#F1F3F8] text-left"
+          aria-label={`Open ${profile.name}'s profile`}
+        >
+          {primaryPhoto ? (
+            <img
+              src={primaryPhoto}
+              alt={profile.name}
+              className={`h-full min-h-[13.5rem] w-full object-cover ${isPremiumLocked ? "blur-[10px] scale-105 opacity-80" : ""}`}
+            />
+          ) : (
+            <div className="flex h-full min-h-[13.5rem] w-full items-center justify-center bg-[#EEF1F6]">
+              <ImageIcon className="h-9 w-9 text-[#9AA5B2]" />
+            </div>
+          )}
+          <div className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/58 px-2 py-1 text-xs font-bold text-white backdrop-blur">
+            <ImageIcon className="h-3.5 w-3.5" />
+            {Math.max(profile.photos?.length || 1, 1)}
+          </div>
+          {isPremiumLocked && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/18">
+              <span className="rounded-full bg-[#E83262] px-3 py-1 text-xs font-bold text-white shadow-lg">Premium</span>
+            </div>
+          )}
+        </button>
+
+        <div className="flex min-w-0 flex-col">
+          <button type="button" onClick={handleOpen} className="flex-1 p-4 text-left sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-[#657386]">{profile.demo ? "Active Today" : "Active Yesterday"}</p>
+                <div className="mt-1 flex min-w-0 items-center gap-2">
+                  <h3 className="truncate text-2xl font-extrabold tracking-[-0.03em] text-[#26364A] sm:text-3xl">
+                    {formatPublicProfileName(profile.name)}, {profile.age}
+                  </h3>
+                  {profile.verified && <BadgeCheck className="h-5 w-5 shrink-0 fill-[#45A7E8] text-white" />}
+                </div>
+              </div>
+              {compatibilityLabel && (
+                <span className="hidden rounded-l-full bg-[#FFF0F5] px-3 py-1 text-xs font-bold text-[#E83262] sm:inline-flex">
+                  {compatibilityLabel}
+                </span>
+              )}
+            </div>
+
+            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.95rem] font-semibold text-[#4D5B6C]">
+              <span>{profile.height || "5ft 5in"}</span>
+              <span aria-hidden="true">&middot;</span>
+              <span>{profileCity}</span>
+              {profile.community && (
+                <>
+                  <span aria-hidden="true">&middot;</span>
+                  <span>{profile.community}</span>
+                </>
+              )}
+            </div>
+
+            <div className="mt-2 grid gap-x-4 gap-y-1.5 text-sm font-semibold text-[#697789] sm:grid-cols-2">
+              <span className="inline-flex min-w-0 items-center gap-1.5">
+                <Briefcase className="h-4 w-4 shrink-0 text-[#9AA5B2]" />
+                <span className="truncate">{profile.profession}</span>
+              </span>
+              <span className="inline-flex min-w-0 items-center gap-1.5">
+                <IndianRupee className="h-4 w-4 shrink-0 text-[#9AA5B2]" />
+                <span className="truncate">{salary}</span>
+              </span>
+              <span className="inline-flex min-w-0 items-center gap-1.5">
+                <GraduationCap className="h-4 w-4 shrink-0 text-[#9AA5B2]" />
+                <span className="truncate">{education}</span>
+              </span>
+              <span className="inline-flex min-w-0 items-center gap-1.5">
+                <Heart className="h-4 w-4 shrink-0 text-[#9AA5B2]" />
+                <span className="truncate">{maritalStatus}</span>
+              </span>
+            </div>
+
+            {profile.bio && (
+              <p className="mt-3 line-clamp-2 text-sm font-medium leading-6 text-[#657386]">{profile.bio}</p>
+            )}
+          </button>
+
+          <div className="grid grid-cols-4 border-t border-[#F3D8E1] bg-[#FFF3F7] text-[#D72C5B]">
+            <button type="button" onClick={onInterest} className="flex items-center justify-center gap-1.5 px-2 py-4 text-sm font-bold hover:bg-white/70">
+              <Send className="h-4 w-4" />
+              <span className="hidden sm:inline">Interest</span>
+            </button>
+            <button type="button" onClick={onShortlist} className="flex items-center justify-center gap-1.5 px-2 py-4 text-sm font-bold hover:bg-white/70">
+              <Star className="h-4 w-4" fill={isShortlisted ? "currentColor" : "none"} />
+              <span className="hidden sm:inline">Shortlist</span>
+            </button>
+            <button type="button" onClick={onIgnore} className="flex items-center justify-center gap-1.5 px-2 py-4 text-sm font-bold hover:bg-white/70">
+              <X className="h-4 w-4" />
+              <span className="hidden sm:inline">Ignore</span>
+            </button>
+            <button type="button" onClick={onChat} className="flex items-center justify-center gap-1.5 px-2 py-4 text-sm font-bold hover:bg-white/70">
+              <MessageCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Chat</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function MatrimonyDiscoveryList({
+  loading,
+  profiles,
+  viewerIsPremium,
+  shortlistedIds,
+  swipeLimitStatus,
+  appliedFilters,
+  onOpenFilters,
+  onOpenPremium,
+  onClearFilters,
+  onOpenProfile,
+  onInterest,
+  onIgnore,
+  onShortlist,
+  onChat,
+}: {
+  loading: boolean
+  profiles: MatrimonyProfile[]
+  viewerIsPremium: boolean
+  shortlistedIds: Set<string>
+  swipeLimitStatus: UsageLimitStatus | null
+  appliedFilters: FilterState | null
+  onOpenFilters: () => void
+  onOpenPremium: () => void
+  onClearFilters: () => void
+  onOpenProfile: (profile: MatrimonyProfile) => void
+  onInterest: (profile: MatrimonyProfile) => void
+  onIgnore: (profile: MatrimonyProfile) => void
+  onShortlist: (profile: MatrimonyProfile) => void
+  onChat: (profile: MatrimonyProfile) => void
+}) {
+  const [searchQuery, setSearchQuery] = useState("")
+  const visibleProfiles = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return profiles
+    return profiles.filter((profile) => {
+      const searchable = [profile.name, profile.location, profile.profession, profile.education, profile.community]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+      return searchable.includes(query)
+    })
+  }, [profiles, searchQuery])
+  const hasFilters = Boolean(
+    appliedFilters &&
+      (appliedFilters.locations.length ||
+        appliedFilters.communities.length ||
+        appliedFilters.educationPrefs.length ||
+        appliedFilters.professionPrefs.length ||
+        appliedFilters.familyTypePrefs.length ||
+        appliedFilters.dietPrefs.length ||
+        appliedFilters.lifestylePrefs.length ||
+        appliedFilters.verifiedOnly ||
+        appliedFilters.premiumOnly),
+  )
+
+  return (
+    <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#F6F7FB] text-[#26364A]">
+      <header className="shrink-0 border-b border-[#E4E7EE] bg-white/95 px-4 pt-[calc(0.85rem+env(safe-area-inset-top))] shadow-[0_12px_30px_rgba(31,44,60,0.06)] backdrop-blur-xl sm:px-6">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 pb-3">
+          <div className="min-w-0">
+            <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.22em] text-[#E83262]">Lovesathi Matches</p>
+            <h1 className="truncate text-2xl font-black tracking-[-0.04em] text-[#26364A] sm:text-3xl">Search Matches</h1>
+            <p className="hidden text-sm font-semibold text-[#6F7C8B] sm:block">
+              {profiles.length} curated profiles prepared for serious introductions.
+            </p>
+          </div>
+          <Button
+            type="button"
+            onClick={onOpenPremium}
+            className="hidden rounded-xl bg-[#E83262] px-5 font-black text-white shadow-[0_14px_30px_rgba(232,50,98,0.22)] hover:bg-[#C3264E] sm:inline-flex"
+          >
+            Upgrade Membership
+          </Button>
+        </div>
+
+        <div className="mx-auto flex w-full max-w-6xl gap-2 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <button
+            type="button"
+            onClick={onOpenFilters}
+            className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#E83262]/35 bg-white px-4 py-2 text-sm font-bold text-[#26364A] shadow-sm"
+          >
+            <SlidersHorizontal className="h-4 w-4 text-[#E83262]" />
+            Filters
+            {hasFilters && <span className="h-2 w-2 rounded-full bg-[#E83262]" />}
+          </button>
+          {["Nearby", "With Photos", "Self Profiles"].map((chip) => (
+            <button
+              key={chip}
+              type="button"
+              onClick={chip === "Nearby" ? onOpenFilters : undefined}
+              className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#D9DFE8] bg-white px-4 py-2 text-sm font-bold text-[#526173] shadow-sm"
+            >
+              {chip}
+              {chip !== "Self Profiles" && <X className="h-3.5 w-3.5 text-[#E83262]" />}
+            </button>
+          ))}
+          {hasFilters && (
+            <button type="button" onClick={onClearFilters} className="shrink-0 rounded-full px-4 py-2 text-sm font-black text-[#E83262]">
+              Reset
+            </button>
+          )}
+        </div>
+      </header>
+
+      <main className="min-h-0 flex-1 overflow-y-auto px-4 py-4 pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:px-6">
+        <div className="mx-auto grid w-full max-w-6xl gap-4 lg:grid-cols-[1fr_18rem]">
+          <section className="min-w-0 space-y-4">
+            <div className="rounded-[1.25rem] border border-[#E7EAF0] bg-white p-3 shadow-[0_10px_28px_rgba(31,44,60,0.05)]">
+              <div className="flex items-center gap-3 rounded-xl border border-[#E4E7EE] bg-[#F8FAFC] px-3 py-2.5">
+                <Search className="h-5 w-5 text-[#8B96A5]" />
+                <input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search by name, city, caste, education, or profession"
+                  className="h-8 min-w-0 flex-1 border-0 bg-transparent text-sm font-semibold text-[#26364A] outline-none placeholder:text-[#98A3B3]"
+                />
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="rounded-[1.25rem] border border-[#E7EAF0] bg-white p-10 text-center shadow-[0_10px_30px_rgba(31,44,60,0.06)]">
+                <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#F7C6D3] border-t-[#E83262]" />
+                <p className="mt-4 text-sm font-bold text-[#526173]">Preparing matching profiles...</p>
+              </div>
+            ) : visibleProfiles.length > 0 ? (
+              visibleProfiles.map((profile) => (
+                <MatrimonyListProfileCard
+                  key={profile.id}
+                  profile={profile}
+                  viewerIsPremium={viewerIsPremium}
+                  isShortlisted={shortlistedIds.has(profile.id)}
+                  onOpen={() => onOpenProfile(profile)}
+                  onInterest={() => onInterest(profile)}
+                  onIgnore={() => onIgnore(profile)}
+                  onShortlist={() => onShortlist(profile)}
+                  onChat={() => onChat(profile)}
+                  onUpgrade={onOpenPremium}
+                />
+              ))
+            ) : (
+              <div className="rounded-[1.25rem] border border-[#E7EAF0] bg-white p-10 text-center shadow-[0_10px_30px_rgba(31,44,60,0.06)]">
+                <Users className="mx-auto h-10 w-10 text-[#E83262]" />
+                <h2 className="mt-4 text-xl font-black text-[#26364A]">No profiles found</h2>
+                <p className="mx-auto mt-2 max-w-md text-sm font-semibold leading-6 text-[#6F7C8B]">
+                  Try relaxing filters or searching a wider city, education, or community.
+                </p>
+                <Button type="button" onClick={onClearFilters} className="mt-5 rounded-xl bg-[#E83262] px-6 font-black text-white hover:bg-[#C3264E]">
+                  Clear filters
+                </Button>
+              </div>
+            )}
+          </section>
+
+          <aside className="hidden space-y-4 lg:block">
+            <div className="rounded-[1.25rem] border border-[#E7EAF0] bg-white p-5 shadow-[0_10px_30px_rgba(31,44,60,0.06)]">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-[#E83262]">Membership</p>
+              <h2 className="mt-2 text-xl font-black text-[#26364A]">Upgrade to connect faster</h2>
+              <p className="mt-2 text-sm font-semibold leading-6 text-[#6F7C8B]">
+                Unlock contact reveal, premium profiles, super interests, and priority support.
+              </p>
+              <Button type="button" onClick={onOpenPremium} className="mt-4 w-full rounded-xl bg-[#E83262] font-black text-white hover:bg-[#C3264E]">
+                Upgrade Now
+              </Button>
+            </div>
+            <div className="rounded-[1.25rem] border border-[#E7EAF0] bg-white p-5 shadow-[0_10px_30px_rgba(31,44,60,0.06)]">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-[#E83262]">Today</p>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <div className="rounded-xl bg-[#F6F7FB] p-3">
+                  <p className="text-2xl font-black text-[#26364A]">{profiles.length}</p>
+                  <p className="text-xs font-bold text-[#6F7C8B]">Profiles</p>
+                </div>
+                <div className="rounded-xl bg-[#F6F7FB] p-3">
+                  <p className="text-2xl font-black text-[#26364A]">
+                    {swipeLimitStatus?.isPremium ? "Max" : swipeLimitStatus?.remaining ?? 15}
+                  </p>
+                  <p className="text-xs font-bold text-[#6F7C8B]">Free swipes</p>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      <DiscountOfferTimer onSubscribe={onOpenPremium} />
+    </div>
+  )
 }
 
 
@@ -83,6 +445,12 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     | "app-settings"
     | "shortlist"
     | "view-profile"
+    | "partner-preferences"
+    | "astrology"
+    | "phonebook"
+    | "safety-centre"
+    | "help-support"
+    | "success-stories"
   >(initialScreen)
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
   const [viewedUserId, setViewedUserId] = useState<string | null>(null)
@@ -867,6 +1235,108 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     }
   }
 
+  const handleProfileAction = useCallback(
+    async (profile: MatrimonyProfile, preference: "like" | "pass" | "super_like") => {
+      try {
+        if (!currentUserId) {
+          toast({
+            title: "Please sign in",
+            description: "You need to be signed in to interact with profiles.",
+            variant: "destructive",
+          })
+          return false
+        }
+
+        if (preference === "super_like") {
+          if (!viewerIsPremium) {
+            showPremiumUpsell(
+              "Unlock Super Likes",
+              "Super Likes are included with paid plans. Choose a plan to send standout interest.",
+              "discover",
+            )
+            return false
+          }
+
+          const superLikeStatus = await getSuperLikeLimitStatus(currentUserId)
+          if (!superLikeStatus.allowed) {
+            showPremiumUpsell(
+              "Unlock Super Likes",
+              superLikeStatus.error || "Choose a paid plan to send standout interest.",
+              "discover",
+            )
+            return false
+          }
+        } else if (swipeLocked) {
+          showSwipePaywall()
+          return false
+        }
+
+        removeProfileFromDeck(profile.id)
+        if (preference !== "super_like") {
+          consumeSwipeAllowance()
+        }
+
+        const result = await recordMatrimonyLike(currentUserId, profile.id, preference)
+        if (!result.success) {
+          if (result.error?.toLowerCase().includes("swipe limit")) {
+            await refreshSwipeLimitStatus(currentUserId)
+            showSwipePaywall()
+            return false
+          }
+
+          toast({
+            title: preference === "pass" ? "Could not ignore profile" : "Could not send interest",
+            description: result.error || "Please try again.",
+            variant: "destructive",
+          })
+          await refreshSwipeLimitStatus(currentUserId)
+          return false
+        }
+
+        if (preference === "like") {
+          toast({
+            title: "Interest sent",
+            description: `${formatPublicProfileName(profile.name)} will see your interest.`,
+          })
+        }
+
+        if (preference === "super_like") {
+          toast({
+            title: "Super Interest sent",
+            description: `${formatPublicProfileName(profile.name)} will see your profile above regular interests.`,
+          })
+        }
+
+        if (result.isMatch) {
+          setMatchedProfile(profile)
+          setMatchedMatchId(result.matchId || null)
+          setShowMatchNotification(true)
+        }
+
+        void refreshSwipeLimitStatus(currentUserId)
+        return true
+      } catch (error: any) {
+        toast({
+          title: "Could not update profile",
+          description: error.message || "Please try again.",
+          variant: "destructive",
+        })
+        return false
+      }
+    },
+    [
+      consumeSwipeAllowance,
+      currentUserId,
+      refreshSwipeLimitStatus,
+      removeProfileFromDeck,
+      showPremiumUpsell,
+      showSwipePaywall,
+      swipeLocked,
+      toast,
+      viewerIsPremium,
+    ],
+  )
+
   return (
     <AppLayout 
       activeTab="discover" 
@@ -877,22 +1347,70 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       currentScreen={currentScreen}
       mode="matrimony"
     >
-      {/* Floating header elements */}
       {currentScreen === "discover" && (
+        <MatrimonyDiscoveryList
+          loading={loading}
+          profiles={profiles}
+          viewerIsPremium={viewerIsPremium}
+          shortlistedIds={shortlistedIds}
+          swipeLimitStatus={swipeLimitStatus}
+          appliedFilters={appliedFilters}
+          onOpenFilters={() => setShowFilters(true)}
+          onOpenPremium={() => {
+            setSelectedPlanId("essential")
+            setPremiumBackTarget("discover")
+            setCurrentScreen("premium")
+          }}
+          onClearFilters={() => {
+            setAppliedFilters(null)
+            setCurrentCardIndex(0)
+          }}
+          onOpenProfile={(profile) => {
+            if (profile.premium && !viewerIsPremium) {
+              showPremiumUpsell(
+                "Unlock premium profile details",
+                "Premium profiles are visible to free members, but photos and full details unlock with a paid Lovesathi plan.",
+                "discover",
+              )
+              return
+            }
+            setShortlistModalProfile(profile)
+          }}
+          onInterest={(profile) => {
+            void handleProfileAction(profile, "like")
+          }}
+          onIgnore={(profile) => {
+            void handleProfileAction(profile, "pass")
+          }}
+          onShortlist={(profile) => {
+            void handleShortlistToggle(profile)
+          }}
+          onChat={(profile) => {
+            toast({
+              title: "Interest starts the conversation",
+              description: `Send interest to ${formatPublicProfileName(profile.name)} first. Chat opens when the match is accepted.`,
+            })
+            void handleProfileAction(profile, "like")
+          }}
+        />
+      )}
+
+      {/* Legacy swipe discovery kept dormant while the list-first matrimony experience rolls out. */}
+      {false && currentScreen === "discover" && (
         <>
-          <div className="fixed left-4 top-[calc(0.75rem+env(safe-area-inset-top))] z-40 max-w-[70vw] rounded-[1.35rem] border border-[#C2A574]/36 bg-[#ffffff]/78 px-4 py-3 shadow-[0_24px_60px_rgba(24,17,13,0.16)] backdrop-blur-2xl sm:left-6 sm:px-5">
-            <p className="luxe-kicker text-[0.58rem] text-[#C2A574] sm:text-[0.65rem]">Lovesathi private salon</p>
-            <p className="truncate font-serif text-xl font-bold leading-none tracking-[-0.05em] text-[#3A2B24] sm:text-2xl">Curated discovery</p>
-            <p className="mt-1 hidden text-xs font-semibold text-[#8B7B70] sm:block">{profiles.length} profile dossiers prepared</p>
+          <div className="fixed left-4 top-[calc(0.75rem+env(safe-area-inset-top))] z-40 max-w-[70vw] rounded-[1.35rem] border border-[#E83262]/36 bg-[#ffffff]/78 px-4 py-3 shadow-[0_24px_60px_rgba(24,17,13,0.16)] backdrop-blur-2xl sm:left-6 sm:px-5">
+            <p className="luxe-kicker text-[0.58rem] text-[#E83262] sm:text-[0.65rem]">Lovesathi private salon</p>
+            <p className="truncate font-serif text-xl font-bold leading-none tracking-[-0.05em] text-[#26364A] sm:text-2xl">Curated discovery</p>
+            <p className="mt-1 hidden text-xs font-semibold text-[#6F7C8B] sm:block">{profiles.length} profile dossiers prepared</p>
           </div>
           <div className="fixed right-3 top-[calc(0.75rem+env(safe-area-inset-top))] z-40 sm:right-6">
             <Button
               variant="secondary"
               size="default"
-              className="rounded-full border border-[#C2A574]/40 bg-[#ffffff]/86 px-4 py-5 text-[#3A2B24] shadow-[0_24px_60px_rgba(24,17,13,0.16)] backdrop-blur-2xl hover:bg-white sm:px-5"
+              className="rounded-full border border-[#E83262]/40 bg-[#ffffff]/86 px-4 py-5 text-[#26364A] shadow-[0_24px_60px_rgba(24,17,13,0.16)] backdrop-blur-2xl hover:bg-white sm:px-5"
               onClick={() => setShowFilters(true)}
             >
-              <Filter className="h-5 w-5 text-[#C2A574]" />
+              <Filter className="h-5 w-5 text-[#E83262]" />
               <span className="hidden font-bold sm:inline">Refine</span>
             </Button>
           </div>
@@ -906,59 +1424,59 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           {viewerEntitlement?.paymentDue && (
             <button
               type="button"
-              className="fixed left-1/2 top-[calc(5.6rem+env(safe-area-inset-top))] z-40 w-[min(92vw,28rem)] -translate-x-1/2 rounded-full border border-[#C2A574]/35 bg-[#3A2B24]/92 px-4 py-3 text-left shadow-[0_24px_70px_rgba(24,17,13,0.22)] backdrop-blur-2xl sm:top-[calc(5rem+env(safe-area-inset-top))]"
+              className="fixed left-1/2 top-[calc(5.6rem+env(safe-area-inset-top))] z-40 w-[min(92vw,28rem)] -translate-x-1/2 rounded-full border border-[#E83262]/35 bg-[#26364A]/92 px-4 py-3 text-left shadow-[0_24px_70px_rgba(24,17,13,0.22)] backdrop-blur-2xl sm:top-[calc(5rem+env(safe-area-inset-top))]"
               onClick={() => {
                 setPremiumBackTarget("discover")
                 setCurrentScreen("premium")
               }}
             >
-              <span className="block luxe-kicker text-[0.55rem] text-[#C2A574]">subscription renewal due</span>
+              <span className="block luxe-kicker text-[0.55rem] text-[#E83262]">subscription renewal due</span>
               <span className="block text-sm font-bold text-[#fff7df]">
-                {viewerEntitlement.graceDaysRemaining || 0} day{viewerEntitlement.graceDaysRemaining === 1 ? "" : "s"} of grace left. Tap to renew.
+                {viewerEntitlement?.graceDaysRemaining || 0} day{viewerEntitlement?.graceDaysRemaining === 1 ? "" : "s"} of grace left. Tap to renew.
               </span>
             </button>
           )}
         </>
       )}
 
-      {currentScreen === "discover" && (
-        <div className="fixed inset-0 flex h-[100dvh] min-h-[100dvh] w-screen flex-col overflow-hidden bg-[#F7F3EE]">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_14%,rgba(216,199,159,0.34),transparent_25rem),radial-gradient(circle_at_82%_12%,rgba(194,165,116,0.18),transparent_28rem),radial-gradient(circle_at_50%_104%,rgba(185,144,77,0.30),transparent_32rem),linear-gradient(135deg,#F7F3EE_0%,#fbf3e5_46%,#f1d9aa_100%)]" />
+      {false && currentScreen === "discover" && (
+        <div className="fixed inset-0 flex h-[100dvh] min-h-[100dvh] w-screen flex-col overflow-hidden bg-[#F6F7FB]">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_14%,rgba(216,199,159,0.34),transparent_25rem),radial-gradient(circle_at_82%_12%,rgba(194,165,116,0.18),transparent_28rem),radial-gradient(circle_at_50%_104%,rgba(185,144,77,0.30),transparent_32rem),linear-gradient(135deg,#F6F7FB_0%,#fbf3e5_46%,#f1d9aa_100%)]" />
           <div className="pointer-events-none absolute inset-0 opacity-[0.34] [background-image:linear-gradient(rgba(185,144,77,0.14)_1px,transparent_1px),linear-gradient(90deg,rgba(185,144,77,0.10)_1px,transparent_1px)] [background-size:88px_88px] [mask-image:radial-gradient(circle_at_center,black,transparent_76%)]" />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[linear-gradient(to_bottom,rgba(255,253,248,0.96),rgba(255,253,248,0))]" />
-          <div className="pointer-events-none absolute left-1/2 top-20 hidden h-[78vh] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[#C2A574]/30 to-transparent lg:block" />
-          <div className="pointer-events-none absolute bottom-[-9rem] left-1/2 h-72 w-[52rem] -translate-x-1/2 rounded-full bg-[#C2A574]/20 blur-3xl" />
+          <div className="pointer-events-none absolute left-1/2 top-20 hidden h-[78vh] w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[#E83262]/30 to-transparent lg:block" />
+          <div className="pointer-events-none absolute bottom-[-9rem] left-1/2 h-72 w-[52rem] -translate-x-1/2 rounded-full bg-[#E83262]/20 blur-3xl" />
           
           <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center overflow-hidden px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(7.5rem+env(safe-area-inset-top))] sm:px-6 sm:pb-[calc(6.25rem+env(safe-area-inset-bottom))] lg:px-10 lg:pt-28">
             {loading ? (
               <div className="flex items-center justify-center h-full w-full">
-                <div className="luxe-card rounded-[2rem] border-[#C2A574]/30 p-8 text-center shadow-[0_28px_90px_rgba(24,17,13,0.14)]">
-                  <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#C2A574] border-t-[#C2A574]" />
-                  <p className="mt-4 luxe-kicker text-[0.62rem] text-[#C2A574]">private curation</p>
-                  <p className="mt-2 text-sm font-bold text-[#3A2B24]">Preparing premium profile dossiers...</p>
+                <div className="luxe-card rounded-[2rem] border-[#E83262]/30 p-8 text-center shadow-[0_28px_90px_rgba(24,17,13,0.14)]">
+                  <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#E83262] border-t-[#E83262]" />
+                  <p className="mt-4 luxe-kicker text-[0.62rem] text-[#E83262]">private curation</p>
+                  <p className="mt-2 text-sm font-bold text-[#26364A]">Preparing premium profile dossiers...</p>
                 </div>
               </div>
             ) : (
               <div className="grid w-full max-w-[1240px] items-center gap-5 lg:grid-cols-[minmax(230px,0.78fr)_minmax(420px,500px)_minmax(230px,0.78fr)] xl:gap-8">
                 <aside className="hidden lg:block">
-                  <div className="luxe-card space-y-5 rounded-[2rem] border-[#C2A574]/28 p-6 shadow-[0_30px_90px_rgba(24,17,13,0.12)]">
+                  <div className="luxe-card space-y-5 rounded-[2rem] border-[#E83262]/28 p-6 shadow-[0_30px_90px_rgba(24,17,13,0.12)]">
                     <div>
-                      <p className="luxe-kicker text-[0.62rem] text-[#C2A574]">today's salon</p>
-                      <h2 className="mt-2 font-serif text-4xl font-bold leading-[0.95] tracking-[-0.07em] text-[#3A2B24]">
+                      <p className="luxe-kicker text-[0.62rem] text-[#E83262]">today's salon</p>
+                      <h2 className="mt-2 font-serif text-4xl font-bold leading-[0.95] tracking-[-0.07em] text-[#26364A]">
                         Serious introductions, beautifully curated.
                       </h2>
                     </div>
-                    <p className="text-sm font-semibold leading-6 text-[#8B7B70]">
+                    <p className="text-sm font-semibold leading-6 text-[#6F7C8B]">
                       Every card should feel like a private profile dossier, not a casual swipe tile.
                     </p>
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="rounded-2xl border border-[#C2A574]/24 bg-white/62 p-4">
-                        <p className="font-serif text-3xl font-bold tracking-[-0.06em] text-[#C2A574]">{profiles.length}</p>
-                        <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#8B7B70]">profiles</p>
+                      <div className="rounded-2xl border border-[#E83262]/24 bg-white/62 p-4">
+                        <p className="font-serif text-3xl font-bold tracking-[-0.06em] text-[#E83262]">{profiles.length}</p>
+                        <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#6F7C8B]">profiles</p>
                       </div>
-                      <div className="rounded-2xl border border-[#C2A574]/24 bg-white/62 p-4">
-                        <ShieldCheck className="h-6 w-6 text-[#C2A574]" />
-                        <p className="mt-3 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#8B7B70]">trust first</p>
+                      <div className="rounded-2xl border border-[#E83262]/24 bg-white/62 p-4">
+                        <ShieldCheck className="h-6 w-6 text-[#E83262]" />
+                        <p className="mt-3 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#6F7C8B]">trust first</p>
                       </div>
                     </div>
                   </div>
@@ -967,8 +1485,8 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                 {/* Card Stack */}
                 <div className="relative mx-auto flex h-[min(64svh,610px)] w-full max-w-[min(92vw,470px)] items-center justify-center overflow-visible md:h-[min(72dvh,680px)]">
                   <div className="pointer-events-none absolute -inset-8 rounded-[3rem] bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.78),rgba(216,199,159,0.22)_42%,transparent_70%)] blur-xl" />
-                  <div className="pointer-events-none absolute -bottom-8 h-20 w-[82%] rounded-full bg-[#3A2B24]/20 blur-2xl" />
-                  <div className="pointer-events-none absolute inset-x-7 -bottom-4 h-5 rounded-full bg-[#8B7B70]/18 blur-md" />
+                  <div className="pointer-events-none absolute -bottom-8 h-20 w-[82%] rounded-full bg-[#26364A]/20 blur-2xl" />
+                  <div className="pointer-events-none absolute inset-x-7 -bottom-4 h-5 rounded-full bg-[#6F7C8B]/18 blur-md" />
                   {hasMoreProfiles && profiles.length > 0 ? (
                     <div className="relative w-full h-full overflow-visible">
                       {visibleProfileStack.map(({ profile, key }, index) => (
@@ -1033,14 +1551,14 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                         ))}
                     </div>
                   ) : (
-                    <Card className="luxe-card flex h-96 w-full max-w-sm items-center justify-center rounded-[2rem] border-[#C2A574]/30 shadow-[0_28px_90px_rgba(24,17,13,0.12)]">
+                    <Card className="luxe-card flex h-96 w-full max-w-sm items-center justify-center rounded-[2rem] border-[#E83262]/30 shadow-[0_28px_90px_rgba(24,17,13,0.12)]">
                       <CardContent className="text-center space-y-4">
-                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#C2A574]/10">
-                          <Heart className="h-8 w-8 text-[#C2A574]" />
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#E83262]/10">
+                          <Heart className="h-8 w-8 text-[#E83262]" />
                         </div>
                         <div className="space-y-2">
-                          <h3 className="font-serif text-2xl font-bold text-[#3A2B24]">No more profiles</h3>
-                          <p className="text-sm leading-6 text-[#8B7B70]">
+                          <h3 className="font-serif text-2xl font-bold text-[#26364A]">No more profiles</h3>
+                          <p className="text-sm leading-6 text-[#6F7C8B]">
                             {profiles.length === 0
                               ? "No matching completed profiles are available right now. Try relaxing filters, checking your preferences, or coming back after more members complete verification."
                               : "You have reviewed this set. New completed profiles will appear here as members join."}
@@ -1070,18 +1588,18 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
                 <aside className="hidden lg:block">
                   <div className="space-y-4">
-                    <div className="rounded-[1.75rem] border border-[#C2A574]/28 bg-[#ffffff]/76 p-5 shadow-[0_24px_70px_rgba(24,17,13,0.10)] backdrop-blur-2xl">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#C2A574] text-[#3A2B24] shadow-[0_18px_42px_rgba(194,165,116,0.22)]">
+                    <div className="rounded-[1.75rem] border border-[#E83262]/28 bg-[#ffffff]/76 p-5 shadow-[0_24px_70px_rgba(24,17,13,0.10)] backdrop-blur-2xl">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#E83262] text-white shadow-[0_18px_42px_rgba(194,165,116,0.22)]">
                         <Sparkles className="h-5 w-5" />
                       </div>
-                      <h3 className="mt-4 font-serif text-2xl font-bold tracking-[-0.05em] text-[#3A2B24]">Refined discovery</h3>
-                      <p className="mt-2 text-sm font-semibold leading-6 text-[#8B7B70]">
+                      <h3 className="mt-4 font-serif text-2xl font-bold tracking-[-0.05em] text-[#26364A]">Refined discovery</h3>
+                      <p className="mt-2 text-sm font-semibold leading-6 text-[#6F7C8B]">
                         Tune age, height, location, family context, lifestyle, and verified-only visibility.
                       </p>
                     </div>
-                    <div className="rounded-[1.75rem] border border-[#C2A574]/28 bg-[#3A2B24]/88 p-5 text-[#ffffff] shadow-[0_28px_90px_rgba(24,17,13,0.18)] backdrop-blur-2xl">
-                      <Crown className="h-6 w-6 text-[#C2A574]" />
-                      <p className="mt-4 luxe-kicker text-[0.58rem] text-[#C2A574]">premium signal</p>
+                    <div className="rounded-[1.75rem] border border-[#E83262]/28 bg-[#26364A]/88 p-5 text-[#ffffff] shadow-[0_28px_90px_rgba(24,17,13,0.18)] backdrop-blur-2xl">
+                      <Crown className="h-6 w-6 text-[#E83262]" />
+                      <p className="mt-4 luxe-kicker text-[0.58rem] text-[#E83262]">premium signal</p>
                       <p className="mt-2 text-sm font-semibold leading-6 text-[#ffffff]/78">
                         Verified filters reopen after the free allowance when a paid membership is active.
                       </p>
@@ -1092,7 +1610,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             )}
           </div>
           {hasMoreProfiles && profiles.length > 0 && (
-            <div className="pointer-events-none fixed bottom-[calc(5.35rem+env(safe-area-inset-bottom))] left-1/2 z-30 hidden -translate-x-1/2 rounded-full border border-[#C2A574]/24 bg-[#ffffff]/70 px-4 py-2 text-xs font-bold text-[#8B7B70] shadow-[0_18px_48px_rgba(24,17,13,0.12)] backdrop-blur-xl sm:block">
+            <div className="pointer-events-none fixed bottom-[calc(5.35rem+env(safe-area-inset-bottom))] left-1/2 z-30 hidden -translate-x-1/2 rounded-full border border-[#E83262]/24 bg-[#ffffff]/70 px-4 py-2 text-xs font-bold text-[#6F7C8B] shadow-[0_18px_48px_rgba(24,17,13,0.12)] backdrop-blur-xl sm:block">
               Swipe with intention. Tap the card for the full dossier.
             </div>
           )}
@@ -1100,7 +1618,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {currentScreen === "messages" && (
-        <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#F7F3EE]">
+        <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#F6F7FB]">
           <MatrimonyChatList onChatClick={(chatId) => {
             setSelectedChatId(chatId)
             setCurrentScreen("chat")
@@ -1109,7 +1627,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {currentScreen === "activity" && (
-        <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#F7F3EE]">
+        <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#F6F7FB]">
           <ActivityScreen
             mode="matrimony"
             onProfileClick={(userId) => {
@@ -1133,7 +1651,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {currentScreen === "shortlist" && (
-        <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#F7F3EE]">
+        <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#F6F7FB]">
           <div className="flex flex-col h-full relative">
             {/* Static Background */}
             <StaticBackground />
@@ -1151,8 +1669,8 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                     <ArrowLeft className="w-5 h-5" />
                   </Button>
                   <div>
-                    <p className="luxe-kicker text-[0.62rem] text-[#C2A574]">saved profiles</p>
-                    <h1 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#3A2B24]">Shortlist</h1>
+                    <p className="luxe-kicker text-[0.62rem] text-[#E83262]">saved profiles</p>
+                    <h1 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#26364A]">Shortlist</h1>
                   </div>
                 </div>
               </div>
@@ -1203,8 +1721,13 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             }
             else if (id === "verification") setCurrentScreen("verification-status")
             else if (id === "app_settings") setCurrentScreen("app-settings")
+            else if (id === "partner_preferences") setCurrentScreen("partner-preferences")
+            else if (id === "astrology") setCurrentScreen("astrology")
+            else if (id === "phonebook") setCurrentScreen("phonebook")
+            else if (id === "help_safety") setCurrentScreen("safety-centre")
+            else if (id === "help_support") setCurrentScreen("help-support")
+            else if (id === "success_stories") setCurrentScreen("success-stories")
             else if (id === "help_faq") router.push("/faq")
-            else if (id === "help_safety") router.push("/safety")
             else if (id === "help_contact") router.push("/contact")
             else if (id === "help_report_bug") router.push("/contact")
           }}
@@ -1260,6 +1783,13 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         <div className="p-0 pb-0 mt-0">
           <VerificationStatus mode="matrimony" onBack={() => setCurrentScreen("profile")} />
         </div>
+      )}
+
+      {(["partner-preferences", "astrology", "phonebook", "safety-centre", "help-support", "success-stories"] as const).includes(currentScreen as MatrimonyInfoScreenId) && (
+        <MatrimonyInfoScreen
+          screen={currentScreen as MatrimonyInfoScreenId}
+          onBack={() => setCurrentScreen("profile")}
+        />
       )}
 
       {currentScreen === "view-profile" && viewedUserId && (
@@ -1349,6 +1879,10 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             void handleShortlistConnect(shortlistModalProfile)
             setShortlistModalProfile(null)
           }}
+          onSuperLike={() => {
+            void handleProfileAction(shortlistModalProfile, "super_like")
+            setShortlistModalProfile(null)
+          }}
           onNotNow={() => {
             void handleShortlistRemove(shortlistModalProfile.id, shortlistModalProfile.name)
             setShortlistModalProfile(null)
@@ -1379,7 +1913,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       
-      {currentScreen !== "chat" && currentScreen !== "app-settings" && currentScreen !== "premium" && currentScreen !== "payment" && currentScreen !== "premium-features" && currentScreen !== "verification-status" && currentScreen !== "edit-profile" && currentScreen !== "view-profile" && (
+      {currentScreen !== "chat" && currentScreen !== "app-settings" && currentScreen !== "premium" && currentScreen !== "payment" && currentScreen !== "premium-features" && currentScreen !== "verification-status" && currentScreen !== "edit-profile" && currentScreen !== "view-profile" && currentScreen !== "partner-preferences" && currentScreen !== "astrology" && currentScreen !== "phonebook" && currentScreen !== "safety-centre" && currentScreen !== "help-support" && currentScreen !== "success-stories" && (
         <QuickActions
           activeTab={currentScreen}
           onOpenChat={() => setCurrentScreen("messages")}

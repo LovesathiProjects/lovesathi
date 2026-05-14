@@ -61,3 +61,15 @@ supabase secrets set --project-ref bysvtucftcclrdyfihsx SEND_SMS_HOOK_SECRET="PA
 Do not verify OTPs through MSG91. Verification remains inside Supabase so Lovesathi can trust the Supabase database and Auth user state.
 
 The `send-sms` Auth Hook remains deployed for compatibility, but Lovesathi's phone verification screen uses `phone-otp` directly. This avoids Supabase's `phone_change` Auth Hook payload issue for newly created email-first accounts.
+
+## Delivery Debugging
+
+Each phone OTP request now stores MSG91 delivery diagnostics in `phone_verifications`:
+
+- `otp_provider`
+- `otp_provider_request_id`
+- `otp_provider_status`
+- `otp_provider_response`
+- `otp_provider_updated_at`
+
+If the app says "code sent" but the user does not receive the SMS, check the latest row for that user and compare `otp_provider_request_id` with MSG91 OTP logs. If the request is accepted by MSG91 but not delivered, the issue is on the MSG91/template/DLT/carrier delivery side, not the Lovesathi verification UI.

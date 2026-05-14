@@ -54,7 +54,7 @@ export function QuickActions({
       )}
     >
       <div className={cn(
-        "flex w-full items-center justify-between gap-1 rounded-[2rem] border border-[#C2A574]/34 bg-[#ffffff]/90 px-3 py-2.5 shadow-[0_22px_70px_rgba(24,17,13,0.2)] ring-1 ring-white/60 backdrop-blur-2xl sm:gap-4 sm:px-8 sm:py-3",
+        "flex w-full items-center justify-between gap-1 rounded-[2rem] border border-[#E83262]/34 bg-[#ffffff]/90 px-3 py-2.5 shadow-[0_22px_70px_rgba(24,17,13,0.2)] ring-1 ring-white/60 backdrop-blur-2xl sm:gap-4 sm:px-8 sm:py-3",
       )}>
         {tabs.map((tab) => {
           const Icon = tab.icon
@@ -66,7 +66,7 @@ export function QuickActions({
               onClick={tab.onClick}
               className={cn(
                 "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-150 ease-in-out sm:h-11 sm:w-11",
-                isActive ? "bg-[#C2A574] shadow-[0_14px_34px_rgba(194,165,116,0.28)]" : "cursor-pointer hover:bg-[#C2A574]/8"
+                isActive ? "bg-[#E83262] shadow-[0_14px_34px_rgba(194,165,116,0.28)]" : "cursor-pointer hover:bg-[#E83262]/8"
               )}
             >
               <div className={cn(
@@ -77,12 +77,12 @@ export function QuickActions({
                   className={cn(
                     "w-5 h-5 transition-all duration-150 ease-in-out"
                   )} 
-                  stroke={isActive ? "#ffffff" : "#8B7B70"}
+                  stroke={isActive ? "#ffffff" : "#6F7C8B"}
                   strokeWidth={isActive ? 2.5 : 2}
                   fill="none"
                   style={{
-                    color: isActive ? '#ffffff' : '#8B7B70',
-                    stroke: isActive ? '#ffffff' : '#8B7B70',
+                    color: isActive ? '#ffffff' : '#6F7C8B',
+                    stroke: isActive ? '#ffffff' : '#6F7C8B',
                     fill: 'none',
                     opacity: isActive ? 1 : 0.9
                   }}
@@ -90,7 +90,7 @@ export function QuickActions({
                 {/* Unread message badge for messages icon */}
                 {tab.id === "messages" && unreadCount > 0 && (
                   <div className={cn(
-                    "absolute -top-1 -right-1 min-w-[20px] h-[20px] flex items-center justify-center px-1 rounded-full bg-[#C2A574] backdrop-blur-md border text-[#3A2B24] text-xs font-bold shadow-md z-10",
+                    "absolute -top-1 -right-1 min-w-[20px] h-[20px] flex items-center justify-center px-1 rounded-full bg-[#E83262] backdrop-blur-md border text-white text-xs font-bold shadow-md z-10",
                     "border-white"
                   )} style={{ color: '#FFFFFF' }}>
                     {unreadCount > 99 ? '99+' : unreadCount}
@@ -99,7 +99,7 @@ export function QuickActions({
                 {/* Unread activity badge for activity icon */}
                 {tab.id === "activity" && activityUnreadCount > 0 && (
                   <div className={cn(
-                    "absolute -top-1 -right-1 min-w-[20px] h-[20px] flex items-center justify-center px-1 rounded-full bg-[#C2A574] backdrop-blur-md border text-[#3A2B24] text-xs font-bold shadow-md z-10",
+                    "absolute -top-1 -right-1 min-w-[20px] h-[20px] flex items-center justify-center px-1 rounded-full bg-[#E83262] backdrop-blur-md border text-white text-xs font-bold shadow-md z-10",
                     "border-white"
                   )} style={{ color: '#FFFFFF' }}>
                     {activityUnreadCount > 99 ? '99+' : activityUnreadCount}

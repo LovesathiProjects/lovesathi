@@ -139,7 +139,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                   e.stopPropagation()
                   onSuperLike()
                 }}
-                className="absolute left-4 top-4 z-20 flex h-[3.35rem] w-[3.35rem] items-center justify-center rounded-[1.35rem] border border-white/22 bg-[linear-gradient(145deg,#080706,#18122a_48%,#050505)] p-[3px] shadow-[0_18px_46px_rgba(0,0,0,0.36),0_0_30px_rgba(100,78,255,0.22),inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-xl transition hover:scale-105 hover:border-[#C2A574]/60"
+                className="absolute left-4 top-4 z-20 flex h-[3.35rem] w-[3.35rem] items-center justify-center rounded-[1.35rem] border border-white/22 bg-[linear-gradient(145deg,#080706,#18122a_48%,#050505)] p-[3px] shadow-[0_18px_46px_rgba(0,0,0,0.36),0_0_30px_rgba(100,78,255,0.22),inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-xl transition hover:scale-105 hover:border-[#E83262]/60"
               >
                 <img
                   src={SUPER_LIKE_ICON_SRC}
@@ -195,7 +195,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                 </Badge>
               )}
               {profile.premium && (
-                <Badge className="bg-[#C2A574] text-[#3A2B24] text-xs px-3 py-1.5 font-medium shadow-lg">
+                <Badge className="bg-[#E83262] text-white text-xs px-3 py-1.5 font-medium shadow-lg">
                   Premium
                 </Badge>
               )}
@@ -233,8 +233,8 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                       className={cn(
                         "mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold",
                         phoneIsRevealed
-                          ? "border-[#C2A574]/20 bg-[#C2A574]/8 text-[#C2A574]"
-                          : "border-gray-200 bg-gray-50 text-gray-700 hover:border-[#C2A574]/30",
+                          ? "border-[#E83262]/20 bg-[#E83262]/8 text-[#E83262]"
+                          : "border-gray-200 bg-gray-50 text-gray-700 hover:border-[#E83262]/30",
                       )}
                     >
                       <Phone className="h-4 w-4" />
@@ -338,7 +338,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
               {onSuperLike && (
                 <Button
                   size="lg"
-                  className="h-16 w-16 rounded-[1.45rem] border border-[#C2A574]/40 bg-[linear-gradient(145deg,#080706,#18122a_48%,#050505)] p-[3px] shadow-[0_14px_34px_rgba(0,0,0,0.24),0_0_24px_rgba(128,88,255,0.20)] hover:bg-black"
+                  className="h-16 w-16 rounded-[1.45rem] border border-[#E83262]/40 bg-[linear-gradient(145deg,#080706,#18122a_48%,#050505)] p-[3px] shadow-[0_14px_34px_rgba(0,0,0,0.24),0_0_24px_rgba(128,88,255,0.20)] hover:bg-black"
                   onClick={onSuperLike}
                 >
                   <img
@@ -352,7 +352,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
 
               <Button
                 size="lg"
-                className="w-16 h-16 rounded-full p-0 bg-gradient-to-r from-[#C2A574] to-[#B9975E] hover:from-[#B9975E] hover:to-[#C2A574] shadow-lg shadow-[#C2A574]/30"
+                className="w-16 h-16 rounded-full p-0 bg-gradient-to-r from-[#E83262] to-[#C3264E] hover:from-[#C3264E] hover:to-[#E83262] shadow-lg shadow-[#E83262]/30"
                 onClick={onConnect}
               >
                 <Heart className="w-7 h-7 fill-white text-white" />

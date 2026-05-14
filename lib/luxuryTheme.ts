@@ -1,16 +1,16 @@
 export const LUXURY_THEME = {
-  ivoryWhite: "#F7F3EE",
-  deepMocha: "#3A2B24",
-  champagneGold: "#C2A574",
-  warmTaupe: "#8B7B70",
-  porcelain: "#FBF8F3",
-  softIvory: "#EFE7DB",
-  mochaInk: "#231A16",
+  ivoryWhite: "#F6F7FB",
+  deepMocha: "#26364A",
+  champagneGold: "#E83262",
+  warmTaupe: "#6F7C8B",
+  porcelain: "#FFFFFF",
+  softIvory: "#F2F5FA",
+  mochaInk: "#172235",
 } as const
 
 export const LUXURY_THEME_RGB = {
-  ivoryWhite: "247, 243, 238",
-  deepMocha: "58, 43, 36",
-  champagneGold: "194, 165, 116",
-  warmTaupe: "139, 123, 112",
+  ivoryWhite: "246, 247, 251",
+  deepMocha: "38, 54, 74",
+  champagneGold: "232, 50, 98",
+  warmTaupe: "111, 124, 139",
 } as const

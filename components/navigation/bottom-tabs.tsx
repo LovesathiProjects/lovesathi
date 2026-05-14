@@ -47,7 +47,7 @@ export function BottomTabs({ activeTab = "discover", onTabChange }: BottomTabsPr
         data-bottom-nav 
         className={cn(
           "fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-xl",
-          "border-[#C2A574]/24 bg-[#F7F3EE]/92 shadow-[0_-18px_50px_rgba(24,17,13,0.08)]"
+          "border-[#E83262]/24 bg-[#F6F7FB]/92 shadow-[0_-18px_50px_rgba(24,17,13,0.08)]"
         )}
       >
         <div className="mx-auto flex max-w-xl items-center justify-around px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2">
@@ -61,24 +61,24 @@ export function BottomTabs({ activeTab = "discover", onTabChange }: BottomTabsPr
                 onClick={() => handleTabClick(tab.id)}
                 className={cn(
                   "flex min-w-0 flex-1 flex-col items-center justify-center rounded-2xl p-2 transition-all duration-150 ease-in-out",
-                  isActive ? "" : "cursor-pointer hover:bg-[#C2A574]/8"
+                  isActive ? "" : "cursor-pointer hover:bg-[#E83262]/8"
                 )}
               >
                 <div className={cn(
                   "relative flex items-center justify-center",
-                  isActive && "rounded-full bg-[#C2A574]/18 p-2 shadow-[0_8px_22px_rgba(194,165,116,0.16)] backdrop-blur-[8px]"
+                  isActive && "rounded-full bg-[#E83262]/18 p-2 shadow-[0_8px_22px_rgba(194,165,116,0.16)] backdrop-blur-[8px]"
                 )}>
                   <Icon 
                     className={cn(
                       "w-5 h-5 sm:w-6 sm:h-6 mb-1 transition-all duration-150 ease-in-out",
                       isActive && "stroke-[2.5]"
                     )}
-                    stroke={isActive ? "#3A2B24" : "#8B7B70"}
+                    stroke={isActive ? "#26364A" : "#6F7C8B"}
                     strokeWidth={isActive ? 2.5 : 2}
                     fill="none"
                     style={{
-                      color: isActive ? '#3A2B24' : '#8B7B70',
-                      stroke: isActive ? '#3A2B24' : '#8B7B70',
+                      color: isActive ? '#26364A' : '#6F7C8B',
+                      stroke: isActive ? '#26364A' : '#6F7C8B',
                       fill: 'none',
                       opacity: isActive ? 1 : 0.75
                     }}
@@ -86,7 +86,7 @@ export function BottomTabs({ activeTab = "discover", onTabChange }: BottomTabsPr
                   {/* Unread message badge for messages icon */}
                   {tab.id === "messages" && unreadCount > 0 && (
                     <div className={cn(
-                      "absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full bg-[#C2A574] text-[#3A2B24] text-[10px] font-bold shadow-md z-10",
+                      "absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full bg-[#E83262] text-white text-[10px] font-bold shadow-md z-10",
                       "border-2 border-white"
                     )}>
                       {unreadCount > 99 ? '99+' : unreadCount}
@@ -95,7 +95,7 @@ export function BottomTabs({ activeTab = "discover", onTabChange }: BottomTabsPr
                   {/* Unread activity badge for activity icon */}
                   {tab.id === "activity" && activityUnreadCount > 0 && (
                     <div className={cn(
-                      "absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full bg-[#C2A574] text-[#3A2B24] text-[10px] font-bold shadow-md z-10",
+                      "absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full bg-[#E83262] text-white text-[10px] font-bold shadow-md z-10",
                       "border-2 border-white"
                     )}>
                       {activityUnreadCount > 99 ? '99+' : activityUnreadCount}
@@ -105,7 +105,7 @@ export function BottomTabs({ activeTab = "discover", onTabChange }: BottomTabsPr
                 <span 
                   className={cn(
                     "text-xs font-semibold truncate transition-colors duration-150 ease-in-out",
-                    isActive ? "text-[#3A2B24]" : "text-[#8B7B70]"
+                    isActive ? "text-[#26364A]" : "text-[#6F7C8B]"
                   )}
                 >
                   {tab.label}

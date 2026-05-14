@@ -1,18 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { BadgeCheck, Crown, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
-import { Badge } from "@/components/ui/badge"
-import { BadgeCheck, Crown, Sparkles, X } from "lucide-react"
 import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
+import { SearchableMultiSelect } from "@/components/ui/searchable-select"
 import { COMMUNITY_PREFERENCE_OPTIONS } from "@/lib/matrimonyOptions"
 import { FREE_VERIFIED_FILTER_MATCH_LIMIT, useVerifiedFilterAllowance } from "@/hooks/useVerifiedFilterAllowance"
-import { SearchableMultiSelect } from "@/components/ui/searchable-select"
+import { cn } from "@/lib/utils"
 
 export interface FilterState {
   ageRange: [number, number]
@@ -34,23 +34,106 @@ interface MatrimonyFilterSheetProps {
   onApplyFilters?: (filters: FilterState) => void
 }
 
+type FilterCategory =
+  | "smart"
+  | "posted"
+  | "activity"
+  | "religion"
+  | "motherTongue"
+  | "caste"
+  | "country"
+  | "city"
+  | "income"
+  | "education"
+  | "occupation"
+  | "photo"
+  | "height"
+  | "age"
+  | "diet"
+  | "marital"
+  | "horoscope"
+
+const defaultFilters: FilterState = {
+  ageRange: [21, 35],
+  heightRange: [150, 190],
+  locations: [],
+  educationPrefs: [],
+  professionPrefs: [],
+  communities: [],
+  familyTypePrefs: [],
+  dietPrefs: [],
+  lifestylePrefs: [],
+  verifiedOnly: false,
+  premiumOnly: false,
+}
+
+const categories: Array<{ id: FilterCategory; label: string; badge?: (filters: FilterState) => number }> = [
+  { id: "smart", label: "Smart Filters", badge: (filters) => Number(filters.verifiedOnly) + Number(filters.premiumOnly) },
+  { id: "posted", label: "Profile posted by" },
+  { id: "activity", label: "Activity on site" },
+  { id: "religion", label: "Religion" },
+  { id: "motherTongue", label: "Mother Tongue" },
+  { id: "caste", label: "Caste Subcaste", badge: (filters) => filters.communities.length },
+  { id: "country", label: "Country", badge: (filters) => filters.locations.length },
+  { id: "city", label: "City", badge: (filters) => filters.locations.length },
+  { id: "income", label: "Income" },
+  { id: "education", label: "Education", badge: (filters) => filters.educationPrefs.length },
+  { id: "occupation", label: "Occupation", badge: (filters) => filters.professionPrefs.length },
+  { id: "photo", label: "Photo" },
+  { id: "height", label: "Height" },
+  { id: "age", label: "Age" },
+  { id: "diet", label: "Diet", badge: (filters) => filters.dietPrefs.length },
+  { id: "marital", label: "Marital Status" },
+  { id: "horoscope", label: "Horoscope" },
+]
+
+const checkboxGroups = {
+  posted: ["All", "Self", "Parent", "Sibling", "Relative"],
+  activity: ["All", "Online", "Active in last week", "Active in last month", "Active in last 2 months"],
+  religion: ["All", "Hindu", "Muslim", "Christian", "Sikh", "Jain", "Buddhist", "Parsi", "Jewish", "Other"],
+  motherTongue: ["All", "Hindi", "Marathi", "Urdu", "Gujarati", "Tamil", "Telugu", "Kannada", "Malayalam", "Bengali", "Punjabi"],
+  income: ["All", "Rs. 1 - 2 Lakh p.a", "Rs. 2 - 3 Lakh p.a", "Rs. 3 - 5 Lakh p.a", "Rs. 5 - 10 Lakh p.a", "Rs. 10 Lakh+ p.a"],
+  photo: ["All", "With Photos", "Verified Photos", "Premium Profiles"],
+  marital: ["All", "Never Married", "Divorced", "Widowed", "Awaiting Divorce"],
+  horoscope: ["All", "Manglik", "Non-Manglik", "Horoscope available"],
+}
+
+const educationOptions = ["Any", "B.Com", "B.Sc", "B.E / B.Tech", "MBA", "MCA", "M.Sc", "M.A", "MBBS", "CA", "PhD"]
+const occupationOptions = ["Any", "Administration", "Admin Professional", "Analyst", "Data Scientist", "Engineer", "HR Professional", "Marketing Manager", "Nurse", "Software & IT", "Teacher"]
+const dietOptions = ["Any", "Vegetarian", "Eggetarian", "Non-vegetarian", "Pescatarian", "Vegan", "Jain", "Other"]
+const lifestyleOptions = ["Any", "Non-smoker", "Non-drinker", "Smoker", "Drinker"]
+const familyTypeOptions = ["Any", "Nuclear Family", "Joint Family", "Extended Family"]
+
+function toggleArray(array: string[], value: string) {
+  if (value === "Any" || value === "All") return array.includes(value) ? [] : [value]
+  return array.includes(value) ? array.filter((item) => item !== value) : [...array.filter((item) => item !== "Any" && item !== "All"), value]
+}
+
+function CheckboxList({ options, selected, onChange }: { options: string[]; selected: string[]; onChange: (next: string[]) => void }) {
+  return (
+    <div className="space-y-4">
+      {options.map((option) => {
+        const checked = selected.includes(option) || (selected.length === 0 && option === "All")
+        return (
+          <label key={option} className="flex cursor-pointer items-center gap-3 text-base font-bold text-[#5A6878]">
+            <Checkbox
+              checked={checked}
+              onCheckedChange={() => onChange(toggleArray(selected, option))}
+              className="h-5 w-5 rounded border-[#AEB8C5] data-[state=checked]:border-[#E83262] data-[state=checked]:bg-[#E83262]"
+            />
+            {option}
+          </label>
+        )
+      })}
+    </div>
+  )
+}
+
 export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: MatrimonyFilterSheetProps) {
   const { canUseVerifiedFilter, loading: verifiedFilterLoading, matchCount, isPremium } = useVerifiedFilterAllowance()
-  const [filters, setFilters] = useState<FilterState>({
-    ageRange: [21, 35],
-    heightRange: [150, 190], // in cm
-    locations: [] as string[],
-    educationPrefs: [] as string[],
-    professionPrefs: [] as string[],
-    communities: [] as string[],
-    familyTypePrefs: [] as string[],
-    dietPrefs: [] as string[],
-    lifestylePrefs: [] as string[],
-    verifiedOnly: false,
-    premiumOnly: false,
-  })
-
-  const communityOptions = ["Any", ...COMMUNITY_PREFERENCE_OPTIONS]
+  const [filters, setFilters] = useState<FilterState>(defaultFilters)
+  const [auxFilters, setAuxFilters] = useState<Record<string, string[]>>({})
+  const [activeCategory, setActiveCategory] = useState<FilterCategory>("posted")
 
   useEffect(() => {
     if (!canUseVerifiedFilter && filters.verifiedOnly) {
@@ -64,297 +147,210 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
     }
   }, [filters.premiumOnly, isPremium])
 
-  // Family Type options from matrimony onboarding (matrimony-preferences.tsx)
-  const familyTypeOptions = [
-    "Any", "Nuclear Family", "Joint Family", "Extended Family"
-  ]
+  const communityOptions = useMemo(() => ["Any", ...COMMUNITY_PREFERENCE_OPTIONS], [])
+  const verifiedFilterDescription = isPremium
+    ? "Premium active. Verified-only discovery is unlocked."
+    : canUseVerifiedFilter
+      ? `Free verified filter available for ${FREE_VERIFIED_FILTER_MATCH_LIMIT - matchCount} more match${FREE_VERIFIED_FILTER_MATCH_LIMIT - matchCount === 1 ? "" : "es"}.`
+      : "Upgrade to keep verified-only discovery."
 
-  // Dietary options from matrimony onboarding (Step2PersonalPhysical.tsx)
-  const dietOptions = [
-    "Any", "Vegetarian", "Eggetarian", "Non-vegetarian", "Pescatarian", "Vegan", "Jain", "Other"
-  ]
-
-  // Lifestyle options based on matrimony onboarding (Step2PersonalPhysical.tsx - smoker/drinker)
-  const lifestyleOptions = [
-    "Any", "Non-smoker", "Non-drinker", "Smoker", "Drinker"
-  ]
-
-  const handleArrayToggle = (array: string[], item: string, setter: (value: string[]) => void) => {
-    if (item === "Any") {
-      setter(array.includes("Any") ? [] : ["Any"])
-      return
-    }
-
-    if (array.includes(item)) {
-      setter(array.filter(i => i !== item))
-    } else {
-      setter([...array.filter(i => i !== "Any"), item])
-    }
+  const resetFilters = () => {
+    setFilters(defaultFilters)
+    setAuxFilters({})
   }
-
-  const handleReset = () => {
-    setFilters({
-      ageRange: [21, 35],
-      heightRange: [150, 190],
-      locations: [],
-      educationPrefs: [],
-      professionPrefs: [],
-      communities: [],
-      familyTypePrefs: [],
-      dietPrefs: [],
-      lifestylePrefs: [],
-      verifiedOnly: false,
-      premiumOnly: false,
-    })
+  const setAux = (key: FilterCategory, values: string[]) => {
+    setAuxFilters((previous) => ({ ...previous, [key]: values }))
   }
-
-  const handleApply = () => {
-    // Call the callback to apply filters
-    if (onApplyFilters) {
-      onApplyFilters(filters)
-    }
+  const applyFilters = () => {
+    onApplyFilters?.(filters)
     onOpenChange(false)
   }
 
-  const verifiedFilterDescription = isPremium
-    ? "Premium active. Verified-only discovery is unlocked without the free-match limit."
-    : canUseVerifiedFilter
-      ? `Included for your first ${FREE_VERIFIED_FILTER_MATCH_LIMIT} active matches. Current: ${matchCount}/${FREE_VERIFIED_FILTER_MATCH_LIMIT}.`
-      : `Upgrade to keep verified-only discovery after ${matchCount} active matches.`
-  const premiumOnlyDescription = isPremium
-    ? "Premium active. Show profiles with an active Lovesathi premium membership."
-    : "Premium members can filter for other premium members once subscriptions are active."
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="matrimony-filter-sheet flex w-full min-w-0 flex-col overflow-hidden border-l border-[#C2A574]/24 bg-[linear-gradient(145deg,#F7F3EE,#F7F3EE_48%,#EFE7DB)] sm:w-[520px]">
-        <SheetHeader className="shrink-0 space-y-3 px-4 pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6">
-          <div className="flex min-w-0 items-center justify-between gap-3 pr-16 sm:pr-12">
-            <SheetTitle className="matrimony-filter-title min-w-0 flex-1 truncate font-serif text-[1.8rem] leading-none tracking-[-0.05em] text-[#3A2B24] sm:text-3xl">Refine Matches</SheetTitle>
-            <Button variant="ghost" size="sm" onClick={handleReset} className="h-11 shrink-0 rounded-full border border-[#C2A574]/30 bg-white/78 px-5 text-[#3A2B24] shadow-[0_10px_24px_rgba(24,17,13,0.06)] hover:bg-white sm:h-12 sm:px-6">
-              Reset
-            </Button>
-          </div>
-          <SheetDescription className="text-[#8B7B70]">Tune discovery by age, height, location, family context, and lifestyle.</SheetDescription>
-        </SheetHeader>
-
-        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 pb-28 pt-2 sm:px-6">
-          <div className="rounded-[1.7rem] border border-[#C2A574]/28 bg-white/72 p-4 shadow-[0_18px_52px_rgba(24,17,13,0.08)] backdrop-blur-xl">
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C2A574]/36 bg-[#EFE7DB] text-[#C2A574] shadow-inner">
-                <Sparkles className="h-5 w-5" />
-              </div>
+  const content = (() => {
+    if (activeCategory === "smart") {
+      return (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-[#E6EAF1] bg-[#F8FAFC] p-4">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="luxe-kicker text-[0.62rem] text-[#C2A574]">premium discovery suite</p>
-                <p className="mt-1 text-sm leading-6 text-[#8B7B70]">Filter with intention, then keep the experience calm and family-ready.</p>
+                <Label htmlFor="verified-only" className="text-base font-black text-[#26364A]">Verified profiles only</Label>
+                <p className="mt-1 text-sm font-semibold text-[#6F7C8B]">{verifiedFilterDescription}</p>
               </div>
-            </div>
-          </div>
-
-          {/* Age Range */}
-          <div className="space-y-4">
-            <Label className="text-black">
-              Age range: {filters.ageRange[0]} - {filters.ageRange[1]} years
-            </Label>
-            <Slider
-              value={filters.ageRange}
-              onValueChange={(value) => setFilters((prev) => ({ ...prev, ageRange: value as [number, number] }))}
-              max={60}
-              min={18}
-              step={1}
-              className="w-full"
-            />
-          </div>
-
-          <Separator className="bg-[#E5E5E5]" />
-
-          {/* Height Range */}
-          <div className="space-y-4">
-            <Label className="text-black">
-              Height range: {filters.heightRange[0]} - {filters.heightRange[1]} cm
-            </Label>
-            <Slider
-              value={filters.heightRange}
-              onValueChange={(value) => setFilters((prev) => ({ ...prev, heightRange: value as [number, number] }))}
-              max={250}
-              min={90}
-              step={1}
-              className="w-full"
-            />
-          </div>
-
-          <Separator className="bg-[#E5E5E5]" />
-
-          {/* Locations */}
-          <div className="space-y-4">
-            <LocationPreferencePicker
-              value={filters.locations}
-              onChange={(locations) => setFilters((prev) => ({ ...prev, locations }))}
-              label="Location Preferences"
-            />
-          </div>
-
-          <Separator className="bg-[#E5E5E5]" />
-
-          {/* Advanced Filters - Premium */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-black">Advanced Filters</h3>
-              <Badge variant="secondary" className="text-xs bg-gray-100 text-black border-[#E5E5E5]">Premium</Badge>
-            </div>
-
-            {/* Community Preferences */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium text-sm text-black">Community/Caste Preferences</h4>
-                <span className="text-sm text-[#444444]">{filters.communities.length} selected</span>
-              </div>
-              <SearchableMultiSelect
-                values={filters.communities}
-                onValuesChange={(communities) => setFilters((prev) => ({ ...prev, communities }))}
-                options={communityOptions.map((community) => ({ value: community, label: community }))}
-                placeholder="Select preferred communities"
-                searchPlaceholder="Search community, caste, or denomination..."
-                emptyMessage="No community found."
+              <Switch
+                id="verified-only"
+                checked={filters.verifiedOnly}
+                disabled={verifiedFilterLoading || !canUseVerifiedFilter}
+                onCheckedChange={(checked) => setFilters((prev) => ({ ...prev, verifiedOnly: checked }))}
               />
             </div>
-
-            <Separator className="bg-[#E5E5E5]" />
-
-            {/* Family Type Preferences */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium text-sm text-black">Family Type Preferences</h4>
-                <span className="text-sm text-[#444444]">{filters.familyTypePrefs.length} selected</span>
+          </div>
+          <div className="rounded-xl border border-[#E6EAF1] bg-[#F8FAFC] p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <Label htmlFor="premium-only" className="text-base font-black text-[#26364A]">Premium members only</Label>
+                <p className="mt-1 text-sm font-semibold text-[#6F7C8B]">Available once a paid membership is active.</p>
               </div>
-              <div className="flex flex-wrap gap-2.5">
-                {familyTypeOptions.map((familyType) => (
-                  <Badge
-                    key={familyType}
-                    variant={filters.familyTypePrefs.includes(familyType) ? "default" : "outline"}
-                    className={filters.familyTypePrefs.includes(familyType)
-                      ? "cursor-pointer bg-[#C2A574] text-[#3A2B24] border-[#C2A574]/50 hover:bg-[#B9975E]"
-                      : "cursor-pointer bg-gray-100 border-[#E5E5E5] text-black hover:bg-gray-200"}
-                    onClick={() => handleArrayToggle(filters.familyTypePrefs, familyType, (value) => setFilters(prev => ({ ...prev, familyTypePrefs: value })))}
+              <Switch
+                id="premium-only"
+                checked={filters.premiumOnly}
+                disabled={!isPremium}
+                onCheckedChange={(checked) => setFilters((prev) => ({ ...prev, premiumOnly: checked }))}
+              />
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-[#E6EAF1] bg-white p-4">
+              <BadgeCheck className="h-6 w-6 text-[#E83262]" />
+              <p className="mt-3 text-sm font-bold text-[#26364A]">Trust-first matching</p>
+            </div>
+            <div className="rounded-xl border border-[#E6EAF1] bg-white p-4">
+              <Crown className="h-6 w-6 text-[#E83262]" />
+              <p className="mt-3 text-sm font-bold text-[#26364A]">Premium visibility</p>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    if (activeCategory === "caste") {
+      return (
+        <SearchableMultiSelect
+          values={filters.communities}
+          onValuesChange={(communities) => setFilters((prev) => ({ ...prev, communities }))}
+          options={communityOptions.map((community) => ({ value: community, label: community }))}
+          placeholder="Select caste / subcaste"
+          searchPlaceholder="Search caste, community, or denomination..."
+          emptyMessage="No community found."
+        />
+      )
+    }
+
+    if (activeCategory === "country" || activeCategory === "city") {
+      return (
+        <LocationPreferencePicker
+          value={filters.locations}
+          onChange={(locations) => setFilters((prev) => ({ ...prev, locations }))}
+          label="Location Preferences"
+        />
+      )
+    }
+
+    if (activeCategory === "education") {
+      return (
+        <SearchableMultiSelect
+          values={filters.educationPrefs}
+          onValuesChange={(educationPrefs) => setFilters((prev) => ({ ...prev, educationPrefs }))}
+          options={educationOptions.map((item) => ({ value: item, label: item }))}
+          placeholder="Select education"
+          searchPlaceholder="Search education..."
+          emptyMessage="No education found."
+        />
+      )
+    }
+
+    if (activeCategory === "occupation") {
+      return (
+        <SearchableMultiSelect
+          values={filters.professionPrefs}
+          onValuesChange={(professionPrefs) => setFilters((prev) => ({ ...prev, professionPrefs }))}
+          options={occupationOptions.map((item) => ({ value: item, label: item }))}
+          placeholder="Select occupation"
+          searchPlaceholder="Search occupation..."
+          emptyMessage="No occupation found."
+        />
+      )
+    }
+
+    if (activeCategory === "height") {
+      return (
+        <div className="space-y-5">
+          <Label className="text-base font-black text-[#26364A]">Height range: {filters.heightRange[0]} - {filters.heightRange[1]} cm</Label>
+          <Slider value={filters.heightRange} onValueChange={(value) => setFilters((prev) => ({ ...prev, heightRange: value as [number, number] }))} max={250} min={90} step={1} />
+        </div>
+      )
+    }
+
+    if (activeCategory === "age") {
+      return (
+        <div className="space-y-5">
+          <Label className="text-base font-black text-[#26364A]">Age range: {filters.ageRange[0]} - {filters.ageRange[1]} years</Label>
+          <Slider value={filters.ageRange} onValueChange={(value) => setFilters((prev) => ({ ...prev, ageRange: value as [number, number] }))} max={60} min={18} step={1} />
+        </div>
+      )
+    }
+
+    if (activeCategory === "diet") {
+      return <CheckboxList options={dietOptions} selected={filters.dietPrefs} onChange={(dietPrefs) => setFilters((prev) => ({ ...prev, dietPrefs }))} />
+    }
+
+    if (activeCategory === "posted") {
+      return <CheckboxList options={checkboxGroups.posted} selected={auxFilters.posted || []} onChange={(values) => setAux("posted", values)} />
+    }
+
+    if (activeCategory === "activity") {
+      return <CheckboxList options={checkboxGroups.activity} selected={auxFilters.activity || []} onChange={(values) => setAux("activity", values)} />
+    }
+
+    const group = checkboxGroups[activeCategory as keyof typeof checkboxGroups] || familyTypeOptions
+    return <CheckboxList options={group} selected={auxFilters[activeCategory] || []} onChange={(values) => setAux(activeCategory, values)} />
+  })()
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[88dvh] w-[min(94vw,760px)] overflow-hidden rounded-[1.1rem] border-0 bg-white p-0 shadow-[0_30px_90px_rgba(31,44,60,0.28)]" showCloseButton={false}>
+        <div className="relative flex max-h-[88dvh] flex-col">
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="absolute -right-3 -top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#26364A] shadow-lg"
+            aria-label="Close filters"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <div className="flex items-center justify-between gap-4 border-b border-[#EEF1F6] px-5 py-5 sm:px-7">
+            <h2 className="text-2xl font-black tracking-[-0.03em] text-[#26364A]">Refine Matches</h2>
+            <button type="button" onClick={resetFilters} className="text-sm font-black text-[#E83262]">
+              Reset
+            </button>
+          </div>
+
+          <div className="grid min-h-0 flex-1 grid-cols-[9.7rem_1fr] overflow-hidden sm:grid-cols-[13rem_1fr]">
+            <nav className="min-h-0 overflow-y-auto bg-[#F4F6FA] py-2">
+              {categories.map((category) => {
+                const selectedCount = category.badge?.(filters) || 0
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => setActiveCategory(category.id)}
+                    className={cn(
+                      "flex min-h-12 w-full items-center justify-between gap-2 px-4 py-3 text-left text-xs font-black text-[#465568] transition sm:text-sm",
+                      activeCategory === category.id && "bg-white text-[#26364A] shadow-[inset_3px_0_0_#E83262]",
+                    )}
                   >
-                    {familyType}
-                    {filters.familyTypePrefs.includes(familyType) && <X className="w-3 h-3 ml-1" />}
-                  </Badge>
-                ))}
-              </div>
-            </div>
+                    <span>{category.label}</span>
+                    {selectedCount > 0 && (
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E83262] px-1.5 text-[0.68rem] text-white">
+                        {selectedCount}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </nav>
+
+            <section className="min-h-0 overflow-y-auto px-5 py-5 pb-28 sm:px-7">
+              {content}
+            </section>
           </div>
 
-          <Separator className="bg-[#E5E5E5]" />
-
-          {/* Dietary Preferences */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-black">Dietary Preferences</h3>
-              <span className="text-sm text-[#444444]">{filters.dietPrefs.length} selected</span>
-            </div>
-            <div className="flex flex-wrap gap-2.5">
-              {dietOptions.map((diet) => (
-                <Badge
-                  key={diet}
-                  variant={filters.dietPrefs.includes(diet) ? "default" : "outline"}
-                  className={filters.dietPrefs.includes(diet)
-                    ? "cursor-pointer bg-[#C2A574] text-[#3A2B24] border-[#C2A574]/50 hover:bg-[#B9975E]"
-                    : "cursor-pointer bg-gray-100 border-[#E5E5E5] text-black hover:bg-gray-200"}
-                  onClick={() => handleArrayToggle(filters.dietPrefs, diet, (value) => setFilters(prev => ({ ...prev, dietPrefs: value })))}
-                >
-                  {diet}
-                  {filters.dietPrefs.includes(diet) && <X className="w-3 h-3 ml-1" />}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          <Separator className="bg-[#E5E5E5]" />
-
-          {/* Lifestyle Preferences */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-black">Lifestyle Preferences</h3>
-              <span className="text-sm text-[#444444]">{filters.lifestylePrefs.length} selected</span>
-            </div>
-            <div className="flex flex-wrap gap-2.5">
-              {lifestyleOptions.map((lifestyle) => (
-                <Badge
-                  key={lifestyle}
-                  variant={filters.lifestylePrefs.includes(lifestyle) ? "default" : "outline"}
-                  className={filters.lifestylePrefs.includes(lifestyle)
-                    ? "cursor-pointer bg-[#C2A574] text-[#3A2B24] border-[#C2A574]/50 hover:bg-[#B9975E]"
-                    : "cursor-pointer bg-gray-100 border-[#E5E5E5] text-black hover:bg-gray-200"}
-                  onClick={() => handleArrayToggle(filters.lifestylePrefs, lifestyle, (value) => setFilters(prev => ({ ...prev, lifestylePrefs: value })))}
-                >
-                  {lifestyle}
-                  {filters.lifestylePrefs.includes(lifestyle) && <X className="w-3 h-3 ml-1" />}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          <Separator className="bg-[#E5E5E5]" />
-
-          {/* Account Type */}
-          <div className="space-y-4">
-            <h3 className="font-serif text-2xl font-bold tracking-[-0.05em] text-[#3A2B24]">Account Type</h3>
-            <div className="space-y-3">
-              <div className="rounded-[1.6rem] border border-[#C2A574]/30 bg-white/78 p-4 shadow-[0_18px_48px_rgba(24,17,13,0.07)]">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex min-w-0 gap-3">
-                    <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#C2A574]/10 text-[#C2A574]">
-                      <BadgeCheck className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Label htmlFor="verified-only" className="text-base font-bold text-[#3A2B24]">Verified profiles only</Label>
-                        {isPremium && <Badge className="border-[#C2A574]/40 bg-[#EFE7DB] text-[#C2A574]">Premium</Badge>}
-                      </div>
-                      <p className="mt-1 text-xs leading-5 text-[#8B7B70]">{verifiedFilterDescription}</p>
-                    </div>
-                  </div>
-                  <Switch
-                    id="verified-only"
-                    className="h-7 w-12 data-[state=checked]:bg-[linear-gradient(135deg,#C2A574,#C2A574)]"
-                    checked={filters.verifiedOnly}
-                    disabled={verifiedFilterLoading || !canUseVerifiedFilter}
-                    onCheckedChange={(checked) => setFilters((prev) => ({ ...prev, verifiedOnly: checked }))}
-                  />
-                </div>
-              </div>
-              <div className="rounded-[1.6rem] border border-[#482b1a]/10 bg-white/52 p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex min-w-0 gap-3">
-                    <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#C2A574]/18 text-[#8a641f]">
-                      <Crown className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <Label htmlFor="premium-only" className="text-base font-bold text-[#3A2B24]">Premium members only</Label>
-                      <p className="mt-1 text-xs leading-5 text-[#8B7B70]">{premiumOnlyDescription}</p>
-                    </div>
-                  </div>
-                  <Switch
-                    id="premium-only"
-                    className="h-7 w-12 data-[state=checked]:bg-[linear-gradient(135deg,#C2A574,#C2A574)]"
-                    checked={filters.premiumOnly}
-                    disabled={!isPremium}
-                    onCheckedChange={(checked) => setFilters((prev) => ({ ...prev, premiumOnly: checked }))}
-                  />
-                </div>
-              </div>
-            </div>
+          <div className="absolute inset-x-0 bottom-0 border-t border-[#EEF1F6] bg-white/96 px-5 py-4 backdrop-blur sm:px-7">
+            <Button onClick={applyFilters} className="h-12 w-full rounded-xl bg-[#E83262] text-base font-black text-white shadow-[0_14px_30px_rgba(232,50,98,0.18)] hover:bg-[#C3264E]">
+              Show Matches
+            </Button>
           </div>
         </div>
-
-        {/* Apply Button */}
-        <div className="shrink-0 border-t border-[#482b1a]/10 bg-[#F7F3EE]/94 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl sm:px-6 sm:py-5">
-          <Button onClick={handleApply} className="luxe-button w-full rounded-full" size="lg">
-            Apply Matrimony Filters
-          </Button>
-        </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }

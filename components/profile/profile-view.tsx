@@ -167,8 +167,8 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
     return (
       <div className="luxe-light-page flex min-h-screen items-center justify-center">
         <div className="luxe-card rounded-[2rem] p-7 text-center">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#C2A574] border-t-transparent" />
-          <p className="mt-4 font-bold text-[#3A2B24]">Opening profile dossier...</p>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#E83262] border-t-transparent" />
+          <p className="mt-4 font-bold text-[#26364A]">Opening profile dossier...</p>
         </div>
       </div>
     )
@@ -225,8 +225,8 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
               </Button>
             )}
             <div>
-              <p className="luxe-kicker text-[0.62rem] text-[#C2A574]">{isOwnProfile ? "my dossier" : "profile dossier"}</p>
-              <h1 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#3A2B24]">{isOwnProfile ? "My Profile" : publicName}</h1>
+              <p className="luxe-kicker text-[0.62rem] text-[#E83262]">{isOwnProfile ? "my dossier" : "profile dossier"}</p>
+              <h1 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#26364A]">{isOwnProfile ? "My Profile" : publicName}</h1>
             </div>
           </div>
           {isOwnProfile ? (
@@ -240,12 +240,12 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
               </Button>
             </div>
           ) : isMatched ? (
-            <Badge className="bg-[#C2A574] text-[#3A2B24]">
+            <Badge className="bg-[#E83262] text-white">
               <CheckCircle2 className="w-4 h-4 mr-1" />
               Matched
             </Badge>
           ) : (
-            <Button className="bg-[#C2A574] hover:bg-[#B9975E]" onClick={handleLike} disabled={isLiking}>
+            <Button className="bg-[#E83262] hover:bg-[#C3264E]" onClick={handleLike} disabled={isLiking}>
               <Heart className="w-4 h-4 mr-2" />
               {isLiking ? "Liking..." : canLikeBack ? "Like Back" : "Like"}
             </Button>
@@ -255,10 +255,10 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
 
       <div className="mx-auto max-w-5xl space-y-5 p-4 pb-28 sm:p-6">
         {photos.length > 0 && (
-          <div className="luxe-card overflow-hidden rounded-[2rem] border-[#C2A574]/24 p-3">
-            <div className="relative h-96 overflow-hidden rounded-[1.5rem] bg-[#3A2B24]">
+          <div className="luxe-card overflow-hidden rounded-[2rem] border-[#E83262]/24 p-3">
+            <div className="relative h-96 overflow-hidden rounded-[1.5rem] bg-[#26364A]">
               <img src={photos[currentPhotoIndex] || "/placeholder.svg"} alt={profile?.name || "Profile photo"} className="h-full w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#3A2B24]/42 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#26364A]/42 via-transparent to-transparent" />
               {photos.length > 1 && (
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
                   {photos.map((_, index) => (
@@ -273,7 +273,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
               {verified && (
                 <div className="absolute top-3 right-3">
                   <Badge className="bg-white text-black border border-[#E5E5E5]">
-                    <CheckCircle2 className="w-3 h-3 mr-1 text-[#C2A574]" />
+                    <CheckCircle2 className="w-3 h-3 mr-1 text-[#E83262]" />
                     Verified
                   </Badge>
                 </div>
@@ -283,21 +283,21 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
         )}
 
         {photos.length === 0 && (
-          <div className="luxe-card rounded-[2rem] border-[#C2A574]/24 p-8 text-center">
-            <Sparkles className="mx-auto mb-3 h-8 w-8 text-[#C2A574]" />
-            <h2 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#3A2B24]">Photos pending</h2>
-            <p className="mt-2 text-sm leading-6 text-[#8B7B70]">Add clear profile photos to make this dossier feel complete.</p>
+          <div className="luxe-card rounded-[2rem] border-[#E83262]/24 p-8 text-center">
+            <Sparkles className="mx-auto mb-3 h-8 w-8 text-[#E83262]" />
+            <h2 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#26364A]">Photos pending</h2>
+            <p className="mt-2 text-sm leading-6 text-[#6F7C8B]">Add clear profile photos to make this dossier feel complete.</p>
           </div>
         )}
 
-        <Card className="luxe-card rounded-[2rem] border-[#C2A574]/24">
+        <Card className="luxe-card rounded-[2rem] border-[#E83262]/24">
           <CardContent className="p-6 space-y-5">
             <div className="flex items-center gap-2">
               <h2 className="text-3xl font-bold text-black">
                 {isOwnProfile ? profile?.name : publicName}
                 {profile?.age ? `, ${profile.age}` : ""}
               </h2>
-              {verified && <CheckCircle2 className="w-5 h-5 text-[#C2A574]" />}
+              {verified && <CheckCircle2 className="w-5 h-5 text-[#E83262]" />}
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -311,7 +311,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
                 <Separator />
                 <div className="space-y-2">
                   <h3 className="font-semibold flex items-center gap-2 text-black">
-                    <Sparkles className="w-4 h-4 text-[#C2A574]" />
+                    <Sparkles className="w-4 h-4 text-[#E83262]" />
                     About Me
                   </h3>
                   <p className="text-sm leading-relaxed text-[#666666]">{profile.bio}</p>
@@ -322,16 +322,16 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
         </Card>
 
         {displayPhone && (
-          <Card className="luxe-card rounded-[2rem] border-[#C2A574]/24">
+          <Card className="luxe-card rounded-[2rem] border-[#E83262]/24">
             <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#C2A574]/10 text-[#C2A574]">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E83262]/10 text-[#E83262]">
                   <Phone className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="luxe-kicker text-[0.62rem] text-[#C2A574]">premium contact</p>
-                  <h3 className="mt-1 text-lg font-bold text-[#3A2B24]">{displayPhone}</h3>
-                  <p className="mt-1 text-sm leading-6 text-[#8B7B70]">
+                  <p className="luxe-kicker text-[0.62rem] text-[#E83262]">premium contact</p>
+                  <h3 className="mt-1 text-lg font-bold text-[#26364A]">{displayPhone}</h3>
+                  <p className="mt-1 text-sm leading-6 text-[#6F7C8B]">
                     {phoneIsRevealed
                       ? "This phone number is revealed through your active plan."
                       : contact?.canReveal
@@ -352,10 +352,10 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
           </Card>
         )}
 
-        <Card className="luxe-card rounded-[2rem] border-[#C2A574]/24">
+        <Card className="luxe-card rounded-[2rem] border-[#E83262]/24">
           <CardContent className="p-6 space-y-4">
             <h3 className="font-semibold text-lg flex items-center gap-2 text-black">
-              <Briefcase className="w-5 h-5 text-[#C2A574]" />
+              <Briefcase className="w-5 h-5 text-[#E83262]" />
               Career & Education
             </h3>
             <div className="grid sm:grid-cols-2 gap-4 text-sm text-[#666666]">
@@ -365,7 +365,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
               {career.annual_income && <div><span className="font-medium text-black">Income:</span> {career.annual_income}</div>}
               {locationParts.length > 0 && (
                 <div className="sm:col-span-2 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-[#C2A574]" />
+                  <MapPin className="w-4 h-4 text-[#E83262]" />
                   <span>{locationParts.join(", ")}</span>
                 </div>
               )}
@@ -373,10 +373,10 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
           </CardContent>
         </Card>
 
-        <Card className="luxe-card rounded-[2rem] border-[#C2A574]/24">
+        <Card className="luxe-card rounded-[2rem] border-[#E83262]/24">
           <CardContent className="p-6 space-y-4">
             <h3 className="font-semibold text-lg flex items-center gap-2 text-black">
-              <Users className="w-5 h-5 text-[#C2A574]" />
+              <Users className="w-5 h-5 text-[#E83262]" />
               Family & Cultural Details
             </h3>
             <div className="grid sm:grid-cols-2 gap-4 text-sm text-[#666666]">
@@ -387,7 +387,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
               {cultural.community && <div><span className="font-medium text-black">Community:</span> {cultural.community}</div>}
               {cultural.place_of_birth && (
                 <div className="flex items-center gap-2">
-                  <Home className="w-4 h-4 text-[#C2A574]" />
+                  <Home className="w-4 h-4 text-[#E83262]" />
                   <span>{cultural.place_of_birth}</span>
                 </div>
               )}
@@ -395,7 +395,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
           </CardContent>
         </Card>
 
-        <Card className="luxe-card rounded-[2rem] border-[#C2A574]/24">
+        <Card className="luxe-card rounded-[2rem] border-[#E83262]/24">
           <CardContent className="p-6 space-y-4">
             <h3 className="font-semibold text-lg text-black">Partner Preferences</h3>
             <div className="grid sm:grid-cols-2 gap-4 text-sm text-[#666666]">

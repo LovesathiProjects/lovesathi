@@ -31,7 +31,7 @@ const toastVariants = cva(
       variant: {
         default: 'border-black/12 bg-white text-black',
         destructive:
-          'destructive group border-[#C2A574] bg-[#C2A574] text-[#3A2B24]',
+          'destructive group border-[#E83262] bg-[#E83262] text-white',
       },
     },
     defaultVariants: {
@@ -62,7 +62,7 @@ const ToastAction = React.forwardRef<
   <ToastPrimitives.Action
     ref={ref}
     className={cn(
-      'inline-flex h-9 shrink-0 items-center justify-center rounded-lg border-2 border-black bg-transparent px-4 text-sm font-semibold text-black ring-offset-white transition-colors hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-[#C2A574] focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-white/40 group-[.destructive]:hover:border-white group-[.destructive]:hover:bg-white group-[.destructive]:hover:text-[#C2A574] group-[.destructive]:focus:ring-white',
+      'inline-flex h-9 shrink-0 items-center justify-center rounded-lg border-2 border-black bg-transparent px-4 text-sm font-semibold text-black ring-offset-white transition-colors hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-[#E83262] focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-white/40 group-[.destructive]:hover:border-white group-[.destructive]:hover:bg-white group-[.destructive]:hover:text-[#E83262] group-[.destructive]:focus:ring-white',
       className,
     )}
     {...props}

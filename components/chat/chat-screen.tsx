@@ -845,7 +845,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
         <StaticBackground />
         <div className="flex items-center justify-center h-full">
           <div className="text-center space-y-4">
-            <div className="w-12 h-12 mx-auto border-4 border-[#C2A574] border-t-transparent rounded-full animate-spin" />
+            <div className="w-12 h-12 mx-auto border-4 border-[#E83262] border-t-transparent rounded-full animate-spin" />
             <p className={cn("text-sm", isMatrimony ? "text-black" : "text-white")}>Loading chat...</p>
           </div>
         </div>
@@ -876,14 +876,14 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
   }
 
   return (
-    <div className={cn("relative flex h-[100dvh] min-h-[100dvh] max-h-[100dvh] flex-col overflow-hidden", isMatrimony ? "bg-[linear-gradient(145deg,#ffffff,#F7F3EE_58%,#f5f4f0)]" : "bg-[#0E0F12]")}>
+    <div className={cn("relative flex h-[100dvh] min-h-[100dvh] max-h-[100dvh] flex-col overflow-hidden", isMatrimony ? "bg-[linear-gradient(145deg,#ffffff,#F6F7FB_58%,#f5f4f0)]" : "bg-[#0E0F12]")}>
       {/* Static Background */}
       <StaticBackground />
       
       {/* Header */}
       <div className={cn(
         "relative z-[40] flex-shrink-0 border-b px-4 pb-4 pt-[calc(0.85rem+env(safe-area-inset-top))] shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:p-4",
-        isMatrimony ? "border-[#C2A574]/24 bg-[#F7F3EE]/86" : "border-white/20 bg-[#14161B]/50"
+        isMatrimony ? "border-[#E83262]/24 bg-[#F6F7FB]/86" : "border-white/20 bg-[#14161B]/50"
       )}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -893,7 +893,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
                 size="sm" 
                 className={cn(
                   "rounded-full border p-2 backdrop-blur-xl",
-                  isMatrimony ? "border-[#C2A574]/28 bg-white/72 hover:bg-[#EFE7DB]" : "hover:bg-white/10 bg-white/10 border-white/20"
+                  isMatrimony ? "border-[#E83262]/28 bg-white/72 hover:bg-[#F2F5FA]" : "hover:bg-white/10 bg-white/10 border-white/20"
                 )}
                 onClick={onBack}
               >
@@ -903,9 +903,9 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
 
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <Avatar className={cn("h-11 w-11 border-2 shadow-[0_10px_28px_rgba(24,17,13,0.12)] sm:h-12 sm:w-12", isMatrimony ? "border-[#C2A574]/35" : "border-white/30")}>
+                <Avatar className={cn("h-11 w-11 border-2 shadow-[0_10px_28px_rgba(24,17,13,0.12)] sm:h-12 sm:w-12", isMatrimony ? "border-[#E83262]/35" : "border-white/30")}>
                   <AvatarImage src={chatUser.avatar || "/placeholder.svg"} alt={chatDisplayName} />
-                  <AvatarFallback className={cn("text-lg", isMatrimony ? "bg-[#EFE7DB] text-[#3A2B24]" : "bg-white/20 text-white")}>
+                  <AvatarFallback className={cn("text-lg", isMatrimony ? "bg-[#F2F5FA] text-[#26364A]" : "bg-white/20 text-white")}>
                     {getDisplayInitial(chatUser.name)}
                   </AvatarFallback>
                 </Avatar>
@@ -916,9 +916,9 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
 
               <div>
                 <div className="flex items-center space-x-2">
-                  <h2 className={cn("max-w-[44vw] truncate font-serif text-2xl font-bold tracking-[-0.05em] sm:max-w-none", isMatrimony ? "text-[#3A2B24]" : "text-white")}>{chatDisplayName}</h2>
+                  <h2 className={cn("max-w-[44vw] truncate font-serif text-2xl font-bold tracking-[-0.05em] sm:max-w-none", isMatrimony ? "text-[#26364A]" : "text-white")}>{chatDisplayName}</h2>
                   {chatUser.isPremium && (
-                    <Badge className="bg-[#C2A574] text-[#3A2B24] text-xs px-2 py-0">
+                    <Badge className="bg-[#E83262] text-white text-xs px-2 py-0">
                       Premium
                     </Badge>
                   )}
@@ -969,7 +969,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
                 {isHeaderMenuOpen && (
                   <div className={cn(
                     "absolute right-0 top-full mt-2 z-[9999] min-w-[160px] rounded-2xl border text-sm shadow-2xl backdrop-blur-lg pointer-events-auto",
-                    isMatrimony ? "border-[#C2A574]/24 bg-[#F7F3EE]/96 text-[#3A2B24] shadow-[0_18px_60px_rgba(24,17,13,0.14)]" : "border-white/10 bg-black/90 text-white"
+                    isMatrimony ? "border-[#E83262]/24 bg-[#F6F7FB]/96 text-[#26364A] shadow-[0_18px_60px_rgba(24,17,13,0.14)]" : "border-white/10 bg-black/90 text-white"
                   )}>
                     <div className="flex flex-col py-1">
                       <button
@@ -1041,7 +1041,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
       {/* In-page Notification */}
       {inPageNotification && (
         <div className="flex-shrink-0 px-4 py-2 animate-in slide-in-from-top duration-300">
-          <div className="rounded-2xl border border-[#C2A574]/34 bg-[#C2A574]/92 px-4 py-3 shadow-[0_18px_48px_rgba(194,165,116,0.2)] backdrop-blur-sm">
+          <div className="rounded-2xl border border-[#E83262]/34 bg-[#E83262]/92 px-4 py-3 shadow-[0_18px_48px_rgba(194,165,116,0.2)] backdrop-blur-sm">
             <p className="text-sm" style={{ color: '#FFFFFF' }}>
               <span className="font-semibold">New message from {inPageNotification.senderName}:</span>
               <span className="ml-2">{inPageNotification.message}</span>
@@ -1054,11 +1054,11 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:p-6">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
-            <div className={cn("mb-4 flex h-16 w-16 items-center justify-center rounded-full", isMatrimony ? "border border-[#C2A574]/24 bg-[#EFE7DB] shadow-[0_18px_48px_rgba(24,17,13,0.08)]" : "bg-white/10")}>
+            <div className={cn("mb-4 flex h-16 w-16 items-center justify-center rounded-full", isMatrimony ? "border border-[#E83262]/24 bg-[#F2F5FA] shadow-[0_18px_48px_rgba(24,17,13,0.08)]" : "bg-white/10")}>
               <Heart className={cn("w-8 h-8", isMatrimony ? "text-[#444444]" : "text-[#A1A1AA]")} />
             </div>
-            <h3 className={cn("mb-2 font-serif text-3xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#3A2B24]" : "text-white")}>It's a Match</h3>
-            <p className={cn("text-sm", isMatrimony ? "text-[#8B7B70]" : "text-[#A1A1AA]")}>Start a calm, intentional conversation with {chatDisplayName}.</p>
+            <h3 className={cn("mb-2 font-serif text-3xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#26364A]" : "text-white")}>It's a Match</h3>
+            <p className={cn("text-sm", isMatrimony ? "text-[#6F7C8B]" : "text-[#A1A1AA]")}>Start a calm, intentional conversation with {chatDisplayName}.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -1091,7 +1091,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
                         <div className={cn(
                           "px-3 py-1 rounded-full text-xs font-medium",
                           isMatrimony 
-                            ? "border border-[#C2A574]/24 bg-[#ffffff]/84 text-[#8B7B70] shadow-[0_8px_24px_rgba(24,17,13,0.06)]"
+                            ? "border border-[#E83262]/24 bg-[#ffffff]/84 text-[#6F7C8B] shadow-[0_8px_24px_rgba(24,17,13,0.06)]"
                             : "bg-white/10 text-white/80 backdrop-blur-sm"
                         )}>
                           {formatDateSeparator(message.created_at)}
@@ -1144,17 +1144,17 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
                           isSelectMode ? "cursor-pointer" : "cursor-pointer",
                           isOwn
                             ? isMatrimony 
-                              ? "rounded-br-md border-[#C2A574] bg-[linear-gradient(135deg,#C2A574,#C2A574)] text-white"
+                              ? "rounded-br-md border-[#E83262] bg-[linear-gradient(135deg,#E83262,#E83262)] text-white"
                               : "bg-white/20 border-white/30 rounded-br-md"
                             : isMatrimony
-                              ? "rounded-bl-md border-[#C2A574]/24 bg-[#F7F3EE]/92 text-[#3A2B24]"
+                              ? "rounded-bl-md border-[#E83262]/24 bg-[#F6F7FB]/92 text-[#26364A]"
                               : "bg-white/15 border-white/20 rounded-bl-md",
-                          activeMenu?.messageId === message.id && !isSelectMode && (isMatrimony ? "ring-2 ring-[#C2A574]/40" : "ring-2 ring-white/60"),
+                          activeMenu?.messageId === message.id && !isSelectMode && (isMatrimony ? "ring-2 ring-[#E83262]/40" : "ring-2 ring-white/60"),
                           selectedMessages.has(message.id) && "ring-2 ring-primary",
                         )}
                       >
                         {repliedMessage && (
-                          <div className={cn("mb-2 rounded-xl border px-3 py-2 text-xs", isMatrimony ? "border-[#C2A574]/24 bg-[#EFE7DB]" : "border-white/10 bg-white/10")}>
+                          <div className={cn("mb-2 rounded-xl border px-3 py-2 text-xs", isMatrimony ? "border-[#E83262]/24 bg-[#F2F5FA]" : "border-white/10 bg-white/10")}>
                             <p className={cn("text-[11px] uppercase tracking-wide", isMatrimony ? "text-[#444444]" : "text-[#A1A1AA]")}>
                               Reply to {repliedMessage.sender_id === currentUserId ? "You" : chatDisplayName}
                             </p>
@@ -1291,7 +1291,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
           <div className="mb-3 flex justify-start">
             <div className={cn(
               "max-w-[85%] rounded-2xl rounded-bl-md border px-4 py-2 shadow-lg backdrop-blur-sm sm:max-w-[80%]",
-              isMatrimony ? "border-[#C2A574]/24 bg-[#F7F3EE]/92 text-[#3A2B24]" : "bg-white/15 border-white/20 text-white"
+              isMatrimony ? "border-[#E83262]/24 bg-[#F6F7FB]/92 text-[#26364A]" : "bg-white/15 border-white/20 text-white"
             )}>
               <div className="flex items-center space-x-1">
                 <div className="flex space-x-1">
@@ -1310,12 +1310,12 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
       {/* Message Input */}
       <div className={cn(
         "flex-shrink-0 border-t px-4 pb-[calc(0.9rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_55px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:p-4 sm:pb-[calc(1rem+env(safe-area-inset-bottom))]",
-        isMatrimony ? "border-[#C2A574]/24 bg-[#F7F3EE]/88" : "border-white/20 bg-[#14161B]/50"
+        isMatrimony ? "border-[#E83262]/24 bg-[#F6F7FB]/88" : "border-white/20 bg-[#14161B]/50"
       )}>
         {replyPreview && (
           <div className={cn(
             "mb-2 flex items-center justify-between rounded-2xl border px-3 py-2 text-sm",
-            isMatrimony ? "border-[#C2A574]/24 bg-[#EFE7DB] text-[#3A2B24]" : "border-white/10 bg-white/10 text-white"
+            isMatrimony ? "border-[#E83262]/24 bg-[#F2F5FA] text-[#26364A]" : "border-white/10 bg-white/10 text-white"
           )}>
             <div>
               <p className={cn("text-xs uppercase tracking-wide", isMatrimony ? "text-[#444444]" : "text-[#A1A1AA]")}>
@@ -1346,16 +1346,16 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
               }}
               onKeyPress={handleKeyPress}
               className={cn(
-                "h-12 rounded-full border-2 pr-12 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_10px_26px_rgba(24,17,13,0.05)] backdrop-blur-sm transition-colors focus:border-[#C2A574]/50",
+                "h-12 rounded-full border-2 pr-12 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_10px_26px_rgba(24,17,13,0.05)] backdrop-blur-sm transition-colors focus:border-[#E83262]/50",
                 isMatrimony 
-                  ? "border-[#C2A574]/24 bg-white/92 text-[#3A2B24] placeholder:text-[#8B7B70]"
+                  ? "border-[#E83262]/24 bg-white/92 text-[#26364A] placeholder:text-[#6F7C8B]"
                   : "border-white/20 bg-[#14161B] text-white"
               )}
               disabled={uploading}
             />
             <Button
               size="sm"
-              className="absolute right-1.5 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full bg-[linear-gradient(135deg,#C2A574,#C2A574)] p-0 shadow-[0_10px_24px_rgba(194,165,116,0.22)] transition-all duration-200 hover:scale-105 hover:brightness-110 disabled:opacity-50 disabled:hover:scale-100"
+              className="absolute right-1.5 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full bg-[linear-gradient(135deg,#E83262,#E83262)] p-0 shadow-[0_10px_24px_rgba(194,165,116,0.22)] transition-all duration-200 hover:scale-105 hover:brightness-110 disabled:opacity-50 disabled:hover:scale-100"
               onClick={handleSendMessage}
               disabled={!newMessage.trim() || uploading}
             >

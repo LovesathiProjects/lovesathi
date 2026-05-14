@@ -41,10 +41,10 @@ export function AppLayout({
           <button
             type="button"
             aria-label="Open settings"
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-[#C2A574]/30 bg-white/82 shadow-[0_16px_45px_rgba(24,17,13,0.12)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-[#C2A574]"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-[#E83262]/30 bg-white/82 shadow-[0_16px_45px_rgba(24,17,13,0.12)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-[#E83262]"
             onClick={onSettingsClick}
           >
-            <Settings className="h-5 w-5 text-[#3A2B24]" strokeWidth={2.2} />
+            <Settings className="h-5 w-5 text-[#26364A]" strokeWidth={2.2} />
           </button>
         </div>
       )}

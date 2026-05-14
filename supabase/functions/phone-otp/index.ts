@@ -12,6 +12,18 @@ type PhoneVerificationRow = {
   otp_attempts: number | null;
   otp_send_count: number | null;
   otp_send_window_started_at: string | null;
+  otp_provider?: string | null;
+  otp_provider_request_id?: string | null;
+  otp_provider_status?: string | null;
+  otp_provider_response?: string | null;
+  otp_provider_updated_at?: string | null;
+};
+
+type Msg91SendResult = {
+  provider: "msg91";
+  requestId: string | null;
+  status: "accepted";
+  responseText: string;
 };
 
 type FunctionError = {
@@ -165,7 +177,20 @@ async function sendViaMsg91(phone: string, otp: string) {
       throw functionError(`MSG91 rejected the OTP request: ${responseText || response.statusText}`, 502);
     }
 
-    return;
+    let requestId: string | null = null;
+    try {
+      const parsed = JSON.parse(responseText);
+      requestId = String(parsed.request_id || parsed.requestId || parsed.message_uuid || "") || null;
+    } catch {
+      requestId = null;
+    }
+
+    return {
+      provider: "msg91",
+      requestId,
+      status: "accepted",
+      responseText: responseText.slice(0, 1200),
+    } satisfies Msg91SendResult;
   }
 
   const messageTemplate =
@@ -187,6 +212,21 @@ async function sendViaMsg91(phone: string, otp: string) {
   if (!response.ok || /"type"\s*:\s*"error"/i.test(responseText)) {
     throw functionError(`MSG91 rejected the OTP request: ${responseText || response.statusText}`, 502);
   }
+
+  let requestId: string | null = null;
+  try {
+    const parsed = JSON.parse(responseText);
+    requestId = String(parsed.request_id || parsed.requestId || parsed.message || "") || null;
+  } catch {
+    requestId = null;
+  }
+
+  return {
+    provider: "msg91",
+    requestId,
+    status: "accepted",
+    responseText: responseText.slice(0, 1200),
+  } satisfies Msg91SendResult;
 }
 
 async function sendPhoneOtp(
@@ -241,7 +281,33 @@ async function sendPhoneOtp(
 
   if (upsertError) throw functionError(upsertError.message, 500);
 
-  await sendViaMsg91(phone, otp);
+  try {
+    const sendResult = await sendViaMsg91(phone, otp);
+    await serviceClient
+      .from("phone_verifications")
+      .update({
+        otp_provider: sendResult.provider,
+        otp_provider_request_id: sendResult.requestId,
+        otp_provider_status: sendResult.status,
+        otp_provider_response: sendResult.responseText,
+        otp_provider_updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id);
+  } catch (error) {
+    await serviceClient
+      .from("phone_verifications")
+      .update({
+        otp_provider: "msg91",
+        otp_provider_status: "failed",
+        otp_provider_response: error instanceof Error ? error.message.slice(0, 1200) : String((error as FunctionError).message || error).slice(0, 1200),
+        otp_provider_updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id);
+    throw error;
+  }
+
   return { phone, alreadyVerified: false };
 }
 

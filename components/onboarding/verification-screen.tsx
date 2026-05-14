@@ -242,9 +242,9 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
             key={stepNum}
             className={`h-2 rounded-full transition-all duration-300 ${
               stepNum === currentStepIndex
-                ? "w-8 bg-[#C2A574]"
+                ? "w-8 bg-[#E83262]"
                 : stepNum < currentStepIndex
-                ? "w-2 bg-[#C2A574]"
+                ? "w-2 bg-[#E83262]"
                 : "w-2 bg-black/20"
             }`}
           />
@@ -302,7 +302,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                       onChange={(e) => setDob(e.target.value)}
                       min="1950-01-01"
                       max={minimumBirthDate}
-                      className="block h-14 w-full max-w-full min-w-0 appearance-none rounded-2xl border-black/20 text-base text-[#111] focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20"
+                      className="block h-14 w-full max-w-full min-w-0 appearance-none rounded-2xl border-black/20 text-base text-[#111] focus:border-[#E83262] focus:ring-2 focus:ring-[#E83262]/20"
                     />
                   </div>
                 </div>
@@ -314,8 +314,8 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                 )}
 
                 {underageMessage && (
-                  <div className="p-4 bg-[#C2A574]/10 rounded-xl">
-                    <p className="text-sm text-[#C2A574] text-center font-medium">{underageMessage}</p>
+                  <div className="p-4 bg-[#E83262]/10 rounded-xl">
+                    <p className="text-sm text-[#E83262] text-center font-medium">{underageMessage}</p>
                   </div>
                 )}
               </div>
@@ -328,7 +328,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                   e.stopPropagation()
                   handleProfileContinue()
                 }}
-                className="h-14 w-full rounded-full bg-[#C2A574] text-base font-semibold text-[#3A2B24] shadow-sm transition-colors hover:bg-[#B9975E] disabled:bg-[#d08190] disabled:text-white"
+                className="h-14 w-full rounded-full bg-[#E83262] text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#C3264E] disabled:bg-[#d08190] disabled:text-white"
                 disabled={isLoading || !dob}
                 type="button"
               >
@@ -353,7 +353,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                   onClick={() => setGender("male")}
                   className={`w-full h-14 text-base font-semibold rounded-xl border-2 transition-all ${
                     gender === "male"
-                      ? "bg-[#C2A574] text-[#3A2B24] border-[#C2A574]"
+                      ? "bg-[#E83262] text-white border-[#E83262]"
                       : "bg-white text-[#111] border-black/20 hover:border-black/40"
                   }`}
                 >
@@ -364,7 +364,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                   onClick={() => setGender("female")}
                   className={`w-full h-14 text-base font-semibold rounded-xl border-2 transition-all ${
                     gender === "female"
-                      ? "bg-[#C2A574] text-[#3A2B24] border-[#C2A574]"
+                      ? "bg-[#E83262] text-white border-[#E83262]"
                       : "bg-white text-[#111] border-black/20 hover:border-black/40"
                   }`}
                 >
@@ -375,7 +375,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                   onClick={() => setGender("prefer_not_to_say")}
                   className={`w-full h-14 text-base font-semibold rounded-xl border-2 transition-all ${
                     gender === "prefer_not_to_say"
-                      ? "bg-[#C2A574] text-[#3A2B24] border-[#C2A574]"
+                      ? "bg-[#E83262] text-white border-[#E83262]"
                       : "bg-white text-[#111] border-black/20 hover:border-black/40"
                   }`}
                 >
@@ -386,7 +386,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
 
             <div className="mt-auto pt-8 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
               <Button
-                className="h-14 w-full rounded-full bg-[#C2A574] text-base font-semibold text-[#3A2B24] shadow-sm transition-colors hover:bg-[#B9975E] disabled:bg-[#d08190] disabled:text-white"
+                className="h-14 w-full rounded-full bg-[#E83262] text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#C3264E] disabled:bg-[#d08190] disabled:text-white"
                 onClick={async () => {
                   if (gender === null) return
                   
@@ -430,7 +430,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
 
               <div className="rounded-3xl bg-black/[0.045] p-4">
                 <div className="flex items-start gap-3">
-                  <Shield className="w-5 h-5 text-[#C2A574] mt-0.5 flex-shrink-0" />
+                  <Shield className="w-5 h-5 text-[#E83262] mt-0.5 flex-shrink-0" />
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-[#111]">Why verify your ID?</p>
                     <ul className="list-disc space-y-1 pl-4 text-sm text-black/60">
@@ -469,10 +469,10 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                       <span className="text-sm font-medium text-[#111]">Upload ID</span>
                     </button>
                   ) : (
-                    <div className="relative h-28 overflow-hidden rounded-2xl border-2 border-[#C2A574] bg-[#C2A574]/5 p-3 sm:h-32">
+                    <div className="relative h-28 overflow-hidden rounded-2xl border-2 border-[#E83262] bg-[#E83262]/5 p-3 sm:h-32">
                       <button
                         onClick={handleRemoveFile}
-                        className="absolute top-2 right-2 z-10 h-6 w-6 rounded-full bg-[#C2A574] hover:bg-[#B9975E] text-[#3A2B24] flex items-center justify-center transition-colors"
+                        className="absolute top-2 right-2 z-10 h-6 w-6 rounded-full bg-[#E83262] hover:bg-[#C3264E] text-white flex items-center justify-center transition-colors"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -482,7 +482,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                             <img src={filePreview} alt="ID Preview" className="w-full h-full object-cover" />
                           </div>
                         ) : (
-                          <FileText className="w-8 h-8 text-[#C2A574]" />
+                          <FileText className="w-8 h-8 text-[#E83262]" />
                         )}
                         <p className="text-xs font-medium text-[#111] truncate w-full text-center px-2">
                           {uploadedFile.name}
@@ -501,10 +501,10 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
                       <span className="text-sm font-medium text-[#111]">Take Photo</span>
                     </button>
                   ) : (
-                    <div className="relative h-28 overflow-hidden rounded-2xl border-2 border-[#C2A574] bg-[#C2A574]/5 p-3 sm:h-32">
+                    <div className="relative h-28 overflow-hidden rounded-2xl border-2 border-[#E83262] bg-[#E83262]/5 p-3 sm:h-32">
                       <button
                         onClick={handleRemoveFacePhoto}
-                        className="absolute top-2 right-2 z-10 h-6 w-6 rounded-full bg-[#C2A574] hover:bg-[#B9975E] text-[#3A2B24] flex items-center justify-center transition-colors"
+                        className="absolute top-2 right-2 z-10 h-6 w-6 rounded-full bg-[#E83262] hover:bg-[#C3264E] text-white flex items-center justify-center transition-colors"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -527,7 +527,7 @@ export function VerificationScreen({ onComplete, onSkip }: VerificationScreenPro
             <div className="mt-auto space-y-3 pt-8 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
               <Button
                 onClick={handleComplete}
-                className="h-14 w-full rounded-full bg-[#C2A574] text-base font-semibold text-[#3A2B24] shadow-sm transition-colors hover:bg-[#B9975E] disabled:bg-[#d08190] disabled:text-white"
+                className="h-14 w-full rounded-full bg-[#E83262] text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#C3264E] disabled:bg-[#d08190] disabled:text-white"
                 disabled={isLoading || !uploadedFile || !capturedFacePhoto}
               >
                 {isLoading ? "Uploading & Saving..." : "Verify ID"}

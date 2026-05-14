@@ -103,7 +103,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
             </Button>
           )}
           {!onBack && <div className="w-10 sm:w-16"></div>}
-          <h1 className={cn("min-w-0 truncate text-center font-serif text-2xl font-bold tracking-[-0.05em] sm:text-3xl", isMatrimony ? "text-[#3A2B24]" : "text-white")}>Lovesathi Premium</h1>
+          <h1 className={cn("min-w-0 truncate text-center font-serif text-2xl font-bold tracking-[-0.05em] sm:text-3xl", isMatrimony ? "text-[#26364A]" : "text-white")}>Lovesathi Premium</h1>
           <div className="w-10 sm:w-16"></div>
         </div>
       </div>
@@ -111,7 +111,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
       <div className="overflow-x-hidden overflow-y-auto">
         {/* Hero Section */}
         <div className={cn(
-          "w-full overflow-hidden bg-gradient-to-br from-[#3A2B24] via-[#5f0012] to-[#C2A574] px-4 py-8 text-[#ffffff] shadow-[0_26px_80px_rgba(24,17,13,0.28)] sm:p-8",
+          "w-full overflow-hidden bg-gradient-to-br from-[#26364A] via-[#5f0012] to-[#E83262] px-4 py-8 text-[#ffffff] shadow-[0_26px_80px_rgba(24,17,13,0.28)] sm:p-8",
           isMatrimony ? "" : "glass-apple"
         )}>
           <div className="mx-auto max-w-3xl space-y-4 text-center">
@@ -119,19 +119,19 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
               <Crown className="h-12 w-12 fill-current sm:h-16 sm:w-16" />
             </div>
             <div>
-              <p className="luxe-kicker mb-3 text-[#C2A574]">premium matrimony</p>
+              <p className="luxe-kicker mb-3 text-[#E83262]">premium matrimony</p>
               <h1 className="mx-auto max-w-[18rem] font-serif text-4xl font-bold leading-[0.96] tracking-[-0.05em] text-[#ffffff] sm:max-w-2xl sm:text-5xl">
                 A more intentional path to the right family.
               </h1>
               <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-[#f0d6a4] sm:text-lg">
                 Unlock refined discovery, richer signals, and priority trust features without turning matrimony into noise.
               </p>
-              <Badge className="mx-auto mt-4 max-w-full whitespace-normal rounded-full border border-[#C2A574]/40 bg-[#ffffff]/14 px-4 py-2 text-center text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#fff7df] sm:text-sm sm:tracking-[0.18em]">
+              <Badge className="mx-auto mt-4 max-w-full whitespace-normal rounded-full border border-[#E83262]/40 bg-[#ffffff]/14 px-4 py-2 text-center text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#fff7df] sm:text-sm sm:tracking-[0.18em]">
                 Every plan includes 70% off forever
               </Badge>
               {entitlement?.isPremium && activePlan && (
-                <div className="mx-auto mt-5 max-w-xl rounded-[1.4rem] border border-[#C2A574]/30 bg-white/12 p-4 text-left backdrop-blur-xl">
-                  <p className="luxe-kicker text-[#C2A574]">{entitlement.paymentDue ? "renewal payment due" : "currently active"}</p>
+                <div className="mx-auto mt-5 max-w-xl rounded-[1.4rem] border border-[#E83262]/30 bg-white/12 p-4 text-left backdrop-blur-xl">
+                  <p className="luxe-kicker text-[#E83262]">{entitlement.paymentDue ? "renewal payment due" : "currently active"}</p>
                   <p className="mt-1 font-serif text-2xl font-bold tracking-[-0.04em] text-white">{activePlan.name}</p>
                   <p className="mt-1 text-sm text-[#f2dfbd]">
                     {entitlement.paymentDue
@@ -148,16 +148,16 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
         {/* Features Section */}
         <div className={cn("mx-auto w-full max-w-7xl space-y-6 px-5 py-6 sm:p-6", isMatrimony ? "bg-white/0" : "")}>
           <div className="space-y-4">
-            <h2 className={cn("text-center font-serif text-4xl font-bold tracking-[-0.05em] sm:text-5xl", isMatrimony ? "text-[#3A2B24]" : "text-white")}>Premium Features</h2>
+            <h2 className={cn("text-center font-serif text-4xl font-bold tracking-[-0.05em] sm:text-5xl", isMatrimony ? "text-[#26364A]" : "text-white")}>Premium Features</h2>
             <div className="grid min-w-0 gap-4">
               {premiumFeatures.map((feature, index) => (
                 <div key={feature.title}>
                   <div className="flex min-w-0 items-start gap-4">
                     <div className={cn(
                       "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-                      isMatrimony ? "bg-[#C2A574]/10" : "bg-[#C2A574]/10"
+                      isMatrimony ? "bg-[#E83262]/10" : "bg-[#E83262]/10"
                     )}>
-                      <feature.icon className="w-5 h-5" style={{ color: '#C2A574' }} />
+                      <feature.icon className="w-5 h-5" style={{ color: '#E83262' }} />
                     </div>
                     <div className="min-w-0 flex-1 space-y-1">
                       <h3 className={cn("font-semibold", isMatrimony ? "text-black" : "text-white")}>{feature.title}</h3>
@@ -177,9 +177,9 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
           {/* Plans Section */}
           <div className="space-y-4">
             <div className="text-center">
-              <p className="luxe-kicker text-[0.68rem] text-[#C2A574]">launch offer</p>
-              <h2 className={cn("font-serif text-4xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#3A2B24]" : "text-white")}>Choose Your Plan</h2>
-              <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-[#8B7B70]">
+              <p className="luxe-kicker text-[0.68rem] text-[#E83262]">launch offer</p>
+              <h2 className={cn("font-serif text-4xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#26364A]" : "text-white")}>Choose Your Plan</h2>
+              <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-[#6F7C8B]">
                 The 70% launch discount is locked forever for every tier. Upgrade later if your search needs more contact reveals, shortlist capacity, or concierge support.
               </p>
             </div>
@@ -191,17 +191,17 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
                     "cursor-pointer transition-all h-full flex flex-col border",
                     isMatrimony
                       ? selectedPlan === plan.id
-                        ? "luxe-card ring-2 ring-[#C2A574] border-[#C2A574]"
-                        : "luxe-card border-[#C2A574]/24 hover:border-[#C2A574]/50"
+                        ? "luxe-card ring-2 ring-[#E83262] border-[#E83262]"
+                        : "luxe-card border-[#E83262]/24 hover:border-[#E83262]/50"
                       : selectedPlan === plan.id
-                        ? "ring-2 ring-[#C2A574] border-[#C2A574] bg-[#14161B]/50"
-                        : "border-white/20 bg-[#14161B]/50 hover:border-[#C2A574]/50",
+                        ? "ring-2 ring-[#E83262] border-[#E83262] bg-[#14161B]/50"
+                        : "border-white/20 bg-[#14161B]/50 hover:border-[#E83262]/50",
                     plan.popular || plan.id === "heritage" ? "relative" : ""
                   )}
                   onClick={() => setSelectedPlan(plan.id)}
                 >
                   {plan.popular && (
-                    <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-[#C2A574] text-[#3A2B24]">
+                    <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-[#E83262] text-white">
                       Most Popular
                     </Badge>
                   )}
@@ -222,7 +222,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
                         {plan.originalPriceLabel && (
                           <div className="mt-1 flex flex-wrap items-center gap-2">
                             <div className={cn("text-sm line-through", isMatrimony ? "text-[#666666]" : "text-[#A1A1AA]")}>{plan.originalPriceLabel}</div>
-                            <Badge variant="secondary" className="text-xs bg-[#C2A574]/10 text-[#C2A574] border-[#C2A574]/20">
+                            <Badge variant="secondary" className="text-xs bg-[#E83262]/10 text-[#E83262] border-[#E83262]/20">
                               {plan.discountLabel}
                             </Badge>
                           </div>
@@ -235,21 +235,21 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
                     <div className="space-y-2 flex-1">
                       {plan.features.map((feature) => (
                         <div key={feature} className="flex items-center space-x-2">
-                          <Check className="w-4 h-4 flex-shrink-0" style={{ color: '#C2A574' }} />
+                          <Check className="w-4 h-4 flex-shrink-0" style={{ color: '#E83262' }} />
                           <span className={cn("text-sm", isMatrimony ? "text-black" : "text-white")}>{feature}</span>
                         </div>
                       ))}
                       {plan.concierge && (
-                        <div className="mt-3 rounded-2xl border border-[#C2A574]/30 bg-[#fffaf0] p-3">
+                        <div className="mt-3 rounded-2xl border border-[#E83262]/30 bg-[#fffaf0] p-3">
                           <div className="mb-2 flex items-center gap-2">
-                            <HeartHandshake className="h-4 w-4 text-[#C2A574]" />
-                            <p className="text-sm font-black text-[#3A2B24]">{plan.concierge.title}</p>
+                            <HeartHandshake className="h-4 w-4 text-[#E83262]" />
+                            <p className="text-sm font-black text-[#26364A]">{plan.concierge.title}</p>
                           </div>
-                          <p className="text-xs leading-5 text-[#8B7B70]">{plan.concierge.description}</p>
+                          <p className="text-xs leading-5 text-[#6F7C8B]">{plan.concierge.description}</p>
                           <div className="mt-3 space-y-2">
                             {plan.concierge.highlights.map((highlight) => (
-                              <p key={highlight} className="text-xs leading-5 text-[#3A2B24]">
-                                <Check className="mr-1 inline h-3.5 w-3.5 text-[#C2A574]" />
+                              <p key={highlight} className="text-xs leading-5 text-[#26364A]">
+                                <Check className="mr-1 inline h-3.5 w-3.5 text-[#E83262]" />
                                 {highlight}
                               </p>
                             ))}
@@ -263,7 +263,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
                           className={cn(
                             "w-full",
                             selectedPlan === plan.id
-                              ? "bg-[#C2A574] hover:bg-[#B9975E] text-[#3A2B24] border-[#C2A574]"
+                              ? "bg-[#E83262] hover:bg-[#C3264E] text-white border-[#E83262]"
                               : isMatrimony
                                 ? "bg-white border-[#E5E5E5] hover:bg-gray-50 text-black"
                                 : "bg-white/10 border-white/20 hover:bg-white/20 text-white"
@@ -295,7 +295,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
           <div className="space-y-4">
             <Button
               size="lg"
-              className="w-full bg-[#C2A574] hover:bg-[#B9975E] text-[#3A2B24] border-[#C2A574]"
+              className="w-full bg-[#E83262] hover:bg-[#C3264E] text-white border-[#E83262]"
               onClick={() => onSubscribe?.(selectedPlan)}
             >
               <Crown className="w-5 h-5 mr-2" style={{ color: '#FFFFFF' }} />

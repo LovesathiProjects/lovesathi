@@ -122,36 +122,36 @@ export default function ResetPasswordPage() {
   return (
     <div className="luxe-light-page flex min-h-screen flex-col overflow-x-hidden px-4 py-5 sm:px-6">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-full border border-[#482b1a]/10 bg-[#ffffff]/74 px-4 py-3 shadow-sm backdrop-blur-xl">
-        <Button variant="ghost" size="sm" className="rounded-full text-[#3A2B24]" onClick={() => router.push("/auth")}>
+        <Button variant="ghost" size="sm" className="rounded-full text-[#26364A]" onClick={() => router.push("/auth")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-        <h2 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#3A2B24]">Set new password</h2>
+        <h2 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#26364A]">Set new password</h2>
         <div className="w-16" />
       </div>
 
       <div className="flex flex-1 items-center justify-center py-10">
         <div className="luxe-card mx-auto w-full max-w-lg space-y-6 rounded-[2rem] p-6 sm:p-8">
           <div className="space-y-2 text-center">
-            <p className="luxe-kicker text-[#C2A574]">Secure recovery</p>
-            <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#3A2B24] sm:text-5xl">
+            <p className="luxe-kicker text-[#E83262]">Secure recovery</p>
+            <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#26364A] sm:text-5xl">
               Set new password
             </h1>
-            <p className="text-base text-[#8B7B70]">
+            <p className="text-base text-[#6F7C8B]">
               Choose a new password for your Lovesathi account.
             </p>
           </div>
 
           {status === "checking" && (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-[1.5rem] border border-[#C2A574]/24 bg-white/62 p-6 text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-[#C2A574]" />
-              <p className="text-sm font-semibold text-[#8B7B70]">Opening your secure Supabase recovery session...</p>
+            <div className="flex flex-col items-center justify-center gap-4 rounded-[1.5rem] border border-[#E83262]/24 bg-white/62 p-6 text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-[#E83262]" />
+              <p className="text-sm font-semibold text-[#6F7C8B]">Opening your secure Supabase recovery session...</p>
             </div>
           )}
 
           {status === "invalid" && (
             <div className="space-y-5 pt-2 text-center">
-              <div className="rounded-[1.5rem] border border-[#C2A574]/20 bg-[#C2A574]/10 p-4 text-sm font-semibold leading-6 text-[#C2A574]">
+              <div className="rounded-[1.5rem] border border-[#E83262]/20 bg-[#E83262]/10 p-4 text-sm font-semibold leading-6 text-[#E83262]">
                 This reset link is expired or invalid. Please request a fresh password reset email.
               </div>
               <Button asChild className="luxe-button h-12 w-full rounded-2xl font-bold">
@@ -183,7 +183,7 @@ export default function ResetPasswordPage() {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-1 top-1 h-10 rounded-xl px-3 text-[#8B7B70] hover:bg-transparent"
+                    className="absolute right-1 top-1 h-10 rounded-xl px-3 text-[#6F7C8B] hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -208,7 +208,7 @@ export default function ResetPasswordPage() {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-1 top-1 h-10 rounded-xl px-3 text-[#8B7B70] hover:bg-transparent"
+                    className="absolute right-1 top-1 h-10 rounded-xl px-3 text-[#6F7C8B] hover:bg-transparent"
                     onClick={() => setShowConfirm(!showConfirm)}
                   >
                     {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -221,7 +221,7 @@ export default function ResetPasswordPage() {
               </Button>
 
               <Separator />
-              <Button asChild variant="link" className="w-full font-bold text-[#C2A574]">
+              <Button asChild variant="link" className="w-full font-bold text-[#E83262]">
                 <Link href="/auth">Back to login</Link>
               </Button>
             </form>

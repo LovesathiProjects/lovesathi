@@ -82,8 +82,8 @@ export function PhoneNumberInput({
       {label && <Label htmlFor={id}>{label}</Label>}
       <div
         className={cn(
-          "flex h-12 overflow-hidden rounded-2xl border border-[#482b1a]/20 bg-[#ffffff] shadow-sm transition focus-within:border-[#C2A574]/60 focus-within:ring-2 focus-within:ring-[#C2A574]/18",
-          (disabled || readOnly) && "bg-[#F7F3EE] text-[#8B7B70]",
+          "flex h-12 overflow-hidden rounded-2xl border border-[#482b1a]/20 bg-[#ffffff] shadow-sm transition focus-within:border-[#E83262]/60 focus-within:ring-2 focus-within:ring-[#E83262]/18",
+          (disabled || readOnly) && "bg-[#F6F7FB] text-[#6F7C8B]",
         )}
       >
         <select
@@ -93,7 +93,7 @@ export function PhoneNumberInput({
           onChange={(event) => handleCountryChange(event.target.value)}
           onBlur={onBlur}
           disabled={disabled || readOnly}
-          className="h-full w-[8.2rem] shrink-0 border-0 border-r border-[#482b1a]/12 bg-[#F7F3EE] px-3 text-sm font-bold text-[#3A2B24] outline-none disabled:cursor-not-allowed disabled:text-[#8B7B70]"
+          className="h-full w-[8.2rem] shrink-0 border-0 border-r border-[#482b1a]/12 bg-[#F6F7FB] px-3 text-sm font-bold text-[#26364A] outline-none disabled:cursor-not-allowed disabled:text-[#6F7C8B]"
         >
           {PHONE_COUNTRY_CODES.map((option) => (
             <option key={option.iso2} value={option.iso2}>
@@ -120,7 +120,7 @@ export function PhoneNumberInput({
         />
       </div>
       {helperText !== false && (
-        <p className="text-xs leading-5 text-[#8B7B70]">
+        <p className="text-xs leading-5 text-[#6F7C8B]">
           {helperText ?? (
             <>
               We will send OTP to {selectedCountry.dialCode}

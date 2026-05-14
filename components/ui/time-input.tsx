@@ -37,7 +37,7 @@ export function TimeInput({ value = "", onChange, className, onBlur, ...props }:
         onBlur?.(event)
       }}
       className={cn(
-        "block h-12 w-full max-w-full min-w-0 appearance-none rounded-xl border-black/20 text-base text-[#111] [inline-size:100%] [min-inline-size:0] focus:border-[#C2A574] focus:ring-2 focus:ring-[#C2A574]/20",
+        "block h-12 w-full max-w-full min-w-0 appearance-none rounded-xl border-black/20 text-base text-[#111] [inline-size:100%] [min-inline-size:0] focus:border-[#E83262] focus:ring-2 focus:ring-[#E83262]/20",
         className,
       )}
     />

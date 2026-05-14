@@ -111,36 +111,36 @@ export function DiscountOfferDialog({ onSubscribe }: { onSubscribe: () => void }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="overflow-hidden rounded-[2rem] border-[#C2A574]/40 bg-[#FBF8F3] p-0 shadow-[0_30px_100px_rgba(24,17,13,0.28)] sm:max-w-xl">
+      <DialogContent className="overflow-hidden rounded-[2rem] border-[#E83262]/40 bg-[#FFFFFF] p-0 shadow-[0_30px_100px_rgba(24,17,13,0.28)] sm:max-w-xl">
         <div className="relative p-6 sm:p-8">
-          <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#C2A574]/14 blur-2xl" />
-          <div className="absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-[#C2A574]/30 blur-2xl" />
+          <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#E83262]/14 blur-2xl" />
+          <div className="absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-[#E83262]/30 blur-2xl" />
           <div className="relative space-y-5">
             <div className="flex items-start justify-between gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#C2A574] text-[#3A2B24] shadow-[0_18px_45px_rgba(194,165,116,0.25)]">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E83262] text-white shadow-[0_18px_45px_rgba(194,165,116,0.25)]">
                 <Crown className="h-7 w-7" />
               </div>
-              <Badge className="border border-[#C2A574]/20 bg-[#C2A574]/10 px-3 py-1 text-[#C2A574]">
+              <Badge className="border border-[#E83262]/20 bg-[#E83262]/10 px-3 py-1 text-[#E83262]">
                 70% off forever
               </Badge>
             </div>
 
             <DialogHeader className="text-left">
-              <p className="luxe-kicker text-[0.68rem] text-[#C2A574]">profile complete reward</p>
-              <DialogTitle className="font-serif text-4xl font-bold leading-[0.95] tracking-[-0.06em] text-[#3A2B24] sm:text-5xl">
+              <p className="luxe-kicker text-[0.68rem] text-[#E83262]">profile complete reward</p>
+              <DialogTitle className="font-serif text-4xl font-bold leading-[0.95] tracking-[-0.06em] text-[#26364A] sm:text-5xl">
                 {isFirstOffer ? "You are lucky. Your 70% discount is live." : "Your 70% Lovesathi offer is back."}
               </DialogTitle>
-              <DialogDescription className="text-base leading-7 text-[#8B7B70]">
+              <DialogDescription className="text-base leading-7 text-[#6F7C8B]">
                 You have {remainingLabel} to avail this private launch discount.
               </DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-3 sm:grid-cols-3">
               {["Basic", "Essential", "Signature"].map((plan) => (
-                <div key={plan} className="rounded-2xl border border-[#C2A574]/30 bg-white/70 p-3">
-                  <Sparkles className="mb-2 h-4 w-4 text-[#C2A574]" />
-                  <p className="text-sm font-black text-[#3A2B24]">{plan}</p>
-                  <p className="text-xs leading-5 text-[#8B7B70]">70% forever pricing</p>
+                <div key={plan} className="rounded-2xl border border-[#E83262]/30 bg-white/70 p-3">
+                  <Sparkles className="mb-2 h-4 w-4 text-[#E83262]" />
+                  <p className="text-sm font-black text-[#26364A]">{plan}</p>
+                  <p className="text-xs leading-5 text-[#6F7C8B]">70% forever pricing</p>
                 </div>
               ))}
             </div>
@@ -206,15 +206,15 @@ export function DiscountOfferTimer({ onSubscribe }: { onSubscribe: () => void })
     <button
       type="button"
       onClick={onSubscribe}
-      className="fixed left-1/2 top-[calc(5.4rem+env(safe-area-inset-top))] z-40 -translate-x-1/2 rounded-full border border-[#C2A574]/45 bg-[#FBF8F3]/88 px-4 py-2 text-left shadow-[0_18px_55px_rgba(58,43,36,0.16)] backdrop-blur-2xl transition hover:-translate-y-0.5 hover:border-[#C2A574] sm:top-[calc(4.9rem+env(safe-area-inset-top))]"
+      className="fixed left-1/2 top-[calc(5.4rem+env(safe-area-inset-top))] z-40 -translate-x-1/2 rounded-full border border-[#E83262]/45 bg-[#FFFFFF]/88 px-4 py-2 text-left shadow-[0_18px_55px_rgba(58,43,36,0.16)] backdrop-blur-2xl transition hover:-translate-y-0.5 hover:border-[#E83262] sm:top-[calc(4.9rem+env(safe-area-inset-top))]"
     >
       <span className="flex items-center gap-3">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#C2A574] text-[#3A2B24]">
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E83262] text-white">
           <Clock className="h-4 w-4" />
         </span>
         <span>
-          <span className="block luxe-kicker text-[0.55rem] text-[#C2A574]">70% offer expires in</span>
-          <span className="block font-mono text-sm font-black tracking-[0.12em] text-[#3A2B24]">{remainingLabel}</span>
+          <span className="block luxe-kicker text-[0.55rem] text-[#E83262]">70% offer expires in</span>
+          <span className="block font-mono text-sm font-black tracking-[0.12em] text-[#26364A]">{remainingLabel}</span>
         </span>
       </span>
     </button>
