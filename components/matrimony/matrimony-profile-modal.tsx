@@ -455,14 +455,17 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
 
               {onSuperLike && (
                 <Button
+                  type="button"
                   size="lg"
-                  className="h-16 w-16 rounded-[1.45rem] border border-[#E83262]/40 bg-[linear-gradient(145deg,#080706,#18122a_48%,#050505)] p-[3px] shadow-[0_14px_34px_rgba(0,0,0,0.24),0_0_24px_rgba(128,88,255,0.20)] hover:bg-black"
+                  aria-label="Send Super Like"
+                  className="group relative h-16 w-16 overflow-hidden rounded-full border border-[#B9A7FF]/45 bg-[radial-gradient(circle_at_35%_22%,rgba(255,255,255,0.26),transparent_24%),linear-gradient(145deg,#050505,#171127_54%,#050505)] p-0 shadow-[0_16px_38px_rgba(20,13,42,0.28),0_0_28px_rgba(110,84,255,0.24)] transition hover:scale-105 hover:border-[#E83262]/55 hover:shadow-[0_18px_42px_rgba(20,13,42,0.34),0_0_34px_rgba(232,50,98,0.22)]"
                   onClick={onSuperLike}
                 >
+                  <span className="pointer-events-none absolute inset-[5px] rounded-full border border-white/10 bg-black/35" />
                   <img
                     src={SUPER_LIKE_ICON_SRC}
                     alt="Super Like"
-                    className="h-full w-full scale-[1.06] rounded-[1.2rem] object-cover"
+                    className="relative z-10 h-full w-full object-contain p-2.5 drop-shadow-[0_0_10px_rgba(168,134,255,0.65)] transition duration-300 group-hover:scale-110"
                     draggable={false}
                   />
                 </Button>

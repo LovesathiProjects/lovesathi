@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
-import { ArrowLeft, Bell, ChevronRight, EyeOff, LockKeyhole, LogOut, ShieldCheck } from "lucide-react"
+import { AlertTriangle, ArrowLeft, Bell, ChevronRight, EyeOff, LockKeyhole, LogOut, ShieldCheck, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch"
 import { supabase } from "@/lib/supabaseClient"
 import { useToast } from "@/hooks/use-toast"
 
-type SettingsPanel = "home" | "privacy" | "change_password" | "hide_profile" | "notifications"
+type SettingsPanel = "home" | "privacy" | "change_password" | "hide_profile" | "notifications" | "delete_account"
 type SettingsNavigateHandler = (id: string) => void
 
 interface AppSettingsProps {
@@ -51,6 +51,7 @@ const accountRows: Array<{ id: SettingsPanel; label: string; icon: React.Element
   { id: "change_password", label: "Change Password", icon: LockKeyhole },
   { id: "hide_profile", label: "Hide Profile", icon: EyeOff },
   { id: "notifications", label: "Notifications & Alert Manager", icon: Bell },
+  { id: "delete_account", label: "Delete Account", icon: Trash2 },
 ]
 
 function SettingToggle({
@@ -86,6 +87,8 @@ export function AppSettings({ onNavigate, onLogout, onBack }: AppSettingsProps) 
   const [notifications, setNotifications] = useState<NotificationSettings>(defaultNotifications)
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [deleteConfirm, setDeleteConfirm] = useState("")
+  const [deleting, setDeleting] = useState(false)
   const { toast } = useToast()
 
   const headerCopy = useMemo(() => {
@@ -93,6 +96,7 @@ export function AppSettings({ onNavigate, onLogout, onBack }: AppSettingsProps) 
     if (panel === "change_password") return ["Change Password", "Update your Lovesathi login password securely."]
     if (panel === "hide_profile") return ["Hide Profile", "Pause discovery without deleting your account or profile."]
     if (panel === "notifications") return ["Notifications & Alert Manager", "Choose which important Lovesathi alerts you want."]
+    if (panel === "delete_account") return ["Delete Account", "Permanently remove your account, profile, photos, and access."]
     return ["Account & Settings", "Update these details to get suitable matches"]
   }, [panel])
 
@@ -238,6 +242,43 @@ export function AppSettings({ onNavigate, onLogout, onBack }: AppSettingsProps) 
     }
   }
 
+  async function handleDeleteAccount() {
+    if (deleteConfirm.trim().toUpperCase() !== "DELETE") {
+      toast({ title: "Confirmation required", description: "Type DELETE to permanently delete your account.", variant: "destructive" })
+      return
+    }
+
+    setDeleting(true)
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        throw new Error("Please sign in again before deleting your account.")
+      }
+
+      const response = await fetch("/api/auth/delete-account", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      })
+      const result = await response.json().catch(() => null)
+
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.error || "Account deletion failed.")
+      }
+
+      await supabase.auth.signOut()
+      toast({ title: "Account deleted", description: "Your Lovesathi account has been permanently removed." })
+      window.location.assign("/auth")
+    } catch (error: any) {
+      toast({ title: "Could not delete account", description: error.message || "Please try again.", variant: "destructive" })
+      setDeleting(false)
+    }
+  }
+
   const goBack = () => {
     if (panel !== "home") {
       setPanel("home")
@@ -365,6 +406,43 @@ export function AppSettings({ onNavigate, onLogout, onBack }: AppSettingsProps) 
                   {profileHidden ? "Unhide Profile" : "Hide Profile"}
                 </Button>
               </div>
+            </div>
+          ) : panel === "delete_account" ? (
+            <div className="space-y-5 p-5">
+              <div className="rounded-[1.2rem] border border-red-200 bg-red-50 p-5">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+                  <div>
+                    <p className="text-lg font-black text-red-900">Permanent account deletion</p>
+                    <p className="mt-2 text-sm font-semibold leading-6 text-red-800/80">
+                      This removes your login, profile, discovery visibility, and uploaded files where technically possible.
+                      This cannot be undone.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="delete-confirm">Type DELETE to confirm</Label>
+                <Input
+                  id="delete-confirm"
+                  value={deleteConfirm}
+                  onChange={(event) => setDeleteConfirm(event.target.value)}
+                  placeholder="DELETE"
+                  autoComplete="off"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="destructive"
+                className="h-12 w-full rounded-xl font-black"
+                disabled={deleting || deleteConfirm.trim().toUpperCase() !== "DELETE"}
+                onClick={handleDeleteAccount}
+              >
+                {deleting ? "Deleting Account..." : "Delete Account Permanently"}
+              </Button>
+              <p className="text-center text-xs font-semibold leading-5 text-[#6F7C8B]">
+                If you only want a break, use Hide Profile instead so matches and chats stay safe.
+              </p>
             </div>
           ) : (
             <>
