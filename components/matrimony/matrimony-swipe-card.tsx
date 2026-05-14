@@ -13,6 +13,7 @@ import { getMatrimonyProfile, type MatrimonyProfileFull } from "@/lib/matrimonyS
 import { ReportDialog } from "@/components/chat/report-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { formatPublicProfileName, getDisplayInitial } from "@/lib/displayName"
+import { getProfileFallbackImage, getSafeProfilePhotos } from "@/lib/profileImages"
 
 const SUPER_LIKE_ICON_SRC = "/lovesathi-superlike-star-polished.png"
 
@@ -113,10 +114,11 @@ export function MatrimonySwipeCard({
   const { toast } = useToast()
   const isTopCard = stackIndex === 0
   const safePhotos = useMemo(
-    () => photos.filter((photo) => typeof photo === "string" && photo.trim().length > 0),
-    [photos],
+    () => getSafeProfilePhotos(photos, name, profileId, viewerIsPremium ? undefined : 1),
+    [name, photos, profileId, viewerIsPremium],
   )
-  const activePhoto = safePhotos[currentPhotoIndex] || null
+  const fallbackPhoto = useMemo(() => getProfileFallbackImage(name, profileId), [name, profileId])
+  const activePhoto = imageLoadFailed ? fallbackPhoto : safePhotos[currentPhotoIndex] || fallbackPhoto
 
   useEffect(() => {
     if (safePhotos.length > 0 && currentPhotoIndex > safePhotos.length - 1) {
@@ -511,7 +513,7 @@ export function MatrimonySwipeCard({
             onClick={isTopCard ? handlePhotoClick : undefined}
           >
       {/* Background photo fills the card */}
-      {activePhoto && !imageLoadFailed ? (
+      {activePhoto ? (
         <img
           src={activePhoto}
           alt=""
@@ -1356,6 +1358,8 @@ export function MatrimonySwipeCard({
       }}
       open={showProfileModal}
       onOpenChange={setShowProfileModal}
+      viewerIsPremium={viewerIsPremium}
+      isMatched={false}
       onPhoneUpgrade={onPhoneUpgrade}
       onRevealPhone={onRevealPhone}
       onSuperLike={triggerSuperLike}

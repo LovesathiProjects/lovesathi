@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabaseClient"
 import { formatPublicProfileName } from "@/lib/displayName"
+import { getPublicProfileId } from "@/lib/profileIdentity"
+import { getProfileFallbackImage } from "@/lib/profileImages"
 
 type SettingsNavigateHandler = (id: string) => void
 
@@ -59,11 +61,6 @@ function getInitials(name: string) {
   )
 }
 
-function buildPublicId(userId?: string | null) {
-  if (!userId) return "LS000000"
-  return `LS${userId.replace(/-/g, "").slice(0, 7).toUpperCase()}`
-}
-
 export function SettingsScreen({
   onNavigate,
   onLogout,
@@ -96,7 +93,7 @@ export function SettingsScreen({
 
       const { data: profile } = await supabase
         .from("matrimony_profile_full")
-        .select("name, photos")
+        .select("user_id, public_profile_id, name, photos")
         .eq("user_id", user.id)
         .maybeSingle()
 
@@ -108,8 +105,8 @@ export function SettingsScreen({
         setUserInfo({
           name,
           email: user.email || "",
-          photo,
-          publicId: buildPublicId(user.id),
+          photo: photo || getProfileFallbackImage(name, user.id),
+          publicId: getPublicProfileId(profile || { user_id: user.id }),
         })
       }
     }
@@ -149,7 +146,7 @@ export function SettingsScreen({
           <section className="rounded-[1.35rem] border border-[#E6EAF1] bg-white p-4 shadow-[0_12px_34px_rgba(31,44,60,0.07)]">
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16 border border-[#E6EAF1] bg-[#F2F5FA]">
-                <AvatarImage src={userInfo.photo || "/placeholder-user.jpg"} alt={displayName} />
+                <AvatarImage src={userInfo.photo || getProfileFallbackImage(userInfo.name, userInfo.publicId)} alt={displayName} />
                 <AvatarFallback className="bg-[#E8EDF4] text-xl font-black text-[#AAB4C1]">
                   {getInitials(userInfo.name)}
                 </AvatarFallback>

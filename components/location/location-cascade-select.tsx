@@ -235,10 +235,12 @@ export function LocationPreferencePicker({
   value,
   onChange,
   label = "Preferred Locations",
+  cascadeClassName,
 }: {
   value?: string[]
   onChange: (value: string[]) => void
   label?: string
+  cascadeClassName?: string
 }) {
   const [draft, setDraft] = useState<LocationValue>({})
   const selected = value || []
@@ -260,6 +262,7 @@ export function LocationPreferencePicker({
         countryLabel="Country"
         stateLabel="State"
         cityLabel="City"
+        className={cascadeClassName}
       />
       <Button
         type="button"

@@ -65,6 +65,7 @@ type QueueResult<T> = {
 type AdminProfileItem = {
   id: string
   userId: string
+  publicId: string | null
   email: string | null
   name: string
   age: number | null
@@ -88,6 +89,7 @@ type AdminProfileItem = {
 
 type AdminUserItem = {
   id: string
+  publicId: string | null
   email: string | null
   status: string
   provider: string | null
@@ -360,6 +362,7 @@ export function AdminPortal() {
       [
         item.email,
         item.id,
+        item.publicId,
         item.status,
         item.provider,
         item.profileName,
@@ -376,6 +379,7 @@ export function AdminPortal() {
         profile.name,
         profile.email,
         profile.userId,
+        profile.publicId,
         profile.gender,
         profile.city,
         profile.education,
@@ -933,6 +937,9 @@ export function AdminPortal() {
                           <p className="mt-1 truncate text-sm text-[#6F7C8B]">
                             {item.profileName || "No matrimony profile yet"}
                           </p>
+                          <p className="mt-1 text-xs font-black uppercase tracking-[0.12em] text-[#9d7a55]">
+                            ID - {item.publicId || "Pending"}
+                          </p>
                         </div>
                         <StatusBadge status={item.status} />
                       </div>
@@ -1291,6 +1298,9 @@ export function AdminPortal() {
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#26364A]">{profile.name}</p>
+                        <p className="mt-1 text-xs font-black uppercase tracking-[0.12em] text-[#9d7a55]">
+                          ID - {profile.publicId || "Pending"}
+                        </p>
                         <p className="mt-1 text-sm text-[#6F7C8B]">
                           {[profile.age ? `${profile.age} yrs` : null, profile.gender, profile.city].filter(Boolean).join(" - ") ||
                             "Profile details pending"}

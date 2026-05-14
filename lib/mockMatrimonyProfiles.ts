@@ -1,5 +1,6 @@
 export interface MatrimonyProfile {
   id: string
+  publicProfileId?: string
   name: string
   age: number
   education?: string

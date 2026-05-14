@@ -11,6 +11,7 @@ import { getPhoneValidationMessage, normalizePhoneNumber } from "@/lib/phone"
  */
 export interface MatrimonyProfileFull {
   id?: string
+  public_profile_id?: string | null
   user_id: string
   name: string
   age?: number | null
@@ -88,6 +89,8 @@ export interface MatrimonyProfileFull {
   profile_completed?: boolean
   is_seeded_profile?: boolean
   profile_visibility_label?: string | null
+  profile_hidden?: boolean
+  profile_hidden_at?: string | null
   created_at?: string
   updated_at?: string
 }

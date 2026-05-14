@@ -37,6 +37,7 @@ import { SettingsScreen } from "@/components/settings/settings-screen"
 import { MatrimonyInfoScreen, type MatrimonyInfoScreenId } from "@/components/settings/matrimony-info-screen"
 import { ActivityScreen } from "@/components/activity/activity-screen"
 import { AppSettings } from "@/components/settings/app-settings"
+import { MatrimonyPreferencesSettings } from "@/components/settings/matrimony-preferences-settings"
 import { PremiumScreen } from "@/components/premium/premium-screen"
 import { PaymentScreen } from "@/components/premium/payment-screen"
 import { PremiumFeatures } from "@/components/premium/premium-features"
@@ -51,6 +52,7 @@ import { handleLogout } from "@/lib/logout"
 import {
   getMatrimonyDiscoverySwipeStatus,
   getMatrimonyLikedProfiles,
+  createPremiumDirectMatrimonyMatch,
   recordMatrimonyLike,
 } from "@/lib/matchmakingService"
 import { getLimitMessage, getSuperLikeLimitStatus, getUserEntitlementStatus, type EntitlementStatus, type UsageLimitStatus } from "@/lib/planLimits"
@@ -65,6 +67,8 @@ import { ProfileView } from "@/components/profile/profile-view"
 import { calculateAgeFromDate } from "@/lib/age"
 import { getLocationCity } from "@/lib/location"
 import { formatPublicProfileName } from "@/lib/displayName"
+import { getPublicProfileId } from "@/lib/profileIdentity"
+import { getProfileFallbackImage, getSafeProfilePhotos } from "@/lib/profileImages"
 
 interface MatrimonyMainProps {
   onExit?: () => void
@@ -111,13 +115,22 @@ function MatrimonyListProfileCard({
   onChat: () => void
   onUpgrade: () => void
 }) {
-  const primaryPhoto = profile.photos?.[0]
+  const [photoFailed, setPhotoFailed] = useState(false)
+  const visiblePhotos = getSafeProfilePhotos(profile.photos, profile.name, profile.id, viewerIsPremium ? undefined : 1)
+  const fallbackPhoto = getProfileFallbackImage(profile.name, profile.id)
+  const primaryPhoto = photoFailed ? fallbackPhoto : visiblePhotos[0]
+  const visiblePhotoCount = viewerIsPremium ? Math.max(profile.photos?.length || 1, 1) : 1
   const isPremiumLocked = Boolean(profile.premium && !viewerIsPremium)
   const profileCity = profile.location?.split(",")?.[0]?.trim() || profile.location
   const salary = (profile as MatrimonyProfile & { income?: string }).income || "Rs. 3 - 4 Lakh p.a"
   const education = profile.education || "Education shared"
   const maritalStatus = (profile as MatrimonyProfile & { maritalStatus?: string }).maritalStatus || "Never Married"
   const compatibilityLabel = profile.verified ? "Most Compatible" : profile.premium ? "Top Profile" : null
+  const publicProfileId = getPublicProfileId(profile)
+
+  useEffect(() => {
+    setPhotoFailed(false)
+  }, [profile.id, visiblePhotos[0]])
 
   const handleOpen = () => {
     if (isPremiumLocked) {
@@ -141,6 +154,7 @@ function MatrimonyListProfileCard({
               src={primaryPhoto}
               alt={profile.name}
               className={`h-full min-h-[13.5rem] w-full object-cover ${isPremiumLocked ? "blur-[10px] scale-105 opacity-80" : ""}`}
+              onError={() => setPhotoFailed(true)}
             />
           ) : (
             <div className="flex h-full min-h-[13.5rem] w-full items-center justify-center bg-[#EEF1F6]">
@@ -149,7 +163,7 @@ function MatrimonyListProfileCard({
           )}
           <div className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/58 px-2 py-1 text-xs font-bold text-white backdrop-blur">
             <ImageIcon className="h-3.5 w-3.5" />
-            {Math.max(profile.photos?.length || 1, 1)}
+            {visiblePhotoCount}
           </div>
           {isPremiumLocked && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/18">
@@ -163,6 +177,7 @@ function MatrimonyListProfileCard({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-[#657386]">{profile.demo ? "Active Today" : "Active Yesterday"}</p>
+                <p className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#9AA5B2]">ID - {publicProfileId}</p>
                 <div className="mt-1 flex min-w-0 items-center gap-2">
                   <h3 className="truncate text-2xl font-extrabold tracking-[-0.03em] text-[#26364A] sm:text-3xl">
                     {formatPublicProfileName(profile.name)}, {profile.age}
@@ -679,6 +694,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           .from("matrimony_profile_full")
           .select(`
             user_id,
+            public_profile_id,
             name,
             age,
             gender,
@@ -688,10 +704,12 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             cultural,
             family,
             bio,
+            profile_hidden,
             is_seeded_profile,
             admin_review_status
           `)
           .eq("profile_completed", true)
+          .eq("profile_hidden", false)
           .neq("admin_review_status", "rejected")
 
         // Apply age filter at database level if available
@@ -940,13 +958,14 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
             return {
               id: matrimonyProfile.user_id,
+              publicProfileId: matrimonyProfile.public_profile_id || getPublicProfileId({ user_id: matrimonyProfile.user_id }),
               name: matrimonyProfile.name,
               age: calculatedAge,
               education: careerData?.highest_education || "",
               profession: careerData?.job_title || "",
               location: location,
               community: culturalData?.community || undefined,
-              photos: photosData.length > 0 ? photosData : ["/placeholder-user.jpg"],
+              photos: getSafeProfilePhotos(photosData, matrimonyProfile.name, matrimonyProfile.user_id),
               bio: bioText || undefined,
               interests: [], // Not in current schema, can be added later
               verified: verification?.verification_status === "approved",
@@ -1337,6 +1356,42 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     ],
   )
 
+  const handleDiscoveryChat = useCallback(
+    async (profile: MatrimonyProfile) => {
+      if (!currentUserId) {
+        toast({
+          title: "Please sign in",
+          description: "You need to be signed in to start a conversation.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (!viewerIsPremium) {
+        showPremiumUpsell(
+          "Unlock direct chat",
+          "Free members can send interest first. Paid members can open a safe conversation directly.",
+          "discover",
+        )
+        return
+      }
+
+      const result = await createPremiumDirectMatrimonyMatch(profile.id)
+      if (!result.success || !result.matchId) {
+        toast({
+          title: "Could not open chat",
+          description: result.error || "Please try again after sending interest.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      setSelectedChatId(result.matchId)
+      setCurrentScreen("chat")
+    },
+    [currentUserId, showPremiumUpsell, toast, viewerIsPremium],
+  )
+
   return (
     <AppLayout 
       activeTab="discover" 
@@ -1385,13 +1440,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           onShortlist={(profile) => {
             void handleShortlistToggle(profile)
           }}
-          onChat={(profile) => {
-            toast({
-              title: "Interest starts the conversation",
-              description: `Send interest to ${formatPublicProfileName(profile.name)} first. Chat opens when the match is accepted.`,
-            })
-            void handleProfileAction(profile, "like")
-          }}
+          onChat={(profile) => void handleDiscoveryChat(profile)}
         />
       )}
 
@@ -1785,7 +1834,11 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         </div>
       )}
 
-      {(["partner-preferences", "astrology", "phonebook", "safety-centre", "help-support", "success-stories"] as const).includes(currentScreen as MatrimonyInfoScreenId) && (
+      {currentScreen === "partner-preferences" && (
+        <MatrimonyPreferencesSettings onBack={() => setCurrentScreen("profile")} />
+      )}
+
+      {(["astrology", "phonebook", "safety-centre", "help-support", "success-stories"] as string[]).includes(currentScreen) && (
         <MatrimonyInfoScreen
           screen={currentScreen as MatrimonyInfoScreenId}
           onBack={() => setCurrentScreen("profile")}
@@ -1864,6 +1917,8 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         <MatrimonyProfileModal
           profile={shortlistModalProfile}
           open={!!shortlistModalProfile}
+          viewerIsPremium={viewerIsPremium}
+          isMatched={false}
           onOpenChange={(open) => {
             if (!open) setShortlistModalProfile(null)
           }}

@@ -162,6 +162,32 @@ export async function recordMatrimonyLike(
   }
 }
 
+export async function createPremiumDirectMatrimonyMatch(otherUserId: string): Promise<LikeAction> {
+  try {
+    if (isDemoProfileId(otherUserId)) {
+      return {
+        success: false,
+        error: "This profile is a discovery preview. Send interest first and keep browsing real completed profiles.",
+      }
+    }
+
+    const { data, error } = await supabase.rpc("create_lovesathi_premium_direct_match", {
+      p_other_user_id: otherUserId,
+    })
+
+    if (error) throw error
+
+    return {
+      success: true,
+      isMatch: true,
+      matchId: typeof data === "string" ? data : undefined,
+    }
+  } catch (error: any) {
+    console.error("Error creating premium direct match:", error)
+    return { success: false, error: normalizeLimitError(error.message) }
+  }
+}
+
 export async function getMatrimonyMatches(userId: string): Promise<Match[]> {
   try {
     const { data: matches, error } = await supabase

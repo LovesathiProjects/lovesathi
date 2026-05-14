@@ -10,6 +10,8 @@ import { X, MapPin, Briefcase, GraduationCap, Users, Share, Flag, Heart, Chevron
 import { cn } from "@/lib/utils"
 import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
 import { formatPublicProfileName } from "@/lib/displayName"
+import { getPublicProfileId } from "@/lib/profileIdentity"
+import { getProfileFallbackImage, getSafeProfilePhotos } from "@/lib/profileImages"
 
 const SUPER_LIKE_ICON_SRC = "/lovesathi-superlike-star-polished.png"
 
@@ -22,17 +24,25 @@ interface MatrimonyProfileModalProps {
   onSuperLike?: () => void
   onPhoneUpgrade?: () => void
   onRevealPhone?: (profileId: string) => Promise<string | null>
+  viewerIsPremium?: boolean
+  isMatched?: boolean
 }
 
-export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, onNotNow, onSuperLike, onPhoneUpgrade, onRevealPhone }: MatrimonyProfileModalProps) {
+export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, onNotNow, onSuperLike, onPhoneUpgrade, onRevealPhone, viewerIsPremium = false, isMatched = false }: MatrimonyProfileModalProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
+  const [photoFailed, setPhotoFailed] = useState(false)
   const [revealedPhone, setRevealedPhone] = useState<string | null>(profile.phone || null)
   const phoneIsRevealed = Boolean(revealedPhone || profile.phone)
   const displayPhone = revealedPhone || profile.phone || profile.phoneMasked
   const displayName = formatPublicProfileName(profile.name)
+  const publicProfileId = getPublicProfileId(profile)
+  const visiblePhotos = getSafeProfilePhotos(profile.photos, profile.name, profile.id, viewerIsPremium || isMatched ? undefined : 1)
+  const currentPhoto = photoFailed ? getProfileFallbackImage(profile.name, profile.id) : visiblePhotos[currentPhotoIndex]
 
   useEffect(() => {
     setRevealedPhone(profile.phone || null)
+    setCurrentPhotoIndex(0)
+    setPhotoFailed(false)
   }, [profile.id, profile.phone])
 
   const handlePhotoClick = (e: React.MouseEvent) => {
@@ -42,7 +52,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
 
     if (clickX > cardWidth / 2) {
       // Right side - next photo
-      if (currentPhotoIndex < profile.photos.length - 1) {
+      if (currentPhotoIndex < visiblePhotos.length - 1) {
         setCurrentPhotoIndex((prev) => prev + 1)
       }
     } else {
@@ -54,7 +64,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
   }
 
   const nextPhoto = () => {
-    if (currentPhotoIndex < profile.photos.length - 1) {
+    if (currentPhotoIndex < visiblePhotos.length - 1) {
       setCurrentPhotoIndex((prev) => prev + 1)
     }
   }
@@ -68,27 +78,21 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm sm:max-w-md p-0 gap-0 max-h-[95vh] sm:max-h-[90vh] overflow-hidden bg-white mx-2 sm:mx-0 rounded-2xl sm:rounded-3xl shadow-2xl" showCloseButton={false}>
-        <div className="flex flex-col h-full overflow-hidden rounded-2xl sm:rounded-3xl">
+        <div className="flex min-h-0 flex-col h-full overflow-hidden rounded-2xl sm:rounded-3xl">
           {/* Photo Section */}
           <div className="relative h-80 sm:h-96 flex-shrink-0 overflow-hidden rounded-t-2xl sm:rounded-t-3xl" onClick={handlePhotoClick}>
             <img
-              src={profile.photos[currentPhotoIndex] || "/placeholder.svg"}
+              src={currentPhoto || getProfileFallbackImage(profile.name, profile.id)}
               alt={`${profile.name} photo ${currentPhotoIndex + 1}`}
               className="w-full h-full object-cover"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement
-                if (target.src !== "/placeholder.svg") {
-                  target.src = "/placeholder.svg"
-                }
-              }}
-              crossOrigin="anonymous"
+              onError={() => setPhotoFailed(true)}
             />
 
             {/* Gradient overlay for better text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
             {/* Photo navigation arrows */}
-            {profile.photos.length > 1 && (
+            {visiblePhotos.length > 1 && (
               <>
                 {currentPhotoIndex > 0 && (
                   <button
@@ -101,7 +105,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                     <ChevronLeft className="w-5 h-5 text-white" />
                   </button>
                 )}
-                {currentPhotoIndex < profile.photos.length - 1 && (
+                {currentPhotoIndex < visiblePhotos.length - 1 && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
@@ -116,9 +120,9 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
             )}
 
             {/* Photo indicators */}
-            {profile.photos.length > 1 && (
+            {visiblePhotos.length > 1 && (
               <div className="absolute top-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20">
-                {profile.photos.map((_, index) => (
+                {visiblePhotos.map((_, index) => (
                   <div
                     key={index}
                     className={cn(
@@ -203,7 +207,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
           </div>
 
           {/* Content Section */}
-          <div className="flex-1 overflow-y-auto bg-white">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-white">
             <div className="p-5 sm:p-6 space-y-5">
               {/* Basic Info */}
               <div className="space-y-4">
@@ -212,6 +216,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                     {displayName}, {profile.age}
                     {profile.height && <span className="text-xl sm:text-2xl font-normal text-gray-600"> • {profile.height}</span>}
                   </h1>
+                  <p className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-[#9AA5B2]">ID - {publicProfileId}</p>
                   {profile.location && (
                     <div className="flex items-center space-x-2 text-gray-600">
                       <MapPin className="w-4 h-4 flex-shrink-0" />

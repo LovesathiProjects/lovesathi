@@ -41,8 +41,7 @@ type FilterCategory =
   | "religion"
   | "motherTongue"
   | "caste"
-  | "country"
-  | "city"
+  | "location"
   | "income"
   | "education"
   | "occupation"
@@ -74,8 +73,7 @@ const categories: Array<{ id: FilterCategory; label: string; badge?: (filters: F
   { id: "religion", label: "Religion" },
   { id: "motherTongue", label: "Mother Tongue" },
   { id: "caste", label: "Caste Subcaste", badge: (filters) => filters.communities.length },
-  { id: "country", label: "Country", badge: (filters) => filters.locations.length },
-  { id: "city", label: "City", badge: (filters) => filters.locations.length },
+  { id: "location", label: "Location", badge: (filters) => filters.locations.length },
   { id: "income", label: "Income" },
   { id: "education", label: "Education", badge: (filters) => filters.educationPrefs.length },
   { id: "occupation", label: "Occupation", badge: (filters) => filters.professionPrefs.length },
@@ -88,7 +86,7 @@ const categories: Array<{ id: FilterCategory; label: string; badge?: (filters: F
 ]
 
 const checkboxGroups = {
-  posted: ["All", "Self", "Parent", "Sibling", "Relative"],
+  posted: ["All", "Self", "Parent", "Sibling"],
   activity: ["All", "Online", "Active in last week", "Active in last month", "Active in last 2 months"],
   religion: ["All", "Hindu", "Muslim", "Christian", "Sikh", "Jain", "Buddhist", "Parsi", "Jewish", "Other"],
   motherTongue: ["All", "Hindi", "Marathi", "Urdu", "Gujarati", "Tamil", "Telugu", "Kannada", "Malayalam", "Bengali", "Punjabi"],
@@ -225,12 +223,13 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
       )
     }
 
-    if (activeCategory === "country" || activeCategory === "city") {
+    if (activeCategory === "location") {
       return (
         <LocationPreferencePicker
           value={filters.locations}
           onChange={(locations) => setFilters((prev) => ({ ...prev, locations }))}
           label="Location Preferences"
+          cascadeClassName="grid grid-cols-1 gap-4"
         />
       )
     }

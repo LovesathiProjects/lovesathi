@@ -14,6 +14,9 @@ import type { MatrimonyProfileFull } from "@/lib/matrimonyService"
 import { useToast } from "@/hooks/use-toast"
 import { getProfileContact, revealProfileContact, type ProfileContactInfo } from "@/lib/profileContacts"
 import { formatPublicProfileName } from "@/lib/displayName"
+import { getUserEntitlementStatus } from "@/lib/planLimits"
+import { getPublicProfileId } from "@/lib/profileIdentity"
+import { getProfileFallbackImage, getSafeProfilePhotos } from "@/lib/profileImages"
 
 interface ProfileViewProps {
   isOwnProfile?: boolean
@@ -34,10 +37,14 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
   const [canLikeBack, setCanLikeBack] = useState(false)
   const [isLiking, setIsLiking] = useState(false)
   const [contact, setContact] = useState<ProfileContactInfo | null>(null)
+  const [viewerIsPremium, setViewerIsPremium] = useState(false)
+  const [photoFailed, setPhotoFailed] = useState(false)
   const { toast } = useToast()
   const publicName = formatPublicProfileName(profile?.name)
+  const publicProfileId = getPublicProfileId(profile)
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" })
     void fetchProfile()
   }, [userId, isOwnProfile])
 
@@ -48,6 +55,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
       return
     }
     setCurrentPhotoIndex((prev) => (prev >= count ? 0 : prev))
+    setPhotoFailed(false)
   }, [profile?.photos])
 
   async function fetchProfile() {
@@ -57,6 +65,8 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) return
+      const entitlement = await getUserEntitlementStatus(user.id)
+      setViewerIsPremium(entitlement.isPremium)
 
       const targetUserId = userId || user.id
 
@@ -174,7 +184,8 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
     )
   }
 
-  const photos = (profile?.photos as string[] | undefined) || []
+  const canViewAllPhotos = isOwnProfile || isMatched || viewerIsPremium
+  const photos = getSafeProfilePhotos(profile?.photos as string[] | undefined, profile?.name, profile?.user_id, canViewAllPhotos ? undefined : 1)
   const personal = profile?.personal || {}
   const career = profile?.career || {}
   const family = profile?.family || {}
@@ -257,7 +268,12 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
         {photos.length > 0 && (
           <div className="luxe-card overflow-hidden rounded-[2rem] border-[#E83262]/24 p-3">
             <div className="relative h-96 overflow-hidden rounded-[1.5rem] bg-[#26364A]">
-              <img src={photos[currentPhotoIndex] || "/placeholder.svg"} alt={profile?.name || "Profile photo"} className="h-full w-full object-cover" />
+              <img
+                src={photoFailed ? getProfileFallbackImage(profile?.name, profile?.user_id) : photos[currentPhotoIndex]}
+                alt={profile?.name || "Profile photo"}
+                className="h-full w-full object-cover"
+                onError={() => setPhotoFailed(true)}
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-[#26364A]/42 via-transparent to-transparent" />
               {photos.length > 1 && (
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
@@ -299,6 +315,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
               </h2>
               {verified && <CheckCircle2 className="w-5 h-5 text-[#E83262]" />}
             </div>
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-[#9AA5B2]">ID - {publicProfileId}</p>
 
             <div className="flex flex-wrap gap-2">
               {profile?.gender && <Badge variant="secondary">{profile.gender}</Badge>}

@@ -26,6 +26,7 @@ type QueueResult<T> = {
 type AdminProfileItem = {
   id: string
   userId: string
+  publicId: string | null
   email: string | null
   name: string
   age: number | null
@@ -49,6 +50,7 @@ type AdminProfileItem = {
 
 type AdminUserItem = {
   id: string
+  publicId: string | null
   email: string | null
   status: string
   provider: string | null
@@ -235,6 +237,7 @@ function mapProfile(row: any, userEmailMap = new Map<string, string | null>()): 
   return {
     id: row.id,
     userId: row.user_id,
+    publicId: row.public_profile_id || null,
     email: userEmailMap.get(row.user_id) || null,
     name: row.name || "Unnamed profile",
     age: typeof row.age === "number" ? row.age : null,
@@ -320,23 +323,42 @@ async function safeRows<T>(run: () => PromiseLike<{ data: T[] | null; error: any
 
 async function safeAuthUsers(supabase: any): Promise<QueueResult<any>> {
   try {
-    const { data, error } = await supabase.auth.admin.listUsers({
-      page: 1,
-      perPage: 50,
-    })
+    const users: any[] = []
+    const perPage = 1000
+    let page = 1
+    let detail: string | undefined
 
-    if (error) {
-      return {
-        status: "warning",
-        detail: error.message,
-        items: [],
+    while (page <= 10) {
+      const { data, error } = await supabase.auth.admin.listUsers({
+        page,
+        perPage,
+      })
+
+      if (error) {
+        return {
+          status: "warning",
+          detail: error.message,
+          items: users,
+        }
       }
+
+      const pageUsers = data?.users || []
+      users.push(...pageUsers)
+
+      if (pageUsers.length < perPage) break
+      page += 1
+    }
+
+    if (users.length >= perPage * 10) {
+      detail = "Showing the first 10,000 Supabase Auth users. Narrow with search if needed."
+    } else {
+      detail = `Showing all ${users.length.toLocaleString("en-IN")} Supabase Auth users.`
     }
 
     return {
       status: "ok",
-      detail: "Showing the latest 50 Supabase Auth users.",
-      items: data?.users || [],
+      detail,
+      items: users,
     }
   } catch (error: any) {
     return {
@@ -356,16 +378,16 @@ function isMissingAdminReviewColumn(error: any) {
 
 async function loadAdminProfileRows(supabase: any): Promise<QueueResult<any>> {
   const enhancedSelect =
-    "id,user_id,name,age,gender,created_by,photos,bio,personal,career,cultural,profile_completed,step1_completed,step2_completed,step3_completed,step4_completed,step5_completed,step6_completed,step7_completed,is_seeded_profile,admin_review_status,admin_review_notes,admin_reviewed_at,created_at,updated_at"
+    "id,user_id,public_profile_id,name,age,gender,created_by,photos,bio,personal,career,cultural,profile_completed,step1_completed,step2_completed,step3_completed,step4_completed,step5_completed,step6_completed,step7_completed,is_seeded_profile,admin_review_status,admin_review_notes,admin_reviewed_at,created_at,updated_at"
   const legacySelect =
-    "id,user_id,name,age,gender,created_by,photos,bio,personal,career,cultural,profile_completed,step1_completed,step2_completed,step3_completed,step4_completed,step5_completed,step6_completed,step7_completed,created_at,updated_at"
+    "id,user_id,public_profile_id,name,age,gender,created_by,photos,bio,personal,career,cultural,profile_completed,step1_completed,step2_completed,step3_completed,step4_completed,step5_completed,step6_completed,step7_completed,created_at,updated_at"
 
   try {
     const enhanced = await supabase
       .from("matrimony_profile_full")
       .select(enhancedSelect)
       .order("updated_at", { ascending: false })
-      .limit(14)
+      .limit(500)
 
     if (!enhanced.error) {
       return { status: "ok", items: enhanced.data || [] }
@@ -383,7 +405,7 @@ async function loadAdminProfileRows(supabase: any): Promise<QueueResult<any>> {
       .from("matrimony_profile_full")
       .select(legacySelect)
       .order("updated_at", { ascending: false })
-      .limit(14)
+      .limit(500)
 
     return {
       status: "warning",
@@ -408,7 +430,7 @@ async function loadAuthUserProfileRows(supabase: any, userIds: string[]): Promis
 
   const enhanced = await supabase
     .from("matrimony_profile_full")
-    .select("user_id,name,profile_completed,admin_review_status,updated_at")
+    .select("user_id,public_profile_id,name,profile_completed,admin_review_status,updated_at")
     .in("user_id", userIds)
 
   if (!enhanced.error) {
@@ -417,7 +439,7 @@ async function loadAuthUserProfileRows(supabase: any, userIds: string[]): Promis
 
   const legacy = await supabase
     .from("matrimony_profile_full")
-    .select("user_id,name,profile_completed,updated_at")
+    .select("user_id,public_profile_id,name,profile_completed,updated_at")
     .in("user_id", userIds)
 
   return {
@@ -465,6 +487,7 @@ function mapAuthUser(user: any, profile?: any, entitlement?: any): AdminUserItem
 
   return {
     id: String(user?.id || ""),
+    publicId: profile?.public_profile_id || null,
     email: typeof user?.email === "string" ? user.email : null,
     status,
     provider: providers,
