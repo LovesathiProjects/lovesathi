@@ -5,6 +5,7 @@ import {
   getUserPhoneVerifiedAt,
   normalizePhoneNumber,
 } from "@/lib/phone"
+import type { Msg91WidgetConfig } from "@/lib/msg91WidgetOtp"
 
 export const PHONE_OTP_LENGTH = 6
 
@@ -35,7 +36,7 @@ async function getAccessToken() {
   return session.access_token
 }
 
-async function callPhoneOtpFunction(body: Record<string, string>) {
+async function callPhoneOtpFunction(body: Record<string, unknown>) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "")
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!supabaseUrl || !anonKey) {
@@ -59,6 +60,40 @@ async function callPhoneOtpFunction(body: Record<string, string>) {
   }
 
   return payload
+}
+
+async function refreshVerifiedPhoneSession(payload: any, phone: string) {
+  let verifiedUser = null
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.refreshSession()
+    verifiedUser = user
+  } catch {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    verifiedUser = user
+  }
+
+  const nextPhone = normalizePhoneNumber(payload.phone || getAuthUserPhone(verifiedUser) || phone)
+  const verifiedAt =
+    payload.verifiedAt ||
+    getUserPhoneVerifiedAt(verifiedUser, phone) ||
+    getUserPhoneVerifiedAt(verifiedUser, nextPhone) ||
+    new Date().toISOString()
+
+  return { phone: nextPhone || phone, verifiedAt, user: verifiedUser }
+}
+
+export async function getMsg91WidgetPhoneOtpConfig(): Promise<Msg91WidgetConfig | null> {
+  const payload = await callPhoneOtpFunction({ action: "widget_config" })
+  if (!payload?.enabled || !payload.widgetId || !payload.tokenAuth) return null
+
+  return {
+    widgetId: String(payload.widgetId),
+    tokenAuth: String(payload.tokenAuth),
+  }
 }
 
 export async function requestCurrentUserPhoneOtp(phoneInput: string) {
@@ -100,26 +135,19 @@ export async function verifyCurrentUserPhoneOtp(phoneInput: string, tokenInput: 
   }
 
   const payload = await callPhoneOtpFunction({ action: "verify", phone, token })
+  return refreshVerifiedPhoneSession(payload, phone)
+}
 
-  let verifiedUser = null
-  try {
-    const {
-      data: { user },
-    } = await supabase.auth.refreshSession()
-    verifiedUser = user
-  } catch {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    verifiedUser = user
+export async function verifyCurrentUserMsg91WidgetPhoneOtp(phoneInput: string, accessToken: string) {
+  const phone = normalizePhoneNumber(phoneInput)
+  const phoneError = getPhoneValidationMessage(phone)
+  if (phoneError) throw new Error(phoneError)
+
+  const token = accessToken.trim()
+  if (!token) {
+    throw new Error("MSG91 did not return a verification token. Please resend the code and try again.")
   }
 
-  const nextPhone = normalizePhoneNumber(payload.phone || getAuthUserPhone(verifiedUser) || phone)
-  const verifiedAt =
-    payload.verifiedAt ||
-    getUserPhoneVerifiedAt(verifiedUser, phone) ||
-    getUserPhoneVerifiedAt(verifiedUser, nextPhone) ||
-    new Date().toISOString()
-
-  return { phone: nextPhone || phone, verifiedAt, user: verifiedUser }
+  const payload = await callPhoneOtpFunction({ action: "verify_widget", phone, accessToken: token })
+  return refreshVerifiedPhoneSession(payload, phone)
 }

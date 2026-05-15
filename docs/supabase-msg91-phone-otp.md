@@ -1,6 +1,6 @@
 # Supabase + MSG91 Phone OTP
 
-Lovesathi uses a Supabase Edge Function to generate, send, and verify phone OTPs. MSG91 is only the SMS delivery provider.
+Lovesathi uses MSG91 Widget custom UI for phone OTP delivery and code verification, while the final trusted verification still happens through a Supabase Edge Function. This keeps the Lovesathi screen fully custom, avoids the MSG91 popup UI, and lets Supabase Auth/database store the verified phone state.
 
 ## Deployed Function
 
@@ -15,6 +15,8 @@ Lovesathi uses a Supabase Edge Function to generate, send, and verify phone OTPs
 These secrets are configured in Supabase Edge Functions, not in the repository:
 
 - `MSG91_AUTH_KEY`
+- `MSG91_WIDGET_ID`
+- `MSG91_WIDGET_TOKEN_AUTH`
 - `SEND_SMS_HOOK_SECRET`
 - `MSG91_OTP_EXPIRY_MINUTES`
 - `MSG91_OTP_MESSAGE`
@@ -23,12 +25,12 @@ These secrets are configured in Supabase Edge Functions, not in the repository:
 - `LOVESATHI_SUPABASE_ANON_KEY`
 - `LOVESATHI_SUPABASE_SERVICE_ROLE_KEY`
 
-Optional production SMS template support:
+Fallback production SMS template support:
 
 - `MSG91_OTP_TEMPLATE_ID`
 - `MSG91_SENDER_ID`
 
-If MSG91 requires an approved OTP template, set `MSG91_OTP_TEMPLATE_ID` to the 24-character MSG91 OTP template object ID. If the value is an alias such as `global_otp`, the function intentionally uses MSG91's legacy SendOTP API with the provided message text instead of sending an invalid V5 template request.
+The primary production path is the MSG91 Widget. If the widget config is unavailable, the app falls back to the older Supabase-generated OTP path using `MSG91_OTP_TEMPLATE_ID`.
 
 Current production template:
 
@@ -58,18 +60,20 @@ supabase secrets set --project-ref bysvtucftcclrdyfihsx SEND_SMS_HOOK_SECRET="PA
 ## How The Flow Works
 
 1. User enters phone number in Lovesathi signup.
-2. Lovesathi calls the `phone-otp` Edge Function with the signed-in user's Supabase session.
-3. The Edge Function creates the OTP, stores only a hash in `phone_verifications`, and sends the OTP through MSG91.
-4. User enters the OTP.
-5. The Edge Function verifies the OTP hash, marks the row verified, and marks the Supabase Auth phone as confirmed with the service role.
-
-Do not verify OTPs through MSG91. Verification remains inside Supabase so Lovesathi can trust the Supabase database and Auth user state.
+2. Lovesathi asks the `phone-otp` Edge Function for the MSG91 widget config.
+3. The Lovesathi screen loads MSG91's OTP provider script in custom UI mode.
+4. Lovesathi calls MSG91's exposed `sendOtp` method from our own button.
+5. User enters the OTP in Lovesathi's own input.
+6. Lovesathi calls MSG91's exposed `verifyOtp` method.
+7. MSG91 returns a verification access token.
+8. Lovesathi sends that token to the `phone-otp` Edge Function.
+9. The Edge Function verifies the token with MSG91's server API, then marks the Supabase Auth phone and `user_profiles.phone_verified_at` as verified.
 
 The `send-sms` Auth Hook remains deployed for compatibility, but Lovesathi's phone verification screen uses `phone-otp` directly. This avoids Supabase's native phone-provider/Twilio/test-number mismatch for newly created email-first accounts. Twilio does not need to be used for Lovesathi phone verification while this custom MSG91 function is active.
 
 ## Delivery Debugging
 
-Each phone OTP request now stores MSG91 delivery diagnostics in `phone_verifications`:
+Each verified phone flow stores MSG91 diagnostics in `phone_verifications`:
 
 - `otp_provider`
 - `otp_provider_request_id`
@@ -77,4 +81,4 @@ Each phone OTP request now stores MSG91 delivery diagnostics in `phone_verificat
 - `otp_provider_response`
 - `otp_provider_updated_at`
 
-If the app says "code sent" but the user does not receive the SMS, check the latest row for that user and compare `otp_provider_request_id` with MSG91 OTP logs. If the request is accepted by MSG91 but not delivered, the issue is on the MSG91/template/DLT/carrier delivery side, not the Lovesathi verification UI.
+If the app says "code sent" but the user does not receive the SMS, check MSG91 Widget logs first. The primary send now happens through MSG91's browser widget script, so SMS delivery failures usually mean widget token/template/DLT/route/credit issues rather than a Lovesathi UI issue. If the app falls back to the older Edge Function send path, compare `otp_provider_request_id` with MSG91 OTP logs.
