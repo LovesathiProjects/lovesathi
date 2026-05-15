@@ -271,59 +271,72 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
     setIsPhoneSending(true)
     setPhoneStatusMessage("Sending your phone code...")
     try {
-      let widgetConfig = msg91WidgetConfig
-      if (!widgetConfig) {
-        try {
-          widgetConfig = await getMsg91WidgetPhoneOtpConfig()
-          if (widgetConfig) setMsg91WidgetConfig(widgetConfig)
-        } catch {
-          widgetConfig = null
+      const sendWithSupabaseFunction = async () => {
+        const result = resend
+          ? await resendCurrentUserPhoneOtp(normalizedPhone)
+          : await requestCurrentUserPhoneOtp(normalizedPhone)
+
+        if ("alreadyVerified" in result && result.alreadyVerified) {
+          rememberPhone(result.phone)
+          setPhoneOtpTarget("")
+          continueToOnboarding()
+          return
         }
-      }
 
-      if (widgetConfig) {
-        const widgetPayload =
-          resend && phoneOtpProvider === "msg91-widget" && phoneOtpRequestId
-            ? await retryMsg91WidgetOtp(widgetConfig, normalizedPhone, phoneOtpRequestId)
-            : await sendMsg91WidgetOtp(widgetConfig, normalizedPhone)
-        const requestId = getMsg91WidgetRequestId(widgetPayload) || phoneOtpRequestId
-
-        rememberPhone(normalizedPhone)
-        setPhoneOtpTarget(normalizedPhone)
-        setPhoneOtpProvider("msg91-widget")
-        setPhoneOtpRequestId(requestId)
+        rememberPhone(result.phone)
+        setPhoneOtpTarget(result.phone)
+        setPhoneOtpProvider("supabase")
+        setPhoneOtpRequestId("")
         setPhoneOtpSent(true)
         setPhoneOtpCode("")
-        setPhoneStatusMessage(`Code sent to ${normalizedPhone}. Enter it below to continue.`)
+        setPhoneStatusMessage(`Code sent to ${result.phone}. Enter it below to continue.`)
         toast({
           title: resend ? "Phone code resent" : "Phone code sent",
-          description: `We sent a 6-digit OTP to ${normalizedPhone}.`,
+          description: `We sent a 6-digit OTP to ${result.phone}.`,
         })
-        return
       }
 
-      const result = resend
-        ? await resendCurrentUserPhoneOtp(normalizedPhone)
-        : await requestCurrentUserPhoneOtp(normalizedPhone)
-
-      if ("alreadyVerified" in result && result.alreadyVerified) {
-        rememberPhone(result.phone)
-        setPhoneOtpTarget("")
-        continueToOnboarding()
+      try {
+        await sendWithSupabaseFunction()
         return
-      }
+      } catch (serverError) {
+        setPhoneStatusMessage("Trying a backup phone code route...")
+        let widgetConfig = msg91WidgetConfig
+        if (!widgetConfig) {
+          try {
+            widgetConfig = await getMsg91WidgetPhoneOtpConfig()
+            if (widgetConfig) setMsg91WidgetConfig(widgetConfig)
+          } catch {
+            widgetConfig = null
+          }
+        }
 
-      rememberPhone(result.phone)
-      setPhoneOtpTarget(result.phone)
-      setPhoneOtpProvider("supabase")
-      setPhoneOtpRequestId("")
-      setPhoneOtpSent(true)
-      setPhoneOtpCode("")
-      setPhoneStatusMessage(`Code sent to ${result.phone}. Enter it below to continue.`)
-      toast({
-        title: resend ? "Phone code resent" : "Phone code sent",
-        description: `We sent a 6-digit OTP to ${result.phone}.`,
-      })
+        if (!widgetConfig) throw serverError
+
+        try {
+          const widgetPayload =
+            resend && phoneOtpProvider === "msg91-widget" && phoneOtpRequestId
+              ? await retryMsg91WidgetOtp(widgetConfig, normalizedPhone, phoneOtpRequestId)
+              : await sendMsg91WidgetOtp(widgetConfig, normalizedPhone)
+          const requestId = getMsg91WidgetRequestId(widgetPayload) || phoneOtpRequestId
+
+          rememberPhone(normalizedPhone)
+          setPhoneOtpTarget(normalizedPhone)
+          setPhoneOtpProvider("msg91-widget")
+          setPhoneOtpRequestId(requestId)
+          setPhoneOtpSent(true)
+          setPhoneOtpCode("")
+          setPhoneStatusMessage(`Code sent to ${normalizedPhone}. Enter it below to continue.`)
+          toast({
+            title: resend ? "Phone code resent" : "Phone code sent",
+            description: `We sent a 6-digit OTP to ${normalizedPhone}.`,
+          })
+          return
+        } catch {
+          setMsg91WidgetConfig(null)
+          throw serverError
+        }
+      }
     } catch (error: any) {
       const message = error.message || "Please check Supabase SMS settings and try again."
       setPhoneStatusMessage("")

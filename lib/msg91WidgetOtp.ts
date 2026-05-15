@@ -114,7 +114,12 @@ async function loadMsg91Script() {
     )
   }
 
-  await scriptPromise
+  try {
+    await scriptPromise
+  } catch (error) {
+    scriptPromise = null
+    throw error
+  }
 }
 
 function waitForWidgetMethods() {
