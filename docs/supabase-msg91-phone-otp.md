@@ -32,7 +32,7 @@ If MSG91 requires an approved OTP template, set `MSG91_OTP_TEMPLATE_ID` to the 2
 
 Current production template:
 
-- `MSG91_OTP_TEMPLATE_ID=6a06f94e65d95c33f90c27c2`
+- `MSG91_OTP_TEMPLATE_ID=6a0703233a692bdafc0a9b24`
 
 Optional no-SMS testing:
 
