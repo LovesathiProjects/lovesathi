@@ -1628,6 +1628,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                               currentUserId={currentUserId}
                               onConnect={index === 0 ? () => handleLike() : () => {}}
                               onNotNow={index === 0 ? () => handlePass() : () => {}}
+                              onChat={index === 0 ? () => void handleDiscoveryChat(profile) : undefined}
                               onSuperLike={index === 0 ? () => handleSuperLike() : () => {}}
                               onPhoneUpgrade={() =>
                                 showPremiumUpsell(
@@ -1998,6 +1999,10 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           onConnect={() => {
             void handleShortlistConnect(shortlistModalProfile)
             setShortlistModalProfile(null)
+          }}
+          onChat={() => {
+            setShortlistModalProfile(null)
+            void handleDiscoveryChat(shortlistModalProfile)
           }}
           onSuperLike={() => {
             void handleProfileAction(shortlistModalProfile, "super_like")

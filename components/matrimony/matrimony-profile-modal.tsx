@@ -5,7 +5,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { X, MapPin, Briefcase, GraduationCap, Users, Share, Flag, Heart, ChevronLeft, ChevronRight, Phone } from "lucide-react"
+import { X, MapPin, Briefcase, GraduationCap, Users, Share, Flag, Heart, ChevronLeft, ChevronRight, Phone, MessageCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
 import { formatPublicProfileName } from "@/lib/displayName"
@@ -20,6 +20,7 @@ interface MatrimonyProfileModalProps {
   onOpenChange: (open: boolean) => void
   onConnect: () => void
   onNotNow: () => void
+  onChat?: () => void
   onSuperLike?: () => void
   onPhoneUpgrade?: () => void
   onRevealPhone?: (profileId: string) => Promise<string | null>
@@ -70,7 +71,7 @@ function DossierSection({
   )
 }
 
-export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, onNotNow, onSuperLike, onPhoneUpgrade, onRevealPhone, viewerIsPremium = false, isMatched = false }: MatrimonyProfileModalProps) {
+export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, onNotNow, onChat, onSuperLike, onPhoneUpgrade, onRevealPhone, viewerIsPremium = false, isMatched = false }: MatrimonyProfileModalProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
   const [photoFailed, setPhotoFailed] = useState(false)
   const [revealedPhone, setRevealedPhone] = useState<string | null>(profile.phone || null)
@@ -453,21 +454,15 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                 <X className="w-7 h-7" />
               </Button>
 
-              {onSuperLike && (
+              {onChat && (
                 <Button
                   type="button"
                   size="lg"
-                  aria-label="Send Super Like"
-                  className="group relative h-16 w-16 overflow-hidden rounded-full border border-[#B9A7FF]/45 bg-[radial-gradient(circle_at_35%_22%,rgba(255,255,255,0.26),transparent_24%),linear-gradient(145deg,#050505,#171127_54%,#050505)] p-0 shadow-[0_16px_38px_rgba(20,13,42,0.28),0_0_28px_rgba(110,84,255,0.24)] transition hover:scale-105 hover:border-[#E83262]/55 hover:shadow-[0_18px_42px_rgba(20,13,42,0.34),0_0_34px_rgba(232,50,98,0.22)]"
-                  onClick={onSuperLike}
+                  aria-label="Open Chat"
+                  className="h-16 w-16 rounded-full border border-[#DCE2EB] bg-white p-0 text-[#26364A] shadow-[0_14px_34px_rgba(31,44,60,0.12)] transition hover:scale-105 hover:border-[#E83262]/35 hover:bg-[#FFF3F7] hover:text-[#E83262]"
+                  onClick={onChat}
                 >
-                  <span className="pointer-events-none absolute inset-[5px] rounded-full border border-white/10 bg-black/35" />
-                  <img
-                    src={SUPER_LIKE_ICON_SRC}
-                    alt="Super Like"
-                    className="relative z-10 h-full w-full object-contain p-2.5 drop-shadow-[0_0_10px_rgba(168,134,255,0.65)] transition duration-300 group-hover:scale-110"
-                    draggable={false}
-                  />
+                  <MessageCircle className="h-7 w-7" />
                 </Button>
               )}
 

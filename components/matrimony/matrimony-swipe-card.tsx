@@ -54,6 +54,7 @@ interface MatrimonySwipeCardProps {
   canRevealPhone?: boolean
   onConnect: () => boolean | void | Promise<boolean | void>
   onNotNow: () => boolean | void | Promise<boolean | void>
+  onChat?: () => void
   onSuperLike?: () => boolean | void | Promise<boolean | void>
   onPhoneUpgrade?: () => void
   onRevealPhone?: (profileId: string) => Promise<string | null>
@@ -89,6 +90,7 @@ export function MatrimonySwipeCard({
   canRevealPhone = false,
   onConnect,
   onNotNow,
+  onChat,
   onSuperLike,
   onPhoneUpgrade,
   onRevealPhone,
@@ -1362,6 +1364,7 @@ export function MatrimonySwipeCard({
       isMatched={false}
       onPhoneUpgrade={onPhoneUpgrade}
       onRevealPhone={onRevealPhone}
+      onChat={onChat}
       onSuperLike={triggerSuperLike}
       onConnect={() => {
         if (swipeLocked) {
