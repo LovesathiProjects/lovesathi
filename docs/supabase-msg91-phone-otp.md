@@ -19,7 +19,6 @@ These secrets are configured in Supabase Edge Functions, not in the repository:
 - `MSG91_OTP_EXPIRY_MINUTES`
 - `MSG91_OTP_MESSAGE`
 - `PHONE_OTP_PEPPER`
-- `PHONE_OTP_TEST_NUMBERS`
 - `LOVESATHI_SUPABASE_URL`
 - `LOVESATHI_SUPABASE_ANON_KEY`
 - `LOVESATHI_SUPABASE_SERVICE_ROLE_KEY`
@@ -33,13 +32,12 @@ If MSG91 requires an approved OTP template, set `MSG91_OTP_TEMPLATE_ID` to the 2
 
 Current production template:
 
-- `MSG91_OTP_TEMPLATE_ID=global_otp`
+- `MSG91_OTP_TEMPLATE_ID=6a06f94e65d95c33f90c27c2`
 
-Current no-SMS test numbers:
+Optional no-SMS testing:
 
-- `919028160940=123456`
-- `919342068881=000000`
-- `919999000001=111111`
+- `PHONE_OTP_TEST_NUMBERS` may be set temporarily in staging only, using comma-separated `phone=otp` pairs.
+- Do not keep real user phone numbers in `PHONE_OTP_TEST_NUMBERS` for production.
 
 ## Dashboard Wiring
 
