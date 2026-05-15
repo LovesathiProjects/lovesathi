@@ -22,7 +22,7 @@ type PhoneVerificationRow = {
 type Msg91SendResult = {
   provider: "msg91";
   requestId: string | null;
-  status: "accepted";
+  status: "accepted" | "test_accepted";
   responseText: string;
 };
 
@@ -96,6 +96,22 @@ function generateOtp() {
   return String(100000 + (bytes[0] % 900000));
 }
 
+function parseTestOtpForPhone(phone: string) {
+  const configured = getEnv("PHONE_OTP_TEST_NUMBERS");
+  if (!configured) return null;
+
+  const phoneDigits = getPhoneDigits(phone);
+  for (const pair of configured.split(",")) {
+    const [rawPhone, rawOtp] = pair.split("=").map((part) => part?.trim() || "");
+    const otp = rawOtp.replace(/\D/g, "").slice(0, OTP_LENGTH);
+    if (getPhoneDigits(rawPhone) === phoneDigits && otp.length === OTP_LENGTH) {
+      return otp;
+    }
+  }
+
+  return null;
+}
+
 async function sha256(value: string) {
   const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return Array.from(new Uint8Array(hashBuffer))
@@ -131,6 +147,33 @@ function shouldResetSendWindow(row?: PhoneVerificationRow | null) {
   return new Date(row.otp_send_window_started_at) < minutesAgo(SEND_WINDOW_MINUTES);
 }
 
+function parseMsg91Response(responseText: string) {
+  try {
+    const parsed = JSON.parse(responseText || "{}");
+    return {
+      type: String(parsed.type || parsed.status || "").toLowerCase(),
+      message: String(parsed.message || parsed.error || parsed.errors || ""),
+      requestId:
+        String(parsed.request_id || parsed.requestId || parsed.message_uuid || parsed.message || "").trim() || null,
+    };
+  } catch {
+    return { type: "", message: responseText, requestId: null };
+  }
+}
+
+function assertMsg91Accepted(response: Response, responseText: string) {
+  const parsed = parseMsg91Response(responseText);
+  if (!response.ok || parsed.type === "error" || parsed.type === "fail" || parsed.type === "failed") {
+    throw functionError(`MSG91 rejected the OTP request: ${responseText || response.statusText}`, 502);
+  }
+
+  return parsed;
+}
+
+function isMsg91ObjectId(value: string) {
+  return /^[a-f0-9]{24}$/i.test(value);
+}
+
 async function getUser(req: Request, anonClient: ReturnType<typeof createClient>) {
   const authorization = req.headers.get("authorization") || "";
   if (!authorization.toLowerCase().startsWith("bearer ")) {
@@ -156,13 +199,14 @@ async function sendViaMsg91(phone: string, otp: string) {
   const senderId = getEnv("MSG91_SENDER_ID");
   const otpExpiryMinutes = getEnv("MSG91_OTP_EXPIRY_MINUTES") || String(OTP_TTL_MINUTES);
 
-  if (templateId) {
+  if (templateId && isMsg91ObjectId(templateId)) {
     const url = new URL("https://control.msg91.com/api/v5/otp");
     url.searchParams.set("template_id", templateId);
     url.searchParams.set("mobile", mobile);
     url.searchParams.set("otp", otp);
     url.searchParams.set("otp_expiry", otpExpiryMinutes);
     url.searchParams.set("otp_length", String(OTP_LENGTH));
+    url.searchParams.set("authkey", authKey);
 
     const response = await fetch(url, {
       method: "POST",
@@ -173,21 +217,11 @@ async function sendViaMsg91(phone: string, otp: string) {
     });
 
     const responseText = await response.text();
-    if (!response.ok) {
-      throw functionError(`MSG91 rejected the OTP request: ${responseText || response.statusText}`, 502);
-    }
-
-    let requestId: string | null = null;
-    try {
-      const parsed = JSON.parse(responseText);
-      requestId = String(parsed.request_id || parsed.requestId || parsed.message_uuid || "") || null;
-    } catch {
-      requestId = null;
-    }
+    const parsed = assertMsg91Accepted(response, responseText);
 
     return {
       provider: "msg91",
-      requestId,
+      requestId: parsed.requestId,
       status: "accepted",
       responseText: responseText.slice(0, 1200),
     } satisfies Msg91SendResult;
@@ -209,21 +243,11 @@ async function sendViaMsg91(phone: string, otp: string) {
 
   const response = await fetch(url);
   const responseText = await response.text();
-  if (!response.ok || /"type"\s*:\s*"error"/i.test(responseText)) {
-    throw functionError(`MSG91 rejected the OTP request: ${responseText || response.statusText}`, 502);
-  }
-
-  let requestId: string | null = null;
-  try {
-    const parsed = JSON.parse(responseText);
-    requestId = String(parsed.request_id || parsed.requestId || parsed.message || "") || null;
-  } catch {
-    requestId = null;
-  }
+  const parsed = assertMsg91Accepted(response, responseText);
 
   return {
     provider: "msg91",
-    requestId,
+    requestId: parsed.requestId,
     status: "accepted",
     responseText: responseText.slice(0, 1200),
   } satisfies Msg91SendResult;
@@ -257,7 +281,8 @@ async function sendPhoneOtp(
     throw functionError("Too many phone codes requested. Please try again later.", 429);
   }
 
-  const otp = generateOtp();
+  const testOtp = parseTestOtpForPhone(phone);
+  const otp = testOtp || generateOtp();
   const otpHash = await hashOtp(user.id, phone, otp);
   const now = new Date().toISOString();
 
@@ -282,7 +307,14 @@ async function sendPhoneOtp(
   if (upsertError) throw functionError(upsertError.message, 500);
 
   try {
-    const sendResult = await sendViaMsg91(phone, otp);
+    const sendResult = testOtp
+      ? ({
+          provider: "msg91",
+          requestId: "test-number",
+          status: "test_accepted",
+          responseText: "Configured test phone number accepted without external SMS delivery.",
+        } satisfies Msg91SendResult)
+      : await sendViaMsg91(phone, otp);
     await serviceClient
       .from("phone_verifications")
       .update({
@@ -387,7 +419,15 @@ async function verifyPhoneOtp(
     },
   });
 
-  if (authUpdateError) throw functionError(authUpdateError.message, 500);
+  if (authUpdateError) {
+    const message = authUpdateError.message || "Could not confirm this phone number.";
+    throw functionError(
+      message === "Error updating user"
+        ? "Could not confirm this phone number in Supabase Auth. It may already be linked to another account."
+        : message,
+      500,
+    );
+  }
 
   await serviceClient
     .from("user_profiles")

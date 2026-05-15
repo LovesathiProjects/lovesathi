@@ -19,6 +19,7 @@ These secrets are configured in Supabase Edge Functions, not in the repository:
 - `MSG91_OTP_EXPIRY_MINUTES`
 - `MSG91_OTP_MESSAGE`
 - `PHONE_OTP_PEPPER`
+- `PHONE_OTP_TEST_NUMBERS`
 - `LOVESATHI_SUPABASE_URL`
 - `LOVESATHI_SUPABASE_ANON_KEY`
 - `LOVESATHI_SUPABASE_SERVICE_ROLE_KEY`
@@ -28,11 +29,17 @@ Optional production SMS template support:
 - `MSG91_OTP_TEMPLATE_ID`
 - `MSG91_SENDER_ID`
 
-If MSG91 requires an approved OTP template, set `MSG91_OTP_TEMPLATE_ID` to the MSG91 OTP template ID. Without that value, the function uses MSG91's legacy SendOTP API with the provided message text.
+If MSG91 requires an approved OTP template, set `MSG91_OTP_TEMPLATE_ID` to the 24-character MSG91 OTP template object ID. If the value is an alias such as `global_otp`, the function intentionally uses MSG91's legacy SendOTP API with the provided message text instead of sending an invalid V5 template request.
 
 Current production template:
 
 - `MSG91_OTP_TEMPLATE_ID=global_otp`
+
+Current no-SMS test numbers:
+
+- `919028160940=123456`
+- `919342068881=000000`
+- `919999000001=111111`
 
 ## Dashboard Wiring
 
@@ -60,7 +67,7 @@ supabase secrets set --project-ref bysvtucftcclrdyfihsx SEND_SMS_HOOK_SECRET="PA
 
 Do not verify OTPs through MSG91. Verification remains inside Supabase so Lovesathi can trust the Supabase database and Auth user state.
 
-The `send-sms` Auth Hook remains deployed for compatibility, but Lovesathi's phone verification screen uses `phone-otp` directly. This avoids Supabase's `phone_change` Auth Hook payload issue for newly created email-first accounts.
+The `send-sms` Auth Hook remains deployed for compatibility, but Lovesathi's phone verification screen uses `phone-otp` directly. This avoids Supabase's native phone-provider/Twilio/test-number mismatch for newly created email-first accounts. Twilio does not need to be used for Lovesathi phone verification while this custom MSG91 function is active.
 
 ## Delivery Debugging
 

@@ -57,6 +57,28 @@ function maskMobile(mobile: string) {
   return `${mobile.slice(0, 2)}******${mobile.slice(-2)}`;
 }
 
+function parseMsg91Response(responseText: string) {
+  try {
+    const parsed = JSON.parse(responseText || "{}");
+    return {
+      type: String(parsed.type || parsed.status || "").toLowerCase(),
+    };
+  } catch {
+    return { type: "" };
+  }
+}
+
+function assertMsg91Accepted(response: Response, responseText: string) {
+  const parsed = parseMsg91Response(responseText);
+  if (!response.ok || parsed.type === "error" || parsed.type === "fail" || parsed.type === "failed") {
+    throw hookError(`MSG91 rejected the OTP request: ${responseText || response.statusText}`, 502);
+  }
+}
+
+function isMsg91ObjectId(value: string) {
+  return /^[a-f0-9]{24}$/i.test(value);
+}
+
 function getPhone(payload: SendSmsHookPayload) {
   return payload.user?.phone_change || payload.user?.phone || "";
 }
@@ -72,13 +94,14 @@ async function sendViaMsg91(mobile: string, otp: string) {
   const otpExpiryMinutes = Deno.env.get("MSG91_OTP_EXPIRY_MINUTES")?.trim() || "10";
   const otpLength = String(otp.length || 6);
 
-  if (templateId) {
+  if (templateId && isMsg91ObjectId(templateId)) {
     const url = new URL("https://control.msg91.com/api/v5/otp");
     url.searchParams.set("template_id", templateId);
     url.searchParams.set("mobile", mobile);
     url.searchParams.set("otp", otp);
     url.searchParams.set("otp_expiry", otpExpiryMinutes);
     url.searchParams.set("otp_length", otpLength);
+    url.searchParams.set("authkey", authKey);
 
     const response = await fetch(url, {
       method: "POST",
@@ -89,9 +112,7 @@ async function sendViaMsg91(mobile: string, otp: string) {
     });
 
     const responseText = await response.text();
-    if (!response.ok) {
-      throw hookError(`MSG91 rejected the OTP request: ${responseText || response.statusText}`, 502);
-    }
+    assertMsg91Accepted(response, responseText);
 
     return responseText;
   }
@@ -113,9 +134,7 @@ async function sendViaMsg91(mobile: string, otp: string) {
 
   const response = await fetch(url);
   const responseText = await response.text();
-  if (!response.ok || /"type"\s*:\s*"error"/i.test(responseText)) {
-    throw hookError(`MSG91 rejected the OTP request: ${responseText || response.statusText}`, 502);
-  }
+  assertMsg91Accepted(response, responseText);
 
   return responseText;
 }
