@@ -7,20 +7,6 @@ export const dynamic = 'force-dynamic'
 
 const SUPABASE_EMAIL_OTP_TYPES = new Set(['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'])
 
-function phoneDigits(value?: string | null) {
-  return String(value || '').replace(/\D/g, '')
-}
-
-function getAuthUserPhone(user: any) {
-  return String(user?.phone || user?.user_metadata?.phone || '').trim()
-}
-
-function isPhoneVerified(user: any) {
-  const phone = phoneDigits(getAuthUserPhone(user))
-  const confirmedPhone = phoneDigits(user?.phone)
-  return Boolean(phone && confirmedPhone && phone === confirmedPhone && user?.phone_confirmed_at)
-}
-
 function getRedirectOrigin(requestOrigin: string) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
   if (siteUrl?.startsWith('http')) {
@@ -82,11 +68,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/auth/reset-password', redirectOrigin))
     }
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user && !isPhoneVerified(user)) {
-      return NextResponse.redirect(new URL('/auth/verify-email?reason=phone', redirectOrigin))
-    }
-
     if (safeNextPath) {
       return NextResponse.redirect(new URL(safeNextPath, redirectOrigin))
     }
@@ -113,10 +94,6 @@ export async function GET(request: NextRequest) {
       // Check if email is verified (OAuth providers usually verify automatically, but check anyway)
       if (!user.email_confirmed_at) {
         return NextResponse.redirect(new URL('/auth/verify-email', redirectOrigin))
-      }
-
-      if (!isPhoneVerified(user)) {
-        return NextResponse.redirect(new URL('/auth/verify-email?reason=phone', redirectOrigin))
       }
 
       // Check user profile for onboarding status

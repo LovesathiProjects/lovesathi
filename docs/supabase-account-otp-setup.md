@@ -5,7 +5,7 @@ Lovesathi uses two verification paths:
 1. Email/password signup verifies email with a Supabase email OTP, then verifies phone with a Supabase phone OTP.
 2. Google/Apple signup treats provider email as trusted, then verifies phone with a Supabase phone OTP.
 
-Phone is collected only on Create Account for email/password users. Social users enter phone once on the account verification screen.
+Phone is collected on Create Account for email/password users. Social users can enter phone on the account verification screen. Phone verification is strongly encouraged, but users can skip it during onboarding and verify later from Edit Profile.
 
 ## Supabase Settings Required
 
@@ -13,24 +13,24 @@ Phone is collected only on Create Account for email/password users. Social users
 2. Authentication > Providers > Email: Confirm email enabled.
 3. Authentication > Email Templates > Confirm signup: include `{{ .Token }}` so users receive a 6-digit code.
 4. Authentication > Providers > Phone: enabled.
-5. Configure a Supabase-supported SMS provider, such as Twilio.
+5. Configure Twilio/Twilio Verify as the Supabase phone SMS provider.
 6. Authentication > URL Configuration: add the production site URL and callback URL.
+7. Authentication > Auth Hooks: disable any old `Send SMS hook` that points to a Lovesathi Edge Function, otherwise Supabase will call that hook instead of Twilio.
 
-## Twilio Values Needed
+## Twilio Values Needed In Supabase
 
-```env
-TWILIO_ACCOUNT_SID=
-TWILIO_AUTH_TOKEN=
-TWILIO_MESSAGING_SERVICE_SID=
-```
+These values live in the Supabase Dashboard phone provider settings, not in the app environment:
 
-Use a Messaging Service SID when possible so sender management, regional rules, and compliance live in Twilio instead of the app.
+- Twilio Account SID
+- Twilio Auth Token
+- Twilio Verify Service SID if Supabase is set to Twilio Verify
+- Twilio Messaging Service SID only if Supabase is set to Twilio SMS/Messaging Service
 
 ## Current App Behavior
 
 - Email/password signup saves full name, email, phone, and password.
 - `/auth/verify-email` verifies email first.
-- After email is verified, the same page sends/verifies phone OTP.
-- Google/Apple users skip email OTP and land on phone OTP.
-- Onboarding starts only after phone verification.
-- `phone_verified_at` is written to `user_profiles` during DOB save and is required before onboarding completion.
+- After email is verified, the same page offers phone OTP verification.
+- Google/Apple users skip email OTP and can verify phone from the account verification screen.
+- Users can skip phone verification and continue onboarding.
+- `phone_verified_at` is written to `user_profiles` after successful phone OTP verification.

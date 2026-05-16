@@ -19,7 +19,6 @@ import {
   normalizeEmail,
 } from "@/lib/authRedirects"
 import { getPhoneValidationMessage, normalizePhoneNumber } from "@/lib/phone"
-import { isCurrentUserPhoneVerified } from "@/lib/phoneVerificationRecords"
 import { supabase } from "@/lib/supabaseClient"
 
 interface AuthScreenProps {
@@ -176,15 +175,6 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           window.sessionStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, normalizePhoneNumber(String(user.user_metadata?.phone || user.phone || "")))
         }
         router.push("/auth/verify-email?reason=unconfirmed")
-        return
-      }
-
-      if (user && !(await isCurrentUserPhoneVerified(user))) {
-        if (user.email) window.sessionStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, normalizeEmail(user.email))
-        if (user.user_metadata?.phone || user.phone) {
-          window.sessionStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, normalizePhoneNumber(String(user.user_metadata?.phone || user.phone || "")))
-        }
-        router.push("/auth/verify-email?reason=phone")
         return
       }
 

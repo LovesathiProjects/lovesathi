@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { ArrowLeft, Plus, Save, Sparkles, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,6 +20,7 @@ import { calculateAgeFromDate, formatDateForDisplay } from "@/lib/age"
 import { LocationCascadeSelect, LocationPreferencePicker } from "@/components/location/location-cascade-select"
 import { formatLocationValue, parseLocationValue, type LocationValue } from "@/lib/location"
 import { getPhoneValidationMessage, normalizePhoneNumber } from "@/lib/phone"
+import { PHONE_VERIFICATION_STORAGE_KEY } from "@/lib/authRedirects"
 import {
   BODY_TYPE_OPTIONS,
   COMPLEXION_OPTIONS,
@@ -77,6 +79,7 @@ function SelectField({
 }
 
 export function EditProfile({ onBack, onSave }: EditProfileProps) {
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState("photos")
@@ -306,6 +309,22 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
     }
   }
 
+  function handleVerifyPhone() {
+    const normalizedPhone = normalizePhoneNumber(phone)
+    const phoneError = getPhoneValidationMessage(normalizedPhone)
+    if (phoneError) {
+      toast({
+        title: "Check phone number",
+        description: phoneError,
+        variant: "destructive",
+      })
+      return
+    }
+
+    window.sessionStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, normalizedPhone)
+    router.push(`/auth/verify-email?reason=phone&phone=${encodeURIComponent(normalizedPhone)}`)
+  }
+
   if (loading) {
     return (
       <div className="luxe-light-page flex min-h-screen items-center justify-center">
@@ -416,6 +435,16 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                       ? "Verified by OTP. Contact support if you need to change this number."
                       : "Phone changes require OTP verification before saving."}
                   </p>
+                  {!phoneVerifiedAt && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-2 w-full rounded-2xl border-[#E83262]/30 font-bold text-[#E83262] hover:bg-[#E83262]/10"
+                      onClick={handleVerifyPhone}
+                    >
+                      Verify phone now
+                    </Button>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>{dateOfBirth ? "Verified Age" : "Age"}</Label>

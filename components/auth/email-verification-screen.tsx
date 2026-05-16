@@ -19,24 +19,13 @@ import {
   getPhoneValidationMessage,
   normalizePhoneNumber,
 } from "@/lib/phone"
-import { isCurrentUserPhoneVerified } from "@/lib/phoneVerificationRecords"
 import {
   PHONE_OTP_LENGTH,
-  getMsg91WidgetPhoneOtpConfig,
   normalizePhoneOtpCode,
   requestCurrentUserPhoneOtp,
   resendCurrentUserPhoneOtp,
-  verifyCurrentUserMsg91WidgetPhoneOtp,
   verifyCurrentUserPhoneOtp,
 } from "@/lib/phoneOtp"
-import {
-  getMsg91WidgetAccessToken,
-  getMsg91WidgetRequestId,
-  retryMsg91WidgetOtp,
-  sendMsg91WidgetOtp,
-  verifyMsg91WidgetOtp,
-  type Msg91WidgetConfig,
-} from "@/lib/msg91WidgetOtp"
 import { supabase } from "@/lib/supabaseClient"
 
 interface EmailVerificationScreenProps {
@@ -46,7 +35,6 @@ interface EmailVerificationScreenProps {
 type VerificationReason = "unconfirmed" | "expired" | "phone" | null
 type EmailOtpVerificationType = "email" | "signup"
 type VerificationStage = "loading" | "email" | "phone" | "done"
-type PhoneOtpProvider = "msg91-widget" | "supabase"
 
 const EMAIL_OTP_LENGTH = 6
 
@@ -65,9 +53,6 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
   const [phoneOtpCode, setPhoneOtpCode] = useState("")
   const [phoneOtpSent, setPhoneOtpSent] = useState(false)
   const [phoneOtpTarget, setPhoneOtpTarget] = useState("")
-  const [phoneOtpProvider, setPhoneOtpProvider] = useState<PhoneOtpProvider | null>(null)
-  const [phoneOtpRequestId, setPhoneOtpRequestId] = useState("")
-  const [msg91WidgetConfig, setMsg91WidgetConfig] = useState<Msg91WidgetConfig | null>(null)
   const [phoneStatusMessage, setPhoneStatusMessage] = useState("")
   const [phoneErrorMessage, setPhoneErrorMessage] = useState("")
   const [isEmailBusy, setIsEmailBusy] = useState(false)
@@ -140,7 +125,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
       return
     }
 
-    if (!(await isCurrentUserPhoneVerified(user))) {
+    if (reason === "phone") {
       setStage("phone")
       return
     }
@@ -240,7 +225,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
       rememberPhone(getAuthUserPhone(data.user) || phoneInput)
       toast({
         title: "Email verified",
-        description: "Now verify your phone number once before profile setup.",
+        description: "You can verify your phone now, or skip and do it later from Edit Profile.",
       })
       setStage("phone")
     } catch (error: any) {
@@ -271,72 +256,30 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
     setIsPhoneSending(true)
     setPhoneStatusMessage("Sending your phone code...")
     try {
-      const sendWithSupabaseFunction = async () => {
-        const result = resend
-          ? await resendCurrentUserPhoneOtp(normalizedPhone)
-          : await requestCurrentUserPhoneOtp(normalizedPhone)
+      const result = resend
+        ? await resendCurrentUserPhoneOtp(normalizedPhone)
+        : await requestCurrentUserPhoneOtp(normalizedPhone)
 
-        if ("alreadyVerified" in result && result.alreadyVerified) {
-          rememberPhone(result.phone)
-          setPhoneOtpTarget("")
-          continueToOnboarding()
-          return
-        }
-
+      if ("alreadyVerified" in result && result.alreadyVerified) {
         rememberPhone(result.phone)
-        setPhoneOtpTarget(result.phone)
-        setPhoneOtpProvider("supabase")
-        setPhoneOtpRequestId("")
-        setPhoneOtpSent(true)
-        setPhoneOtpCode("")
-        setPhoneStatusMessage(`Code sent to ${result.phone}. Enter it below to continue.`)
+        setPhoneOtpTarget("")
         toast({
-          title: resend ? "Phone code resent" : "Phone code sent",
-          description: `We sent a 6-digit OTP to ${result.phone}.`,
+          title: "Phone already verified",
+          description: "Your phone number is already verified.",
         })
-      }
-
-      try {
-        await sendWithSupabaseFunction()
+        continueToOnboarding()
         return
-      } catch (serverError) {
-        setPhoneStatusMessage("Trying a backup phone code route...")
-        let widgetConfig = msg91WidgetConfig
-        if (!widgetConfig) {
-          try {
-            widgetConfig = await getMsg91WidgetPhoneOtpConfig()
-            if (widgetConfig) setMsg91WidgetConfig(widgetConfig)
-          } catch {
-            widgetConfig = null
-          }
-        }
-
-        if (!widgetConfig) throw serverError
-
-        try {
-          const widgetPayload =
-            resend && phoneOtpProvider === "msg91-widget" && phoneOtpRequestId
-              ? await retryMsg91WidgetOtp(widgetConfig, normalizedPhone, phoneOtpRequestId)
-              : await sendMsg91WidgetOtp(widgetConfig, normalizedPhone)
-          const requestId = getMsg91WidgetRequestId(widgetPayload) || phoneOtpRequestId
-
-          rememberPhone(normalizedPhone)
-          setPhoneOtpTarget(normalizedPhone)
-          setPhoneOtpProvider("msg91-widget")
-          setPhoneOtpRequestId(requestId)
-          setPhoneOtpSent(true)
-          setPhoneOtpCode("")
-          setPhoneStatusMessage(`Code sent to ${normalizedPhone}. Enter it below to continue.`)
-          toast({
-            title: resend ? "Phone code resent" : "Phone code sent",
-            description: `We sent a 6-digit OTP to ${normalizedPhone}.`,
-          })
-          return
-        } catch {
-          setMsg91WidgetConfig(null)
-          throw serverError
-        }
       }
+
+      rememberPhone(result.phone)
+      setPhoneOtpTarget(result.phone)
+      setPhoneOtpSent(true)
+      setPhoneOtpCode("")
+      setPhoneStatusMessage(`Code sent to ${result.phone}. Enter it below to continue.`)
+      toast({
+        title: resend ? "Phone code resent" : "Phone code sent",
+        description: `We sent a 6-digit OTP to ${result.phone}.`,
+      })
     } catch (error: any) {
       const message = error.message || "Please check Supabase SMS settings and try again."
       setPhoneStatusMessage("")
@@ -349,6 +292,19 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
     } finally {
       setIsPhoneSending(false)
     }
+  }
+
+  const handleSkipPhoneVerification = () => {
+    setPhoneErrorMessage("")
+    setPhoneStatusMessage("")
+    setPhoneOtpSent(false)
+    setPhoneOtpCode("")
+    setPhoneOtpTarget("")
+    toast({
+      title: "Phone verification skipped",
+      description: "You can verify your number later from Edit Profile.",
+    })
+    continueToOnboarding()
   }
 
   const handleVerifyPhoneCode = async () => {
@@ -381,26 +337,9 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
     setIsPhoneBusy(true)
     setPhoneStatusMessage("Verifying your phone code...")
     try {
-      let result
-      if (phoneOtpProvider === "msg91-widget" && msg91WidgetConfig) {
-        const widgetPayload = await verifyMsg91WidgetOtp(
-          msg91WidgetConfig,
-          phoneForVerification,
-          token,
-          phoneOtpRequestId || undefined,
-        )
-        const accessToken = getMsg91WidgetAccessToken(widgetPayload)
-        if (!accessToken) {
-          throw new Error("MSG91 verified the code but did not return a server verification token.")
-        }
-        result = await verifyCurrentUserMsg91WidgetPhoneOtp(phoneForVerification, accessToken)
-      } else {
-        result = await verifyCurrentUserPhoneOtp(phoneForVerification, token)
-      }
+      const result = await verifyCurrentUserPhoneOtp(phoneForVerification, token)
       rememberPhone(result.phone)
       setPhoneOtpTarget("")
-      setPhoneOtpProvider(null)
-      setPhoneOtpRequestId("")
       toast({
         title: "Phone verified",
         description: "Your account is ready. Continuing to profile setup.",
@@ -542,8 +481,6 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
                   onChange={(phone) => {
                     setPhoneInput(phone)
                     setPhoneOtpTarget("")
-                    setPhoneOtpProvider(null)
-                    setPhoneOtpRequestId("")
                     setPhoneOtpSent(false)
                     setPhoneOtpCode("")
                     setPhoneStatusMessage("")
@@ -552,12 +489,6 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
                   onBlur={() => rememberPhone(phoneInput)}
                 />
               </div>
-
-              <div
-                id="lovesathi-phone-otp-captcha"
-                className="flex min-h-[1px] justify-center"
-                aria-live="polite"
-              />
 
               <Button
                 type="button"
@@ -613,6 +544,17 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
                   </Button>
                 </>
               )}
+
+              <Button
+                type="button"
+                onClick={handleSkipPhoneVerification}
+                variant="ghost"
+                className="w-full font-semibold text-black/60 hover:text-black"
+                size="lg"
+                disabled={isPhoneBusy || isPhoneSending}
+              >
+                Skip for now
+              </Button>
             </div>
           )}
 
