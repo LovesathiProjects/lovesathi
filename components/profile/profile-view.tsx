@@ -175,7 +175,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
 
   if (loading) {
     return (
-      <div className="luxe-light-page flex min-h-screen items-center justify-center">
+      <div className="luxe-light-page flex min-h-[100svh] items-center justify-center sm:min-h-screen">
         <div className="luxe-card rounded-[2rem] p-7 text-center">
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#E83262] border-t-transparent" />
           <p className="mt-4 font-bold text-[#26364A]">Opening profile dossier...</p>
@@ -226,18 +226,18 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
   }
 
   return (
-    <div className="luxe-light-page min-h-screen">
+    <div className="luxe-light-page min-h-[100svh] sm:min-h-screen">
       <div className="sticky top-0 z-20 border-b border-[#482b1a]/10 bg-[#ffffff]/84 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur-xl">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between gap-3 p-4 pt-[calc(1rem+env(safe-area-inset-top))]">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             {!isOwnProfile && onBack && (
-              <Button variant="ghost" size="sm" className="p-2" onClick={onBack}>
+              <Button variant="ghost" size="sm" className="shrink-0 p-2" onClick={onBack}>
                 <ArrowLeft className="w-5 h-5 text-black" />
               </Button>
             )}
-            <div>
+            <div className="min-w-0">
               <p className="luxe-kicker text-[0.62rem] text-[#E83262]">{isOwnProfile ? "my dossier" : "profile dossier"}</p>
-              <h1 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#26364A]">{isOwnProfile ? "My Profile" : publicName}</h1>
+              <h1 className="truncate font-serif text-2xl font-bold tracking-[-0.05em] text-[#26364A] sm:text-3xl">{isOwnProfile ? "My Profile" : publicName}</h1>
             </div>
           </div>
           {isOwnProfile ? (
@@ -267,7 +267,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
       <div className="mx-auto max-w-5xl space-y-5 p-4 pb-28 sm:p-6">
         {photos.length > 0 && (
           <div className="luxe-card overflow-hidden rounded-[2rem] border-[#E83262]/24 p-3">
-            <div className="relative h-96 overflow-hidden rounded-[1.5rem] bg-[#26364A]">
+            <div className="relative h-[min(64vw,24rem)] min-h-[15rem] overflow-hidden rounded-[1.5rem] bg-[#26364A] sm:h-96">
               <img
                 src={photoFailed ? getProfileFallbackImage(profile?.name, profile?.user_id) : photos[currentPhotoIndex]}
                 alt={profile?.name || "Profile photo"}

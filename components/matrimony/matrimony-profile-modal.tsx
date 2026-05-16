@@ -151,10 +151,10 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!flex h-[min(92dvh,860px)] max-w-sm gap-0 overflow-hidden rounded-2xl bg-white p-0 shadow-2xl sm:max-w-md sm:rounded-3xl" showCloseButton={false}>
+      <DialogContent className="!flex h-[min(calc(100svh-1rem),860px)] w-[min(calc(100vw-1rem),30rem)] max-w-none gap-0 overflow-hidden rounded-2xl bg-white p-0 shadow-2xl sm:h-[min(calc(100dvh-2rem),860px)] sm:max-w-md sm:rounded-3xl" showCloseButton={false}>
         <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-2xl sm:rounded-3xl">
           {/* Photo Section */}
-          <div className="relative h-[34dvh] min-h-[14rem] max-h-80 flex-shrink-0 overflow-hidden rounded-t-2xl sm:h-[36dvh] sm:max-h-96 sm:rounded-t-3xl" onClick={handlePhotoClick}>
+          <div className="relative h-[min(34svh,19rem)] min-h-[12rem] max-h-80 flex-shrink-0 overflow-hidden rounded-t-2xl sm:h-[min(36dvh,24rem)] sm:max-h-96 sm:rounded-t-3xl" onClick={handlePhotoClick}>
             <img
               src={currentPhoto || getProfileFallbackImage(profile.name, profile.id)}
               alt={`${profile.name} photo ${currentPhotoIndex + 1}`}
@@ -281,7 +281,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
           </div>
 
           {/* Content Section */}
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white [-webkit-overflow-scrolling:touch]">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white pr-1 [-webkit-overflow-scrolling:touch]">
             <div className="space-y-5 p-5 sm:p-6">
               {/* Basic Info */}
               <div className="space-y-4">
@@ -443,7 +443,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
           </div>
 
           {/* Action Buttons */}
-          <div className="flex-shrink-0 rounded-b-2xl border-t border-gray-200 bg-gray-50/50 p-4 sm:rounded-b-3xl sm:p-5">
+          <div className="shrink-0 rounded-b-2xl border-t border-gray-200 bg-gray-50/95 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur sm:rounded-b-3xl sm:p-5 sm:pb-[calc(1rem+env(safe-area-inset-bottom))]">
             <div className="flex items-center justify-center space-x-4">
               <Button
                 variant="outline"

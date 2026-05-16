@@ -338,7 +338,7 @@ function MatrimonyDiscoveryList({
   ]
 
   return (
-    <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#F6F7FB] text-[#26364A]">
+    <div className="fixed inset-0 flex h-[100svh] flex-col overflow-hidden bg-[#F6F7FB] text-[#26364A] sm:h-[100dvh]">
       <header className="shrink-0 border-b border-[#E4E7EE] bg-white/95 px-4 pt-[calc(0.85rem+env(safe-area-inset-top))] shadow-[0_12px_30px_rgba(31,44,60,0.06)] backdrop-blur-xl sm:px-6">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 pb-3">
           <div className="min-w-0">
@@ -394,7 +394,7 @@ function MatrimonyDiscoveryList({
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto px-4 py-4 pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:px-6">
+      <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(8.25rem+env(safe-area-inset-bottom))] sm:px-6">
         <div className="mx-auto grid w-full max-w-6xl gap-4 lg:grid-cols-[1fr_18rem]">
           <section className="min-w-0 space-y-4">
             <div className="rounded-[1.25rem] border border-[#E7EAF0] bg-white p-3 shadow-[0_10px_28px_rgba(31,44,60,0.05)]">
@@ -1554,7 +1554,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {false && currentScreen === "discover" && (
-        <div className="fixed inset-0 flex h-[100dvh] min-h-[100dvh] w-screen flex-col overflow-hidden bg-[#F6F7FB]">
+        <div className="fixed inset-0 flex h-[100svh] min-h-[100svh] w-full flex-col overflow-hidden bg-[#F6F7FB] sm:h-[100dvh] sm:min-h-[100dvh]">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_14%,rgba(216,199,159,0.34),transparent_25rem),radial-gradient(circle_at_82%_12%,rgba(194,165,116,0.18),transparent_28rem),radial-gradient(circle_at_50%_104%,rgba(185,144,77,0.30),transparent_32rem),linear-gradient(135deg,#F6F7FB_0%,#fbf3e5_46%,#f1d9aa_100%)]" />
           <div className="pointer-events-none absolute inset-0 opacity-[0.34] [background-image:linear-gradient(rgba(185,144,77,0.14)_1px,transparent_1px),linear-gradient(90deg,rgba(185,144,77,0.10)_1px,transparent_1px)] [background-size:88px_88px] [mask-image:radial-gradient(circle_at_center,black,transparent_76%)]" />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[linear-gradient(to_bottom,rgba(255,253,248,0.96),rgba(255,253,248,0))]" />
@@ -1812,7 +1812,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       )}
 
       {currentScreen === "chat" && selectedChatId && (
-        <div className="fixed inset-0 z-50 h-[100dvh] max-h-[100dvh] overflow-hidden bg-background">
+        <div className="fixed inset-0 z-50 h-[100svh] max-h-[100svh] overflow-hidden bg-background sm:h-[100dvh] sm:max-h-[100dvh]">
           <ChatScreen 
             matchId={selectedChatId} 
             onBack={() => setCurrentScreen("messages")} 

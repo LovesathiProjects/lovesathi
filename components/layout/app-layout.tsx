@@ -31,9 +31,9 @@ export function AppLayout({
   
   return (
     <div className={cn(
-      "min-h-[100dvh] w-full overflow-x-hidden",
+      "min-h-[100svh] w-full overflow-x-hidden sm:min-h-[100dvh]",
       "luxe-light-page",
-      isDiscoverScreen && "h-[100dvh] overflow-hidden"
+      isDiscoverScreen && "h-[100svh] overflow-hidden sm:h-[100dvh]"
     )}>
       {/* Settings Icon - Only show on profile page */}
       {showSettingsButton && onSettingsClick && currentScreen === "profile" && (
@@ -50,7 +50,7 @@ export function AppLayout({
       )}
 
       <main className={cn(
-        "min-h-[100dvh] w-full pb-16 sm:pb-20",
+        "min-h-[100svh] w-full pb-[calc(4.75rem+env(safe-area-inset-bottom))] sm:min-h-[100dvh] sm:pb-20",
         !showBottomTabs && "pb-0",
         isDiscoverScreen && "h-full overflow-hidden"
       )}>{children}</main>

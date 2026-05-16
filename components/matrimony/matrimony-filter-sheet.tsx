@@ -296,25 +296,25 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!flex h-[min(88dvh,760px)] w-[min(94vw,760px)] overflow-hidden rounded-[1.1rem] border-0 bg-white p-0 shadow-[0_30px_90px_rgba(31,44,60,0.28)]" showCloseButton={false}>
+      <DialogContent className="!flex h-[min(calc(100svh-1rem),760px)] w-[min(calc(100vw-1rem),760px)] max-w-none overflow-hidden rounded-[1.1rem] border-0 bg-white p-0 shadow-[0_30px_90px_rgba(31,44,60,0.28)] sm:h-[min(calc(100dvh-2rem),760px)]" showCloseButton={false}>
         <div className="relative flex min-h-0 w-full flex-1 flex-col">
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="absolute -right-3 -top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#26364A] shadow-lg"
+            className="absolute right-3 top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#26364A] shadow-lg sm:-right-3 sm:-top-3"
             aria-label="Close filters"
           >
             <X className="h-5 w-5" />
           </button>
-          <div className="flex items-center justify-between gap-4 border-b border-[#EEF1F6] px-5 py-5 sm:px-7">
+          <div className="flex items-center justify-between gap-4 border-b border-[#EEF1F6] px-5 py-5 pr-14 sm:px-7">
             <h2 className="text-2xl font-black tracking-[-0.03em] text-[#26364A]">Refine Matches</h2>
             <button type="button" onClick={resetFilters} className="text-sm font-black text-[#E83262]">
               Reset
             </button>
           </div>
 
-          <div className="grid min-h-0 flex-1 grid-cols-[9.7rem_1fr] overflow-hidden sm:grid-cols-[13rem_1fr]">
-            <nav className="min-h-0 overflow-y-auto bg-[#F4F6FA] py-2">
+          <div className="grid min-h-0 flex-1 grid-cols-[7.75rem_minmax(0,1fr)] overflow-hidden sm:grid-cols-[13rem_minmax(0,1fr)]">
+            <nav className="min-h-0 overflow-y-auto overscroll-contain bg-[#F4F6FA] py-2">
               {categories.map((category) => {
                 const selectedCount = category.badge?.(filters) || 0
                 return (
@@ -323,7 +323,7 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
                     type="button"
                     onClick={() => setActiveCategory(category.id)}
                     className={cn(
-                      "flex min-h-12 w-full items-center justify-between gap-2 px-4 py-3 text-left text-xs font-black text-[#465568] transition sm:text-sm",
+                      "flex min-h-12 w-full items-center justify-between gap-2 px-3 py-3 text-left text-[0.72rem] font-black leading-tight text-[#465568] transition sm:px-4 sm:text-sm",
                       activeCategory === category.id && "bg-white text-[#26364A] shadow-[inset_3px_0_0_#E83262]",
                     )}
                   >
@@ -338,12 +338,12 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
               })}
             </nav>
 
-            <section className="min-h-0 overflow-y-auto px-5 py-5 sm:px-7">
+            <section className="min-h-0 overflow-y-auto overscroll-contain px-4 py-5 pb-7 sm:px-7">
               {content}
             </section>
           </div>
 
-          <div className="shrink-0 border-t border-[#EEF1F6] bg-white/96 px-5 py-4 backdrop-blur sm:px-7">
+          <div className="shrink-0 border-t border-[#EEF1F6] bg-white/96 px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 backdrop-blur sm:px-7">
             <Button onClick={applyFilters} className="h-12 w-full rounded-xl bg-[#E83262] text-base font-black text-white shadow-[0_14px_30px_rgba(232,50,98,0.18)] hover:bg-[#C3264E]">
               Show Matches
             </Button>

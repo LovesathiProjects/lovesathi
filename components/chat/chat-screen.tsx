@@ -855,7 +855,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
 
   if (!matchId || !chatUser) {
     return (
-      <div className={cn("relative flex min-h-[100dvh] flex-col", isMatrimony ? "bg-white" : "bg-[#0E0F12]")}>
+      <div className={cn("relative flex min-h-[100svh] flex-col sm:min-h-[100dvh]", isMatrimony ? "bg-white" : "bg-[#0E0F12]")}>
         <StaticBackground />
         <div className="flex items-center justify-center h-full">
           <div className="text-center space-y-4">
@@ -876,7 +876,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
   }
 
   return (
-    <div className={cn("relative flex h-[100dvh] min-h-[100dvh] max-h-[100dvh] flex-col overflow-hidden", isMatrimony ? "bg-[linear-gradient(145deg,#ffffff,#F6F7FB_58%,#f5f4f0)]" : "bg-[#0E0F12]")}>
+    <div className={cn("relative flex h-[100svh] min-h-[100svh] max-h-[100svh] flex-col overflow-hidden sm:h-[100dvh] sm:min-h-[100dvh] sm:max-h-[100dvh]", isMatrimony ? "bg-[linear-gradient(145deg,#ffffff,#F6F7FB_58%,#f5f4f0)]" : "bg-[#0E0F12]")}>
       {/* Static Background */}
       <StaticBackground />
       
@@ -1051,7 +1051,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
       )}
 
       {/* Messages */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:p-6">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-5 scroll-pb-32 sm:p-6">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <div className={cn("mb-4 flex h-16 w-16 items-center justify-center rounded-full", isMatrimony ? "border border-[#E83262]/24 bg-[#F2F5FA] shadow-[0_18px_48px_rgba(24,17,13,0.08)]" : "bg-white/10")}>
@@ -1309,7 +1309,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
 
       {/* Message Input */}
       <div className={cn(
-        "flex-shrink-0 border-t px-4 pb-[calc(0.9rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_55px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:p-4 sm:pb-[calc(1rem+env(safe-area-inset-bottom))]",
+        "shrink-0 border-t px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_55px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:p-4 sm:pb-[calc(1rem+env(safe-area-inset-bottom))]",
         isMatrimony ? "border-[#E83262]/24 bg-[#F6F7FB]/88" : "border-white/20 bg-[#14161B]/50"
       )}>
         {replyPreview && (
@@ -1335,8 +1335,8 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
             </button>
           </div>
         )}
-        <div className="flex items-end space-x-3">
-          <div className="flex-1 relative">
+        <div className="flex min-w-0 items-end space-x-3">
+          <div className="relative min-w-0 flex-1">
             <Input
               placeholder="Type a message... contact numbers are blocked"
               value={newMessage}
