@@ -1338,7 +1338,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
         <div className="flex min-w-0 items-end space-x-3">
           <div className="relative min-w-0 flex-1">
             <Input
-              placeholder="Type a message... contact numbers are blocked"
+              placeholder="Type a message... contact details are blocked"
               value={newMessage}
               onChange={(e) => {
                 setNewMessage(e.target.value)

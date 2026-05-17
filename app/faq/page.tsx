@@ -42,7 +42,7 @@ const faqSections = [
       {
         question: "Can free users see my phone number?",
         answer:
-          "No. Phone numbers are masked unless a member has the right premium contact access. Lovesathi also blocks attempts to share phone numbers inside chat for safety.",
+          "No. Phone numbers are masked unless a member has the right premium contact access. Lovesathi also blocks attempts to share phone numbers, emails, social handles, and other contact details inside chat for safety.",
       },
       {
         question: "Who can see my profile?",
@@ -175,4 +175,3 @@ export default function FAQPage() {
     </main>
   )
 }
-
