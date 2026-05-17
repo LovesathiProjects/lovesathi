@@ -634,6 +634,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
   const [viewedUserId, setViewedUserId] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [viewerLocation, setViewerLocation] = useState<string | null>(null)
+  const [viewerProfile, setViewerProfile] = useState<Record<string, any> | null>(null)
   const [cameFromChat, setCameFromChat] = useState<boolean>(false)
   const [cameFromShortlist, setCameFromShortlist] = useState<boolean>(false)
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
@@ -823,6 +824,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           setProfiles([])
           setCurrentUserId(null)
           setViewerLocation(null)
+          setViewerProfile(null)
           setLoading(false)
           return
         }
@@ -831,6 +833,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           setProfiles([])
           setCurrentUserId(null)
           setViewerLocation(null)
+          setViewerProfile(null)
           setSwipeLimitStatus(null)
           setViewerEntitlement(null)
           setLoading(false)
@@ -892,6 +895,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         if (profilesError) {
           console.error("Error fetching matrimony profiles:", profilesError)
           setProfiles([])
+          setViewerProfile(null)
           setLoading(false)
           return
         }
@@ -929,6 +933,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         const workLocationLabel = formatLocationValue(currentWorkLocation)
         const birthLocationLabel = typeof currentCultural.place_of_birth === "string" ? currentCultural.place_of_birth.trim() : ""
         setViewerLocation(workLocationLabel || birthLocationLabel || null)
+        setViewerProfile((currentMatrimonyProfile as Record<string, any> | undefined) || null)
 
         // Hide profiles the user has already liked, passed, or connected with.
         const actedProfileIds = await getMatrimonyLikedProfiles(user.id)
@@ -1179,6 +1184,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       } catch (error) {
         console.error("Unexpected error fetching matrimony profiles:", error)
         setProfiles([])
+        setViewerProfile(null)
       } finally {
         setLoading(false)
       }
@@ -2107,6 +2113,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         <MatrimonyProfileModal
           profile={shortlistModalProfile}
           open={!!shortlistModalProfile}
+          viewerProfile={viewerProfile}
           viewerIsPremium={viewerIsPremium}
           isMatched={false}
           onOpenChange={(open) => {

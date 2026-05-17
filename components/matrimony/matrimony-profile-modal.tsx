@@ -8,9 +8,11 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { X, MapPin, Briefcase, GraduationCap, Users, Share, Flag, Heart, ChevronLeft, ChevronRight, Phone, MessageCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
+import { PreferenceCompatibilityCard } from "@/components/matrimony/preference-compatibility-card"
 import { formatPublicProfileName } from "@/lib/displayName"
 import { getPublicProfileId } from "@/lib/profileIdentity"
 import { getProfileFallbackImage, getSafeProfilePhotos } from "@/lib/profileImages"
+import type { ProfileForCompatibility } from "@/lib/preferenceCompatibility"
 
 const SUPER_LIKE_ICON_SRC = "/lovesathi-superlike-star-polished.png"
 
@@ -24,6 +26,7 @@ interface MatrimonyProfileModalProps {
   onSuperLike?: () => void
   onPhoneUpgrade?: () => void
   onRevealPhone?: (profileId: string) => Promise<string | null>
+  viewerProfile?: ProfileForCompatibility
   viewerIsPremium?: boolean
   isMatched?: boolean
 }
@@ -71,7 +74,7 @@ function DossierSection({
   )
 }
 
-export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, onNotNow, onChat, onSuperLike, onPhoneUpgrade, onRevealPhone, viewerIsPremium = false, isMatched = false }: MatrimonyProfileModalProps) {
+export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, onNotNow, onChat, onSuperLike, onPhoneUpgrade, onRevealPhone, viewerProfile = null, viewerIsPremium = false, isMatched = false }: MatrimonyProfileModalProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
   const [photoFailed, setPhotoFailed] = useState(false)
   const [revealedPhone, setRevealedPhone] = useState<string | null>(profile.phone || null)
@@ -101,10 +104,12 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
   const education = profile.education || career.highest_education
   const profession = profile.profession || career.job_title
   const hasAnyPreferences = Boolean(
-    preferences.min_age ||
+      preferences.min_age ||
       preferences.max_age ||
       preferences.min_height ||
       preferences.max_height ||
+      preferences.min_height_cm ||
+      preferences.max_height_cm ||
       (Array.isArray(preferences.locations) && preferences.locations.length) ||
       (Array.isArray(preferences.communities) && preferences.communities.length) ||
       (Array.isArray(preferences.education_prefs) && preferences.education_prefs.length) ||
@@ -408,6 +413,8 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                 />
               </DossierSection>
 
+              <PreferenceCompatibilityCard targetProfile={profile} viewerProfile={viewerProfile} />
+
               {hasAnyPreferences && (
                 <DossierSection title="Partner Preferences" icon={<Heart className="h-4 w-4 text-[#E83262]" />}>
                   <InfoLine
@@ -416,7 +423,11 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                   />
                   <InfoLine
                     label="Height Range"
-                    value={preferences.min_height || preferences.max_height ? `${preferences.min_height || "?"} - ${preferences.max_height || "?"}` : null}
+                    value={
+                      preferences.min_height_cm || preferences.max_height_cm || preferences.min_height || preferences.max_height
+                        ? `${preferences.min_height_cm || preferences.min_height || "?"} - ${preferences.max_height_cm || preferences.max_height || "?"}`
+                        : null
+                    }
                   />
                   <InfoLine label="Locations" value={preferences.locations} />
                   <InfoLine label="Communities" value={preferences.communities} />

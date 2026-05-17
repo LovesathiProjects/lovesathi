@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabaseClient"
 import { recordMatrimonyLike, recordMatrimonyProfileView } from "@/lib/matchmakingService"
 import { EditProfile } from "./edit-profile"
+import { PreferenceCompatibilityCard } from "@/components/matrimony/preference-compatibility-card"
 import type { MatrimonyProfileFull } from "@/lib/matrimonyService"
 import { useToast } from "@/hooks/use-toast"
 import { getProfileContact, revealProfileContact, type ProfileContactInfo } from "@/lib/profileContacts"
@@ -38,6 +39,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
   const [isLiking, setIsLiking] = useState(false)
   const [contact, setContact] = useState<ProfileContactInfo | null>(null)
   const [viewerIsPremium, setViewerIsPremium] = useState(false)
+  const [viewerProfile, setViewerProfile] = useState<MatrimonyProfileFull | null>(null)
   const [photoFailed, setPhotoFailed] = useState(false)
   const { toast } = useToast()
   const publicName = formatPublicProfileName(profile?.name)
@@ -64,7 +66,10 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        setViewerProfile(null)
+        return
+      }
       const entitlement = await getUserEntitlementStatus(user.id)
       setViewerIsPremium(entitlement.isPremium)
 
@@ -79,6 +84,19 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
       if (error) throw error
       setProfile(data as MatrimonyProfileFull)
       setContact(await getProfileContact(targetUserId))
+
+      if (targetUserId === user.id) {
+        setViewerProfile(data as MatrimonyProfileFull)
+      } else {
+        const { data: viewerData, error: viewerError } = await supabase
+          .from("matrimony_profile_full")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle()
+
+        if (viewerError) console.warn("Unable to fetch viewer profile for compatibility:", viewerError.message)
+        setViewerProfile((viewerData as MatrimonyProfileFull | null) || null)
+      }
 
       const { data: verification } = await supabase
         .from("id_verifications")
@@ -132,6 +150,7 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
       }
     } catch (error) {
       console.error("Error fetching matrimony profile:", error)
+      setViewerProfile(null)
     } finally {
       setLoading(false)
     }
@@ -191,6 +210,11 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
   const family = profile?.family || {}
   const cultural = profile?.cultural || {}
   const preferences = profile?.partner_preferences || {}
+  const preferenceRecord = preferences as Record<string, unknown>
+  const preferredMinHeight = preferenceRecord.min_height_cm ?? preferenceRecord.min_height
+  const preferredMaxHeight = preferenceRecord.max_height_cm ?? preferenceRecord.max_height
+  const preferredMinHeightText = typeof preferredMinHeight === "number" || typeof preferredMinHeight === "string" ? preferredMinHeight : null
+  const preferredMaxHeightText = typeof preferredMaxHeight === "number" || typeof preferredMaxHeight === "string" ? preferredMaxHeight : null
   const locationParts = [career.work_location?.city, career.work_location?.state, career.work_location?.country].filter(Boolean)
   const phoneIsRevealed = Boolean(contact?.phoneRevealed)
   const displayPhone = contact?.phoneRevealed || contact?.phoneMasked
@@ -412,6 +436,14 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
           </CardContent>
         </Card>
 
+        {!isOwnProfile && (
+          <PreferenceCompatibilityCard
+            targetProfile={profile}
+            viewerProfile={viewerProfile}
+            className="rounded-[2rem] border-[#E83262]/24"
+          />
+        )}
+
         <Card className="luxe-card rounded-[2rem] border-[#E83262]/24">
           <CardContent className="p-6 space-y-4">
             <h3 className="font-semibold text-lg text-black">Partner Preferences</h3>
@@ -419,6 +451,12 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
               {(preferences.min_age || preferences.max_age) && (
                 <div>
                   <span className="font-medium text-black">Age Range:</span> {preferences.min_age || "?"} - {preferences.max_age || "?"}
+                </div>
+              )}
+              {(preferredMinHeightText || preferredMaxHeightText) && (
+                <div>
+                  <span className="font-medium text-black">Height Range:</span>{" "}
+                  {preferredMinHeightText || "?"} - {preferredMaxHeightText || "?"}
                 </div>
               )}
               {Array.isArray(preferences.locations) && preferences.locations.length > 0 && (
