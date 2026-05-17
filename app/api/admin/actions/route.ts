@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/adminAuth"
-import { getPlanActiveUntil, getPlanGraceUntil, getSubscriptionPlan, SUBSCRIPTION_GRACE_DAYS } from "@/lib/subscriptionPlans"
+import {
+  getPlanActiveUntil,
+  getPlanGraceUntil,
+  getSubscriptionPlan,
+  SUBSCRIPTION_GRACE_DAYS,
+  SUBSCRIPTION_PLANS,
+} from "@/lib/subscriptionPlans"
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const verificationStatuses = new Set(["approved", "rejected", "in_review"])
@@ -9,6 +15,7 @@ const profileReviewStatuses = new Set(["approved", "rejected", "in_review", "pen
 const userStatuses = new Set(["suspended", "active"])
 const entitlementStatuses = new Set(["active", "past_due", "canceled"])
 const authEmailStatuses = new Set(["resend_confirmation"])
+const adminGrantPlanIds = new Set<string>(SUBSCRIPTION_PLANS.map((plan) => plan.id))
 
 function cleanText(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim().slice(0, 500) : null
@@ -282,7 +289,12 @@ export async function POST(request: Request) {
     }
 
     const notes = cleanText(body.notes)
-    const planId = typeof body.planId === "string" ? body.planId : "signature"
+    const planId = typeof body.planId === "string" && body.planId.trim() ? body.planId.trim() : "signature"
+
+    if (status === "active" && !adminGrantPlanIds.has(planId)) {
+      return NextResponse.json({ error: "Invalid subscription plan." }, { status: 400 })
+    }
+
     const plan = getSubscriptionPlan(planId)
     const { data: currentRows } = await supabase
       .from("user_entitlements")

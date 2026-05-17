@@ -909,7 +909,7 @@ export function AdminPortal() {
                     User management
                   </CardTitle>
                   <p className="mt-2 max-w-3xl text-sm leading-6 text-[#6F7C8B]">
-                    Inspect recent Supabase Auth users, email confirmation state, profile completion, review status,
+                    Inspect loaded Supabase Auth users, email confirmation state, profile completion, review status,
                     and suspend or restore access with an audit note.
                   </p>
                   {queueFilter !== "all" && (
@@ -939,6 +939,9 @@ export function AdminPortal() {
                           </p>
                           <p className="mt-1 text-xs font-black uppercase tracking-[0.12em] text-[#9d7a55]">
                             ID - {item.publicId || "Pending"}
+                          </p>
+                          <p className="mt-1 break-all text-[0.68rem] font-semibold text-[#9d7a55]/80">
+                            Auth UUID - {item.id}
                           </p>
                         </div>
                         <StatusBadge status={item.status} />
@@ -1017,7 +1020,7 @@ export function AdminPortal() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="rounded-full border-[#E83262]/20 bg-[#E83262]/10 text-white"
+                            className="rounded-full border-[#E83262]/20 bg-[#E83262]/10 text-[#E83262]"
                             disabled={Boolean(actionKey)}
                             onClick={() => handleAction("entitlement", item.id, "canceled")}
                           >

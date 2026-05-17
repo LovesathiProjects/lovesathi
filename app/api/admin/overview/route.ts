@@ -176,8 +176,28 @@ const authEmailActions: Record<string, { label: string; description: string }> =
   },
 }
 
+const ADMIN_PAGE_SIZE = 1000
+const ADMIN_MAX_PAGES = 10
+const ADMIN_IN_FILTER_BATCH_SIZE = 200
+
 function unique(values: Array<string | null | undefined>) {
   return Array.from(new Set(values.filter(Boolean))) as string[]
+}
+
+function chunkValues<T>(values: T[], size = ADMIN_IN_FILTER_BATCH_SIZE) {
+  const chunks: T[][] = []
+  for (let index = 0; index < values.length; index += size) {
+    chunks.push(values.slice(index, index + size))
+  }
+  return chunks
+}
+
+function getLoadedRowsDetail(label: string, count: number) {
+  const formattedCount = count.toLocaleString("en-IN")
+  const maxRows = ADMIN_PAGE_SIZE * ADMIN_MAX_PAGES
+  return count >= maxRows
+    ? `Showing the first ${maxRows.toLocaleString("en-IN")} ${label}. Narrow with search if needed.`
+    : `Showing all ${formattedCount} ${label}.`
 }
 
 function getHost(request: Request) {
@@ -324,11 +344,11 @@ async function safeRows<T>(run: () => PromiseLike<{ data: T[] | null; error: any
 async function safeAuthUsers(supabase: any): Promise<QueueResult<any>> {
   try {
     const users: any[] = []
-    const perPage = 1000
+    const perPage = ADMIN_PAGE_SIZE
     let page = 1
     let detail: string | undefined
 
-    while (page <= 10) {
+    while (page <= ADMIN_MAX_PAGES) {
       const { data, error } = await supabase.auth.admin.listUsers({
         page,
         perPage,
@@ -349,11 +369,7 @@ async function safeAuthUsers(supabase: any): Promise<QueueResult<any>> {
       page += 1
     }
 
-    if (users.length >= perPage * 10) {
-      detail = "Showing the first 10,000 Supabase Auth users. Narrow with search if needed."
-    } else {
-      detail = `Showing all ${users.length.toLocaleString("en-IN")} Supabase Auth users.`
-    }
+    detail = getLoadedRowsDetail("Supabase Auth users", users.length)
 
     return {
       status: "ok",
@@ -383,14 +399,38 @@ async function loadAdminProfileRows(supabase: any): Promise<QueueResult<any>> {
     "id,user_id,public_profile_id,name,age,gender,created_by,photos,bio,personal,career,cultural,profile_completed,step1_completed,step2_completed,step3_completed,step4_completed,step5_completed,step6_completed,step7_completed,created_at,updated_at"
 
   try {
-    const enhanced = await supabase
-      .from("matrimony_profile_full")
-      .select(enhancedSelect)
-      .order("updated_at", { ascending: false })
-      .limit(500)
+    async function loadProfilePages(select: string) {
+      const rows: any[] = []
+
+      for (let page = 0; page < ADMIN_MAX_PAGES; page += 1) {
+        const from = page * ADMIN_PAGE_SIZE
+        const to = from + ADMIN_PAGE_SIZE - 1
+        const { data, error } = await supabase
+          .from("matrimony_profile_full")
+          .select(select)
+          .order("updated_at", { ascending: false })
+          .range(from, to)
+
+        if (error) {
+          return { rows, error, detail: undefined as string | undefined }
+        }
+
+        const pageRows = data || []
+        rows.push(...pageRows)
+        if (pageRows.length < ADMIN_PAGE_SIZE) break
+      }
+
+      return {
+        rows,
+        error: null,
+        detail: getLoadedRowsDetail("matrimony profiles", rows.length),
+      }
+    }
+
+    const enhanced = await loadProfilePages(enhancedSelect)
 
     if (!enhanced.error) {
-      return { status: "ok", items: enhanced.data || [] }
+      return { status: "ok", detail: enhanced.detail, items: enhanced.rows }
     }
 
     if (!isMissingAdminReviewColumn(enhanced.error)) {
@@ -401,18 +441,14 @@ async function loadAdminProfileRows(supabase: any): Promise<QueueResult<any>> {
       }
     }
 
-    const legacy = await supabase
-      .from("matrimony_profile_full")
-      .select(legacySelect)
-      .order("updated_at", { ascending: false })
-      .limit(500)
+    const legacy = await loadProfilePages(legacySelect)
 
     return {
       status: "warning",
       detail:
         legacy.error?.message ||
-        "Profile review migration is pending. Showing profiles in read-only moderation mode until the DB migration is applied.",
-      items: legacy.data || [],
+        `Profile review migration is pending. ${legacy.detail || "Showing profiles in read-only moderation mode until the DB migration is applied."}`,
+      items: legacy.rows,
     }
   } catch (error: any) {
     return {
@@ -423,29 +459,74 @@ async function loadAdminProfileRows(supabase: any): Promise<QueueResult<any>> {
   }
 }
 
+async function loadBatchedRows(
+  supabase: any,
+  table: string,
+  select: string,
+  column: string,
+  values: string[],
+  build?: (query: any) => any,
+): Promise<QueueResult<any>> {
+  const items: any[] = []
+
+  try {
+    for (const batch of chunkValues(values)) {
+      let query = supabase.from(table).select(select).in(column, batch)
+      if (build) {
+        query = build(query)
+      }
+
+      const { data, error } = await query
+      if (error) {
+        return {
+          status: "warning",
+          detail: error.message,
+          items,
+        }
+      }
+
+      items.push(...(data || []))
+    }
+
+    return { status: "ok", items }
+  } catch (error: any) {
+    return {
+      status: "warning",
+      detail: error?.message || `Unable to load ${table}.`,
+      items,
+    }
+  }
+}
+
 async function loadAuthUserProfileRows(supabase: any, userIds: string[]): Promise<QueueResult<any>> {
   if (userIds.length === 0) {
     return { status: "ok", items: [] }
   }
 
-  const enhanced = await supabase
-    .from("matrimony_profile_full")
-    .select("user_id,public_profile_id,name,profile_completed,admin_review_status,updated_at")
-    .in("user_id", userIds)
+  const enhanced = await loadBatchedRows(
+    supabase,
+    "matrimony_profile_full",
+    "user_id,public_profile_id,name,profile_completed,admin_review_status,updated_at",
+    "user_id",
+    userIds,
+  )
 
-  if (!enhanced.error) {
-    return { status: "ok", items: enhanced.data || [] }
+  if (enhanced.status === "ok") {
+    return enhanced
   }
 
-  const legacy = await supabase
-    .from("matrimony_profile_full")
-    .select("user_id,public_profile_id,name,profile_completed,updated_at")
-    .in("user_id", userIds)
+  const legacy = await loadBatchedRows(
+    supabase,
+    "matrimony_profile_full",
+    "user_id,public_profile_id,name,profile_completed,updated_at",
+    "user_id",
+    userIds,
+  )
 
   return {
-    status: legacy.error ? "warning" : "ok",
-    detail: legacy.error?.message,
-    items: legacy.data || [],
+    status: legacy.status,
+    detail: legacy.detail || enhanced.detail,
+    items: legacy.items,
   }
 }
 
@@ -454,13 +535,21 @@ async function loadEntitlementRows(supabase: any, userIds: string[]): Promise<Qu
     return { status: "ok", items: [] }
   }
 
-  return safeRows<any>(() =>
-    supabase
-      .from("user_entitlements")
-      .select("id,user_id,plan_id,status,active_until,renewal_due_at,grace_until,source,updated_at")
-      .in("user_id", userIds)
-      .order("updated_at", { ascending: false }),
+  const result = await loadBatchedRows(
+    supabase,
+    "user_entitlements",
+    "id,user_id,plan_id,status,active_until,renewal_due_at,grace_until,source,updated_at",
+    "user_id",
+    userIds,
+    (query) => query.order("updated_at", { ascending: false }),
   )
+
+  result.items.sort(
+    (left, right) =>
+      new Date(right.updated_at || 0).getTime() - new Date(left.updated_at || 0).getTime(),
+  )
+
+  return result
 }
 
 async function loadNameMap(supabase: any, userIds: string[]) {
@@ -468,8 +557,8 @@ async function loadNameMap(supabase: any, userIds: string[]) {
     return new Map<string, string>()
   }
 
-  const { data } = await supabase.from("matrimony_profile_full").select("user_id,name").in("user_id", userIds)
-  const rows = (data || []) as Array<{ user_id: string; name: string | null }>
+  const result = await loadBatchedRows(supabase, "matrimony_profile_full", "user_id,name", "user_id", userIds)
+  const rows = result.items as Array<{ user_id: string; name: string | null }>
   return new Map<string, string>(rows.map((row) => [row.user_id, row.name || "Unnamed profile"]))
 }
 
@@ -725,19 +814,22 @@ export async function GET(request: Request) {
       label: "Unconfirmed users",
       value: unconfirmedUserCount,
       status: unconfirmedUserCount > 0 ? "warning" : "ok",
-      detail: authUserRows.status === "ok" ? "Latest 50 auth users sample." : authUserRows.detail,
+      detail: authUserRows.detail,
     },
     {
       label: "Suspended users",
       value: suspendedUserCount,
       status: suspendedUserCount > 0 ? "warning" : "ok",
-      detail: authUserRows.status === "ok" ? "Latest 50 auth users sample." : authUserRows.detail,
+      detail: authUserRows.detail,
     },
     {
       label: "Premium users visible",
       value: premiumUserCount,
       status: entitlementRows.status,
-      detail: entitlementRows.status === "ok" ? "Latest 50 auth users sample." : entitlementRows.detail,
+      detail:
+        entitlementRows.status === "ok"
+          ? "Premium state is matched against the loaded Supabase Auth users."
+          : entitlementRows.detail,
     },
   ]
 
@@ -825,7 +917,7 @@ export async function GET(request: Request) {
       detail:
         unconfirmedUsers > 0
           ? "Unconfirmed users can be nudged from User management with a fresh verification code."
-          : "Recent auth users have confirmed email in the visible sample.",
+          : "Loaded auth users have confirmed email.",
     },
     {
       label: "Premium controls",
@@ -834,7 +926,7 @@ export async function GET(request: Request) {
       detail:
         activePremium > 0
           ? "Active premium entitlements are visible and can be revoked from this portal."
-          : "No active premium entitlements are visible in the current sample.",
+          : "No active premium entitlements are visible in the loaded user set.",
     },
     {
       label: "Admin activity",
@@ -909,7 +1001,7 @@ export async function GET(request: Request) {
         status: authUserRows.status,
         detail:
           authUserRows.status === "ok"
-            ? "Admins can inspect recent auth users and suspend or restore access with audit notes."
+            ? "Admins can inspect loaded auth users and suspend or restore access with audit notes."
             : authUserRows.detail || "Supabase Auth user management is not currently reachable.",
       },
       {
