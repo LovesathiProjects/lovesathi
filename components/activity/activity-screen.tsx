@@ -257,7 +257,7 @@ export function ActivityScreen({ onProfileClick, onMatchClick, onBack, onUpgrade
       </div>
 
         {/* Activity List */}
-        <div className="flex-1 overflow-y-auto p-4 min-h-0">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pb-[calc(7rem+env(safe-area-inset-bottom))]">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <Loader2 className={cn("w-8 h-8 animate-spin mb-4", isMatrimony ? "text-[#E83262]" : "text-white")} />

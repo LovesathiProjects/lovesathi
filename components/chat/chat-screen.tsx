@@ -1051,7 +1051,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
       )}
 
       {/* Messages */}
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-5 scroll-pb-32 sm:p-6">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] scroll-pb-[calc(7rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-8">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <div className={cn("mb-4 flex h-16 w-16 items-center justify-center rounded-full", isMatrimony ? "border border-[#E83262]/24 bg-[#F2F5FA] shadow-[0_18px_48px_rgba(24,17,13,0.08)]" : "bg-white/10")}>
@@ -1309,7 +1309,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
 
       {/* Message Input */}
       <div className={cn(
-        "shrink-0 border-t px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_55px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:p-4 sm:pb-[calc(1rem+env(safe-area-inset-bottom))]",
+        "relative z-[45] shrink-0 border-t px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_55px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:p-4 sm:pb-[calc(1rem+env(safe-area-inset-bottom))]",
         isMatrimony ? "border-[#E83262]/24 bg-[#F6F7FB]/88" : "border-white/20 bg-[#14161B]/50"
       )}>
         {replyPreview && (

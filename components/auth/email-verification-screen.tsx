@@ -361,7 +361,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
 
   if (stage === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white p-6">
+      <div className="flex min-h-[100svh] items-center justify-center bg-white p-6 sm:min-h-[100dvh]">
         <div className="space-y-4 text-center">
           <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#E83262]" />
           <p className="text-sm font-medium text-black/70">Preparing verification...</p>
@@ -371,12 +371,12 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
-      <div className="flex items-center justify-center border-b border-black/10 px-4 py-6">
+    <div className="flex min-h-[100svh] flex-col bg-white sm:min-h-[100dvh]">
+      <div className="flex shrink-0 items-center justify-center border-b border-black/10 px-4 py-6">
         <h2 className="text-lg font-bold text-black">Account Verification</h2>
       </div>
 
-      <div className="flex flex-1 items-center justify-center px-6 py-8">
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-6 py-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
         <div className="mx-auto w-full max-w-md space-y-8">
           <div className="space-y-4 text-center">
             <div className="flex justify-center">

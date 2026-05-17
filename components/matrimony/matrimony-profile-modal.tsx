@@ -156,10 +156,10 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!flex h-[min(calc(100svh-1rem),860px)] w-[min(calc(100vw-1rem),30rem)] max-w-none gap-0 overflow-hidden rounded-2xl bg-white p-0 shadow-2xl sm:h-[min(calc(100dvh-2rem),860px)] sm:max-w-md sm:rounded-3xl" showCloseButton={false}>
+      <DialogContent className="!flex h-[min(calc(100svh-0.75rem),900px)] max-h-[calc(100svh-0.75rem)] w-[min(calc(100vw-0.75rem),34rem)] max-w-none gap-0 overflow-hidden rounded-2xl bg-white p-0 shadow-2xl sm:h-[min(calc(100dvh-2rem),900px)] sm:max-h-[calc(100dvh-2rem)] sm:max-w-lg sm:rounded-3xl" showCloseButton={false}>
         <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-2xl sm:rounded-3xl">
           {/* Photo Section */}
-          <div className="relative h-[min(34svh,19rem)] min-h-[12rem] max-h-80 flex-shrink-0 overflow-hidden rounded-t-2xl sm:h-[min(36dvh,24rem)] sm:max-h-96 sm:rounded-t-3xl" onClick={handlePhotoClick}>
+          <div className="relative h-[clamp(12.5rem,32svh,20rem)] min-h-[12.5rem] max-h-80 flex-shrink-0 overflow-hidden rounded-t-2xl sm:h-[min(35dvh,24rem)] sm:max-h-96 sm:rounded-t-3xl" onClick={handlePhotoClick}>
             <img
               src={currentPhoto || getProfileFallbackImage(profile.name, profile.id)}
               alt={`${profile.name} photo ${currentPhotoIndex + 1}`}
@@ -286,8 +286,8 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
           </div>
 
           {/* Content Section */}
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white pr-1 [-webkit-overflow-scrolling:touch]">
-            <div className="space-y-5 p-5 sm:p-6">
+          <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain scroll-pb-[calc(7rem+env(safe-area-inset-bottom))] bg-white pr-1 [-webkit-overflow-scrolling:touch]">
+            <div className="space-y-5 p-5 pb-8 sm:p-6 sm:pb-10">
               {/* Basic Info */}
               <div className="space-y-4">
                 <div>
@@ -454,15 +454,15 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
           </div>
 
           {/* Action Buttons */}
-          <div className="shrink-0 rounded-b-2xl border-t border-gray-200 bg-gray-50/95 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur sm:rounded-b-3xl sm:p-5 sm:pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <div className="shrink-0 rounded-b-2xl border-t border-gray-200 bg-gray-50/95 p-3 pb-[calc(0.85rem+env(safe-area-inset-bottom))] backdrop-blur sm:rounded-b-3xl sm:p-5 sm:pb-[calc(1rem+env(safe-area-inset-bottom))]">
             <div className="flex items-center justify-center space-x-4">
               <Button
                 variant="outline"
                 size="lg"
-                className="w-16 h-16 rounded-full p-0 border-2 border-red-300 text-red-500 hover:bg-red-50 hover:border-red-400 bg-white shadow-md"
+                className="h-14 w-14 rounded-full border-2 border-red-300 bg-white p-0 text-red-500 shadow-md hover:border-red-400 hover:bg-red-50 sm:h-16 sm:w-16"
                 onClick={onNotNow}
               >
-                <X className="w-7 h-7" />
+                <X className="h-6 w-6 sm:h-7 sm:w-7" />
               </Button>
 
               {onChat && (
@@ -470,19 +470,19 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                   type="button"
                   size="lg"
                   aria-label="Open Chat"
-                  className="h-16 w-16 rounded-full border border-[#DCE2EB] bg-white p-0 text-[#26364A] shadow-[0_14px_34px_rgba(31,44,60,0.12)] transition hover:scale-105 hover:border-[#E83262]/35 hover:bg-[#FFF3F7] hover:text-[#E83262]"
+                  className="h-14 w-14 rounded-full border border-[#DCE2EB] bg-white p-0 text-[#26364A] shadow-[0_14px_34px_rgba(31,44,60,0.12)] transition hover:scale-105 hover:border-[#E83262]/35 hover:bg-[#FFF3F7] hover:text-[#E83262] sm:h-16 sm:w-16"
                   onClick={onChat}
                 >
-                  <MessageCircle className="h-7 w-7" />
+                  <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7" />
                 </Button>
               )}
 
               <Button
                 size="lg"
-                className="w-16 h-16 rounded-full p-0 bg-gradient-to-r from-[#E83262] to-[#C3264E] hover:from-[#C3264E] hover:to-[#E83262] shadow-lg shadow-[#E83262]/30"
+                className="h-14 w-14 rounded-full bg-gradient-to-r from-[#E83262] to-[#C3264E] p-0 shadow-lg shadow-[#E83262]/30 hover:from-[#C3264E] hover:to-[#E83262] sm:h-16 sm:w-16"
                 onClick={onConnect}
               >
-                <Heart className="w-7 h-7 fill-white text-white" />
+                <Heart className="h-6 w-6 fill-white text-white sm:h-7 sm:w-7" />
               </Button>
             </div>
           </div>

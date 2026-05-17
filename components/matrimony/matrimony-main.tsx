@@ -147,7 +147,7 @@ function MatrimonyListProfileCard({
 
   return (
     <article className="overflow-hidden rounded-[1.25rem] border border-[#E7EAF0] bg-white shadow-[0_10px_30px_rgba(30,43,58,0.06)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(30,43,58,0.10)]">
-      <div className="grid min-h-[13.5rem] grid-cols-[8.7rem_1fr] sm:grid-cols-[12.5rem_1fr]">
+      <div className="grid min-h-[12.5rem] grid-cols-[7.75rem_minmax(0,1fr)] sm:min-h-[13.5rem] sm:grid-cols-[12.5rem_1fr]">
         <button
           type="button"
           onClick={handleOpen}
@@ -470,7 +470,7 @@ function MatrimonyDiscoveryList({
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(8.25rem+env(safe-area-inset-bottom))] sm:px-6">
+      <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(9.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-[calc(7.5rem+env(safe-area-inset-bottom))]">
         <div className="mx-auto grid w-full max-w-6xl gap-4 lg:grid-cols-[1fr_18rem]">
           <section className="min-w-0 space-y-4">
             <div className="rounded-[1.25rem] border border-[#E7EAF0] bg-white p-3 shadow-[0_10px_28px_rgba(31,44,60,0.05)]">
@@ -551,7 +551,7 @@ function MatrimonyDiscoveryList({
 
       <DiscountOfferTimer onSubscribe={onOpenPremium} />
       <Dialog open={showNearbyEditor} onOpenChange={setShowNearbyEditor}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-xl rounded-[1.5rem] border border-[#E7EAF0] bg-white p-0 text-[#26364A] shadow-[0_30px_80px_rgba(31,44,60,0.24)]">
+        <DialogContent className="max-h-[calc(100svh-1rem)] w-[calc(100vw-1rem)] max-w-xl overflow-y-auto rounded-[1.5rem] border border-[#E7EAF0] bg-white p-0 text-[#26364A] shadow-[0_30px_80px_rgba(31,44,60,0.24)] sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100vw-2rem)]">
           <div className="border-b border-[#E7EAF0] px-5 py-4">
             <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-[#E83262]">Discovery location</p>
             <DialogTitle className="mt-1 text-2xl font-black tracking-[-0.04em]">Edit Nearby</DialogTitle>
