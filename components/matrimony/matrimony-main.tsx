@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { AppLayout } from "@/components/layout/app-layout"
 import { QuickActions } from "@/components/navigation/quick-actions"
 // Removed TopBackButton usage
@@ -26,6 +27,8 @@ import {
   Search,
   SlidersHorizontal,
   Users,
+  MapPin,
+  Pencil,
 } from "lucide-react"
 import { MatrimonySwipeCard } from "@/components/matrimony/matrimony-swipe-card"
 import { MatrimonyChatList } from "@/components/matrimony/matrimony-chat-list"
@@ -65,11 +68,12 @@ import { MatrimonyShortlistView } from "@/components/matrimony/matrimony-shortli
 import { MatrimonyProfileModal } from "@/components/matrimony/matrimony-profile-modal"
 import { ProfileView } from "@/components/profile/profile-view"
 import { calculateAgeFromDate } from "@/lib/age"
-import { getLocationCity } from "@/lib/location"
+import { formatLocationValue, getLocationCity, parseLocationValue, type LocationValue } from "@/lib/location"
 import { formatPublicProfileName } from "@/lib/displayName"
 import { getPublicProfileId } from "@/lib/profileIdentity"
 import { getProfileFallbackImage, getSafeProfilePhotos } from "@/lib/profileImages"
 import { cn } from "@/lib/utils"
+import { LocationCascadeSelect } from "@/components/location/location-cascade-select"
 
 interface MatrimonyMainProps {
   onExit?: () => void
@@ -257,7 +261,7 @@ function MatrimonyDiscoveryList({
   loading,
   profiles,
   viewerIsPremium,
-  viewerCity,
+  viewerLocation,
   shortlistedIds,
   swipeLimitStatus,
   appliedFilters,
@@ -273,7 +277,7 @@ function MatrimonyDiscoveryList({
   loading: boolean
   profiles: MatrimonyProfile[]
   viewerIsPremium: boolean
-  viewerCity?: string | null
+  viewerLocation?: string | null
   shortlistedIds: Set<string>
   swipeLimitStatus: UsageLimitStatus | null
   appliedFilters: FilterState | null
@@ -292,9 +296,59 @@ function MatrimonyDiscoveryList({
     withPhotos: false,
     selfProfiles: false,
   })
+  const [nearbyLocation, setNearbyLocation] = useState("")
+  const [nearbyDraft, setNearbyDraft] = useState<LocationValue>({})
+  const [showNearbyEditor, setShowNearbyEditor] = useState(false)
+  const resolvedNearbyLocation = nearbyLocation || viewerLocation || ""
+  const nearbyCity = getLocationCity(resolvedNearbyLocation).trim()
+
+  useEffect(() => {
+    if (viewerLocation && !nearbyLocation) {
+      setNearbyLocation(viewerLocation)
+    }
+  }, [nearbyLocation, viewerLocation])
+
+  const openNearbyEditor = () => {
+    setNearbyDraft(parseLocationValue(resolvedNearbyLocation))
+    setShowNearbyEditor(true)
+  }
+
+  const handleNearbyChipClick = () => {
+    if (!nearbyCity) {
+      openNearbyEditor()
+      return
+    }
+
+    setQuickFilters((previous) => ({ ...previous, nearby: !previous.nearby }))
+  }
+
+  const applyNearbyLocation = () => {
+    const formattedLocation = formatLocationValue(nearbyDraft)
+    if (!formattedLocation) return
+
+    setNearbyLocation(formattedLocation)
+    setQuickFilters((previous) => ({ ...previous, nearby: true }))
+    setShowNearbyEditor(false)
+  }
+
+  const resetNearbyToProfile = () => {
+    if (!viewerLocation) return
+
+    setNearbyLocation(viewerLocation)
+    setNearbyDraft(parseLocationValue(viewerLocation))
+    setQuickFilters((previous) => ({ ...previous, nearby: true }))
+  }
+
+  const clearNearbyLocation = () => {
+    setNearbyLocation("")
+    setQuickFilters((previous) => ({ ...previous, nearby: false }))
+    setShowNearbyEditor(false)
+  }
+
   const visibleProfiles = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
-    const viewerCityValue = String(viewerCity || "").trim().toLowerCase()
+    const nearbyLocationValue = resolvedNearbyLocation.trim().toLowerCase()
+    const nearbyCityValue = getLocationCity(resolvedNearbyLocation).trim().toLowerCase()
     return profiles.filter((profile) => {
       const searchable = [profile.name, profile.location, profile.profession, profile.education, profile.community]
         .filter(Boolean)
@@ -302,17 +356,18 @@ function MatrimonyDiscoveryList({
         .toLowerCase()
       const matchesSearch = query ? searchable.includes(query) : true
       const profileCity = getLocationCity(profile.location).toLowerCase()
+      const profileLocation = profile.location.toLowerCase()
       const matchesNearby = quickFilters.nearby
-        ? viewerCityValue
-          ? profileCity === viewerCityValue || profile.location.toLowerCase().includes(viewerCityValue)
-          : profile.location.toLowerCase().includes("mumbai")
+        ? nearbyCityValue
+          ? profileCity === nearbyCityValue || profileLocation.includes(nearbyCityValue) || profileLocation.includes(nearbyLocationValue)
+          : true
         : true
       const matchesPhotos = quickFilters.withPhotos ? profile.hasRealPhotos !== false && profile.photos.length > 0 : true
       const matchesSelf = quickFilters.selfProfiles ? String(profile.createdBy || "Self").toLowerCase() === "self" : true
 
       return matchesSearch && matchesNearby && matchesPhotos && matchesSelf
     })
-  }, [profiles, quickFilters.nearby, quickFilters.selfProfiles, quickFilters.withPhotos, searchQuery, viewerCity])
+  }, [profiles, quickFilters.nearby, quickFilters.selfProfiles, quickFilters.withPhotos, resolvedNearbyLocation, searchQuery])
   const quickFilterCount = Number(quickFilters.nearby) + Number(quickFilters.withPhotos) + Number(quickFilters.selfProfiles)
   const hasFilters = Boolean(
     quickFilterCount ||
@@ -332,7 +387,6 @@ function MatrimonyDiscoveryList({
     onClearFilters()
   }
   const quickFilterChips = [
-    { key: "nearby" as const, label: viewerCity ? `Nearby ${viewerCity}` : "Nearby" },
     { key: "withPhotos" as const, label: "With Photos" },
     { key: "selfProfiles" as const, label: "Self Profiles" },
   ]
@@ -366,6 +420,28 @@ function MatrimonyDiscoveryList({
             <SlidersHorizontal className="h-4 w-4 text-[#E83262]" />
             Filters
             {hasFilters && <span className="h-2 w-2 rounded-full bg-[#E83262]" />}
+          </button>
+          <button
+            type="button"
+            onClick={handleNearbyChipClick}
+            className={cn(
+              "inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold shadow-sm transition",
+              quickFilters.nearby
+                ? "border-[#E83262]/40 bg-[#FFF3F7] text-[#E83262]"
+                : "border-[#D9DFE8] bg-white text-[#526173] hover:border-[#E83262]/30",
+            )}
+          >
+            <MapPin className="h-4 w-4" />
+            {nearbyCity ? `Nearby ${nearbyCity}` : "Set Nearby"}
+            {quickFilters.nearby && <X className="h-3.5 w-3.5 text-[#E83262]" />}
+          </button>
+          <button
+            type="button"
+            onClick={openNearbyEditor}
+            className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#D9DFE8] bg-white px-3 py-2 text-sm font-bold text-[#526173] shadow-sm transition hover:border-[#E83262]/30 hover:text-[#E83262]"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit
           </button>
           {quickFilterChips.map((chip) => {
             const active = quickFilters[chip.key]
@@ -474,6 +550,56 @@ function MatrimonyDiscoveryList({
       </main>
 
       <DiscountOfferTimer onSubscribe={onOpenPremium} />
+      <Dialog open={showNearbyEditor} onOpenChange={setShowNearbyEditor}>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-xl rounded-[1.5rem] border border-[#E7EAF0] bg-white p-0 text-[#26364A] shadow-[0_30px_80px_rgba(31,44,60,0.24)]">
+          <div className="border-b border-[#E7EAF0] px-5 py-4">
+            <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-[#E83262]">Discovery location</p>
+            <DialogTitle className="mt-1 text-2xl font-black tracking-[-0.04em]">Edit Nearby</DialogTitle>
+            <DialogDescription className="mt-1 text-sm font-semibold leading-6 text-[#6F7C8B]">
+              Your profile can prefill Nearby, but this lets you tune discovery without changing your saved profile.
+            </DialogDescription>
+          </div>
+          <div className="space-y-5 px-5 py-5">
+            <LocationCascadeSelect
+              value={nearbyDraft}
+              onChange={setNearbyDraft}
+              countryLabel="Country"
+              stateLabel="State"
+              cityLabel="City"
+              className="grid grid-cols-1 gap-4"
+            />
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={clearNearbyLocation}
+                className="rounded-full px-4 font-black text-[#6F7C8B] hover:text-[#E83262]"
+              >
+                Clear Nearby
+              </Button>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetNearbyToProfile}
+                  disabled={!viewerLocation}
+                  className="rounded-full border-[#D9DFE8] bg-white px-4 font-black text-[#526173]"
+                >
+                  Use profile location
+                </Button>
+                <Button
+                  type="button"
+                  onClick={applyNearbyLocation}
+                  disabled={!nearbyDraft.country || !nearbyDraft.state || !nearbyDraft.city}
+                  className="rounded-full bg-[#E83262] px-5 font-black text-white hover:bg-[#C3264E]"
+                >
+                  Apply Nearby
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -507,7 +633,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
   const [viewedUserId, setViewedUserId] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [viewerCity, setViewerCity] = useState<string | null>(null)
+  const [viewerLocation, setViewerLocation] = useState<string | null>(null)
   const [cameFromChat, setCameFromChat] = useState<boolean>(false)
   const [cameFromShortlist, setCameFromShortlist] = useState<boolean>(false)
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
@@ -696,7 +822,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           console.error("Auth error:", authError)
           setProfiles([])
           setCurrentUserId(null)
-          setViewerCity(null)
+          setViewerLocation(null)
           setLoading(false)
           return
         }
@@ -704,7 +830,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         if (!user) {
           setProfiles([])
           setCurrentUserId(null)
-          setViewerCity(null)
+          setViewerLocation(null)
           setSwipeLimitStatus(null)
           setViewerEntitlement(null)
           setLoading(false)
@@ -800,11 +926,9 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         const currentCareer = (currentMatrimonyProfile?.career as any) || {}
         const currentCultural = (currentMatrimonyProfile?.cultural as any) || {}
         const currentWorkLocation = currentCareer?.work_location || {}
-        setViewerCity(
-          currentWorkLocation.city ||
-            (typeof currentCultural.place_of_birth === "string" ? currentCultural.place_of_birth.split(",")[0]?.trim() : null) ||
-            null,
-        )
+        const workLocationLabel = formatLocationValue(currentWorkLocation)
+        const birthLocationLabel = typeof currentCultural.place_of_birth === "string" ? currentCultural.place_of_birth.trim() : ""
+        setViewerLocation(workLocationLabel || birthLocationLabel || null)
 
         // Hide profiles the user has already liked, passed, or connected with.
         const actedProfileIds = await getMatrimonyLikedProfiles(user.id)
@@ -1471,7 +1595,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           loading={loading}
           profiles={profiles}
           viewerIsPremium={viewerIsPremium}
-          viewerCity={viewerCity}
+          viewerLocation={viewerLocation}
           shortlistedIds={shortlistedIds}
           swipeLimitStatus={swipeLimitStatus}
           appliedFilters={appliedFilters}
