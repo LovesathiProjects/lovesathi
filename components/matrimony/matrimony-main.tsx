@@ -551,39 +551,39 @@ function MatrimonyDiscoveryList({
 
       <DiscountOfferTimer onSubscribe={onOpenPremium} />
       <Dialog open={showNearbyEditor} onOpenChange={setShowNearbyEditor}>
-        <DialogContent className="max-h-[calc(100svh-1rem)] w-[calc(100vw-1rem)] max-w-xl overflow-y-auto rounded-[1.5rem] border border-[#E7EAF0] bg-white p-0 text-[#26364A] shadow-[0_30px_80px_rgba(31,44,60,0.24)] sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100vw-2rem)]">
-          <div className="border-b border-[#E7EAF0] px-5 py-4">
+        <DialogContent className="max-h-[calc(100svh-1rem)] w-[min(calc(100vw-1rem),34rem)] max-w-[calc(100vw-1rem)] overflow-hidden rounded-[1.5rem] border border-[#E7EAF0] bg-white p-0 text-[#26364A] shadow-[0_30px_80px_rgba(31,44,60,0.24)] sm:max-h-[calc(100dvh-2rem)]">
+          <div className="min-w-0 border-b border-[#E7EAF0] px-5 py-4">
             <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-[#E83262]">Discovery location</p>
             <DialogTitle className="mt-1 text-2xl font-black tracking-[-0.04em]">Edit Nearby</DialogTitle>
             <DialogDescription className="mt-1 text-sm font-semibold leading-6 text-[#6F7C8B]">
               Your profile can prefill Nearby, but this lets you tune discovery without changing your saved profile.
             </DialogDescription>
           </div>
-          <div className="space-y-5 px-5 py-5">
+          <div className="min-w-0 space-y-5 overflow-y-auto overflow-x-hidden px-5 py-5">
             <LocationCascadeSelect
               value={nearbyDraft}
               onChange={setNearbyDraft}
               countryLabel="Country"
               stateLabel="State"
               cityLabel="City"
-              className="grid grid-cols-1 gap-4"
+              className="grid min-w-0 grid-cols-1 gap-4"
             />
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
               <Button
                 type="button"
                 variant="ghost"
                 onClick={clearNearbyLocation}
-                className="rounded-full px-4 font-black text-[#6F7C8B] hover:text-[#E83262]"
+                className="w-full rounded-full px-4 font-black text-[#6F7C8B] hover:text-[#E83262] sm:w-auto"
               >
                 Clear Nearby
               </Button>
-              <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={resetNearbyToProfile}
                   disabled={!viewerLocation}
-                  className="rounded-full border-[#D9DFE8] bg-white px-4 font-black text-[#526173]"
+                  className="w-full min-w-0 rounded-full border-[#D9DFE8] bg-white px-4 font-black text-[#526173] sm:w-auto"
                 >
                   Use profile location
                 </Button>
@@ -591,7 +591,7 @@ function MatrimonyDiscoveryList({
                   type="button"
                   onClick={applyNearbyLocation}
                   disabled={!nearbyDraft.country || !nearbyDraft.state || !nearbyDraft.city}
-                  className="rounded-full bg-[#E83262] px-5 font-black text-white hover:bg-[#C3264E]"
+                  className="w-full rounded-full bg-[#E83262] px-5 font-black text-white hover:bg-[#C3264E] sm:w-auto"
                 >
                   Apply Nearby
                 </Button>

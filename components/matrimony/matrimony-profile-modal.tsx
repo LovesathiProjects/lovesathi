@@ -64,7 +64,7 @@ function DossierSection({
   children: React.ReactNode
 }) {
   return (
-    <section className="rounded-[1.35rem] border border-[#F1D5DD] bg-white p-4 shadow-[0_14px_36px_rgba(31,44,60,0.04)]">
+    <section className="min-w-0 overflow-hidden rounded-[1.35rem] border border-[#F1D5DD] bg-white p-4 shadow-[0_14px_36px_rgba(31,44,60,0.04)] sm:p-5">
       <h3 className="flex items-center gap-2 text-base font-black text-[#26364A]">
         {icon}
         {title}
@@ -156,10 +156,10 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!flex h-[min(calc(100svh-0.75rem),900px)] max-h-[calc(100svh-0.75rem)] w-[min(calc(100vw-0.75rem),34rem)] max-w-none gap-0 overflow-hidden rounded-2xl bg-white p-0 shadow-2xl sm:h-[min(calc(100dvh-2rem),900px)] sm:max-h-[calc(100dvh-2rem)] sm:max-w-lg sm:rounded-3xl" showCloseButton={false}>
+      <DialogContent className="!flex h-[min(calc(100svh-1rem),880px)] max-h-[calc(100svh-1rem)] w-[min(calc(100vw-1rem),34rem)] max-w-none gap-0 overflow-hidden rounded-2xl bg-white p-0 shadow-2xl sm:h-[min(calc(100dvh-2rem),900px)] sm:max-h-[calc(100dvh-2rem)] sm:max-w-lg sm:rounded-3xl" showCloseButton={false}>
         <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-2xl sm:rounded-3xl">
           {/* Photo Section */}
-          <div className="relative h-[clamp(12.5rem,32svh,20rem)] min-h-[12.5rem] max-h-80 flex-shrink-0 overflow-hidden rounded-t-2xl sm:h-[min(35dvh,24rem)] sm:max-h-96 sm:rounded-t-3xl" onClick={handlePhotoClick}>
+          <div className="relative h-[clamp(11.5rem,28svh,18rem)] min-h-[11.5rem] max-h-72 flex-shrink-0 overflow-hidden rounded-t-2xl sm:h-[min(34dvh,23rem)] sm:max-h-96 sm:rounded-t-3xl" onClick={handlePhotoClick}>
             <img
               src={currentPhoto || getProfileFallbackImage(profile.name, profile.id)}
               alt={`${profile.name} photo ${currentPhotoIndex + 1}`}
@@ -286,12 +286,12 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
           </div>
 
           {/* Content Section */}
-          <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain scroll-pb-[calc(7rem+env(safe-area-inset-bottom))] bg-white pr-1 [-webkit-overflow-scrolling:touch]">
-            <div className="space-y-5 p-5 pb-8 sm:p-6 sm:pb-10">
+          <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overflow-x-hidden overscroll-contain scroll-pb-[calc(9rem+env(safe-area-inset-bottom))] bg-white pr-1 [-webkit-overflow-scrolling:touch]">
+            <div className="space-y-4 p-4 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:space-y-5 sm:p-6 sm:pb-12">
               {/* Basic Info */}
               <div className="space-y-4">
                 <div>
-                  <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:text-3xl">
+                  <h1 className="mb-2 text-[1.55rem] font-bold leading-tight text-gray-900 sm:text-3xl">
                     {displayName}, {profile.age}{heightDisplay ? ` - ${heightDisplay}` : ""}
                   </h1>
                   <p className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-[#9AA5B2]">ID - {publicProfileId}</p>
@@ -413,7 +413,12 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                 />
               </DossierSection>
 
-              <PreferenceCompatibilityCard targetProfile={profile} viewerProfile={viewerProfile} />
+              <PreferenceCompatibilityCard
+                targetProfile={profile}
+                viewerProfile={viewerProfile}
+                compact
+                className="border-[#F1D5DD] shadow-[0_18px_44px_rgba(31,44,60,0.06)]"
+              />
 
               {hasAnyPreferences && (
                 <DossierSection title="Partner Preferences" icon={<Heart className="h-4 w-4 text-[#E83262]" />}>
@@ -454,7 +459,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
           </div>
 
           {/* Action Buttons */}
-          <div className="shrink-0 rounded-b-2xl border-t border-gray-200 bg-gray-50/95 p-3 pb-[calc(0.85rem+env(safe-area-inset-bottom))] backdrop-blur sm:rounded-b-3xl sm:p-5 sm:pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <div className="shrink-0 rounded-b-2xl border-t border-gray-200 bg-gray-50/95 p-3 pb-[calc(1.15rem+env(safe-area-inset-bottom))] backdrop-blur sm:rounded-b-3xl sm:p-5 sm:pb-[calc(1rem+env(safe-area-inset-bottom))]">
             <div className="flex items-center justify-center space-x-4">
               <Button
                 variant="outline"
