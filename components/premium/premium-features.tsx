@@ -7,7 +7,7 @@ import { StaticBackground } from "@/components/discovery/static-background"
 
 export function PremiumFeatures({ onBack }: { onBack?: () => void }) {
   const features = [
-    "70% forever discount on every paid plan",
+    "90% launch discount on the Basic plan",
     "Plan-based shortlist capacity from 30 to unlimited",
     "Plan-based contact reveal allowance from 15 to unlimited",
     "Monthly Super Like allowance based on your plan",

@@ -12,7 +12,7 @@ const OFFER_REPEAT_MS = 14 * 24 * 60 * 60 * 1000
 const OFFER_WINDOW_MS = 24 * 60 * 60 * 1000
 
 function offerStorageKey(userId: string) {
-  return `lovesathi.70_discount_offer.last_shown:${userId}`
+  return `lovesathi.90_basic_discount_offer.last_shown:${userId}`
 }
 
 function formatRemainingTime(expiresAt: Date | null) {
@@ -121,28 +121,31 @@ export function DiscountOfferDialog({ onSubscribe }: { onSubscribe: () => void }
                 <Crown className="h-7 w-7" />
               </div>
               <Badge className="border border-[#E83262]/20 bg-[#E83262]/10 px-3 py-1 text-[#E83262]">
-                70% off forever
+                90% off Basic
               </Badge>
             </div>
 
             <DialogHeader className="text-left">
               <p className="luxe-kicker text-[0.68rem] text-[#E83262]">profile complete reward</p>
               <DialogTitle className="font-serif text-4xl font-bold leading-[0.95] tracking-[-0.06em] text-[#26364A] sm:text-5xl">
-                {isFirstOffer ? "You are lucky. Your 70% discount is live." : "Your 70% Lovesathi offer is back."}
+                {isFirstOffer ? "Your Basic 90% launch offer is live." : "Your Basic 90% Lovesathi offer is back."}
               </DialogTitle>
               <DialogDescription className="text-base leading-7 text-[#6F7C8B]">
-                You have {remainingLabel} to avail this private launch discount.
+                You have {remainingLabel} to avail this private Basic launch discount.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid gap-3 sm:grid-cols-3">
-              {["Basic", "Essential", "Signature"].map((plan) => (
-                <div key={plan} className="rounded-2xl border border-[#E83262]/30 bg-white/70 p-3">
-                  <Sparkles className="mb-2 h-4 w-4 text-[#E83262]" />
-                  <p className="text-sm font-black text-[#26364A]">{plan}</p>
-                  <p className="text-xs leading-5 text-[#6F7C8B]">70% forever pricing</p>
-                </div>
-              ))}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-[#E83262]/30 bg-white/70 p-3">
+                <Sparkles className="mb-2 h-4 w-4 text-[#E83262]" />
+                <p className="text-sm font-black text-[#26364A]">Basic membership</p>
+                <p className="text-xs leading-5 text-[#6F7C8B]">90% private launch pricing</p>
+              </div>
+              <div className="rounded-2xl border border-[#E83262]/30 bg-white/70 p-3">
+                <Crown className="mb-2 h-4 w-4 text-[#E83262]" />
+                <p className="text-sm font-black text-[#26364A]">Basic only</p>
+                <p className="text-xs leading-5 text-[#6F7C8B]">Essential, Signature, and Heritage stay at standard pricing.</p>
+              </div>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -153,7 +156,7 @@ export function DiscountOfferDialog({ onSubscribe }: { onSubscribe: () => void }
                   onSubscribe()
                 }}
               >
-                Claim 70% Discount
+                Claim Basic 90% Offer
               </Button>
               <Button variant="outline" className="h-12 rounded-full border-[#482b1a]/15 bg-white" onClick={() => handleOpenChange(false)}>
                 Maybe later
@@ -213,7 +216,7 @@ export function DiscountOfferTimer({ onSubscribe }: { onSubscribe: () => void })
           <Clock className="h-4 w-4" />
         </span>
         <span>
-          <span className="block luxe-kicker text-[0.55rem] text-[#E83262]">70% offer expires in</span>
+          <span className="block luxe-kicker text-[0.55rem] text-[#E83262]">Basic 90% offer expires in</span>
           <span className="block font-mono text-sm font-black tracking-[0.12em] text-[#26364A]">{remainingLabel}</span>
         </span>
       </span>

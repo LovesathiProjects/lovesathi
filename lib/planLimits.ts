@@ -17,10 +17,13 @@ export const FREE_PLAN_LIMITS = {
   messagePeople: 5,
   messagesPerPerson: 5,
   windowHours: 12,
-  shortlists: 0,
+  shortlists: 3,
+  superLikes: 3,
+  directChats: 3,
+  directChatMessagesPerPerson: 1,
 } as const
 
-export type LimitKind = "swipe" | "messagePeople" | "messagePerson" | "shortlist" | "superLike"
+export type LimitKind = "swipe" | "messagePeople" | "messagePerson" | "shortlist" | "superLike" | "directChat"
 
 export interface UsageLimitStatus {
   allowed: boolean
@@ -48,8 +51,9 @@ const LIMIT_COPY: Record<LimitKind, string> = {
   swipe: `Free plan swipe limit reached. You can review ${FREE_PLAN_LIMITS.swipeActions} profiles every ${FREE_PLAN_LIMITS.windowHours} hours. Upgrade for unlimited discovery.`,
   messagePeople: `Free plan message limit reached. You can text ${FREE_PLAN_LIMITS.messagePeople} people every ${FREE_PLAN_LIMITS.windowHours} hours. Upgrade for unlimited conversations.`,
   messagePerson: `Free plan conversation limit reached. You can send ${FREE_PLAN_LIMITS.messagesPerPerson} messages to each person every ${FREE_PLAN_LIMITS.windowHours} hours. Upgrade for unlimited conversations.`,
-  shortlist: "Shortlist is a premium feature. Choose a paid plan to save profiles and revisit them anytime.",
-  superLike: "Super Likes are a premium feature. Choose a paid plan to send standout interest.",
+  shortlist: `Free plan shortlist limit reached. You can save ${FREE_PLAN_LIMITS.shortlists} profiles. Upgrade for more shortlist space.`,
+  superLike: `Free plan Super Like limit reached. You can send ${FREE_PLAN_LIMITS.superLikes} Super Likes each month. Upgrade for more standout interests.`,
+  directChat: `Free plan direct chat limit reached. You can open ${FREE_PLAN_LIMITS.directChats} starter chats with free profiles and send ${FREE_PLAN_LIMITS.directChatMessagesPerPerson} message to each. Upgrade for unlimited chat.`,
 }
 
 function windowStartIso() {
@@ -89,6 +93,7 @@ export function normalizeLimitError(errorMessage?: string | null) {
   const lower = errorMessage.toLowerCase()
 
   if (lower.includes("swipe limit")) return getLimitMessage("swipe")
+  if (lower.includes("direct chat") || lower.includes("starter chat")) return getLimitMessage("directChat")
   if (lower.includes("conversation limit")) return getLimitMessage("messagePerson")
   if (lower.includes("message limit")) return getLimitMessage("messagePeople")
   if (lower.includes("shortlist limit")) return getLimitMessage("shortlist")
@@ -277,8 +282,8 @@ export async function getMessageSendLimitStatus(senderId: string, receiverId: st
 export async function getShortlistLimitStatus(userId: string, targetUserId?: string): Promise<UsageLimitStatus> {
   const entitlement = await getUserEntitlementStatus(userId)
   const isPremium = entitlement.isPremium
-  const shortlistLimit = isPremium ? getPlanShortlistLimit(entitlement.planId) : 0
-  if (isPremium && shortlistLimit === null) return { allowed: true, isPremium }
+  const shortlistLimit = isPremium ? getPlanShortlistLimit(entitlement.planId) : FREE_PLAN_LIMITS.shortlists
+  if (shortlistLimit === null) return { allowed: true, isPremium }
 
   if (targetUserId) {
     const { data: existing, error: existingError } = await supabase
@@ -297,16 +302,6 @@ export async function getShortlistLimitStatus(userId: string, targetUserId?: str
     }
   }
 
-  if (!isPremium) {
-    return {
-      allowed: false,
-      isPremium: false,
-      remaining: 0,
-      kind: "shortlist",
-      error: getLimitMessage("shortlist"),
-    }
-  }
-
   const { count, error } = await supabase
     .from("shortlists")
     .select("*", { count: "exact", head: true })
@@ -317,11 +312,9 @@ export async function getShortlistLimitStatus(userId: string, targetUserId?: str
       console.warn("[getShortlistLimitStatus] Unable to read shortlist usage:", error.message)
     }
     return {
-      allowed: false,
+      allowed: true,
       isPremium,
-      remaining: 0,
-      kind: "shortlist",
-      error: isPremium ? "Could not confirm shortlist allowance. Please try again." : getLimitMessage("shortlist"),
+      remaining: typeof shortlistLimit === "number" ? shortlistLimit : undefined,
     }
   }
 
@@ -349,19 +342,9 @@ function monthStartIso() {
 
 export async function getSuperLikeLimitStatus(userId: string): Promise<UsageLimitStatus> {
   const entitlement = await getUserEntitlementStatus(userId)
-  if (!entitlement.isPremium) {
-    return {
-      allowed: false,
-      isPremium: false,
-      remaining: 0,
-      kind: "superLike",
-      error: getLimitMessage("superLike"),
-    }
-  }
-
-  const monthlyLimit = getPlanMonthlySuperLikes(entitlement.planId)
+  const monthlyLimit = entitlement.isPremium ? getPlanMonthlySuperLikes(entitlement.planId) : FREE_PLAN_LIMITS.superLikes
   if (monthlyLimit === null) {
-    return { allowed: true, isPremium: true }
+    return { allowed: true, isPremium: entitlement.isPremium }
   }
 
   const { count, error } = await supabase
@@ -375,18 +358,20 @@ export async function getSuperLikeLimitStatus(userId: string): Promise<UsageLimi
     if (!tableMissing(error)) {
       console.warn("[getSuperLikeLimitStatus] Unable to read Super Like usage:", error.message)
     }
-    return { allowed: true, isPremium: true, remaining: monthlyLimit }
+    return { allowed: true, isPremium: entitlement.isPremium, remaining: monthlyLimit }
   }
 
   const used = count || 0
   const remaining = Math.max(monthlyLimit - used, 0)
   return {
     allowed: used < monthlyLimit,
-    isPremium: true,
+    isPremium: entitlement.isPremium,
     remaining,
     kind: used < monthlyLimit ? undefined : "superLike",
     error: used < monthlyLimit
       ? undefined
-      : `Monthly Super Like allowance reached. Your plan includes ${monthlyLimit} Super Likes each month.`,
+      : entitlement.isPremium
+        ? `Monthly Super Like allowance reached. Your plan includes ${monthlyLimit} Super Likes each month.`
+        : getLimitMessage("superLike"),
   }
 }

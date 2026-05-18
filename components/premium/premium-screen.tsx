@@ -51,7 +51,7 @@ function formatEntitlementDate(value?: string | null) {
 }
 
 export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSelect?: (planId: string) => void; onSubscribe?: (planId: string) => void; onBack?: () => void; mode?: 'matrimony' }) {
-  const [selectedPlan, setSelectedPlan] = useState<string>("essential")
+  const [selectedPlan, setSelectedPlan] = useState<string>("basic")
   const [entitlement, setEntitlement] = useState<EntitlementStatus | null>(null)
   const isMatrimony = true
   const activePlan = entitlement?.planId ? getSubscriptionPlan(entitlement.planId) : null
@@ -127,7 +127,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
                 Unlock refined discovery, richer signals, and priority trust features without turning matrimony into noise.
               </p>
               <Badge className="mx-auto mt-4 max-w-full whitespace-normal rounded-full border border-[#E83262]/40 bg-[#ffffff]/14 px-4 py-2 text-center text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#fff7df] sm:text-sm sm:tracking-[0.18em]">
-                Every plan includes 70% off forever
+                Basic plan includes 90% off
               </Badge>
               {entitlement?.isPremium && activePlan && (
                 <div className="mx-auto mt-5 max-w-xl rounded-[1.4rem] border border-[#E83262]/30 bg-white/12 p-4 text-left backdrop-blur-xl">
@@ -180,7 +180,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
               <p className="luxe-kicker text-[0.68rem] text-[#E83262]">launch offer</p>
               <h2 className={cn("font-serif text-4xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#26364A]" : "text-white")}>Choose Your Plan</h2>
               <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-[#6F7C8B]">
-                The 70% launch discount is locked forever for every tier. Upgrade later if your search needs more contact reveals, shortlist capacity, or concierge support.
+                The 90% launch discount applies only to Basic. Essential, Signature, and Heritage stay at standard launch pricing for deeper contact reveal, shortlist, and concierge needs.
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">

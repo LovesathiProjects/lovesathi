@@ -749,18 +749,6 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
   const handleShortlistToggle = useCallback(
     async (profile: MatrimonyProfile) => {
       const wasShortlisted = shortlistedIds.has(profile.id)
-      if (!viewerIsPremium && !wasShortlisted) {
-        showPremiumUpsell(
-          "Save profiles with Premium",
-          "Shortlist is a paid feature. Upgrade to save profiles and come back to them anytime.",
-          "discover",
-        )
-        return {
-          success: false,
-          error: "Shortlist is a premium feature.",
-        }
-      }
-
       const result = await toggleShortlist(profile)
 
       if (result.success) {
@@ -780,7 +768,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
       return result
     },
-    [shortlistedIds, showPremiumUpsell, toggleShortlist, toast, viewerIsPremium],
+    [shortlistedIds, toggleShortlist, toast],
   )
 
   const handleShortlistRemove = useCallback(
@@ -1420,20 +1408,11 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         return false
       }
 
-      if (!viewerIsPremium) {
-        showPremiumUpsell(
-          "Unlock Super Likes",
-          "Super Likes are included with paid plans. Choose a plan to send standout interest.",
-          "discover",
-        )
-        return false
-      }
-
       const superLikeStatus = await getSuperLikeLimitStatus(currentUserId)
       if (!superLikeStatus.allowed) {
         showPremiumUpsell(
           "Unlock Super Likes",
-          superLikeStatus.error || "Choose a paid plan to send standout interest.",
+          superLikeStatus.error || "Upgrade for more standout interests.",
           "discover",
         )
         return false
@@ -1489,20 +1468,11 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         }
 
         if (preference === "super_like") {
-          if (!viewerIsPremium) {
-            showPremiumUpsell(
-              "Unlock Super Likes",
-              "Super Likes are included with paid plans. Choose a plan to send standout interest.",
-              "discover",
-            )
-            return false
-          }
-
           const superLikeStatus = await getSuperLikeLimitStatus(currentUserId)
           if (!superLikeStatus.allowed) {
             showPremiumUpsell(
               "Unlock Super Likes",
-              superLikeStatus.error || "Choose a paid plan to send standout interest.",
+              superLikeStatus.error || "Upgrade for more standout interests.",
               "discover",
             )
             return false
@@ -1574,7 +1544,6 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       showSwipePaywall,
       swipeLocked,
       toast,
-      viewerIsPremium,
     ],
   )
 
@@ -1589,10 +1558,10 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         return
       }
 
-      if (!viewerIsPremium) {
+      if (!viewerIsPremium && profile.premium) {
         showPremiumUpsell(
-          "Unlock direct chat",
-          "Free members can send interest first. Paid members can open a safe conversation directly.",
+          "Unlock premium direct chat",
+          "Free starter chats work with free profiles only. Upgrade to chat directly with premium members.",
           "discover",
         )
         return
@@ -1600,12 +1569,33 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
       const result = await createPremiumDirectMatrimonyMatch(profile.id)
       if (!result.success || !result.matchId) {
+        const limitMessage = result.error?.toLowerCase() || ""
+        if (
+          limitMessage.includes("direct chat") ||
+          limitMessage.includes("starter chat") ||
+          limitMessage.includes("premium profiles")
+        ) {
+          showPremiumUpsell(
+            "Unlock direct chat",
+            result.error || "Upgrade for unlimited direct conversations.",
+            "discover",
+          )
+          return
+        }
+
         toast({
           title: "Could not open chat",
           description: result.error || "Please try again after sending interest.",
           variant: "destructive",
         })
         return
+      }
+
+      if (!viewerIsPremium) {
+        toast({
+          title: "Starter chat opened",
+          description: "Free plan includes 3 direct chats and 1 message per profile.",
+        })
       }
 
       setSelectedChatId(result.matchId)
@@ -2100,7 +2090,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       {/* Match Notification */}
       <DiscountOfferDialog
         onSubscribe={() => {
-          setSelectedPlanId("essential")
+          setSelectedPlanId("basic")
           setPremiumBackTarget("discover")
           setCurrentScreen("premium")
         }}

@@ -87,7 +87,7 @@ const faqSections = [
       {
         question: "Is the launch discount permanent?",
         answer:
-          "The current plan cards show the 70% launch discount as forever pricing for the selected paid plan. Final payment, invoice, and renewal handling depends on the connected payment provider.",
+          "The current launch offer gives 90% off the Basic plan only. Essential, Signature, and Heritage use standard launch pricing. Final payment, invoice, and renewal handling depends on the connected payment provider.",
       },
     ],
   },
