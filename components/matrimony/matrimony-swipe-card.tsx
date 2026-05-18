@@ -387,12 +387,20 @@ export function MatrimonySwipeCard({
 
   const handlePhoneClick = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (premiumLocked) {
-      onPremiumProfileUpgrade?.()
+    if (!viewerIsPremium) {
+      if (premiumLocked) {
+        onPremiumProfileUpgrade?.()
+      } else {
+        onPhoneUpgrade?.()
+      }
+      toast({
+        title: "Premium contact reveal",
+        description: "Upgrade to reveal verified phone numbers safely inside Lovesathi.",
+      })
       return
     }
     if (phoneIsRevealed) return
-    if (canRevealPhone && onRevealPhone) {
+    if (onRevealPhone) {
       try {
         const nextPhone = await onRevealPhone(profileId)
         if (nextPhone) {
@@ -400,6 +408,11 @@ export function MatrimonySwipeCard({
           toast({
             title: "Contact revealed",
             description: "This profile contact is now saved to your premium reveals.",
+          })
+        } else {
+          toast({
+            title: "Contact not available",
+            description: "This member has not added a revealable phone number yet.",
           })
         }
       } catch (error: any) {
@@ -411,10 +424,9 @@ export function MatrimonySwipeCard({
       }
       return
     }
-    onPhoneUpgrade?.()
     toast({
-      title: "Premium contact reveal",
-      description: "Subscribe to reveal phone numbers safely inside Lovesathi.",
+      title: "Contact not available",
+      description: "This profile does not have a revealable phone number yet.",
     })
   }
 
@@ -1055,7 +1067,7 @@ export function MatrimonySwipeCard({
                               <p className="mt-1 text-xs leading-5 text-[#6F7C8B]">
                                 {phoneIsRevealed
                                   ? "This contact is revealed through your active plan."
-                                  : canRevealPhone
+                                  : viewerIsPremium
                                     ? "Included in your plan. Tap to reveal and count it as a contact view."
                                     : "Masked for free users. Tap to unlock contact reveal."}
                               </p>

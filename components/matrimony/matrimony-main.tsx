@@ -692,6 +692,22 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
   const handleRevealPhone = useCallback(
     async (profileId: string) => {
+      if (!viewerIsPremium) {
+        showPremiumUpsell(
+          "Unlock contact details",
+          "Phone numbers are available only on paid plans. Upgrade to reveal verified contact details safely.",
+          "discover",
+        )
+        return null
+      }
+      if (profileId.startsWith("demo-")) {
+        toast({
+          title: "Preview contact unavailable",
+          description: "This preview profile is not connected to a verified phone number yet.",
+        })
+        return null
+      }
+
       const contact = await revealProfileContact(profileId)
       if (contact.phoneRevealed) {
         setProfiles((previousProfiles) =>
@@ -709,7 +725,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       }
       return contact.phoneRevealed
     },
-    [],
+    [showPremiumUpsell, toast, viewerIsPremium],
   )
 
   const refreshSwipeLimitStatus = useCallback(async (userId: string) => {
@@ -733,6 +749,18 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
   const handleShortlistToggle = useCallback(
     async (profile: MatrimonyProfile) => {
       const wasShortlisted = shortlistedIds.has(profile.id)
+      if (!viewerIsPremium && !wasShortlisted) {
+        showPremiumUpsell(
+          "Save profiles with Premium",
+          "Shortlist is a paid feature. Upgrade to save profiles and come back to them anytime.",
+          "discover",
+        )
+        return {
+          success: false,
+          error: "Shortlist is a premium feature.",
+        }
+      }
+
       const result = await toggleShortlist(profile)
 
       if (result.success) {
@@ -752,7 +780,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
 
       return result
     },
-    [shortlistedIds, toggleShortlist, toast],
+    [shortlistedIds, showPremiumUpsell, toggleShortlist, toast, viewerIsPremium],
   )
 
   const handleShortlistRemove = useCallback(

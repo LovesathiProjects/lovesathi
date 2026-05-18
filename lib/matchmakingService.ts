@@ -167,7 +167,7 @@ export async function createPremiumDirectMatrimonyMatch(otherUserId: string): Pr
     if (isDemoProfileId(otherUserId)) {
       return {
         success: false,
-        error: "This profile is a discovery preview. Send interest first and keep browsing real completed profiles.",
+        error: "This preview profile is not chat-enabled yet. Chat and contact reveal work on real verified profiles.",
       }
     }
 

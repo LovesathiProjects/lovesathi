@@ -17,7 +17,7 @@ export const FREE_PLAN_LIMITS = {
   messagePeople: 5,
   messagesPerPerson: 5,
   windowHours: 12,
-  shortlists: 3,
+  shortlists: 0,
 } as const
 
 export type LimitKind = "swipe" | "messagePeople" | "messagePerson" | "shortlist" | "superLike"
@@ -48,7 +48,7 @@ const LIMIT_COPY: Record<LimitKind, string> = {
   swipe: `Free plan swipe limit reached. You can review ${FREE_PLAN_LIMITS.swipeActions} profiles every ${FREE_PLAN_LIMITS.windowHours} hours. Upgrade for unlimited discovery.`,
   messagePeople: `Free plan message limit reached. You can text ${FREE_PLAN_LIMITS.messagePeople} people every ${FREE_PLAN_LIMITS.windowHours} hours. Upgrade for unlimited conversations.`,
   messagePerson: `Free plan conversation limit reached. You can send ${FREE_PLAN_LIMITS.messagesPerPerson} messages to each person every ${FREE_PLAN_LIMITS.windowHours} hours. Upgrade for unlimited conversations.`,
-  shortlist: `Free plan shortlist limit reached. You can save ${FREE_PLAN_LIMITS.shortlists} profiles. Upgrade for unlimited shortlists.`,
+  shortlist: "Shortlist is a premium feature. Choose a paid plan to save profiles and revisit them anytime.",
   superLike: "Super Likes are a premium feature. Choose a paid plan to send standout interest.",
 }
 
@@ -277,7 +277,7 @@ export async function getMessageSendLimitStatus(senderId: string, receiverId: st
 export async function getShortlistLimitStatus(userId: string, targetUserId?: string): Promise<UsageLimitStatus> {
   const entitlement = await getUserEntitlementStatus(userId)
   const isPremium = entitlement.isPremium
-  const shortlistLimit = isPremium ? getPlanShortlistLimit(entitlement.planId) : FREE_PLAN_LIMITS.shortlists
+  const shortlistLimit = isPremium ? getPlanShortlistLimit(entitlement.planId) : 0
   if (isPremium && shortlistLimit === null) return { allowed: true, isPremium }
 
   if (targetUserId) {
@@ -289,11 +289,21 @@ export async function getShortlistLimitStatus(userId: string, targetUserId?: str
       .maybeSingle()
 
     if (!existingError && existing) {
-      return { allowed: true, isPremium: false }
+      return { allowed: true, isPremium }
     }
 
     if (existingError && existingError.code !== "PGRST116") {
       console.warn("[getShortlistLimitStatus] Unable to read existing shortlist:", existingError.message)
+    }
+  }
+
+  if (!isPremium) {
+    return {
+      allowed: false,
+      isPremium: false,
+      remaining: 0,
+      kind: "shortlist",
+      error: getLimitMessage("shortlist"),
     }
   }
 
@@ -306,11 +316,17 @@ export async function getShortlistLimitStatus(userId: string, targetUserId?: str
     if (!tableMissing(error)) {
       console.warn("[getShortlistLimitStatus] Unable to read shortlist usage:", error.message)
     }
-    return { allowed: true, isPremium: false }
+    return {
+      allowed: false,
+      isPremium,
+      remaining: 0,
+      kind: "shortlist",
+      error: isPremium ? "Could not confirm shortlist allowance. Please try again." : getLimitMessage("shortlist"),
+    }
   }
 
   const used = count || 0
-  const limit = shortlistLimit || FREE_PLAN_LIMITS.shortlists
+  const limit = shortlistLimit ?? FREE_PLAN_LIMITS.shortlists
   const remaining = Math.max(limit - used, 0)
   const planName = isPremium ? getSubscriptionPlan(entitlement.planId).name : "Free plan"
   return {

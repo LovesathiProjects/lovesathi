@@ -305,13 +305,16 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                     <button
                       type="button"
                       onClick={async () => {
+                        if (!viewerIsPremium) {
+                          onPhoneUpgrade?.()
+                          return
+                        }
                         if (phoneIsRevealed) return
-                        if (profile.canRevealPhone && onRevealPhone) {
+                        if (onRevealPhone) {
                           const nextPhone = await onRevealPhone(profile.id)
                           if (nextPhone) setRevealedPhone(nextPhone)
                           return
                         }
-                        onPhoneUpgrade?.()
                       }}
                       className={cn(
                         "mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold",
