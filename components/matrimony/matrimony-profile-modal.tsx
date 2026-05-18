@@ -156,7 +156,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!flex h-[min(calc(100svh-1rem),880px)] max-h-[calc(100svh-1rem)] w-[min(calc(100vw-1rem),34rem)] max-w-none gap-0 overflow-hidden rounded-2xl bg-white p-0 shadow-2xl sm:h-[min(calc(100dvh-2rem),900px)] sm:max-h-[calc(100dvh-2rem)] sm:max-w-lg sm:rounded-3xl" showCloseButton={false}>
+      <DialogContent className="!flex h-[min(calc(100svh-1rem),880px)] max-h-[calc(100svh-1rem)] w-[min(calc(100vw-1rem),34rem)] max-w-none gap-0 overflow-hidden rounded-2xl bg-white p-0 shadow-2xl sm:h-[min(calc(100dvh-2rem),900px)] sm:max-h-[calc(100dvh-2rem)] sm:w-[min(calc(100vw-2rem),38rem)] sm:max-w-none sm:rounded-3xl md:w-[min(calc(100vw-3rem),44rem)] lg:w-[min(calc(100vw-4rem),48rem)]" showCloseButton={false}>
         <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-2xl sm:rounded-3xl">
           {/* Photo Section */}
           <div className="relative h-[clamp(11.5rem,28svh,18rem)] min-h-[11.5rem] max-h-72 flex-shrink-0 overflow-hidden rounded-t-2xl sm:h-[min(34dvh,23rem)] sm:max-h-96 sm:rounded-t-3xl" onClick={handlePhotoClick}>
@@ -459,36 +459,36 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
           </div>
 
           {/* Action Buttons */}
-          <div className="shrink-0 rounded-b-2xl border-t border-gray-200 bg-gray-50/95 p-3 pb-[calc(1.15rem+env(safe-area-inset-bottom))] backdrop-blur sm:rounded-b-3xl sm:p-5 sm:pb-[calc(1rem+env(safe-area-inset-bottom))]">
-            <div className="flex items-center justify-center space-x-4">
-              <Button
-                variant="outline"
-                size="lg"
-                className="h-14 w-14 rounded-full border-2 border-red-300 bg-white p-0 text-red-500 shadow-md hover:border-red-400 hover:bg-red-50 sm:h-16 sm:w-16"
+          <div className="shrink-0 rounded-b-2xl border-t border-gray-200 bg-white/95 p-3 pb-[calc(1.15rem+env(safe-area-inset-bottom))] shadow-[0_-18px_36px_rgba(31,44,60,0.08)] backdrop-blur sm:rounded-b-3xl sm:p-5 sm:pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            <div className="flex items-center justify-center gap-4 sm:gap-5">
+              <button
+                type="button"
+                aria-label="Pass profile"
+                className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-red-300 bg-white text-red-500 shadow-[0_12px_28px_rgba(232,50,98,0.16)] transition hover:-translate-y-0.5 hover:border-red-400 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300/60 active:scale-95 sm:h-16 sm:w-16"
                 onClick={onNotNow}
               >
-                <X className="h-6 w-6 sm:h-7 sm:w-7" />
-              </Button>
+                <X className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={2.4} />
+              </button>
 
               {onChat && (
-                <Button
+                <button
                   type="button"
-                  size="lg"
                   aria-label="Open Chat"
-                  className="h-14 w-14 rounded-full border border-[#DCE2EB] bg-white p-0 text-[#26364A] shadow-[0_14px_34px_rgba(31,44,60,0.12)] transition hover:scale-105 hover:border-[#E83262]/35 hover:bg-[#FFF3F7] hover:text-[#E83262] sm:h-16 sm:w-16"
+                  className="flex h-14 w-14 items-center justify-center rounded-full border border-[#DCE2EB] bg-white text-[#26364A] shadow-[0_14px_34px_rgba(31,44,60,0.12)] transition hover:-translate-y-0.5 hover:border-[#E83262]/35 hover:bg-[#FFF3F7] hover:text-[#E83262] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E83262]/30 active:scale-95 sm:h-16 sm:w-16"
                   onClick={onChat}
                 >
-                  <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7" />
-                </Button>
+                  <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={2.4} />
+                </button>
               )}
 
-              <Button
-                size="lg"
-                className="h-14 w-14 rounded-full bg-gradient-to-r from-[#E83262] to-[#C3264E] p-0 shadow-lg shadow-[#E83262]/30 hover:from-[#C3264E] hover:to-[#E83262] sm:h-16 sm:w-16"
+              <button
+                type="button"
+                aria-label="Send interest"
+                className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-[#E83262] to-[#C3264E] text-white shadow-lg shadow-[#E83262]/30 transition hover:-translate-y-0.5 hover:from-[#C3264E] hover:to-[#E83262] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E83262]/40 active:scale-95 sm:h-16 sm:w-16"
                 onClick={onConnect}
               >
-                <Heart className="h-6 w-6 fill-white text-white sm:h-7 sm:w-7" />
-              </Button>
+                <Heart className="h-6 w-6 fill-white text-white sm:h-7 sm:w-7" strokeWidth={2.4} />
+              </button>
             </div>
           </div>
         </div>
