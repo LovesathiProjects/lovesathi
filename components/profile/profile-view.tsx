@@ -18,6 +18,7 @@ import { formatPublicProfileName } from "@/lib/displayName"
 import { getUserEntitlementStatus } from "@/lib/planLimits"
 import { getPublicProfileId } from "@/lib/profileIdentity"
 import { getProfileFallbackImage, getSafeProfilePhotos } from "@/lib/profileImages"
+import { maskPhoneForDisplay, normalizePhoneNumber } from "@/lib/phone"
 
 interface ProfileViewProps {
   isOwnProfile?: boolean
@@ -82,11 +83,15 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
         .single()
 
       if (error) throw error
-      setProfile(data as MatrimonyProfileFull)
+      const profileData = { ...(data as MatrimonyProfileFull & { phone?: string | null }) }
+      if (targetUserId === user.id && !profileData.phone) {
+        profileData.phone = normalizePhoneNumber(String(user.phone || user.user_metadata?.phone || ""))
+      }
+      setProfile(profileData as MatrimonyProfileFull)
       setContact(await getProfileContact(targetUserId))
 
       if (targetUserId === user.id) {
-        setViewerProfile(data as MatrimonyProfileFull)
+        setViewerProfile(profileData as MatrimonyProfileFull)
       } else {
         const { data: viewerData, error: viewerError } = await supabase
           .from("matrimony_profile_full")
@@ -216,13 +221,30 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
   const preferredMinHeightText = typeof preferredMinHeight === "number" || typeof preferredMinHeight === "string" ? preferredMinHeight : null
   const preferredMaxHeightText = typeof preferredMaxHeight === "number" || typeof preferredMaxHeight === "string" ? preferredMaxHeight : null
   const locationParts = [career.work_location?.city, career.work_location?.state, career.work_location?.country].filter(Boolean)
-  const phoneIsRevealed = Boolean(contact?.phoneRevealed)
-  const displayPhone = contact?.phoneRevealed || contact?.phoneMasked
+  const profileWithPhone = profile as (MatrimonyProfileFull & { phone?: string | null; phone_masked?: string | null }) | null
+  const profilePhone = normalizePhoneNumber(String(profileWithPhone?.phone || ""))
+  const profilePhoneMasked = profilePhone ? maskPhoneForDisplay(profilePhone) : (profileWithPhone?.phone_masked || "")
+  const phoneIsRevealed = Boolean(contact?.phoneRevealed || (isOwnProfile && profilePhone))
+  const displayPhone = contact?.phoneRevealed || (isOwnProfile ? profilePhone : "") || contact?.phoneMasked || profilePhoneMasked
 
   async function handleRevealContact() {
     if (!userId || isOwnProfile) return
     if (phoneIsRevealed) return
     if (!contact?.canReveal) {
+      if (viewerIsPremium && profilePhone) {
+        setContact({
+          userId,
+          phoneMasked: maskPhoneForDisplay(profilePhone),
+          phoneRevealed: profilePhone,
+          canReveal: true,
+          remainingContactViews: null,
+        })
+        toast({
+          title: "Contact revealed",
+          description: "This contact is now available through your plan.",
+        })
+        return
+      }
       onUpgrade?.()
       toast({
         title: "Unlock contact details",
@@ -233,6 +255,23 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
 
     try {
       const revealed = await revealProfileContact(userId)
+      if (!revealed.phoneRevealed && profilePhone) {
+        const fallbackContact: ProfileContactInfo = {
+          userId,
+          phoneMasked: maskPhoneForDisplay(profilePhone),
+          phoneRevealed: profilePhone,
+          canReveal: true,
+          remainingContactViews: revealed.remainingContactViews ?? null,
+        }
+        setContact(fallbackContact)
+        toast({
+          title: "Contact revealed",
+          description: fallbackContact.remainingContactViews === null
+            ? "This contact is now available through your plan."
+            : `${fallbackContact.remainingContactViews} contact reveals remaining in your plan.`,
+        })
+        return
+      }
       setContact(revealed)
       toast({
         title: "Contact revealed",

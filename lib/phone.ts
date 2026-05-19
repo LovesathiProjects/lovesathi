@@ -9,6 +9,20 @@ export function getPhoneDigits(value: string) {
   return value.replace(/\D/g, "")
 }
 
+export function maskPhoneForDisplay(value?: string | null) {
+  const normalized = normalizePhoneNumber(String(value || ""))
+  const digits = getPhoneDigits(normalized)
+  if (!digits) return ""
+
+  const suffix = digits.slice(-4)
+  if (digits.length > 10) {
+    const countryCode = digits.slice(0, digits.length - 10)
+    return `+${countryCode} ******${suffix}`
+  }
+
+  return `+** ******${suffix}`
+}
+
 export function phonesMatch(left?: string | null, right?: string | null) {
   const leftDigits = getPhoneDigits(left || "")
   const rightDigits = getPhoneDigits(right || "")

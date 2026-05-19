@@ -12,6 +12,7 @@ import { PreferenceCompatibilityCard } from "@/components/matrimony/preference-c
 import { formatPublicProfileName } from "@/lib/displayName"
 import { getPublicProfileId } from "@/lib/profileIdentity"
 import { getProfileFallbackImage, getSafeProfilePhotos } from "@/lib/profileImages"
+import { maskPhoneForDisplay } from "@/lib/phone"
 import type { ProfileForCompatibility } from "@/lib/preferenceCompatibility"
 
 const SUPER_LIKE_ICON_SRC = "/lovesathi-superlike-star-polished.png"
@@ -77,9 +78,9 @@ function DossierSection({
 export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, onNotNow, onChat, onSuperLike, onPhoneUpgrade, onRevealPhone, viewerProfile = null, viewerIsPremium = false, isMatched = false }: MatrimonyProfileModalProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
   const [photoFailed, setPhotoFailed] = useState(false)
-  const [revealedPhone, setRevealedPhone] = useState<string | null>(profile.phone || null)
-  const phoneIsRevealed = Boolean(revealedPhone || profile.phone)
-  const displayPhone = revealedPhone || profile.phone || profile.phoneMasked
+  const [revealedPhone, setRevealedPhone] = useState<string | null>(null)
+  const phoneIsRevealed = Boolean(revealedPhone)
+  const displayPhone = revealedPhone || profile.phoneMasked || (profile.phone ? maskPhoneForDisplay(profile.phone) : null)
   const displayName = formatPublicProfileName(profile.name)
   const publicProfileId = getPublicProfileId(profile)
   const visiblePhotos = getSafeProfilePhotos(profile.photos, profile.name, profile.id, viewerIsPremium || isMatched ? undefined : 1)
@@ -119,10 +120,10 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
   )
 
   useEffect(() => {
-    setRevealedPhone(profile.phone || null)
+    setRevealedPhone(null)
     setCurrentPhotoIndex(0)
     setPhotoFailed(false)
-  }, [profile.id, profile.phone])
+  }, [profile.id])
 
   const handlePhotoClick = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect()

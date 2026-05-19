@@ -1,4 +1,5 @@
 import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
+import { maskPhoneForDisplay } from "@/lib/phone"
 
 type ViewerGender = string | null | undefined
 type SupplementalGender = "male" | "female"
@@ -170,6 +171,12 @@ function portraitUrl(gender: SupplementalGender, index: number) {
   return `https://i.pravatar.cc/640?u=lovesathi-${gender}-${index}`
 }
 
+function buildDemoPhone(gender: SupplementalGender, index: number) {
+  const seed = gender === "female" ? 2340 : 6420
+  const nationalNumber = `9${String((index * 7919 + seed) % 1000000000).padStart(9, "0")}`
+  return `+91${nationalNumber}`
+}
+
 function buildProfile(gender: SupplementalGender, index: number): MatrimonyProfile {
   const firstNames = gender === "female" ? FEMALE_FIRST_NAMES : MALE_FIRST_NAMES
   const firstName = firstNames[index % firstNames.length]
@@ -182,6 +189,7 @@ function buildProfile(gender: SupplementalGender, index: number): MatrimonyProfi
   const community = COMMUNITIES[(index * 7) % COMMUNITIES.length]
   const heightCm = gender === "female" ? 154 + (index % 19) : 168 + (index % 20)
   const interestSet = INTERESTS[index % INTERESTS.length]
+  const phone = buildDemoPhone(gender, index)
 
   return {
     id: `demo-${gender}-${index}-${slug(name)}`,
@@ -237,8 +245,9 @@ function buildProfile(gender: SupplementalGender, index: number): MatrimonyProfi
       education_prefs: ["Any"],
       profession_prefs: ["Any"],
     },
-    phoneMasked: `+** ******${String(3100 + (index * 37) % 6800).padStart(4, "0")}`,
-    canRevealPhone: false,
+    phone,
+    phoneMasked: maskPhoneForDisplay(phone),
+    canRevealPhone: true,
   }
 }
 

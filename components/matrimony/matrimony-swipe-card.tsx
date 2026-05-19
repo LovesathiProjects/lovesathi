@@ -14,6 +14,7 @@ import { ReportDialog } from "@/components/chat/report-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { formatPublicProfileName, getDisplayInitial } from "@/lib/displayName"
 import { getProfileFallbackImage, getSafeProfilePhotos } from "@/lib/profileImages"
+import { maskPhoneForDisplay } from "@/lib/phone"
 
 const SUPER_LIKE_ICON_SRC = "/lovesathi-superlike-star-polished.png"
 
@@ -111,7 +112,7 @@ export function MatrimonySwipeCard({
   const [loadingProfile, setLoadingProfile] = useState(false)
   const [shortlistBusy, setShortlistBusy] = useState(false)
   const [showReportDialog, setShowReportDialog] = useState(false)
-  const [revealedPhone, setRevealedPhone] = useState<string | null>(phone || null)
+  const [revealedPhone, setRevealedPhone] = useState<string | null>(null)
   const [superLikeCue, setSuperLikeCue] = useState(false)
   const { toast } = useToast()
   const isTopCard = stackIndex === 0
@@ -133,8 +134,8 @@ export function MatrimonySwipeCard({
   }, [activePhoto])
 
   useEffect(() => {
-    setRevealedPhone(phone || null)
-  }, [phone, profileId])
+    setRevealedPhone(null)
+  }, [profileId])
 
   const handleReportClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -381,8 +382,8 @@ export function MatrimonySwipeCard({
   const cardInitial = getDisplayInitial(name)
   const displayName = formatPublicProfileName(name)
   const modalDisplayName = formatPublicProfileName(fullProfile?.name || name)
-  const phoneIsRevealed = Boolean(revealedPhone || phone)
-  const displayPhone = revealedPhone || phone || phoneMasked
+  const phoneIsRevealed = Boolean(revealedPhone)
+  const displayPhone = revealedPhone || phoneMasked || (phone ? maskPhoneForDisplay(phone) : null)
   const premiumLocked = Boolean(premium && !viewerIsPremium)
 
   const handlePhoneClick = async (e: React.MouseEvent) => {

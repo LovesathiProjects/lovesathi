@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -72,6 +72,7 @@ import { formatLocationValue, getLocationCity, parseLocationValue, type Location
 import { formatPublicProfileName } from "@/lib/displayName"
 import { getPublicProfileId } from "@/lib/profileIdentity"
 import { getProfileFallbackImage, getSafeProfilePhotos } from "@/lib/profileImages"
+import { CONTACT_SHARING_BLOCKED_MESSAGE, containsShareableNumber } from "@/lib/contactSafety"
 import { cn } from "@/lib/utils"
 import { LocationCascadeSelect } from "@/components/location/location-cascade-select"
 
@@ -97,6 +98,140 @@ interface MatrimonyMainProps {
     | "safety-centre"
     | "help-support"
     | "success-stories"
+}
+
+type PreviewChatMessage = {
+  id: string
+  sender: "me" | "them"
+  text: string
+}
+
+function PreviewMatrimonyChat({
+  profile,
+  viewerIsPremium,
+  onBack,
+  onUpgrade,
+}: {
+  profile: MatrimonyProfile
+  viewerIsPremium: boolean
+  onBack: () => void
+  onUpgrade: () => void
+}) {
+  const { toast } = useToast()
+  const [draft, setDraft] = useState("")
+  const [sentCount, setSentCount] = useState(0)
+  const [isReplying, setIsReplying] = useState(false)
+  const publicName = formatPublicProfileName(profile.name)
+  const photos = getSafeProfilePhotos(profile.photos, profile.name, profile.id, 1)
+  const avatar = photos[0] || getProfileFallbackImage(profile.name, profile.id)
+  const [messages, setMessages] = useState<PreviewChatMessage[]>([
+    {
+      id: "welcome",
+      sender: "them" as const,
+      text: `Hi, thanks for opening ${publicName}'s profile. Share a short respectful introduction to begin.`,
+    },
+  ])
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const content = draft.trim()
+    if (!content) return
+
+    if (containsShareableNumber(content)) {
+      toast({
+        title: "Contact sharing blocked",
+        description: CONTACT_SHARING_BLOCKED_MESSAGE,
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!viewerIsPremium && sentCount >= 1) {
+      onUpgrade()
+      return
+    }
+
+    const now = Date.now()
+    setMessages((previousMessages) => [
+      ...previousMessages,
+      { id: `me-${now}`, sender: "me", text: content },
+    ])
+    setDraft("")
+    setSentCount((previousCount) => previousCount + 1)
+    setIsReplying(true)
+
+    window.setTimeout(() => {
+      setMessages((previousMessages) => [
+        ...previousMessages,
+        {
+          id: `them-${now}`,
+          sender: "them",
+          text: "Thank you for the introduction. I would like to understand family values, career plans, and what you are looking for before moving ahead.",
+        },
+      ])
+      setIsReplying(false)
+    }, 650)
+  }
+
+  return (
+    <div className="flex h-full flex-col bg-[#F6F7FB]">
+      <div className="flex items-center gap-3 border-b border-[#E8EDF4] bg-white/95 px-4 py-3 shadow-sm">
+        <Button type="button" variant="ghost" size="sm" className="h-10 w-10 rounded-full p-0" onClick={onBack}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <img src={avatar} alt={profile.name} className="h-12 w-12 rounded-full object-cover ring-1 ring-[#E8EDF4]" />
+        <div className="min-w-0">
+          <h2 className="truncate text-lg font-bold text-[#26364A]">{publicName}</h2>
+          <p className="truncate text-xs text-[#6F7C8B]">{profile.location || "Lovesathi profile"}</p>
+        </div>
+      </div>
+
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+        {messages.map((message) => (
+          <div key={message.id} className={cn("flex", message.sender === "me" ? "justify-end" : "justify-start")}>
+            <div
+              className={cn(
+                "max-w-[78%] rounded-[1.35rem] px-4 py-3 text-sm leading-6 shadow-sm",
+                message.sender === "me"
+                  ? "bg-[#E83262] text-white"
+                  : "border border-[#E8EDF4] bg-white text-[#26364A]",
+              )}
+            >
+              {message.text}
+            </div>
+          </div>
+        ))}
+        {isReplying && (
+          <div className="flex justify-start">
+            <div className="rounded-[1.35rem] border border-[#E8EDF4] bg-white px-4 py-3 text-sm font-semibold text-[#6F7C8B] shadow-sm">
+              {publicName} is typing...
+            </div>
+          </div>
+        )}
+      </div>
+
+      {!viewerIsPremium && (
+        <div className="mx-4 mb-2 rounded-2xl border border-[#E83262]/20 bg-[#FFF4F7] px-3 py-2 text-xs font-semibold text-[#8C2440]">
+          Free preview chat allows one starter message per free profile. Upgrade for unlimited conversations.
+        </div>
+      )}
+
+      <form
+        onSubmit={handleSubmit}
+        className="flex gap-2 border-t border-[#E8EDF4] bg-white/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
+      >
+        <input
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          placeholder="Type a respectful introduction"
+          className="min-w-0 flex-1 rounded-full border border-[#E1E7EF] bg-white px-4 text-sm font-semibold text-[#26364A] outline-none transition focus:border-[#E83262]"
+        />
+        <Button type="submit" className="h-12 w-12 rounded-full bg-[#E83262] p-0 text-white hover:bg-[#C3264E]">
+          <Send className="h-5 w-5" />
+        </Button>
+      </form>
+    </div>
+  )
 }
 
 function MatrimonyListProfileCard({
@@ -649,6 +784,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
   const [viewerIsPremium, setViewerIsPremium] = useState(false)
   const [viewerEntitlement, setViewerEntitlement] = useState<EntitlementStatus | null>(null)
   const [premiumBackTarget, setPremiumBackTarget] = useState<"discover" | "profile" | "activity">("profile")
+  const [selectedPreviewChatProfile, setSelectedPreviewChatProfile] = useState<MatrimonyProfile | null>(null)
   const { toast } = useToast()
   const {
     shortlistedProfiles,
@@ -700,10 +836,32 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         )
         return null
       }
-      if (profileId.startsWith("demo-")) {
+
+      const localProfile = profiles.find((profile) => profile.id === profileId)
+      if (localProfile?.phone) {
+        setProfiles((previousProfiles) =>
+          previousProfiles.map((profile) =>
+            profile.id === profileId
+              ? {
+                  ...profile,
+                  phone: localProfile.phone,
+                  phoneMasked: localProfile.phoneMasked || profile.phoneMasked,
+                  canRevealPhone: true,
+                }
+              : profile,
+          ),
+        )
         toast({
-          title: "Preview contact unavailable",
-          description: "This preview profile is not connected to a verified phone number yet.",
+          title: "Contact revealed",
+          description: "This phone number is now visible through your active plan.",
+        })
+        return localProfile.phone
+      }
+
+      if (localProfile?.demo || profileId.startsWith("demo-")) {
+        toast({
+          title: "Contact unavailable",
+          description: "This profile does not have a phone number attached yet.",
         })
         return null
       }
@@ -725,7 +883,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       }
       return contact.phoneRevealed
     },
-    [showPremiumUpsell, toast, viewerIsPremium],
+    [profiles, showPremiumUpsell, toast, viewerIsPremium],
   )
 
   const refreshSwipeLimitStatus = useCallback(async (userId: string) => {
@@ -1567,6 +1725,19 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         return
       }
 
+      if (profile.demo || profile.id.startsWith("demo-")) {
+        setSelectedPreviewChatProfile(profile)
+        setSelectedChatId(null)
+        setCurrentScreen("chat")
+        if (!viewerIsPremium) {
+          toast({
+            title: "Starter chat opened",
+            description: "Free plan includes 3 direct chats and 1 message per profile.",
+          })
+        }
+        return
+      }
+
       const result = await createPremiumDirectMatrimonyMatch(profile.id)
       if (!result.success || !result.matchId) {
         const limitMessage = result.error?.toLowerCase() || ""
@@ -1598,6 +1769,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         })
       }
 
+      setSelectedPreviewChatProfile(null)
       setSelectedChatId(result.matchId)
       setCurrentScreen("chat")
     },
@@ -1883,6 +2055,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       {currentScreen === "messages" && (
         <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#F6F7FB]">
           <MatrimonyChatList onChatClick={(chatId) => {
+            setSelectedPreviewChatProfile(null)
             setSelectedChatId(chatId)
             setCurrentScreen("chat")
           }} onBack={() => setCurrentScreen("discover")} />
@@ -1898,6 +2071,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
               setCurrentScreen("view-profile")
             }}
             onMatchClick={(matchId) => {
+              setSelectedPreviewChatProfile(null)
               setSelectedChatId(matchId)
               setCurrentScreen("chat")
             }}
@@ -1959,7 +2133,27 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         </div>
       )}
 
-      {currentScreen === "chat" && selectedChatId && (
+      {currentScreen === "chat" && selectedPreviewChatProfile && (
+        <div className="fixed inset-0 z-50 h-[100svh] max-h-[100svh] overflow-hidden bg-background sm:h-[100dvh] sm:max-h-[100dvh]">
+          <PreviewMatrimonyChat
+            profile={selectedPreviewChatProfile}
+            viewerIsPremium={viewerIsPremium}
+            onBack={() => {
+              setSelectedPreviewChatProfile(null)
+              setCurrentScreen("discover")
+            }}
+            onUpgrade={() =>
+              showPremiumUpsell(
+                "Unlock unlimited chat",
+                "Upgrade for unlimited direct conversations with premium profile access.",
+                "discover",
+              )
+            }
+          />
+        </div>
+      )}
+
+      {currentScreen === "chat" && selectedChatId && !selectedPreviewChatProfile && (
         <div className="fixed inset-0 z-50 h-[100svh] max-h-[100svh] overflow-hidden bg-background sm:h-[100dvh] sm:max-h-[100dvh]">
           <ChatScreen 
             matchId={selectedChatId} 
@@ -2108,6 +2302,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           onStartChat={() => {
             setShowMatchNotification(false)
             if (matchedMatchId) {
+              setSelectedPreviewChatProfile(null)
               setSelectedChatId(matchedMatchId)
               setCurrentScreen("chat")
             } else {
