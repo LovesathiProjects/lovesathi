@@ -36,3 +36,11 @@ next-env.d.ts
 
 # supabase local temp
 supabase/.temp/
+
+# Android release signing secrets
+*.jks
+*.keystore
+key.properties
+android/key.properties
+android/app/*.jks
+android/app/*.keystore

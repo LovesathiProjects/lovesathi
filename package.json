@@ -15,6 +15,8 @@
     "native:open:android": "cap open android",
     "native:open:ios": "cap open ios",
     "native:build:android": "cd android && gradlew.bat :app:assembleDebug",
+    "native:assemble:android": "cd android && gradlew.bat :app:assembleRelease",
+    "native:bundle:android": "cd android && gradlew.bat :app:bundleRelease",
     "seed:lovesathi-demo-female": "node scripts/seed-lovesathi-demo-female-profiles.mjs"
   },
   "dependencies": {

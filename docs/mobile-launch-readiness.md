@@ -1,6 +1,6 @@
 # Lovesathi Mobile Launch Readiness
 
-Last updated: May 2026
+Last updated: June 9, 2026
 
 ## Current status
 
@@ -14,6 +14,9 @@ Lovesathi is currently a production Next.js web app with Capacitor wrapper confi
 - PWA manifest with Lovesathi name, theme color, standalone display, and app icons.
 - Capacitor config for `com.lovesathi.app`, loading the hosted app at `https://lovesathi.com`.
 - Android Capacitor project scaffolded with portrait orientation, HTTPS-only traffic, and OS backup disabled.
+- Android package ID set to `com.lovesathi.app`.
+- Android target SDK set to `36`.
+- Play Store bundle script added as `npm run native:bundle:android`.
 - Basic production security headers in `next.config.mjs`.
 - Safety/report/blocking/chat contact-sharing protections in the web app.
 - Admin portal for user, profile, verification, report, entitlement, and concierge review.
@@ -22,6 +25,7 @@ Lovesathi is currently a production Next.js web app with Capacitor wrapper confi
 
 - Native iOS folder has not been generated yet because it requires macOS and Xcode.
 - Android release signing, Play Store upload, and physical-device QA are not complete yet.
+- This Windows machine still needs Android Studio/SDK and active JDK 17+ before a Play Store `.aab` can be generated locally.
 - Native push notifications are not configured.
 - Native deep links/universal links are not configured.
 - Native app icons and splash assets need final high-resolution PNG exports before store submission.
