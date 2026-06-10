@@ -234,6 +234,7 @@ export default function Home() {
             <Link href="/terms">Terms</Link>
             <Link href="/privacy">Privacy</Link>
             <Link href="/safety">Safety</Link>
+            <Link href="/child-safety-standards">Child safety standards</Link>
             <Link href="/account-deletion">Account deletion</Link>
             <Link href="/contact">Contact</Link>
           </div>
