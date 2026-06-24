@@ -87,12 +87,22 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (user) {
+      // If user came from an OAuth provider (Google/Apple), Supabase often
+      // supplies an identity record. Treat OAuth-backed accounts as email
+      // verified for the purposes of onboarding flow to avoid forcing a
+      // redundant email OTP step.
+      const hasOAuthIdentity = user.identities?.some(
+        (identity) => identity.provider && identity.provider !== 'email',
+      ) ?? false
+
       if (safeNextPath) {
         return NextResponse.redirect(new URL(safeNextPath, redirectOrigin))
       }
 
-      // Check if email is verified (OAuth providers usually verify automatically, but check anyway)
-      if (!user.email_confirmed_at) {
+      // Check if email is verified. If not verified but the account has an
+      // OAuth identity (Google/Apple), continue; otherwise redirect to
+      // verify-email so users can confirm via OTP.
+      if (!user.email_confirmed_at && !hasOAuthIdentity) {
         return NextResponse.redirect(new URL('/auth/verify-email', redirectOrigin))
       }
 

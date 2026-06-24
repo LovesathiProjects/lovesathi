@@ -34,6 +34,10 @@ next-env.d.ts
 # os files
 .DS_Store
 
+# IDE and generated Android Studio files
+.idea/
+android/gradle/gradle-daemon-jvm.properties
+
 # supabase local temp
 supabase/.temp/
 

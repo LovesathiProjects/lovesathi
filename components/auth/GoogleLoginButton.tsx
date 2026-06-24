@@ -16,13 +16,19 @@ export default function GoogleLoginButton({ variant = "signup" }: GoogleLoginBut
     try {
       setIsLoading(true)
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || window.location.origin
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${siteUrl}/auth/callback`,
+          skipBrowserRedirect: true,
         },
       })
+
       if (error) throw error
+
+      if (data?.url) {
+        window.location.href = data.url
+      }
     } catch (err) {
       console.error("Google Sign-in Error:", err)
     } finally {

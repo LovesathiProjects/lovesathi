@@ -1,6 +1,13 @@
 import nextVitals from "eslint-config-next/core-web-vitals"
 
 const config = [
+  {
+    ignores: [
+      "android/**/build/**",
+      "mobile/.expo/**",
+      "mobile/node_modules/**",
+    ],
+  },
   ...nextVitals,
   {
     rules: {
@@ -12,6 +19,12 @@ const config = [
       "react-hooks/exhaustive-deps": "off",
       "react-hooks/purity": "off",
       "react-hooks/set-state-in-effect": "off",
+    },
+  },
+  {
+    files: ["mobile/**/*.{ts,tsx}"],
+    rules: {
+      "jsx-a11y/alt-text": "off",
     },
   },
 ]
