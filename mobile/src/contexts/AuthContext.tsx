@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const phoneError = getPhoneValidationMessage(phone);
       if (phoneError) throw new Error(phoneError);
 
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password: input.password,
         options: {
@@ -121,7 +121,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       await AsyncStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, email);
       await AsyncStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, phone);
-      await syncAppFlow((await supabase.auth.getSession()).data.session);
+
+      if (data.session) {
+        setSession(data.session);
+        await syncAppFlow(data.session);
+      } else {
+        setSession(null);
+        setAppFlow('verify-email');
+      }
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Something went wrong');
     } finally {
@@ -159,6 +166,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             normalizePhoneNumber(input.phone),
           );
         }
+        setSession(data.session);
+        setAppFlow('verify-email');
+        return;
       }
 
       await syncAppFlow(data.session);
@@ -174,7 +184,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             normalizePhoneNumber(input.phone),
           );
         }
-        await syncAppFlow((await supabase.auth.getSession()).data.session);
+        setSession(null);
+        setAppFlow('verify-email');
         return;
       }
 

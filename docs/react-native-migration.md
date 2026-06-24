@@ -7,7 +7,8 @@ The existing Next.js and Capacitor production app remains untouched. The native 
 ## Current State
 
 - `mobile/` is an Expo TypeScript app using React Native and React Navigation.
-- Supabase auth is wired with session persistence, email verification routing, and onboarding gating.
+- Supabase auth is wired with session persistence, 6-digit email OTP verification, and onboarding gating.
+- Phone verification uses the existing Supabase/Twilio phone-change OTP flow and can be skipped until Edit Profile.
 - Main tabs exist for Discover, Saved, Chat, Activity, and Profile with Lovesathi styling.
 - Discovery, chat, activity, and profile data still use mock UI until backend services are ported.
 - Admin, legal pages, and payments remain web-only for now.
@@ -26,8 +27,8 @@ mobile/src/
 App flow:
 
 1. `auth` - landing, sign up, sign in
-2. `verify-email` - wait for Supabase email confirmation
-3. `onboarding` - native profile setup (placeholder, next major phase)
+2. `verify-email` - enter the 6-digit Supabase email OTP
+3. `onboarding` - optional phone OTP, DOB, gender, ID, and seven-step matrimony setup
 4. `main` - bottom tabs for the signed-in app
 
 ## Local Commands
@@ -48,8 +49,8 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=...
 
 ## Migration Order
 
-1. Auth - done: email/password, session, verify-email routing
-2. Onboarding - in progress: verification (DOB, gender, ID) + 7-step matrimony setup wired to Supabase
+1. Auth - done: email/password, session, email OTP, resend, and verification routing
+2. Onboarding - done at foundation level: optional phone OTP, DOB, gender, ID, and 7-step matrimony setup wired to Supabase
 3. Discovery - connect `matrimonyService`, swipe limits, shortlist, contact reveal
 4. Chat - connect Socket.IO + `chatService`
 5. Profile centre - edit profile, preferences, subscriptions, settings
