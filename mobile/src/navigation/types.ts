@@ -14,7 +14,7 @@ export type OnboardingStackParamList = {
 export type MainTabParamList = {
   Discover: undefined;
   Shortlist: undefined;
-  Chat: undefined;
+  Chat: { matchId?: string } | undefined;
   Activity: undefined;
   Profile: undefined;
 };
