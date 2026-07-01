@@ -10,10 +10,22 @@ export function getClientSiteUrl() {
   return window.location.origin
 }
 
+export function getBrowserOriginSiteUrl() {
+  if (typeof window !== "undefined" && window.location.origin.startsWith("http")) {
+    return window.location.origin.replace(/\/$/, "")
+  }
+
+  return getClientSiteUrl()
+}
+
 export function getEmailVerificationRedirectUrl() {
   const callbackUrl = new URL("/auth/callback", getClientSiteUrl())
   callbackUrl.searchParams.set("next", "/onboarding/verification")
   return callbackUrl.toString()
+}
+
+export function getOAuthRedirectUrl() {
+  return new URL("/auth/callback", getBrowserOriginSiteUrl()).toString()
 }
 
 export function normalizeEmail(email: string) {

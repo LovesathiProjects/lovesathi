@@ -2,7 +2,9 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { getOAuthRedirectUrl } from "@/lib/authRedirects"
 import { supabase } from "@/lib/supabaseClient"
+import { toast } from "sonner"
 
 interface AppleLoginButtonProps {
   variant?: "login" | "signup"
@@ -15,11 +17,10 @@ export default function AppleLoginButton({ variant = "signup" }: AppleLoginButto
   const handleAppleLogin = async () => {
     try {
       setIsLoading(true)
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || window.location.origin
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "apple",
         options: {
-          redirectTo: `${siteUrl}/auth/callback`,
+          redirectTo: getOAuthRedirectUrl(),
           skipBrowserRedirect: true,
         },
       })
@@ -31,6 +32,7 @@ export default function AppleLoginButton({ variant = "signup" }: AppleLoginButto
       }
     } catch (err) {
       console.error("Apple Sign-in Error:", err)
+      toast.error(err instanceof Error ? err.message : "Apple sign-in could not be started")
     } finally {
       setIsLoading(false)
     }

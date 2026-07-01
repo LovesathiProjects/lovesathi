@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabaseClient"
 import type { MatrimonyProfile } from "@/lib/mockMatrimonyProfiles"
 import { getShortlistLimitStatus, normalizeLimitError } from "@/lib/planLimits"
+import { getProfileFallbackImage } from "@/lib/profileImages"
 
 export interface ShortlistRecord {
   id: string
@@ -53,7 +54,7 @@ function mapProfileFromRow(
     profession: career?.job_title || "",
     location,
     community: cultural?.community || undefined,
-    photos: photos.length > 0 ? photos : ["/placeholder-user.jpg"],
+    photos: photos.length > 0 ? photos : [getProfileFallbackImage(row.name, row.user_id)],
     bio: row.bio || undefined,
     interests: [],
     verified: verificationMap.get(row.user_id) === "approved",

@@ -4,7 +4,7 @@
     "slug": "lovesathi",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/lovesathi-app-logo.png",
     "userInterfaceStyle": "light",
     "scheme": "lovesathi",
     "ios": {
@@ -15,14 +15,14 @@
       "package": "com.lovesathi.app",
       "adaptiveIcon": {
         "backgroundColor": "#F7F3EE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
+        "foregroundImage": "./assets/lovesathi-app-logo.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/lovesathi-app-logo.png"
     }
   }
 }

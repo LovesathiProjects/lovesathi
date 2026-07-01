@@ -4,7 +4,9 @@ import type React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { ArrowLeft, Crown, Eye, EyeOff, Heart, ShieldCheck, Sparkles, Users } from "lucide-react"
+import { ArrowLeft, Crown, Eye, EyeOff, ShieldCheck, Sparkles, Users } from "lucide-react"
+import { LovesathiLogo } from "@/components/brand/lovesathi-logo"
+import { WhatsAppCta } from "@/components/support/whatsapp-cta"
 import AppleLoginButton from "@/components/auth/AppleLoginButton"
 import GoogleLoginButton from "@/components/auth/GoogleLoginButton"
 import { Button } from "@/components/ui/button"
@@ -52,12 +54,9 @@ function LegalLinks({ action }: { action: "continuing" | "signing up" }) {
 function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex flex-col items-center text-center">
-      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#E83262] text-white shadow-[0_18px_45px_rgba(194,165,116,0.28)] sm:h-20 sm:w-20">
-        <Heart className="h-8 w-8 fill-current sm:h-10 sm:w-10" />
+      <div className="mb-4 rounded-lg border border-[#E6EAF1] bg-white p-2 shadow-[0_18px_45px_rgba(38,54,74,0.08)]">
+        <LovesathiLogo imageClassName={compact ? "h-16" : "h-20 sm:h-24"} />
       </div>
-      <h1 className={`${compact ? "text-5xl" : "text-6xl sm:text-7xl"} font-serif font-bold tracking-[-0.07em] text-[#26364A]`}>
-        Lovesathi
-      </h1>
       <p className="mt-2 max-w-sm text-sm font-semibold uppercase tracking-[0.2em] text-[#E83262]">
         Premium matrimony
       </p>
@@ -83,8 +82,8 @@ function AuthShell({
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-        <Link href="/" className="font-serif text-2xl font-bold tracking-[-0.05em] text-[#26364A] no-underline">
-          Lovesathi
+        <Link href="/" className="rounded-md border border-[#E6EAF1] bg-white px-2 py-1 no-underline">
+          <LovesathiLogo imageClassName="h-10" />
         </Link>
       </div>
       <div className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-10 py-8 lg:grid-cols-[0.9fr_1.1fr]">
@@ -239,14 +238,11 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
   if (view === "landing") {
     return (
       <div className="luxe-page flex min-h-screen flex-col overflow-x-hidden px-4 py-5 sm:px-6">
-        <div className="luxe-orb left-[-7rem] top-20 h-72 w-72 bg-[#E83262]/18" />
-        <div className="luxe-orb right-[-8rem] top-10 h-96 w-96 bg-[#E83262]/30" style={{ animationDelay: "1.2s" }} />
-        <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between rounded-full border border-white/10 bg-white/8 px-4 py-3 text-[#ffffff] backdrop-blur-xl">
+        <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between rounded-lg border border-white/10 bg-white/8 px-4 py-3 text-[#ffffff] backdrop-blur-xl">
           <Link href="/" className="flex items-center gap-3 text-[#ffffff] no-underline">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#ffffff] text-[#E83262]">
-              <Heart className="h-5 w-5 fill-current" />
+            <span className="rounded-md border border-white/20 bg-white p-1">
+              <LovesathiLogo imageClassName="h-10" />
             </span>
-            <span className="font-serif text-2xl font-bold tracking-[-0.05em]">Lovesathi</span>
           </Link>
           <Button asChild variant="ghost" className="text-[#ffffff] hover:bg-white/10 hover:text-[#ffffff]">
             <Link href="/">Home</Link>
@@ -280,7 +276,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             </div>
           </section>
 
-          <section className="luxe-card mx-auto w-full max-w-md rounded-[2rem] p-5 sm:p-7">
+          <section className="luxe-card mx-auto w-full max-w-md rounded-lg p-5 sm:p-7">
             <div className="mb-8">
               <BrandMark compact />
               <p className="mx-auto mt-4 max-w-xs text-center text-[#6F7C8B]">
@@ -321,6 +317,8 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             <div className="mt-6">
               <LegalLinks action="continuing" />
             </div>
+
+            <WhatsAppCta compact className="mt-6" />
           </section>
         </main>
       </div>

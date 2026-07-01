@@ -1,18 +1,23 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { LuxuryButton } from '../components/LuxuryButton';
 import { ProfilePhoto } from '../components/ProfilePhoto';
 import { useAuth } from '../contexts/AuthContext';
 import { colors, radius, shadow, spacing } from '../theme';
 
-const rows = [
-  'Edit Profile',
-  'Partner Preferences',
-  'Phone Verification',
-  'Subscription',
-  'Account & Settings',
-  'Safety Centre',
-  'Help & Support',
-];
+const supportRows = ['Safety Centre', 'Help & Support'];
+const WHATSAPP_URL = 'https://wa.me/919175554708';
+
+function getInitials(name: string) {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase() || 'LS'
+  );
+}
 
 export function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -20,6 +25,7 @@ export function ProfileScreen() {
     (user?.user_metadata?.full_name as string | undefined) ||
     user?.email?.split('@')[0] ||
     'Member';
+  const openSupport = () => void Linking.openURL(WHATSAPP_URL);
 
   return (
     <View style={styles.wrap}>
@@ -27,7 +33,7 @@ export function ProfileScreen() {
       <Text style={styles.title}>Profile Centre</Text>
 
       <View style={styles.profileCard}>
-        <ProfilePhoto initials="F" size={74} />
+        <ProfilePhoto initials={getInitials(displayName)} size={74} />
         <View style={styles.profileText}>
           <Text style={styles.name}>{displayName}</Text>
           <Text style={styles.id}>{user?.email || 'Signed in member'}</Text>
@@ -44,13 +50,19 @@ export function ProfileScreen() {
       </View>
 
       <View style={styles.menu}>
-        {rows.map((row) => (
-          <Pressable key={row} style={styles.row}>
+        {supportRows.map((row) => (
+          <Pressable key={row} style={styles.row} onPress={openSupport}>
             <Text style={styles.rowText}>{row}</Text>
-            <Text style={styles.chevron}>›</Text>
+            <Text style={styles.chevron}>{'>'}</Text>
           </Pressable>
         ))}
       </View>
+
+      <Pressable onPress={openSupport} style={styles.supportCard}>
+        <Text style={styles.supportKicker}>Chat on WhatsApp</Text>
+        <Text style={styles.supportNumber}>+91 91755 54708</Text>
+        <Text style={styles.supportCopy}>Tap for profile, safety, or launch support.</Text>
+      </Pressable>
 
       <LuxuryButton label="Sign out" onPress={() => void signOut()} variant="secondary" />
     </View>
@@ -154,6 +166,33 @@ const styles = StyleSheet.create({
   },
   chevron: {
     color: colors.taupe,
-    fontSize: 28,
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  supportCard: {
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.card,
+    padding: spacing.lg,
+    ...shadow,
+  },
+  supportKicker: {
+    color: colors.rose,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 2.4,
+    textTransform: 'uppercase',
+  },
+  supportNumber: {
+    marginTop: spacing.xs,
+    color: colors.ink,
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  supportCopy: {
+    marginTop: spacing.xs,
+    color: colors.muted,
+    lineHeight: 21,
   },
 });

@@ -1,8 +1,8 @@
 const fallbackPalettes = [
-  ["#f9f5ef", "#c9ad7d", "#29364a"],
-  ["#f8f1f2", "#d48a9d", "#372b24"],
-  ["#f6f4ef", "#b7c5b0", "#26364a"],
-  ["#f4f0ea", "#bfa56f", "#3a2b24"],
+  ["#ffffff", "#f8d7e1", "#26364a"],
+  ["#fff4f7", "#E83262", "#172235"],
+  ["#f8fafd", "#f1b7c7", "#26364a"],
+  ["#ffffff", "#d9ad4f", "#5f0012"],
 ]
 
 function hashSeed(seed: string) {
@@ -37,10 +37,11 @@ export function getProfileFallbackImage(name?: string | null, seed?: string | nu
         </filter>
       </defs>
       <rect width="720" height="920" fill="url(#g)"/>
-      <circle cx="360" cy="355" r="142" fill="rgba(255,255,255,0.36)" filter="url(#s)"/>
-      <text x="360" y="405" text-anchor="middle" font-family="Georgia, serif" font-size="126" font-weight="700" fill="rgba(255,255,255,0.88)">${initials}</text>
-      <rect x="140" y="638" width="440" height="54" rx="27" fill="rgba(255,255,255,0.28)"/>
-      <text x="360" y="673" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="4" fill="rgba(255,255,255,0.86)">LOVESATHI PROFILE</text>
+      <path d="M118 185C202 102 314 82 424 125C530 166 604 266 610 386C616 513 548 617 438 682C329 746 192 743 116 655C40 566 36 267 118 185Z" fill="rgba(255,255,255,0.24)"/>
+      <circle cx="360" cy="354" r="148" fill="rgba(255,255,255,0.38)" filter="url(#s)"/>
+      <text x="360" y="406" text-anchor="middle" font-family="Georgia, serif" font-size="126" font-weight="700" fill="rgba(255,255,255,0.92)">${initials}</text>
+      <rect x="130" y="638" width="460" height="54" rx="10" fill="rgba(255,255,255,0.28)"/>
+      <text x="360" y="673" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="4" fill="rgba(255,255,255,0.9)">LOVESATHI PROFILE</text>
     </svg>`
 
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`

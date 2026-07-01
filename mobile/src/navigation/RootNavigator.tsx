@@ -1,6 +1,6 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, View } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthScreen } from '../screens/AuthScreen';
 import { VerifyEmailScreen } from '../screens/VerifyEmailScreen';
@@ -16,6 +16,7 @@ import type {
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const VerifyStack = createNativeStackNavigator<VerifyStackParamList>();
+const logoImage = require('../../assets/lovesathi-logo.jpeg');
 
 function AuthStackScreen() {
   return (
@@ -36,7 +37,7 @@ function VerifyStackScreen() {
 function LoadingScreen() {
   return (
     <View style={styles.loading}>
-      <Text style={styles.brand}>Lovesathi</Text>
+      <Image source={logoImage} resizeMode="contain" style={styles.logo} />
       <ActivityIndicator color={colors.rose} size="large" style={styles.spinner} />
     </View>
   );
@@ -76,11 +77,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.ivory,
   },
-  brand: {
-    fontFamily: 'Georgia',
-    fontSize: 32,
-    color: colors.mocha,
-    fontWeight: '700',
+  logo: {
+    width: 220,
+    height: 90,
   },
   spinner: {
     marginTop: spacing.lg,

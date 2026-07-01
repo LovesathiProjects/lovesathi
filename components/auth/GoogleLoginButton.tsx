@@ -2,7 +2,9 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { getOAuthRedirectUrl } from "@/lib/authRedirects"
 import { supabase } from "@/lib/supabaseClient"
+import { toast } from "sonner"
 
 interface GoogleLoginButtonProps {
   variant?: "login" | "signup"
@@ -15,11 +17,13 @@ export default function GoogleLoginButton({ variant = "signup" }: GoogleLoginBut
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true)
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || window.location.origin
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${siteUrl}/auth/callback`,
+          redirectTo: getOAuthRedirectUrl(),
+          queryParams: {
+            prompt: "select_account",
+          },
           skipBrowserRedirect: true,
         },
       })
@@ -31,6 +35,7 @@ export default function GoogleLoginButton({ variant = "signup" }: GoogleLoginBut
       }
     } catch (err) {
       console.error("Google Sign-in Error:", err)
+      toast.error(err instanceof Error ? err.message : "Google sign-in could not be started")
     } finally {
       setIsLoading(false)
     }

@@ -2295,7 +2295,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           match={{
             id: matchedProfile.id,
             name: matchedProfile.name,
-            avatar: matchedProfile.photos?.[0] || "/placeholder-user.jpg",
+            avatar: matchedProfile.photos?.[0] || getProfileFallbackImage(matchedProfile.name, matchedProfile.id),
             age: matchedProfile.age,
             mutualInterests: matchedProfile.interests || []
           }}

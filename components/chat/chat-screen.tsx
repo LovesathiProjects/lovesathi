@@ -35,6 +35,7 @@ import { ReportDialog } from "@/components/chat/report-dialog"
 import { getPreferredVerticalPlacement, type VerticalPlacement } from "@/components/chat/menu-position"
 import { getMessageSendLimitStatus } from "@/lib/planLimits"
 import { formatPublicProfileName, getDisplayInitial } from "@/lib/displayName"
+import { getProfileFallbackImage } from "@/lib/profileImages"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -452,7 +453,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
         setChatUser({
           id: otherUserId,
           name: profile?.name || 'Unknown',
-          avatar: (profile?.photos as string[])?.[0] || '/placeholder-user.jpg',
+          avatar: (profile?.photos as string[])?.[0] || getProfileFallbackImage(profile?.name, otherUserId),
           isOnline: false,
           isPremium: false,
         })

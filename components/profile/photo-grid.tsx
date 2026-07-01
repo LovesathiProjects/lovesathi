@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import { Camera, Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Camera, Plus, X } from "lucide-react"
+import { getProfileFallbackImage } from "@/lib/profileImages"
 import { cn } from "@/lib/utils"
 
 interface Photo {
@@ -13,25 +14,29 @@ interface Photo {
 }
 
 export function PhotoGrid() {
-  const [photos, setPhotos] = useState<Photo[]>([
-    { id: "1", url: "/professional-headshot.png", isMain: true },
-    { id: "2", url: "/casual-outdoor-photo.jpg" },
-  ])
-
+  const [photos, setPhotos] = useState<Photo[]>([])
   const maxPhotos = 6
 
   const handleAddPhoto = () => {
-    if (photos.length < maxPhotos) {
-      const newPhoto: Photo = {
-        id: Date.now().toString(),
-        url: "/new-profile-photo.jpg",
-      }
-      setPhotos((prev) => [...prev, newPhoto])
+    if (photos.length >= maxPhotos) return
+
+    const id = Date.now().toString()
+    const newPhoto: Photo = {
+      id,
+      url: getProfileFallbackImage("New profile photo", id),
+      isMain: photos.length === 0,
     }
+    setPhotos((prev) => [...prev, newPhoto])
   }
 
   const handleRemovePhoto = (id: string) => {
-    setPhotos((prev) => prev.filter((photo) => photo.id !== id))
+    setPhotos((prev) => {
+      const next = prev.filter((photo) => photo.id !== id)
+      if (!next.some((photo) => photo.isMain) && next[0]) {
+        next[0] = { ...next[0], isMain: true }
+      }
+      return next
+    })
   }
 
   const handleSetMainPhoto = (id: string) => {
@@ -43,68 +48,50 @@ export function PhotoGrid() {
     )
   }
 
-  const handleReorderPhoto = (dragIndex: number, hoverIndex: number) => {
-    const dragPhoto = photos[dragIndex]
-    const newPhotos = [...photos]
-    newPhotos.splice(dragIndex, 1)
-    newPhotos.splice(hoverIndex, 0, dragPhoto)
-    setPhotos(newPhotos)
-  }
-
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-3">
         {photos.map((photo, index) => (
-          <div key={photo.id} className="relative group">
+          <div key={photo.id} className="group relative">
             <Card
               className={cn(
-                "aspect-square overflow-hidden border-2 transition-colors",
-                photo.isMain ? "border-primary" : "border-border",
+                "aspect-square overflow-hidden rounded-lg border-2 transition-colors",
+                photo.isMain ? "border-[#E83262]" : "border-border",
               )}
             >
               <img
-                src={photo.url || "/placeholder.svg"}
+                src={photo.url}
                 alt={`Profile photo ${index + 1}`}
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
               />
 
-              {/* Main photo badge */}
               {photo.isMain && (
-                <div className="absolute top-2 left-2">
-                  <div className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full font-medium">
-                    Main
-                  </div>
+                <div className="absolute left-2 top-2 rounded-md bg-[#E83262] px-2 py-1 text-xs font-bold text-white">
+                  Main
                 </div>
               )}
 
-              {/* Photo controls */}
-              <div className="absolute inset-0 bg-primary/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
+              <div className="absolute inset-0 flex items-center justify-center gap-2 bg-[#26364A]/55 opacity-0 transition-opacity group-hover:opacity-100">
                 {!photo.isMain && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => handleSetMainPhoto(photo.id)}
-                    className="text-xs"
-                  >
+                  <Button size="sm" variant="secondary" onClick={() => handleSetMainPhoto(photo.id)} className="text-xs">
                     Set Main
                   </Button>
                 )}
                 <Button size="sm" variant="destructive" onClick={() => handleRemovePhoto(photo.id)}>
-                  <X className="w-3 h-3" />
+                  <X className="h-3 w-3" />
                 </Button>
               </div>
             </Card>
           </div>
         ))}
 
-        {/* Add photo button */}
         {photos.length < maxPhotos && (
           <Card
-            className="aspect-square border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors cursor-pointer"
+            className="aspect-square cursor-pointer rounded-lg border-2 border-dashed border-muted-foreground/25 transition-colors hover:border-[#E83262]/50"
             onClick={handleAddPhoto}
           >
-            <div className="w-full h-full flex flex-col items-center justify-center space-y-2 text-muted-foreground hover:text-primary transition-colors">
-              <Plus className="w-8 h-8" />
+            <div className="flex h-full w-full flex-col items-center justify-center space-y-2 text-muted-foreground transition-colors hover:text-[#E83262]">
+              <Plus className="h-8 w-8" />
               <span className="text-xs font-medium">Add Photo</span>
             </div>
           </Card>
@@ -116,16 +103,16 @@ export function PhotoGrid() {
           <span className="text-sm font-medium">
             Photos ({photos.length}/{maxPhotos})
           </span>
-          <Button variant="outline" size="sm" className="text-xs bg-transparent">
-            <Camera className="w-3 h-3 mr-1" />
+          <Button variant="outline" size="sm" className="bg-transparent text-xs">
+            <Camera className="mr-1 h-3 w-3" />
             Take Photo
           </Button>
         </div>
 
-        <div className="text-xs text-muted-foreground space-y-1">
-          <p>• Drag photos to reorder them</p>
-          <p>• Your main photo will be shown first</p>
-          <p>• Use high-quality, recent photos for best results</p>
+        <div className="space-y-1 text-xs text-muted-foreground">
+          <p>- Drag photos to reorder them</p>
+          <p>- Your main photo will be shown first</p>
+          <p>- Use high-quality, recent photos for best results</p>
         </div>
       </div>
     </div>

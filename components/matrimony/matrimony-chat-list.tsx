@@ -26,6 +26,7 @@ import { useSocket } from "@/hooks/useSocket"
 import type { Message } from "@/lib/types"
 import { RealtimeChannel } from "@supabase/supabase-js"
 import { formatPublicProfileName, getDisplayInitial } from "@/lib/displayName"
+import { getProfileFallbackImage } from "@/lib/profileImages"
 
 interface ChatPreview {
   matchId: string
@@ -217,7 +218,7 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
               matchId: match.id,
               matchType: 'matrimony' as const,
               name: match.matchedUserName,
-              avatar: match.matchedUserPhoto || "/placeholder-user.jpg",
+              avatar: match.matchedUserPhoto || getProfileFallbackImage(match.matchedUserName, match.matchedUserId),
               lastMessage: lastMessage?.content || "You matched! Start the conversation.",
               timestamp: lastMessage?.created_at || match.matchedAt,
               unreadCount,

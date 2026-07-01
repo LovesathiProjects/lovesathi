@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -19,6 +21,8 @@ import { colors, radius, shadow, spacing } from '../theme';
 type AuthView = 'landing' | 'login' | 'signup';
 
 const trustSignals = ['Verified profiles', 'Premium discovery', 'Family-ready context'];
+const logoImage = require('../../assets/lovesathi-logo.jpeg');
+const WHATSAPP_URL = 'https://wa.me/919175554708';
 
 export function AuthScreen() {
   const { signIn, signUp, isLoading, authError, clearAuthError } = useAuth();
@@ -47,10 +51,9 @@ export function AuthScreen() {
       <SafeAreaView style={styles.landingRoot}>
         <ScrollView contentContainerStyle={styles.landingContent}>
           <View style={styles.brandMark}>
-            <View style={styles.heart}>
-              <Text style={styles.heartText}>L</Text>
+            <View style={styles.logoFrame}>
+              <Image source={logoImage} resizeMode="contain" style={styles.logo} />
             </View>
-            <Text style={styles.brandTitle}>Lovesathi</Text>
             <Text style={styles.brandKicker}>Premium matrimony</Text>
           </View>
 
@@ -84,6 +87,15 @@ export function AuthScreen() {
               </Text>
             )}
           </View>
+
+          <Pressable
+            onPress={() => void Linking.openURL(WHATSAPP_URL)}
+            style={styles.whatsAppCard}
+          >
+            <Text style={styles.whatsAppKicker}>Chat on WhatsApp</Text>
+            <Text style={styles.whatsAppNumber}>+91 91755 54708</Text>
+            <Text style={styles.whatsAppCopy}>Tap to message LoveSathi support.</Text>
+          </Pressable>
         </ScrollView>
       </SafeAreaView>
     );
@@ -203,26 +215,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.lg,
   },
-  heart: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.rose,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
+  logoFrame: {
+    width: 260,
+    height: 120,
+    borderRadius: radius.sm,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    overflow: 'hidden',
+    padding: spacing.sm,
+    ...shadow,
   },
-  heartText: {
-    color: colors.white,
-    fontFamily: 'Georgia',
-    fontSize: 34,
-    fontWeight: '700',
-  },
-  brandTitle: {
-    color: colors.white,
-    fontFamily: 'Georgia',
-    fontSize: 42,
-    fontWeight: '700',
+  logo: {
+    width: '100%',
+    height: '100%',
   },
   brandKicker: {
     marginTop: spacing.xs,
@@ -325,6 +331,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     textAlign: 'center',
+  },
+  whatsAppCard: {
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    padding: spacing.lg,
+  },
+  whatsAppKicker: {
+    color: colors.champagne,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 2.4,
+    textTransform: 'uppercase',
+  },
+  whatsAppNumber: {
+    marginTop: spacing.xs,
+    color: colors.white,
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  whatsAppCopy: {
+    marginTop: spacing.xs,
+    color: colors.champagneSoft,
+    lineHeight: 21,
   },
   error: {
     marginTop: spacing.sm,

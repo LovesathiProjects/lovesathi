@@ -1,5 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ActivityScreen } from '../screens/ActivityScreen';
 import { ChatScreen } from '../screens/ChatScreen';
@@ -9,6 +9,7 @@ import { colors, radius, shadow, spacing } from '../theme';
 import type { MainTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
+const logoImage = require('../../assets/lovesathi-logo.jpeg');
 
 const tabLabels: Record<keyof MainTabParamList, string> = {
   Discover: 'Discover',
@@ -22,7 +23,7 @@ export function MainTabs() {
   return (
     <SafeAreaView style={styles.shell} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.brand}>Lovesathi</Text>
+        <Image source={logoImage} resizeMode="contain" style={styles.logo} />
         <Text style={styles.subtitle}>Premium Matrimony</Text>
       </View>
       <Tab.Navigator
@@ -61,11 +62,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     alignItems: 'center',
   },
-  brand: {
-    fontFamily: 'Georgia',
-    fontSize: 26,
-    color: colors.mocha,
-    fontWeight: '700',
+  logo: {
+    width: 180,
+    height: 54,
   },
   subtitle: {
     marginTop: 2,

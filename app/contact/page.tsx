@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowLeft, Heart, Mail, ShieldCheck } from "lucide-react"
+import { ArrowLeft, Mail, ShieldCheck } from "lucide-react"
+import { LovesathiLogo } from "@/components/brand/lovesathi-logo"
+import { WhatsAppCta } from "@/components/support/whatsapp-cta"
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -11,12 +13,9 @@ export default function ContactPage() {
   return (
     <main className="luxe-light-page min-h-screen px-4 py-6 sm:px-8 lg:px-12">
       <div className="mx-auto max-w-5xl">
-        <nav className="mb-10 flex items-center justify-between rounded-full border border-[#482b1a]/10 bg-[#ffffff]/76 px-4 py-3 shadow-sm backdrop-blur-xl">
+        <nav className="mb-10 flex items-center justify-between rounded-lg border border-[#482b1a]/10 bg-[#ffffff]/76 px-4 py-3 shadow-sm backdrop-blur-xl">
           <Link href="/" className="flex items-center gap-3 text-[#26364A] no-underline">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E83262] text-white">
-              <Heart className="h-5 w-5 fill-current" />
-            </span>
-            <span className="font-serif text-2xl font-bold tracking-[-0.05em]">Lovesathi</span>
+            <LovesathiLogo imageClassName="h-12" />
           </Link>
           <Link href="/" className="flex items-center gap-2 text-sm font-bold text-[#E83262]">
             <ArrowLeft className="h-4 w-4" />
@@ -24,7 +23,7 @@ export default function ContactPage() {
           </Link>
         </nav>
 
-        <section className="luxe-card rounded-[2.5rem] p-6 sm:p-10">
+        <section className="luxe-card rounded-lg p-6 sm:p-10">
           <p className="luxe-kicker mb-4 text-[#E83262]">Contact</p>
           <h1 className="font-serif text-5xl font-bold tracking-[-0.055em] text-[#26364A] sm:text-7xl">
             We are here when trust needs a human.
@@ -35,7 +34,7 @@ export default function ContactPage() {
         </section>
 
         <section className="mt-6 grid gap-4 md:grid-cols-2">
-          <article className="rounded-[1.8rem] border border-[#482b1a]/10 bg-[#ffffff]/78 p-6 shadow-sm backdrop-blur">
+          <article className="rounded-lg border border-[#482b1a]/10 bg-[#ffffff]/78 p-6 shadow-sm backdrop-blur">
             <Mail className="mb-5 h-8 w-8 text-[#E83262]" />
             <h2 className="font-serif text-3xl font-bold tracking-[-0.04em]">Support</h2>
             <p className="mt-3 leading-8 text-[#6F7C8B]">
@@ -46,7 +45,7 @@ export default function ContactPage() {
               .
             </p>
           </article>
-          <article className="rounded-[1.8rem] border border-[#482b1a]/10 bg-[#ffffff]/78 p-6 shadow-sm backdrop-blur">
+          <article className="rounded-lg border border-[#482b1a]/10 bg-[#ffffff]/78 p-6 shadow-sm backdrop-blur">
             <ShieldCheck className="mb-5 h-8 w-8 text-[#E83262]" />
             <h2 className="font-serif text-3xl font-bold tracking-[-0.04em]">Safety</h2>
             <p className="mt-3 leading-8 text-[#6F7C8B]">
@@ -58,6 +57,8 @@ export default function ContactPage() {
             </p>
           </article>
         </section>
+
+        <WhatsAppCta className="mt-6" />
       </div>
     </main>
   )

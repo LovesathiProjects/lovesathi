@@ -3,32 +3,31 @@ import {
   ArrowRight,
   BadgeCheck,
   Crown,
-  Heart,
-  Lock,
+  HeartHandshake,
   MessageCircle,
+  ScanLine,
   Search,
   ShieldCheck,
-  Sparkles,
-  Star,
-  Users,
 } from "lucide-react"
+import { LovesathiLogo } from "@/components/brand/lovesathi-logo"
+import { WhatsAppCta } from "@/components/support/whatsapp-cta"
 import { Button } from "@/components/ui/button"
 
 const pillars = [
   {
     icon: ShieldCheck,
     title: "Verified first",
-    description: "Identity, profile, and safety signals sit at the center of every serious introduction.",
+    description: "Identity, profile, and safety signals stay visible throughout every serious introduction.",
   },
   {
     icon: Search,
-    title: "Deep preferences",
-    description: "Browse with matrimony-ready filters for family, culture, lifestyle, education, career, and values.",
+    title: "Preference led",
+    description: "Family, culture, lifestyle, education, career, and values sit beside modern discovery controls.",
   },
   {
     icon: MessageCircle,
-    title: "Intentional conversations",
-    description: "Move from interest to respectful conversation with privacy and control built into the flow.",
+    title: "Respectful chat",
+    description: "Conversations stay privacy-aware, contact-safe, and ready for real intent instead of casual noise.",
   },
 ]
 
@@ -41,64 +40,128 @@ const details = [
   "Verification status",
 ]
 
+const profileRows = [
+  ["AS", "Verified match", "MBA, Bengaluru", "92%"],
+  ["RM", "Family ready", "Engineer, Pune", "88%"],
+  ["KP", "Premium profile", "Doctor, Mumbai", "95%"],
+]
+
+function ProfileToken({ initials }: { initials: string }) {
+  return (
+    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#E83262]/20 bg-[linear-gradient(145deg,#FFF4F7,#FFFFFF)] text-sm font-black text-[#E83262]">
+      {initials}
+    </span>
+  )
+}
+
+function ProductPreview() {
+  return (
+    <div className="rounded-lg border border-[#E83262]/18 bg-white p-4 shadow-[0_28px_90px_rgba(38,54,74,0.12)] sm:p-5">
+      <div className="rounded-lg border border-[#E6EAF1] bg-[#F8FAFD] p-4">
+        <div className="flex items-center justify-between gap-3 border-b border-[#E6EAF1] pb-4">
+          <LovesathiLogo imageClassName="h-12" />
+          <span className="rounded-full border border-[#E83262]/18 bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-[#E83262]">
+            Premium
+          </span>
+        </div>
+
+        <div className="grid gap-4 pt-4 lg:grid-cols-[1fr_9rem]">
+          <div className="space-y-3">
+            <div className="rounded-lg border border-[#E6EAF1] bg-white p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#E83262]">Discovery</p>
+                  <h2 className="mt-2 text-3xl font-black tracking-[-0.05em] text-[#26364A]">
+                    Find verified matches
+                  </h2>
+                </div>
+                <Crown className="h-6 w-6 text-[#C99A2E]" />
+              </div>
+              <div className="mt-4 space-y-2">
+                {profileRows.map(([initials, title, subtitle, score]) => (
+                  <div key={initials} className="flex items-center gap-3 rounded-md border border-[#EEF1F6] bg-[#FBFCFE] p-3">
+                    <ProfileToken initials={initials} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-black text-[#26364A]">{title}</p>
+                      <p className="truncate text-xs font-bold text-[#6F7C8B]">{subtitle}</p>
+                    </div>
+                    <span className="rounded-full bg-[#FFF4F7] px-2 py-1 text-xs font-black text-[#E83262]">{score}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              {["Discovery", "Activity", "Chat"].map((label) => (
+                <div key={label} className="rounded-lg border border-[#E6EAF1] bg-white p-3 text-center">
+                  <p className="text-sm font-black text-[#26364A]">{label}</p>
+                  <p className="mt-1 text-[0.66rem] font-bold uppercase tracking-[0.12em] text-[#6F7C8B]">Active</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-[#E6EAF1] bg-white p-3 text-center">
+            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-md border border-[#E6EAF1] bg-white p-1.5">
+              <img src="/whatsapp-chat-qr.svg" alt="LoveSathi WhatsApp QR" className="h-full w-full" />
+            </div>
+            <ScanLine className="mx-auto mt-3 h-4 w-4 text-[#E83262]" />
+            <p className="mt-2 text-xs font-black text-[#26364A]">Chat on WhatsApp</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Home() {
   return (
     <main className="luxe-light-page overflow-hidden">
       <section className="relative isolate min-h-screen px-4 py-6 sm:px-8 lg:px-12">
-        <div className="luxe-orb left-[-8rem] top-24 h-80 w-80 bg-[#E83262]/20" />
-        <div className="luxe-orb right-[-10rem] top-8 h-96 w-96 bg-[#E83262]/16" style={{ animationDelay: "1.4s" }} />
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 rounded-full border border-[#482b1a]/10 bg-[#ffffff]/72 px-3 py-3 shadow-[0_18px_60px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:px-4">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 rounded-lg border border-[#482b1a]/10 bg-white/86 px-3 py-3 shadow-[0_18px_60px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:px-4">
           <Link href="/" className="flex items-center gap-3 text-[#26364A] no-underline">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E83262] text-white shadow-lg">
-              <Heart className="h-5 w-5 fill-current" />
-            </span>
-            <span className="font-serif text-2xl font-bold tracking-[-0.04em]">Lovesathi</span>
+            <LovesathiLogo imageClassName="h-12 sm:h-14" />
           </Link>
           <nav className="hidden items-center gap-8 text-sm font-semibold text-[#6F7C8B] md:flex">
             <a href="#experience">Experience</a>
             <a href="#trust">Trust</a>
-            <a href="#membership">Membership</a>
+            <a href="#support">WhatsApp</a>
           </nav>
           <div className="flex shrink-0 items-center gap-2">
             <Button asChild variant="ghost" className="hidden text-[#26364A] sm:inline-flex">
               <Link href="/auth">Sign in</Link>
             </Button>
-            <Button asChild className="luxe-button hidden h-11 w-11 shrink-0 rounded-full p-0 sm:inline-flex sm:w-auto sm:px-5">
+            <Button asChild className="luxe-button hidden h-11 rounded-md px-5 sm:inline-flex">
               <Link href="/auth">
-                <span className="hidden sm:inline">Begin</span>
-                <span className="sr-only sm:hidden">Join</span>
-                <ArrowRight className="h-4 w-4 sm:ml-2" />
+                Begin
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </div>
         </div>
 
-        <div className="mx-auto grid w-full max-w-7xl min-w-0 items-center gap-12 overflow-hidden py-16 lg:grid-cols-[1.08fr_0.92fr] lg:py-24">
+        <div className="mx-auto grid w-full max-w-7xl min-w-0 items-center gap-12 overflow-hidden py-14 lg:grid-cols-[0.98fr_1.02fr] lg:py-20">
           <div className="w-full min-w-0 max-w-full space-y-8 overflow-hidden">
-            <div className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-full border border-[#E83262]/30 bg-[#ffffff]/70 px-4 py-2 text-[#6F7C8B] shadow-sm backdrop-blur">
-              <Sparkles className="h-4 w-4 text-[#E83262]" />
-              <span className="luxe-kicker max-w-full text-[0.62rem] leading-5 sm:text-[0.72rem]">Premium matrimony for serious families</span>
-            </div>
             <div className="space-y-5">
               <h1 className="luxe-title max-w-[22rem] text-4xl font-bold text-[#26364A] sm:max-w-4xl sm:text-7xl lg:text-8xl">
-                <span className="block">A richer way</span>
-                <span className="block">to find your</span>
-                <span className="block">life partner.</span>
+                <span className="block">LoveSathi</span>
+                <span className="block">premium matrimony</span>
+                <span className="block">with real intent.</span>
               </h1>
               <p className="max-w-[22rem] text-base leading-7 text-[#6F7C8B] sm:max-w-2xl sm:text-xl sm:leading-8">
-                Lovesathi is being shaped as a refined matrimony experience where trust, privacy,
-                family context, and meaningful compatibility come before noise.
+                A refined app for verified, family-aware life-partner discovery, built around privacy,
+                compatibility, and respectful conversations.
               </p>
             </div>
             <div className="flex max-w-[22rem] flex-col gap-3 sm:max-w-none sm:flex-row">
-              <Button asChild size="lg" className="luxe-button w-full rounded-full px-7 sm:w-auto">
+              <Button asChild size="lg" className="luxe-button w-full rounded-md px-7 sm:w-auto">
                 <Link href="/auth">
                   Create your profile
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="h-5 w-5" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="luxe-outline-button w-full rounded-full px-7 sm:w-auto">
-                <Link href="#experience">Explore the experience</Link>
+              <Button asChild size="lg" variant="outline" className="luxe-outline-button w-full rounded-md px-7 sm:w-auto">
+                <a href="#support">Scan WhatsApp QR</a>
               </Button>
             </div>
             <div className="grid max-w-[22rem] grid-cols-1 gap-3 pt-3 sm:max-w-xl sm:grid-cols-3">
@@ -107,78 +170,33 @@ export default function Home() {
                 ["Private", "by design"],
                 ["Family", "ready"],
               ].map(([value, label]) => (
-                <div key={value} className="rounded-3xl border border-[#482b1a]/10 bg-[#ffffff]/62 p-4 shadow-sm backdrop-blur">
-                  <p className="font-serif text-2xl font-bold text-[#E83262]">{value}</p>
+                <div key={value} className="rounded-lg border border-[#482b1a]/10 bg-white/78 p-4 shadow-sm backdrop-blur">
+                  <p className="text-2xl font-black text-[#E83262]">{value}</p>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6F7C8B]">{label}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-lg">
-            <div className="absolute -left-8 top-12 h-24 w-24 rounded-full border border-[#E83262]/30 bg-[#ffffff]/72 shadow-xl backdrop-blur" />
-            <div className="absolute -right-4 bottom-20 h-32 w-32 rounded-full bg-[#E83262]/12 blur-sm" />
-            <div className="luxe-card relative rounded-[2.5rem] p-4">
-              <div className="overflow-hidden rounded-[2rem] bg-[#26364A] text-[#ffffff] shadow-2xl">
-                <div className="relative h-[34rem]">
-                  <img
-                    src="/professional-woman-smiling.png"
-                    alt="Premium matrimony profile preview"
-                    className="h-full w-full object-cover opacity-85"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#26364A] via-[#26364A]/24 to-transparent" />
-                  <div className="absolute left-5 right-5 top-5 flex items-center justify-between">
-                    <span className="rounded-full border border-white/20 bg-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] backdrop-blur">
-                      Curated match
-                    </span>
-                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#ffffff] text-[#E83262] shadow-xl">
-                      <Crown className="h-5 w-5" />
-                    </span>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 space-y-5 p-6">
-                    <div>
-                      <div className="mb-3 flex flex-wrap gap-2">
-                        <span className="rounded-full bg-[#ffffff]/16 px-3 py-1 text-xs font-semibold backdrop-blur">Verified</span>
-                        <span className="rounded-full bg-[#ffffff]/16 px-3 py-1 text-xs font-semibold backdrop-blur">Family ready</span>
-                      </div>
-                      <h2 className="font-serif text-5xl font-bold tracking-[-0.05em] text-[#ffffff]">Compatibility with grace</h2>
-                      <p className="mt-3 text-sm leading-6 text-[#E83262]">
-                        Profiles that feel calm, premium, and complete, with the context matrimony actually needs.
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="rounded-2xl border border-white/14 bg-white/10 p-4 backdrop-blur">
-                        <Star className="mb-2 h-4 w-4 text-[#E83262]" />
-                        <p className="text-sm font-semibold">Shortlist</p>
-                      </div>
-                      <div className="rounded-2xl border border-white/14 bg-white/10 p-4 backdrop-blur">
-                        <Lock className="mb-2 h-4 w-4 text-[#E83262]" />
-                        <p className="text-sm font-semibold">Privacy</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ProductPreview />
         </div>
       </section>
 
-      <section id="experience" className="px-4 py-20 sm:px-8 lg:px-12">
+      <section id="experience" className="px-4 py-16 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-7xl">
           <div className="mb-10 max-w-3xl">
-            <p className="luxe-kicker mb-3 text-[#E83262]">The Lovesathi standard</p>
-            <h2 className="font-serif text-5xl font-bold tracking-[-0.05em] text-[#26364A] sm:text-6xl">
+            <p className="luxe-kicker mb-3 text-[#E83262]">The LoveSathi standard</p>
+            <h2 className="text-5xl font-black tracking-[-0.05em] text-[#26364A] sm:text-6xl">
               Designed for intention, not endless scrolling.
             </h2>
           </div>
           <div className="grid gap-5 md:grid-cols-3">
             {pillars.map((pillar) => (
-              <div key={pillar.title} className="luxe-card rounded-[2rem] p-7">
-                <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E83262] text-white shadow-lg">
+              <div key={pillar.title} className="luxe-card rounded-lg p-7">
+                <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-md bg-[#E83262] text-white shadow-lg">
                   <pillar.icon className="h-6 w-6" />
                 </div>
-                <h3 className="mb-3 font-serif text-3xl font-bold tracking-[-0.04em]">{pillar.title}</h3>
+                <h3 className="mb-3 text-3xl font-black tracking-[-0.04em]">{pillar.title}</h3>
                 <p className="leading-7 text-[#6F7C8B]">{pillar.description}</p>
               </div>
             ))}
@@ -186,18 +204,18 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="trust" className="px-4 py-20 sm:px-8 lg:px-12">
-        <div className="mx-auto grid max-w-7xl gap-8 rounded-[2.5rem] bg-[#26364A] p-6 text-[#ffffff] shadow-2xl sm:p-10 lg:grid-cols-[0.9fr_1.1fr] lg:p-14">
+      <section id="trust" className="px-4 py-16 sm:px-8 lg:px-12">
+        <div className="mx-auto grid max-w-7xl gap-8 rounded-lg bg-[#26364A] p-6 text-white shadow-2xl sm:p-10 lg:grid-cols-[0.9fr_1.1fr] lg:p-14">
           <div>
-            <p className="luxe-kicker mb-4 text-[#E83262]">Trust and privacy</p>
-            <h2 className="font-serif text-5xl font-bold tracking-[-0.05em] text-[#ffffff]">
+            <p className="luxe-kicker mb-4 text-[#F7C9D5]">Trust and privacy</p>
+            <h2 className="text-5xl font-black tracking-[-0.05em] text-white">
               Matrimony needs dignity at every step.
             </h2>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {details.map((detail) => (
-              <div key={detail} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/8 p-4 backdrop-blur">
-                <BadgeCheck className="h-5 w-5 text-[#E83262]" />
+              <div key={detail} className="flex items-center gap-3 rounded-md border border-white/10 bg-white/8 p-4 backdrop-blur">
+                <BadgeCheck className="h-5 w-5 text-[#F7C9D5]" />
                 <span className="font-semibold">{detail}</span>
               </div>
             ))}
@@ -205,31 +223,51 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="membership" className="px-4 py-20 sm:px-8 lg:px-12">
+      <section id="support" className="px-4 py-16 sm:px-8 lg:px-12">
+        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.88fr_1.12fr] lg:items-center">
+          <div>
+            <p className="luxe-kicker mb-4 text-[#E83262]">Direct support</p>
+            <h2 className="text-5xl font-black tracking-[-0.05em] text-[#26364A] sm:text-6xl">
+              Scan, chat, and get help from LoveSathi.
+            </h2>
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-[#6F7C8B]">
+              Use WhatsApp for profile help, verification questions, safety reports, or launch support.
+            </p>
+          </div>
+          <WhatsAppCta />
+        </div>
+      </section>
+
+      <section id="membership" className="px-4 py-16 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-4xl text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#E83262] text-white shadow-xl">
-            <Users className="h-7 w-7" />
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-md bg-[#E83262] text-white shadow-xl">
+            <HeartHandshake className="h-7 w-7" />
           </div>
           <p className="luxe-kicker mb-4 text-[#E83262]">Ready when you are</p>
-          <h2 className="font-serif text-5xl font-bold tracking-[-0.05em] text-[#26364A] sm:text-6xl">
+          <h2 className="text-5xl font-black tracking-[-0.05em] text-[#26364A] sm:text-6xl">
             Start with a profile that feels worthy of your future.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-[#6F7C8B]">
-            Create your account, complete verification, add your family and partner preferences,
-            then discover matches with a calmer, premium experience.
+            Create your account, complete verification when ready, add family and partner preferences,
+            then discover matches through a calmer premium experience.
           </p>
-          <Button asChild size="lg" className="luxe-button mt-8 rounded-full px-8">
-            <Link href="/auth">
-              Join Lovesathi
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </Button>
+          <div className="mx-auto mt-8 flex max-w-md flex-col gap-3 sm:flex-row sm:justify-center">
+            <Button asChild size="lg" className="luxe-button rounded-md px-8">
+              <Link href="/auth">
+                Join LoveSathi
+                <ArrowRight className="h-5 w-5" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="rounded-md">
+              <Link href="/contact">Contact support</Link>
+            </Button>
+          </div>
         </div>
       </section>
 
       <footer className="border-t border-[#482b1a]/10 px-4 py-8 sm:px-8 lg:px-12">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 text-sm text-[#6F7C8B] sm:flex-row sm:items-center sm:justify-between">
-          <p>(c) {new Date().getFullYear()} Lovesathi. Premium matrimony for serious connections.</p>
+          <p>(c) {new Date().getFullYear()} LoveSathi. Premium matrimony for serious connections.</p>
           <div className="flex flex-wrap gap-5">
             <Link href="/terms">Terms</Link>
             <Link href="/privacy">Privacy</Link>

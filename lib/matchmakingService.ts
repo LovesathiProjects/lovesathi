@@ -6,6 +6,7 @@ import {
   normalizeLimitError,
   type UsageLimitStatus,
 } from "@/lib/planLimits"
+import { getProfileFallbackImage } from "@/lib/profileImages"
 
 export interface LikeAction {
   success: boolean
@@ -294,7 +295,7 @@ export async function getMatrimonyLikesReceived(userId: string): Promise<Activit
           id: like.id,
           type: like.action === "super_like" ? "super_like" as const : "like" as const,
           name: profile.name || "Unknown",
-          avatar: (profile.photos as string[])?.[0] || "/placeholder-user.jpg",
+          avatar: (profile.photos as string[])?.[0] || getProfileFallbackImage(profile.name, like.liker_id),
           age: profile.age || undefined,
           timestamp: like.created_at,
           occurredAt: like.created_at,
@@ -360,7 +361,7 @@ export async function getMatrimonyProfileViewers(userId: string): Promise<Activi
           id: view.id,
           type: "view" as const,
           name: profile.name || "Unknown",
-          avatar: (profile.photos as string[])?.[0] || "/placeholder-user.jpg",
+          avatar: (profile.photos as string[])?.[0] || getProfileFallbackImage(profile.name, view.viewer_id),
           age: profile.age || undefined,
           timestamp: view.viewed_at,
           occurredAt: view.viewed_at,
@@ -405,7 +406,7 @@ export async function getMatrimonyActivity(userId: string): Promise<ActivityItem
       id: match.id,
       type: "match",
       name: match.matchedUserName,
-      avatar: match.matchedUserPhoto || "/placeholder-user.jpg",
+      avatar: match.matchedUserPhoto || getProfileFallbackImage(match.matchedUserName, match.matchedUserId),
       timestamp: formatTimestamp(match.matchedAt),
       occurredAt: match.matchedAt,
       isNew: new Date(match.matchedAt).getTime() > oneDayAgo,
