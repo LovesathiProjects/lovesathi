@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { VerificationScreen } from "@/components/onboarding/verification-screen"
+import { hasConfirmedEmailOrOAuth } from "@/lib/authUser"
 import { supabase } from "@/lib/supabaseClient"
 
 export default function VerificationPage() {
@@ -21,7 +22,7 @@ export default function VerificationPage() {
           return
         }
 
-        if (!user.email_confirmed_at) {
+        if (!hasConfirmedEmailOrOAuth(user)) {
           router.push("/auth/verify-email")
           return
         }

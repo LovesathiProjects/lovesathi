@@ -26,6 +26,17 @@ This file keeps the launch checklist inside the repo so the app, admin portal, D
 - `https://www.lovesathi.com/auth/callback`
 - `http://localhost:3000/auth/callback`
 
+## Google sign-in configuration
+
+- Supabase Auth provider: Google enabled.
+- Google Cloud OAuth Authorized JavaScript origins:
+- `https://lovesathi.com`
+- `https://www.lovesathi.com`
+- `http://localhost:3000` for local development only.
+- Google Cloud OAuth Authorized redirect URI:
+- `https://bysvtucftcclrdyfihsx.supabase.co/auth/v1/callback`
+- Supabase Auth Redirect URLs must include every app callback origin used by the sign-in button.
+
 ## Launch checks
 
 - `npm run typecheck`
@@ -35,7 +46,7 @@ This file keeps the launch checklist inside the repo so the app, admin portal, D
 - Confirm local `.env.local` and `supabase/.temp/project-ref` point to the Lovesathi Supabase project, not the old Affinity project.
 - Confirm `/favicon.ico`, `/manifest.json`, `/robots.txt`, and `/sitemap.xml` return `200`.
 - Confirm `/test-storage` and `/test-face-scanner` return `404`.
-- Confirm `/auth/callback` never redirects to localhost in production.
+- Confirm `/auth/callback` preserves the current trusted app origin after OAuth so the auth cookie is not lost between `www` and apex domains.
 - Confirm admin users outside `ADMIN_EMAILS` receive `403`.
 - Confirm `https://admin.lovesathi.com` opens the admin portal after Render custom domain SSL is active.
 - Confirm admin verification/report status actions work only for users inside `ADMIN_EMAILS`.

@@ -3,7 +3,7 @@
 import type React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ArrowLeft, Crown, Eye, EyeOff, ShieldCheck, Sparkles, Users } from "lucide-react"
 import { LovesathiLogo } from "@/components/brand/lovesathi-logo"
 import { WhatsAppCta } from "@/components/support/whatsapp-cta"
@@ -20,6 +20,7 @@ import {
   isEmailNotConfirmedError,
   normalizeEmail,
 } from "@/lib/authRedirects"
+import { hasConfirmedEmailOrOAuth } from "@/lib/authUser"
 import { getPhoneValidationMessage, normalizePhoneNumber } from "@/lib/phone"
 import { supabase } from "@/lib/supabaseClient"
 
@@ -123,6 +124,13 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
   })
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("error") === "oauth") {
+      setError("Google sign-in could not be completed. Please try again or continue with email.")
+    }
+  }, [])
+
   const resetForm = () => {
     setError(null)
     setShowPassword(false)
@@ -168,7 +176,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
         data: { user },
       } = await supabase.auth.getUser()
 
-      if (user && !user.email_confirmed_at) {
+      if (user && !hasConfirmedEmailOrOAuth(user)) {
         window.sessionStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, normalizeEmail(user.email || ""))
         if (user.user_metadata?.phone || user.phone) {
           window.sessionStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, normalizePhoneNumber(String(user.user_metadata?.phone || user.phone || "")))
@@ -299,6 +307,12 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                 Continue with Email
               </Button>
             </div>
+
+            {error && (
+              <div className="mt-4 rounded-2xl border border-[#E83262]/20 bg-[#E83262]/10 p-3">
+                <p className="text-center text-sm font-bold text-[#E83262]">{error}</p>
+              </div>
+            )}
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm text-[#6F7C8B]">
               <span>Already have an account?</span>

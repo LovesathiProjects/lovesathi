@@ -14,6 +14,7 @@ import {
   getEmailVerificationRedirectUrl,
   normalizeEmail,
 } from "@/lib/authRedirects"
+import { hasConfirmedEmailOrOAuth } from "@/lib/authUser"
 import {
   getAuthUserPhone,
   getPhoneValidationMessage,
@@ -120,7 +121,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
     if (user.email) rememberEmail(user.email)
     rememberPhone(getAuthUserPhone(user) || rememberedPhone)
 
-    if (!user.email_confirmed_at) {
+    if (!hasConfirmedEmailOrOAuth(user)) {
       setStage("email")
       return
     }

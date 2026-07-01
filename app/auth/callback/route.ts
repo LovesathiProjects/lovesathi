@@ -2,17 +2,76 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { hasOAuthIdentity } from '@/lib/authUser'
 
 export const dynamic = 'force-dynamic'
 
 const SUPABASE_EMAIL_OTP_TYPES = new Set(['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'])
+const PRIMARY_SITE_ORIGIN = 'https://lovesathi.com'
+const WWW_SITE_ORIGIN = 'https://www.lovesathi.com'
+
+function normalizeOrigin(value: string | null | undefined) {
+  if (!value) return null
+
+  try {
+    return new URL(value).origin
+  } catch {
+    return null
+  }
+}
+
+function addWwwPair(origins: Set<string>, origin: string) {
+  try {
+    const url = new URL(origin)
+    if (url.protocol !== 'https:') return
+
+    if (url.hostname.startsWith('www.')) {
+      origins.add(`${url.protocol}//${url.hostname.slice(4)}`)
+      return
+    }
+
+    origins.add(`${url.protocol}//www.${url.hostname}`)
+  } catch {
+    // Ignore malformed optional deployment origins.
+  }
+}
+
+function getAllowedRedirectOrigins() {
+  const origins = new Set<string>([PRIMARY_SITE_ORIGIN, WWW_SITE_ORIGIN])
+  const configuredSiteOrigin = normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL)
+  const renderOrigin = normalizeOrigin(process.env.RENDER_EXTERNAL_URL)
+
+  if (configuredSiteOrigin) {
+    origins.add(configuredSiteOrigin)
+    addWwwPair(origins, configuredSiteOrigin)
+  }
+
+  if (renderOrigin) {
+    origins.add(renderOrigin)
+  }
+
+  return origins
+}
+
+function isLocalOrigin(origin: string) {
+  try {
+    const { hostname } = new URL(origin)
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]'
+  } catch {
+    return false
+  }
+}
 
 function getRedirectOrigin(requestOrigin: string) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
-  if (siteUrl?.startsWith('http')) {
-    return siteUrl.replace(/\/$/, '')
+  const normalizedRequestOrigin = normalizeOrigin(requestOrigin)
+  if (
+    normalizedRequestOrigin &&
+    (getAllowedRedirectOrigins().has(normalizedRequestOrigin) || isLocalOrigin(normalizedRequestOrigin))
+  ) {
+    return normalizedRequestOrigin
   }
-  return requestOrigin
+
+  return normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL) || PRIMARY_SITE_ORIGIN
 }
 
 function getSafeNextPath(requestUrl: URL) {
@@ -40,6 +99,12 @@ function getVerifyEmailUrl(redirectOrigin: string, reason: 'expired' | 'unconfir
   return verifyEmailUrl
 }
 
+function getAuthErrorUrl(redirectOrigin: string) {
+  const authUrl = new URL('/auth', redirectOrigin)
+  authUrl.searchParams.set('error', 'oauth')
+  return authUrl
+}
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const redirectOrigin = getRedirectOrigin(requestUrl.origin)
@@ -49,8 +114,12 @@ export async function GET(request: NextRequest) {
   const safeNextPath = getSafeNextPath(requestUrl)
   const authError = requestUrl.searchParams.get('error') || requestUrl.searchParams.get('error_code')
 
-  if (authError) {
+  if (authError && otpType && SUPABASE_EMAIL_OTP_TYPES.has(otpType)) {
     return NextResponse.redirect(getVerifyEmailUrl(redirectOrigin))
+  }
+
+  if (authError) {
+    return NextResponse.redirect(getAuthErrorUrl(redirectOrigin))
   }
 
   if (tokenHash && otpType && SUPABASE_EMAIL_OTP_TYPES.has(otpType)) {
@@ -91,10 +160,6 @@ export async function GET(request: NextRequest) {
       // supplies an identity record. Treat OAuth-backed accounts as email
       // verified for the purposes of onboarding flow to avoid forcing a
       // redundant email OTP step.
-      const hasOAuthIdentity = user.identities?.some(
-        (identity) => identity.provider && identity.provider !== 'email',
-      ) ?? false
-
       if (safeNextPath) {
         return NextResponse.redirect(new URL(safeNextPath, redirectOrigin))
       }
@@ -102,7 +167,7 @@ export async function GET(request: NextRequest) {
       // Check if email is verified. If not verified but the account has an
       // OAuth identity (Google/Apple), continue; otherwise redirect to
       // verify-email so users can confirm via OTP.
-      if (!user.email_confirmed_at && !hasOAuthIdentity) {
+      if (!user.email_confirmed_at && !hasOAuthIdentity(user)) {
         return NextResponse.redirect(new URL('/auth/verify-email', redirectOrigin))
       }
 

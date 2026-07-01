@@ -30,9 +30,11 @@ export default function GoogleLoginButton({ variant = "signup" }: GoogleLoginBut
 
       if (error) throw error
 
-      if (data?.url) {
-        window.location.href = data.url
+      if (!data?.url) {
+        throw new Error("Google sign-in URL was not returned. Check Supabase Google provider settings.")
       }
+
+      window.location.assign(data.url)
     } catch (err) {
       console.error("Google Sign-in Error:", err)
       toast.error(err instanceof Error ? err.message : "Google sign-in could not be started")
