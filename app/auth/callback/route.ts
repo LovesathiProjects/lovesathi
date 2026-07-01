@@ -53,7 +53,9 @@ function getAllowedRedirectOrigins() {
   return origins
 }
 
-function isLocalOrigin(origin: string) {
+function isLocalDevelopmentOrigin(origin: string) {
+  if (process.env.NODE_ENV === 'production') return false
+
   try {
     const { hostname } = new URL(origin)
     return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]'
@@ -66,7 +68,7 @@ function getRedirectOrigin(requestOrigin: string) {
   const normalizedRequestOrigin = normalizeOrigin(requestOrigin)
   if (
     normalizedRequestOrigin &&
-    (getAllowedRedirectOrigins().has(normalizedRequestOrigin) || isLocalOrigin(normalizedRequestOrigin))
+    (getAllowedRedirectOrigins().has(normalizedRequestOrigin) || isLocalDevelopmentOrigin(normalizedRequestOrigin))
   ) {
     return normalizedRequestOrigin
   }

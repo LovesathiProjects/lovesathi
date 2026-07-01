@@ -25,6 +25,7 @@ This file keeps the launch checklist inside the repo so the app, admin portal, D
 - `https://lovesathi.com/auth/callback`
 - `https://www.lovesathi.com/auth/callback`
 - `http://localhost:3000/auth/callback`
+- Remove `http://localhost:10000` from Supabase Auth Site URL and Redirect URLs. Port `10000` is Render's internal service port, not a browser callback URL.
 
 ## Google sign-in configuration
 
@@ -33,6 +34,7 @@ This file keeps the launch checklist inside the repo so the app, admin portal, D
 - `https://lovesathi.com`
 - `https://www.lovesathi.com`
 - `http://localhost:3000` for local development only.
+- Do not add `http://localhost:10000`.
 - Google Cloud OAuth Authorized redirect URI:
 - `https://bysvtucftcclrdyfihsx.supabase.co/auth/v1/callback`
 - Supabase Auth Redirect URLs must include every app callback origin used by the sign-in button.
