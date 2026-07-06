@@ -21,6 +21,7 @@ export default function GoogleLoginButton({ variant = "signup" }: GoogleLoginBut
         provider: "google",
         options: {
           redirectTo: getOAuthRedirectUrl(),
+          scopes: "openid email profile https://www.googleapis.com/auth/userinfo.email",
           queryParams: {
             prompt: "select_account",
           },
