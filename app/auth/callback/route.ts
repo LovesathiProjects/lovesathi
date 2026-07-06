@@ -191,11 +191,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (authError) {
+      const providerErrorCode = requestUrl.searchParams.get('error_code')
       console.error('OAuth provider returned an error:', {
         error: authError,
-        error_code: requestUrl.searchParams.get('error_code'),
+        error_code: providerErrorCode,
       })
-      return redirectWithCookies(getAuthErrorUrl(redirectOrigin, 'provider', authError))
+      return redirectWithCookies(getAuthErrorUrl(redirectOrigin, 'provider', providerErrorCode || authError))
     }
 
     if (tokenHash && otpType && SUPABASE_EMAIL_OTP_TYPES.has(otpType)) {
