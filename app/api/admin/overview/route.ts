@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/adminAuth"
+import { LOVESATHI_EVENT_SELECT, mapLovesathiEvent, type LovesathiEventRow } from "@/lib/events"
 import { getSubscriptionPlan } from "@/lib/subscriptionPlans"
 import { isEntitlementPaymentDue, isEntitlementPremium } from "@/lib/subscriptionLifecycle"
 
@@ -746,6 +747,8 @@ export async function GET(request: Request) {
       safeCount(supabase, "Active premium", "user_entitlements", (query) =>
         query.in("status", ["active", "trialing", "past_due"]),
       ),
+      safeCount(supabase, "Published events", "lovesathi_events", (query) => query.eq("status", "published")),
+      safeCount(supabase, "Draft events", "lovesathi_events", (query) => query.eq("status", "draft")),
       safeCount(supabase, "New profiles 7d", "matrimony_profile_full", (query) => query.gte("created_at", sevenDaysAgo)),
       safeCount(supabase, "Admin actions 7d", "admin_audit_logs", (query) => query.gte("created_at", sevenDaysAgo)),
     ]),
@@ -755,7 +758,7 @@ export async function GET(request: Request) {
 
   const authUserIds = unique(authUserRows.items.map((item) => item.id))
 
-  const [profileRows, verificationRows, reportRows, auditRows, userProfileRows, entitlementRows] = await Promise.all([
+  const [profileRows, verificationRows, reportRows, auditRows, eventRows, userProfileRows, entitlementRows] = await Promise.all([
     loadAdminProfileRows(supabase),
     safeRows<any>(() =>
       supabase
@@ -781,6 +784,13 @@ export async function GET(request: Request) {
         .select("id,actor_email,action,resource,record_id,previous_status,next_status,notes,created_at")
         .order("created_at", { ascending: false })
         .limit(10),
+    ),
+    safeRows<any>(() =>
+      supabase
+        .from("lovesathi_events")
+        .select(LOVESATHI_EVENT_SELECT)
+        .order("updated_at", { ascending: false })
+        .limit(24),
     ),
     loadAuthUserProfileRows(supabase, authUserIds),
     loadEntitlementRows(supabase, authUserIds),
@@ -881,6 +891,8 @@ export async function GET(request: Request) {
   const openReports = getMetricValue(allMetrics, "Open reports")
   const unconfirmedUsers = getMetricValue(allMetrics, "Unconfirmed users")
   const activePremium = getMetricValue(allMetrics, "Active premium")
+  const publishedEvents = getMetricValue(allMetrics, "Published events")
+  const draftEvents = getMetricValue(allMetrics, "Draft events")
   const adminActions7d = getMetricValue(allMetrics, "Admin actions 7d")
   const risk: AdminRiskItem[] = [
     {
@@ -929,6 +941,17 @@ export async function GET(request: Request) {
           : "No active premium entitlements are visible in the loaded user set.",
     },
     {
+      label: "Event calendar",
+      value: publishedEvents,
+      severity: publishedEvents > 0 ? "clear" : draftEvents > 0 ? "watch" : "watch",
+      detail:
+        publishedEvents > 0
+          ? "Public events are live on the events page."
+          : draftEvents > 0
+            ? "Event drafts are waiting to be published."
+            : "Create the first Lovesathi event before launch campaigns begin.",
+    },
+    {
       label: "Admin activity",
       value: adminActions7d,
       severity: adminActions7d > 0 ? "clear" : "watch",
@@ -960,6 +983,11 @@ export async function GET(request: Request) {
       } satisfies QueueResult<AdminProfileItem>,
       verifications,
       reports,
+      events: {
+        status: eventRows.status,
+        detail: eventRows.detail,
+        items: (eventRows.items as LovesathiEventRow[]).map(mapLovesathiEvent),
+      },
       audit: {
         status: auditRows.status,
         detail: auditRows.detail,
@@ -1019,6 +1047,14 @@ export async function GET(request: Request) {
           auditRows.status === "ok"
             ? "Admin decisions are being written to admin_audit_logs."
             : "Run the latest Supabase migrations so admin_audit_logs can record review decisions.",
+      },
+      {
+        label: "Event publishing",
+        status: eventRows.status,
+        detail:
+          eventRows.status === "ok"
+            ? "Admins can draft, publish, feature, and archive public Lovesathi events."
+            : eventRows.detail || "Run the latest migration so event publishing can load.",
       },
       {
         label: "Supabase email",

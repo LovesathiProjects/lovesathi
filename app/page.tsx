@@ -2,6 +2,7 @@ import Link from "next/link"
 import {
   ArrowRight,
   BadgeCheck,
+  CalendarDays,
   Crown,
   HeartHandshake,
   MessageCircle,
@@ -124,6 +125,7 @@ export default function Home() {
           </Link>
           <nav className="hidden items-center gap-8 text-sm font-semibold text-[#6F7C8B] md:flex">
             <a href="#experience">Experience</a>
+            <Link href="/events">Events</Link>
             <a href="#trust">Trust</a>
             <a href="#support">WhatsApp</a>
           </nav>
@@ -223,6 +225,39 @@ export default function Home() {
         </div>
       </section>
 
+      <section id="events" className="px-4 py-16 sm:px-8 lg:px-12">
+        <div className="mx-auto grid max-w-7xl gap-6 rounded-lg border border-[#E83262]/18 bg-white/82 p-6 shadow-[0_24px_90px_rgba(38,54,74,0.10)] backdrop-blur-xl lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:p-10">
+          <div>
+            <p className="luxe-kicker mb-4 text-[#E83262]">Member events</p>
+            <h2 className="font-serif text-5xl font-bold tracking-[-0.05em] text-[#26364A] sm:text-6xl">
+              Curated sessions for serious introductions.
+            </h2>
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-[#6F7C8B]">
+              Explore LoveSathi meetups, workshops, and concierge support sessions as they are published.
+            </p>
+            <Button asChild size="lg" className="luxe-button mt-7 rounded-md px-7">
+              <Link href="/events">
+                View events
+                <ArrowRight className="h-5 w-5" />
+              </Link>
+            </Button>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[
+              ["Meetups", "Family-aware introductions"],
+              ["Workshops", "Profile and readiness help"],
+              ["Support", "WhatsApp concierge access"],
+            ].map(([title, body]) => (
+              <div key={title} className="rounded-lg border border-[#482b1a]/10 bg-[#F8FAFD] p-5">
+                <CalendarDays className="mb-5 h-6 w-6 text-[#E83262]" />
+                <h3 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#26364A]">{title}</h3>
+                <p className="mt-3 text-sm font-semibold leading-6 text-[#6F7C8B]">{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section id="support" className="px-4 py-16 sm:px-8 lg:px-12">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.88fr_1.12fr] lg:items-center">
           <div>
@@ -272,6 +307,7 @@ export default function Home() {
             <Link href="/terms">Terms</Link>
             <Link href="/privacy">Privacy</Link>
             <Link href="/safety">Safety</Link>
+            <Link href="/events">Events</Link>
             <Link href="/child-safety-standards">Child safety standards</Link>
             <Link href="/account-deletion">Account deletion</Link>
             <Link href="/contact">Contact</Link>

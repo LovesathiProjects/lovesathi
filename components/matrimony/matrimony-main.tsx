@@ -2181,6 +2181,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             else if (id === "partner_preferences") setCurrentScreen("partner-preferences")
             else if (id === "astrology") setCurrentScreen("astrology")
             else if (id === "phonebook") setCurrentScreen("phonebook")
+            else if (id === "events") router.push("/events")
             else if (id === "help_safety") setCurrentScreen("safety-centre")
             else if (id === "help_support") setCurrentScreen("help-support")
             else if (id === "success_stories") setCurrentScreen("success-stories")

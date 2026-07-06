@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { MessageCircle, User, Bell } from "lucide-react"
+import { Bell, HeartHandshake, MessageCircle, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUnreadMessageCount } from "@/hooks/useUnreadMessageCount"
 import { useUnreadActivityCount } from "@/hooks/useUnreadActivityCount"
@@ -15,6 +15,7 @@ interface TabItem {
 }
 
 const allTabs: TabItem[] = [
+  { id: "discover", label: "Discover", icon: HeartHandshake },
   { id: "messages", label: "Messages", icon: MessageCircle },
   { id: "activity", label: "Activity", icon: Bell },
   { id: "profile", label: "Profile", icon: User },

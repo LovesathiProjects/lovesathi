@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import {
   ArrowLeft,
   BookOpen,
+  CalendarDays,
   ChevronRight,
   Edit3,
   HeartHandshake,
@@ -37,6 +38,7 @@ const drawerItems: DrawerItem[] = [
   { id: "partner_preferences", label: "Partner Preferences", icon: HeartHandshake },
   { id: "astrology", label: "Astrology Services", icon: Sparkles },
   { id: "phonebook", label: "Phonebook", icon: BookOpen },
+  { id: "events", label: "Events", icon: CalendarDays },
   { id: "app_settings", label: "Account & Settings", icon: Settings },
   { id: "help_safety", label: "Safety Centre", icon: ShieldCheck },
   { id: "help_support", label: "Help & Support", icon: HelpCircle },

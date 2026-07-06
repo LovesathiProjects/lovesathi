@@ -5,18 +5,18 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl text-sm font-bold transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-[4px] focus-visible:ring-[#E83262]/28",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl text-sm font-bold transition-all duration-200 ease-out active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-[4px] focus-visible:ring-[#E83262]/28",
   {
     variants: {
       variant: {
         default:
-          'bg-[#E83262] text-white border-2 border-[#E83262] hover:bg-[#C3264E] hover:border-[#C3264E] shadow-[0_2px_8px_rgba(194,165,116,0.2)] hover:shadow-[0_4px_12px_rgba(194,165,116,0.3)] active:shadow-[0_1px_4px_rgba(194,165,116,0.2)]',
+          'bg-[#E83262] text-white border-2 border-[#E83262] hover:-translate-y-0.5 hover:bg-[#C3264E] hover:border-[#C3264E] shadow-[0_14px_30px_rgba(232,50,98,0.22)] hover:shadow-[0_20px_44px_rgba(232,50,98,0.30)] active:shadow-[0_8px_18px_rgba(232,50,98,0.18)]',
         destructive:
-          'bg-[#E83262] text-white border-2 border-[#E83262] hover:bg-[#C3264E] shadow-[0_2px_8px_rgba(194,165,116,0.2)] hover:shadow-[0_4px_12px_rgba(194,165,116,0.3)]',
+          'bg-[#E83262] text-white border-2 border-[#E83262] hover:-translate-y-0.5 hover:bg-[#C3264E] shadow-[0_14px_30px_rgba(232,50,98,0.22)] hover:shadow-[0_20px_44px_rgba(232,50,98,0.30)]',
         outline:
-          'border border-[#482b1a]/18 bg-white/88 text-[#26364A] shadow-[0_10px_24px_rgba(24,17,13,0.05)] hover:border-[#E83262] hover:bg-white hover:text-[#E83262]',
+          'border border-[#482b1a]/18 bg-white/88 text-[#26364A] shadow-[0_10px_24px_rgba(24,17,13,0.05)] hover:-translate-y-0.5 hover:border-[#E83262] hover:bg-white hover:text-[#E83262]',
         secondary:
-          'border border-[#E83262]/28 bg-white/88 text-[#26364A] shadow-[0_10px_24px_rgba(24,17,13,0.05)] hover:bg-white hover:text-[#E83262]',
+          'border border-[#E83262]/28 bg-white/88 text-[#26364A] shadow-[0_10px_24px_rgba(24,17,13,0.05)] hover:-translate-y-0.5 hover:bg-white hover:text-[#E83262]',
         ghost:
           'text-[#26364A] hover:bg-[#E83262]/8 hover:text-[#E83262]',
         link: 'text-[#E83262] underline-offset-4 hover:underline hover:text-[#C3264E] font-semibold',

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { writeAdminAuditLog } from "@/lib/adminAudit"
 import { requireAdmin } from "@/lib/adminAuth"
 import {
   getPlanActiveUntil,
@@ -38,45 +39,6 @@ function getSiteOrigin(request: Request) {
   }
 
   return new URL(request.url).origin
-}
-
-async function writeAdminAuditLog(
-  supabase: any,
-  {
-    actorId,
-    actorEmail,
-    resource,
-    recordId,
-    previousStatus,
-    nextStatus,
-    notes,
-    metadata,
-  }: {
-    actorId: string
-    actorEmail: string | null
-    resource: "verification" | "report" | "profile" | "user" | "entitlement" | "auth_email"
-    recordId: string
-    previousStatus: string | null
-    nextStatus: string
-    notes: string | null
-    metadata?: Record<string, unknown>
-  },
-) {
-  const { error } = await supabase.from("admin_audit_logs").insert({
-    actor_id: actorId,
-    actor_email: actorEmail,
-    action: `${resource}.${nextStatus}`,
-    resource,
-    record_id: recordId,
-    previous_status: previousStatus,
-    next_status: nextStatus,
-    notes,
-    metadata: metadata || {},
-  })
-
-  if (error) {
-    console.warn("[admin/actions] Unable to write admin audit log:", error.message)
-  }
 }
 
 export async function POST(request: Request) {

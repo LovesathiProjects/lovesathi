@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   BadgeCheck,
   Ban,
+  CalendarDays,
   CheckCircle2,
   Clock3,
   Crown,
@@ -17,11 +18,17 @@ import {
   Lock,
   LogOut,
   Mail,
+  MapPin,
+  Megaphone,
   MessageCircle,
+  PenLine,
+  PlusCircle,
   RefreshCw,
+  Rocket,
   Search,
   ShieldCheck,
   Sparkles,
+  Ticket,
   UserCheck,
   UserRoundCheck,
   Users,
@@ -33,6 +40,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { supabase } from "@/lib/supabaseClient"
 import { SUBSCRIPTION_PLANS } from "@/lib/subscriptionPlans"
 
@@ -140,6 +148,49 @@ type AdminReportItem = {
   reviewedAt: string | null
 }
 
+type AdminEventStatus = "draft" | "published" | "archived"
+type AdminEventType = "meetup" | "webinar" | "workshop" | "consultation" | "community"
+
+type AdminEventItem = {
+  id: string
+  title: string
+  slug: string
+  summary: string
+  description: string
+  eventType: AdminEventType
+  city: string
+  venue: string | null
+  startsAt: string
+  endsAt: string | null
+  timezone: string
+  rsvpUrl: string | null
+  whatsappUrl: string | null
+  capacity: number | null
+  isFeatured: boolean
+  status: AdminEventStatus
+  publishedAt: string | null
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+type AdminEventDraft = {
+  id: string | null
+  title: string
+  slug: string
+  summary: string
+  description: string
+  eventType: AdminEventType
+  city: string
+  venue: string
+  startsAt: string
+  endsAt: string
+  rsvpUrl: string
+  whatsappUrl: string
+  capacity: string
+  status: AdminEventStatus
+  isFeatured: boolean
+}
+
 type AdminAuditItem = {
   id: string
   actorEmail: string | null
@@ -205,16 +256,39 @@ type AdminOverview = {
     profiles: QueueResult<AdminProfileItem>
     verifications: QueueResult<AdminVerificationItem>
     reports: QueueResult<AdminReportItem>
+    events: QueueResult<AdminEventItem>
     audit: QueueResult<AdminAuditItem>
   }
   authEmailTelemetry: AuthEmailTelemetry
   readiness: ReadinessItem[]
 }
 
-type AdminQueueFilter = "all" | "attention" | "profiles" | "reports" | "premium" | "heritage"
+type AdminQueueFilter = "all" | "attention" | "profiles" | "reports" | "events" | "premium" | "heritage"
 
 const metricIcons = [Users, BadgeCheck, Clock3, ShieldCheck, FileWarning, Crown, MessageCircle, Database, Sparkles]
-const riskIcons = [FileWarning, UserRoundCheck, ShieldCheck, Mail, Crown, Activity]
+const riskIcons = [FileWarning, UserRoundCheck, ShieldCheck, Mail, Crown, CalendarDays, Activity]
+const eventTypes: AdminEventType[] = ["meetup", "webinar", "workshop", "consultation", "community"]
+const eventStatuses: AdminEventStatus[] = ["draft", "published", "archived"]
+
+function createEmptyEventDraft(): AdminEventDraft {
+  return {
+    id: null,
+    title: "",
+    slug: "",
+    summary: "",
+    description: "",
+    eventType: "meetup",
+    city: "",
+    venue: "",
+    startsAt: "",
+    endsAt: "",
+    rsvpUrl: "",
+    whatsappUrl: "",
+    capacity: "",
+    status: "draft",
+    isFeatured: false,
+  }
+}
 
 function matchesSearch(parts: Array<string | number | null | undefined>, query: string) {
   if (!query) return true
@@ -234,6 +308,34 @@ function statusLabel(value: string) {
     .split(/[_\.]/)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ")
+}
+
+function toDateTimeLocal(value?: string | null) {
+  if (!value) return ""
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ""
+  const timezoneOffset = date.getTimezoneOffset() * 60_000
+  return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16)
+}
+
+function eventToDraft(event: AdminEventItem): AdminEventDraft {
+  return {
+    id: event.id,
+    title: event.title,
+    slug: event.slug,
+    summary: event.summary,
+    description: event.description,
+    eventType: event.eventType,
+    city: event.city,
+    venue: event.venue || "",
+    startsAt: toDateTimeLocal(event.startsAt),
+    endsAt: toDateTimeLocal(event.endsAt),
+    rsvpUrl: event.rsvpUrl || "",
+    whatsappUrl: event.whatsappUrl || "",
+    capacity: event.capacity ? String(event.capacity) : "",
+    status: event.status,
+    isFeatured: event.isFeatured,
+  }
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -299,6 +401,10 @@ function reportNeedsAttention(item: AdminReportItem) {
   return ["pending", "reviewed"].includes(normaliseStatus(item.status))
 }
 
+function eventNeedsAttention(item: AdminEventItem) {
+  return item.status === "draft" || (!item.rsvpUrl && !item.whatsappUrl)
+}
+
 function userMatchesLane(item: AdminUserItem, lane: AdminQueueFilter) {
   if (lane === "attention") return userNeedsAttention(item)
   if (lane === "premium") return Boolean(item.premium.isPremium || item.premium.status)
@@ -321,10 +427,17 @@ function reportMatchesLane(item: AdminReportItem, lane: AdminQueueFilter) {
   return true
 }
 
+function eventMatchesLane(item: AdminEventItem, lane: AdminQueueFilter) {
+  if (lane === "attention") return eventNeedsAttention(item)
+  if (lane === "events") return true
+  return true
+}
+
 function auditMatchesLane(item: AdminAuditItem, lane: AdminQueueFilter) {
   const resource = normaliseStatus(item.resource)
   if (lane === "profiles") return resource === "profile"
   if (lane === "reports") return resource === "report"
+  if (lane === "events") return resource === "event"
   if (lane === "premium" || lane === "heritage") return resource === "entitlement"
   return true
 }
@@ -341,6 +454,8 @@ export function AdminPortal() {
   const [overview, setOverview] = useState<AdminOverview | null>(null)
   const [adminSearch, setAdminSearch] = useState("")
   const [queueFilter, setQueueFilter] = useState<AdminQueueFilter>("all")
+  const [eventDraft, setEventDraft] = useState<AdminEventDraft>(() => createEmptyEventDraft())
+  const [eventSaving, setEventSaving] = useState(false)
 
   const generatedAt = overview?.generatedAt ? formatDate(overview.generatedAt) : null
   const refreshing = loading && Boolean(sessionToken)
@@ -356,6 +471,7 @@ export function AdminPortal() {
   const profileReviewActionsReady = overview?.queues.profiles.status === "ok"
   const verificationItems = overview?.queues.verifications.items || []
   const reportItems = overview?.queues.reports.items || []
+  const eventItems = overview?.queues.events.items || []
   const auditItems = overview?.queues.audit.items || []
   const searchedUsers = userItems.filter((item) =>
     matchesSearch(
@@ -400,6 +516,12 @@ export function AdminPortal() {
       searchTerm,
     ),
   )
+  const searchedEvents = eventItems.filter((item) =>
+    matchesSearch(
+      [item.title, item.slug, item.summary, item.description, item.eventType, item.city, item.venue, item.status],
+      searchTerm,
+    ),
+  )
   const searchedAudit = auditItems.filter((item) =>
     matchesSearch(
       [item.actorEmail, item.action, item.resource, item.recordId, item.previousStatus, item.nextStatus, item.notes],
@@ -410,15 +532,18 @@ export function AdminPortal() {
   const filteredProfiles = searchedProfiles.filter((profile) => profileMatchesLane(profile, queueFilter))
   const filteredVerifications = searchedVerifications.filter((item) => verificationMatchesLane(item, queueFilter))
   const filteredReports = searchedReports.filter((item) => reportMatchesLane(item, queueFilter))
+  const filteredEvents = searchedEvents.filter((item) => eventMatchesLane(item, queueFilter))
   const filteredAudit = searchedAudit.filter((item) => auditMatchesLane(item, queueFilter))
   const attentionUsers = userItems.filter(userNeedsAttention)
   const attentionProfiles = profileItems.filter(profileNeedsAttention)
   const attentionVerifications = verificationItems.filter(verificationNeedsAttention)
   const attentionReports = reportItems.filter(reportNeedsAttention)
+  const attentionEvents = eventItems.filter(eventNeedsAttention)
   const premiumUsers = userItems.filter((item) => item.premium.isPremium || item.premium.status)
   const heritageUsers = searchedUsers.filter((item) => item.premium.planId === "heritage")
   const paymentDueUsers = userItems.filter((item) => item.premium.paymentDue)
-  const totalQueueItems = userItems.length + profileItems.length + verificationItems.length + reportItems.length
+  const totalQueueItems = userItems.length + profileItems.length + verificationItems.length + reportItems.length + eventItems.length
+  const publishedEventCount = eventItems.filter((item) => item.status === "published").length
   const queueFilters: Array<{
     id: AdminQueueFilter
     label: string
@@ -434,8 +559,8 @@ export function AdminPortal() {
     {
       id: "attention",
       label: "Needs attention",
-      count: attentionUsers.length + attentionProfiles.length + attentionVerifications.length + attentionReports.length,
-      detail: "Review, safety, email, and renewal risks",
+      count: attentionUsers.length + attentionProfiles.length + attentionVerifications.length + attentionReports.length + attentionEvents.length,
+      detail: "Review, safety, email, events, and renewal risks",
     },
     {
       id: "profiles",
@@ -448,6 +573,12 @@ export function AdminPortal() {
       label: "Safety desk",
       count: attentionReports.length,
       detail: "Open member reports",
+    },
+    {
+      id: "events",
+      label: "Events",
+      count: eventItems.length,
+      detail: "Public calendar drafts and live listings",
     },
     {
       id: "premium",
@@ -632,6 +763,56 @@ export function AdminPortal() {
     }
   }
 
+  function updateEventDraft<K extends keyof AdminEventDraft>(key: K, value: AdminEventDraft[K]) {
+    setEventDraft((previous) => ({ ...previous, [key]: value }))
+  }
+
+  async function saveEventDraft(draft: AdminEventDraft, statusOverride?: AdminEventStatus) {
+    if (!sessionToken) return
+    setEventSaving(true)
+    setError(null)
+    try {
+      const response = await fetch("/api/admin/events", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...draft,
+          status: statusOverride || draft.status,
+          startsAt: draft.startsAt ? new Date(draft.startsAt).toISOString() : "",
+          endsAt: draft.endsAt ? new Date(draft.endsAt).toISOString() : "",
+          capacity: draft.capacity ? Number(draft.capacity) : null,
+        }),
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to save event")
+      }
+      setEventDraft(createEmptyEventDraft())
+      setRefreshIndex((value) => value + 1)
+    } catch (err: any) {
+      setError(err.message || "Unable to save event")
+    } finally {
+      setEventSaving(false)
+    }
+  }
+
+  async function saveEvent(statusOverride?: AdminEventStatus) {
+    await saveEventDraft(eventDraft, statusOverride)
+  }
+
+  async function handleEventSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    await saveEvent()
+  }
+
+  function handleEditEvent(item: AdminEventItem) {
+    setEventDraft(eventToDraft(item))
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
   if (loading && !sessionToken) {
     return (
       <main className="luxe-page flex min-h-screen items-center justify-center px-4">
@@ -729,7 +910,7 @@ export function AdminPortal() {
             <Input
               value={adminSearch}
               onChange={(event) => setAdminSearch(event.target.value)}
-              placeholder="Search users, profiles, reports..."
+              placeholder="Search users, profiles, events..."
               className="h-10 rounded-full border-[#482b1a]/15 bg-white pl-10 text-sm"
             />
           </div>
@@ -837,7 +1018,7 @@ export function AdminPortal() {
               mixed together.
             </p>
           </div>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
             {queueFilters.map((filter) => {
               const isActive = queueFilter === filter.id
               return (
@@ -877,6 +1058,360 @@ export function AdminPortal() {
               queued until the dedicated subscription phase.
             </div>
           )}
+        </section>
+
+        <section>
+          <Card className="luxe-card overflow-hidden rounded-[2rem] border-[#E83262]/24">
+            <CardHeader className="border-b border-[#482b1a]/10 bg-[#26364A] text-white">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="luxe-kicker mb-2 text-[#F7C9D5]">public calendar</p>
+                  <CardTitle className="flex items-center gap-3 font-serif text-3xl tracking-[-0.04em] text-white sm:text-4xl">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E83262] text-white">
+                      <Megaphone className="h-5 w-5" />
+                    </span>
+                    Events publishing desk
+                  </CardTitle>
+                  <p className="mt-3 max-w-3xl text-sm leading-6 text-[#eadcc8]">
+                    Draft, publish, feature, and archive Lovesathi events for the public events page.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge status={overview?.queues.events.status || "pending"} />
+                  <Badge variant="outline" className="rounded-full border-[#E83262]/45 bg-[#E83262]/15 px-4 py-2 text-[#F7C9D5]">
+                    {publishedEventCount.toLocaleString("en-IN")} live
+                  </Badge>
+                  <Button asChild variant="outline" className="rounded-full border-white/20 bg-white/10 text-white hover:bg-white/15">
+                    <Link href="/events" target="_blank">
+                      View events
+                      <ArrowUpRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="grid gap-5 p-5 sm:p-6 xl:grid-cols-[0.9fr_1.1fr]">
+              <form onSubmit={handleEventSubmit} className="space-y-4 rounded-[1.6rem] border border-[#482b1a]/10 bg-white/72 p-4 shadow-[0_18px_48px_rgba(24,17,13,0.05)]">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#E83262]">
+                      {eventDraft.id ? "Edit event" : "New event"}
+                    </p>
+                    <h3 className="mt-1 font-serif text-3xl font-bold tracking-[-0.04em] text-[#26364A]">
+                      {eventDraft.title || "Publish a premium event"}
+                    </h3>
+                  </div>
+                  {eventDraft.id && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="rounded-full border-[#482b1a]/15 bg-white"
+                      onClick={() => setEventDraft(createEmptyEventDraft())}
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      New
+                    </Button>
+                  )}
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="event-title">Title</Label>
+                    <Input
+                      id="event-title"
+                      value={eventDraft.title}
+                      onChange={(event) => updateEventDraft("title", event.target.value)}
+                      placeholder="LoveSathi premium meet-up"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="event-slug">Slug</Label>
+                    <Input
+                      id="event-slug"
+                      value={eventDraft.slug}
+                      onChange={(event) => updateEventDraft("slug", event.target.value)}
+                      placeholder="auto-generated if blank"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="event-summary">Summary</Label>
+                  <Textarea
+                    id="event-summary"
+                    value={eventDraft.summary}
+                    onChange={(event) => updateEventDraft("summary", event.target.value)}
+                    placeholder="A refined short description for the event card."
+                    className="min-h-24"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="event-description">Details</Label>
+                  <Textarea
+                    id="event-description"
+                    value={eventDraft.description}
+                    onChange={(event) => updateEventDraft("description", event.target.value)}
+                    placeholder="Agenda, who should attend, and what members can expect."
+                    className="min-h-28"
+                  />
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="event-type">Type</Label>
+                    <select
+                      id="event-type"
+                      value={eventDraft.eventType}
+                      onChange={(event) => updateEventDraft("eventType", event.target.value as AdminEventType)}
+                      className="h-12 w-full rounded-2xl border border-[#482b1a]/15 bg-white/95 px-4 text-sm font-semibold text-[#26364A] outline-none focus:border-[#E83262]"
+                    >
+                      {eventTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {statusLabel(type)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="event-status">Status</Label>
+                    <select
+                      id="event-status"
+                      value={eventDraft.status}
+                      onChange={(event) => updateEventDraft("status", event.target.value as AdminEventStatus)}
+                      className="h-12 w-full rounded-2xl border border-[#482b1a]/15 bg-white/95 px-4 text-sm font-semibold text-[#26364A] outline-none focus:border-[#E83262]"
+                    >
+                      {eventStatuses.map((status) => (
+                        <option key={status} value={status}>
+                          {statusLabel(status)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="event-city">City</Label>
+                    <Input
+                      id="event-city"
+                      value={eventDraft.city}
+                      onChange={(event) => updateEventDraft("city", event.target.value)}
+                      placeholder="Pune"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="event-venue">Venue</Label>
+                    <Input
+                      id="event-venue"
+                      value={eventDraft.venue}
+                      onChange={(event) => updateEventDraft("venue", event.target.value)}
+                      placeholder="Private lounge or online"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="event-starts-at">Starts</Label>
+                    <Input
+                      id="event-starts-at"
+                      type="datetime-local"
+                      value={eventDraft.startsAt}
+                      onChange={(event) => updateEventDraft("startsAt", event.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="event-ends-at">Ends</Label>
+                    <Input
+                      id="event-ends-at"
+                      type="datetime-local"
+                      value={eventDraft.endsAt}
+                      onChange={(event) => updateEventDraft("endsAt", event.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="event-rsvp">RSVP URL</Label>
+                    <Input
+                      id="event-rsvp"
+                      value={eventDraft.rsvpUrl}
+                      onChange={(event) => updateEventDraft("rsvpUrl", event.target.value)}
+                      placeholder="https://..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="event-whatsapp">WhatsApp URL</Label>
+                    <Input
+                      id="event-whatsapp"
+                      value={eventDraft.whatsappUrl}
+                      onChange={(event) => updateEventDraft("whatsappUrl", event.target.value)}
+                      placeholder="Defaults to LoveSathi WhatsApp"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                  <div className="space-y-2">
+                    <Label htmlFor="event-capacity">Capacity</Label>
+                    <Input
+                      id="event-capacity"
+                      type="number"
+                      min="1"
+                      value={eventDraft.capacity}
+                      onChange={(event) => updateEventDraft("capacity", event.target.value)}
+                      placeholder="Optional"
+                    />
+                  </div>
+                  <label className="flex h-12 items-center gap-3 rounded-2xl border border-[#482b1a]/10 bg-white/80 px-4 text-sm font-bold text-[#26364A]">
+                    <input
+                      type="checkbox"
+                      checked={eventDraft.isFeatured}
+                      onChange={(event) => updateEventDraft("isFeatured", event.target.checked)}
+                      className="h-4 w-4 accent-[#E83262]"
+                    />
+                    Feature event
+                  </label>
+                </div>
+
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button type="submit" className="luxe-button rounded-full" disabled={eventSaving}>
+                    <CheckCircle2 className="h-4 w-4" />
+                    {eventSaving ? "Saving..." : "Save event"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-full border-[#E83262]/30 bg-[#E83262]/10 text-[#E83262]"
+                    disabled={eventSaving}
+                    onClick={() => void saveEvent("published")}
+                  >
+                    <Rocket className="h-4 w-4" />
+                    Publish
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-full border-[#482b1a]/15 bg-white"
+                    onClick={() => setEventDraft(createEmptyEventDraft())}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </form>
+
+              <div className="space-y-3">
+                {overview?.queues.events.detail && (
+                  <p className="rounded-2xl border border-[#E83262]/20 bg-[#E83262]/10 p-3 text-sm font-semibold text-[#8a641f]">
+                    {overview.queues.events.detail}
+                  </p>
+                )}
+                {filteredEvents.length ? (
+                  filteredEvents.map((item) => (
+                    <article key={item.id} className="rounded-[1.5rem] border border-[#482b1a]/10 bg-white/70 p-4 shadow-[0_16px_42px_rgba(24,17,13,0.05)]">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <StatusBadge status={item.status} />
+                            {item.isFeatured && (
+                              <Badge variant="outline" className="border-[#E83262]/28 bg-[#E83262]/10 text-[#E83262]">
+                                Featured
+                              </Badge>
+                            )}
+                            <Badge variant="outline" className="border-[#482b1a]/10 bg-white text-[#6F7C8B]">
+                              {statusLabel(item.eventType)}
+                            </Badge>
+                          </div>
+                          <h3 className="mt-3 font-serif text-3xl font-bold tracking-[-0.05em] text-[#26364A]">
+                            {item.title}
+                          </h3>
+                          <p className="mt-1 text-xs font-bold uppercase tracking-[0.14em] text-[#9d7a55]">
+                            /events#{item.slug}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Button size="sm" variant="outline" className="rounded-full border-[#482b1a]/15 bg-white" onClick={() => handleEditEvent(item)}>
+                            <PenLine className="h-4 w-4" />
+                            Edit
+                          </Button>
+                          {item.status !== "published" ? (
+                            <Button
+                              size="sm"
+                              className="rounded-full bg-[#1b6b43] text-white hover:bg-[#155333]"
+                              disabled={eventSaving}
+                              onClick={() => void saveEventDraft(eventToDraft(item), "published")}
+                            >
+                              Publish
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="rounded-full border-[#482b1a]/15 bg-white"
+                              disabled={eventSaving}
+                              onClick={() => void saveEventDraft(eventToDraft(item), "draft")}
+                            >
+                              Unpublish
+                            </Button>
+                          )}
+                          {item.status !== "archived" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="rounded-full border-[#E83262]/20 bg-[#E83262]/10 text-[#E83262]"
+                              disabled={eventSaving}
+                              onClick={() => void saveEventDraft(eventToDraft(item), "archived")}
+                            >
+                              Archive
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid gap-2 text-sm font-semibold text-[#6F7C8B] sm:grid-cols-2">
+                        <span className="flex items-center gap-2">
+                          <CalendarDays className="h-4 w-4 text-[#E83262]" />
+                          {formatDate(item.startsAt)}
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-[#E83262]" />
+                          {[item.city, item.venue].filter(Boolean).join(" - ")}
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <Ticket className="h-4 w-4 text-[#E83262]" />
+                          {item.capacity ? `${item.capacity.toLocaleString("en-IN")} seats` : "Capacity open"}
+                        </span>
+                        <span>Updated {formatDate(item.updatedAt)}</span>
+                      </div>
+                      <p className="mt-3 text-sm leading-6 text-[#6F7C8B]">{item.summary}</p>
+                      {(item.rsvpUrl || item.whatsappUrl) && (
+                        <div className="mt-4 flex flex-wrap gap-2 text-sm font-bold">
+                          {item.rsvpUrl && (
+                            <a href={item.rsvpUrl} target="_blank" rel="noreferrer" className="rounded-full border border-[#E83262]/20 bg-[#E83262]/10 px-3 py-2 text-[#E83262] no-underline">
+                              RSVP link
+                            </a>
+                          )}
+                          {item.whatsappUrl && (
+                            <a href={item.whatsappUrl} target="_blank" rel="noreferrer" className="rounded-full border border-[#482b1a]/10 bg-white px-3 py-2 text-[#26364A] no-underline">
+                              WhatsApp
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </article>
+                  ))
+                ) : (
+                  <EmptyState copy={searchTerm ? "No events match this admin search." : "No events have been created yet."} />
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </section>
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
@@ -1598,7 +2133,7 @@ export function AdminPortal() {
                 <div className="flex gap-3 rounded-2xl border border-white/10 bg-white/8 p-4">
                   <Activity className="mt-1 h-5 w-5 shrink-0 text-[#E83262]" />
                   <p>
-                    This portal can update user access, profile review, verification, and report statuses only after Supabase login and ADMIN_EMAILS allowlist checks.
+                    This portal can update user access, profile review, verification, reports, and events only after Supabase login and ADMIN_EMAILS allowlist checks.
                   </p>
                 </div>
                 <div className="flex gap-3 rounded-2xl border border-white/10 bg-white/8 p-4">
