@@ -1,4 +1,4 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -9,6 +9,12 @@ export const dynamic = 'force-dynamic'
 const SUPABASE_EMAIL_OTP_TYPES = new Set(['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'])
 const PRIMARY_SITE_ORIGIN = 'https://lovesathi.com'
 const WWW_SITE_ORIGIN = 'https://www.lovesathi.com'
+
+type PendingCookie = {
+  name: string
+  value: string
+  options: CookieOptions
+}
 
 function normalizeOrigin(value: string | null | undefined) {
   if (!value) return null
@@ -107,6 +113,48 @@ function getAuthErrorUrl(redirectOrigin: string) {
   return authUrl
 }
 
+function redirectWithCookies(url: URL, pendingCookies: PendingCookie[] = []) {
+  const response = NextResponse.redirect(url)
+
+  for (const { name, value, options } of pendingCookies) {
+    response.cookies.set(name, value, options as any)
+  }
+
+  return response
+}
+
+async function createCallbackSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Missing Supabase URL or anon key for auth callback')
+  }
+
+  const cookieStore = await cookies()
+  const pendingCookies: PendingCookie[] = []
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll().map(({ name, value }) => ({ name, value }))
+      },
+      setAll(cookiesToSet) {
+        pendingCookies.push(...cookiesToSet)
+
+        for (const { name, value, options } of cookiesToSet) {
+          try {
+            cookieStore.set(name, value, options as any)
+          } catch {
+            // The redirect response below still receives the cookies.
+          }
+        }
+      },
+    },
+  })
+
+  return { pendingCookies, supabase }
+}
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const redirectOrigin = getRedirectOrigin(requestUrl.origin)
@@ -116,82 +164,87 @@ export async function GET(request: NextRequest) {
   const safeNextPath = getSafeNextPath(requestUrl)
   const authError = requestUrl.searchParams.get('error') || requestUrl.searchParams.get('error_code')
 
-  if (authError && otpType && SUPABASE_EMAIL_OTP_TYPES.has(otpType)) {
-    return NextResponse.redirect(getVerifyEmailUrl(redirectOrigin))
-  }
-
-  if (authError) {
-    return NextResponse.redirect(getAuthErrorUrl(redirectOrigin))
-  }
-
-  if (tokenHash && otpType && SUPABASE_EMAIL_OTP_TYPES.has(otpType)) {
-    const supabase = createRouteHandlerClient({ cookies })
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      token_hash: tokenHash,
-      type: otpType === 'email' ? 'signup' : (otpType as any),
-    })
-
-    if (verifyError) {
-      return NextResponse.redirect(getVerifyEmailUrl(redirectOrigin))
+  try {
+    if (authError && otpType && SUPABASE_EMAIL_OTP_TYPES.has(otpType)) {
+      return redirectWithCookies(getVerifyEmailUrl(redirectOrigin))
     }
 
-    if (otpType === 'recovery') {
-      return NextResponse.redirect(new URL('/auth/reset-password', redirectOrigin))
+    if (authError) {
+      return redirectWithCookies(getAuthErrorUrl(redirectOrigin))
     }
 
-    if (safeNextPath) {
-      return NextResponse.redirect(new URL(safeNextPath, redirectOrigin))
-    }
+    if (tokenHash && otpType && SUPABASE_EMAIL_OTP_TYPES.has(otpType)) {
+      const { pendingCookies, supabase } = await createCallbackSupabaseClient()
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: otpType === 'email' ? 'signup' : (otpType as any),
+      })
 
-    return NextResponse.redirect(new URL('/onboarding/verification', redirectOrigin))
-  }
+      if (verifyError) {
+        return redirectWithCookies(getVerifyEmailUrl(redirectOrigin), pendingCookies)
+      }
 
-  if (code) {
-    const supabase = createRouteHandlerClient({ cookies })
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+      if (otpType === 'recovery') {
+        return redirectWithCookies(new URL('/auth/reset-password', redirectOrigin), pendingCookies)
+      }
 
-    if (exchangeError) {
-      return NextResponse.redirect(getVerifyEmailUrl(redirectOrigin))
-    }
-    
-    // Get the current user
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (user) {
-      // If user came from an OAuth provider (Google/Apple), Supabase often
-      // supplies an identity record. Treat OAuth-backed accounts as email
-      // verified for the purposes of onboarding flow to avoid forcing a
-      // redundant email OTP step.
       if (safeNextPath) {
-        return NextResponse.redirect(new URL(safeNextPath, redirectOrigin))
+        return redirectWithCookies(new URL(safeNextPath, redirectOrigin), pendingCookies)
       }
 
-      // Check if email is verified. If not verified but the account has an
-      // OAuth identity (Google/Apple), continue; otherwise redirect to
-      // verify-email so users can confirm via OTP.
-      if (!user.email_confirmed_at && !hasOAuthIdentity(user)) {
-        return NextResponse.redirect(new URL('/auth/verify-email', redirectOrigin))
-      }
-
-      // Check user profile for onboarding status
-      const { data: profile, error } = await supabase
-        .from('user_profiles')
-        .select('onboarding_matrimony')
-        .eq('user_id', user.id)
-        .single()
-
-      if (error || !profile) {
-        return NextResponse.redirect(new URL('/onboarding/verification', redirectOrigin))
-      }
-
-      if (profile.onboarding_matrimony !== true) {
-        return NextResponse.redirect(new URL('/onboarding/verification', redirectOrigin))
-      }
-
-      return NextResponse.redirect(new URL('/matrimony/discovery', redirectOrigin))
+      return redirectWithCookies(new URL('/onboarding/verification', redirectOrigin), pendingCookies)
     }
+
+    if (code) {
+      const { pendingCookies, supabase } = await createCallbackSupabaseClient()
+      const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+
+      if (exchangeError) {
+        const failureUrl = safeNextPath ? getVerifyEmailUrl(redirectOrigin) : getAuthErrorUrl(redirectOrigin)
+        return redirectWithCookies(failureUrl, pendingCookies)
+      }
+
+      const user = data.user || (await supabase.auth.getUser()).data.user
+
+      if (user) {
+        // If user came from an OAuth provider (Google/Apple), Supabase often
+        // supplies an identity record. Treat OAuth-backed accounts as email
+        // verified for the purposes of onboarding flow to avoid forcing a
+        // redundant email OTP step.
+        if (safeNextPath) {
+          return redirectWithCookies(new URL(safeNextPath, redirectOrigin), pendingCookies)
+        }
+
+        // Check if email is verified. If not verified but the account has an
+        // OAuth identity (Google/Apple), continue; otherwise redirect to
+        // verify-email so users can confirm via OTP.
+        if (!user.email_confirmed_at && !hasOAuthIdentity(user)) {
+          return redirectWithCookies(new URL('/auth/verify-email', redirectOrigin), pendingCookies)
+        }
+
+        // Check user profile for onboarding status
+        const { data: profile, error } = await supabase
+          .from('user_profiles')
+          .select('onboarding_matrimony')
+          .eq('user_id', user.id)
+          .single()
+
+        if (error || !profile) {
+          return redirectWithCookies(new URL('/onboarding/verification', redirectOrigin), pendingCookies)
+        }
+
+        if (profile.onboarding_matrimony !== true) {
+          return redirectWithCookies(new URL('/onboarding/verification', redirectOrigin), pendingCookies)
+        }
+
+        return redirectWithCookies(new URL('/matrimony/discovery', redirectOrigin), pendingCookies)
+      }
+    }
+  } catch (error) {
+    console.error('Auth callback failed:', error)
+    return redirectWithCookies(getAuthErrorUrl(redirectOrigin))
   }
 
   // URL to redirect to after sign in process completes
-  return NextResponse.redirect(new URL('/auth/verify-email', redirectOrigin))
+  return redirectWithCookies(new URL('/auth/verify-email', redirectOrigin))
 }
