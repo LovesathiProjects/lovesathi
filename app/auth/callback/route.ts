@@ -16,6 +16,14 @@ type PendingCookie = {
   options: CookieOptions
 }
 
+type OAuthErrorReason =
+  | 'provider'
+  | 'exchange'
+  | 'verify'
+  | 'callback_exception'
+  | 'missing_user'
+  | 'no_callback_params'
+
 function normalizeOrigin(value: string | null | undefined) {
   if (!value) return null
 
@@ -107,9 +115,22 @@ function getVerifyEmailUrl(redirectOrigin: string, reason: 'expired' | 'unconfir
   return verifyEmailUrl
 }
 
-function getAuthErrorUrl(redirectOrigin: string) {
+function sanitizeErrorCode(value: string | null | undefined) {
+  if (!value) return null
+  const sanitized = value.toLowerCase().replace(/[^a-z0-9_-]/g, '_').slice(0, 64)
+  return sanitized || null
+}
+
+function getAuthErrorUrl(redirectOrigin: string, reason: OAuthErrorReason, code?: string | null) {
   const authUrl = new URL('/auth', redirectOrigin)
   authUrl.searchParams.set('error', 'oauth')
+  authUrl.searchParams.set('reason', reason)
+
+  const safeCode = sanitizeErrorCode(code)
+  if (safeCode) {
+    authUrl.searchParams.set('code', safeCode)
+  }
+
   return authUrl
 }
 
@@ -170,7 +191,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (authError) {
-      return redirectWithCookies(getAuthErrorUrl(redirectOrigin))
+      console.error('OAuth provider returned an error:', {
+        error: authError,
+        error_code: requestUrl.searchParams.get('error_code'),
+      })
+      return redirectWithCookies(getAuthErrorUrl(redirectOrigin, 'provider', authError))
     }
 
     if (tokenHash && otpType && SUPABASE_EMAIL_OTP_TYPES.has(otpType)) {
@@ -181,6 +206,11 @@ export async function GET(request: NextRequest) {
       })
 
       if (verifyError) {
+        console.error('Auth callback email OTP verification failed:', {
+          code: verifyError.code,
+          message: verifyError.message,
+          status: verifyError.status,
+        })
         return redirectWithCookies(getVerifyEmailUrl(redirectOrigin), pendingCookies)
       }
 
@@ -200,7 +230,14 @@ export async function GET(request: NextRequest) {
       const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
       if (exchangeError) {
-        const failureUrl = safeNextPath ? getVerifyEmailUrl(redirectOrigin) : getAuthErrorUrl(redirectOrigin)
+        console.error('Auth callback code exchange failed:', {
+          code: exchangeError.code,
+          message: exchangeError.message,
+          status: exchangeError.status,
+        })
+        const failureUrl = safeNextPath
+          ? getVerifyEmailUrl(redirectOrigin)
+          : getAuthErrorUrl(redirectOrigin, 'exchange', exchangeError.code)
         return redirectWithCookies(failureUrl, pendingCookies)
       }
 
@@ -239,12 +276,15 @@ export async function GET(request: NextRequest) {
 
         return redirectWithCookies(new URL('/matrimony/discovery', redirectOrigin), pendingCookies)
       }
+
+      console.error('Auth callback completed code exchange but returned no user')
+      return redirectWithCookies(getAuthErrorUrl(redirectOrigin, 'missing_user'))
     }
   } catch (error) {
     console.error('Auth callback failed:', error)
-    return redirectWithCookies(getAuthErrorUrl(redirectOrigin))
+    return redirectWithCookies(getAuthErrorUrl(redirectOrigin, 'callback_exception'))
   }
 
   // URL to redirect to after sign in process completes
-  return redirectWithCookies(new URL('/auth/verify-email', redirectOrigin))
+  return redirectWithCookies(getAuthErrorUrl(redirectOrigin, 'no_callback_params'))
 }

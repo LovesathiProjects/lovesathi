@@ -36,6 +36,25 @@ const trustSignals = [
   { icon: Users, label: "Family-ready context" },
 ]
 
+function getOAuthErrorMessage(reason: string | null, code: string | null) {
+  const suffix = code ? ` Reason: ${reason || "oauth"} / ${code}.` : reason ? ` Reason: ${reason}.` : ""
+
+  switch (reason) {
+    case "provider":
+      return `Google rejected the sign-in request. Please check the Google OAuth client and Supabase Google provider settings.${suffix}`
+    case "exchange":
+      return `Google returned to Lovesathi, but the secure session exchange failed. Try once in a fresh incognito window after the latest deploy finishes.${suffix}`
+    case "callback_exception":
+      return `Lovesathi hit a server error while finishing Google sign-in. Please check the latest Render log line that starts with "Auth callback failed".${suffix}`
+    case "missing_user":
+      return `Google sign-in completed, but Supabase did not return a user session. Please try again once; if it repeats, check Render auth callback logs.${suffix}`
+    case "no_callback_params":
+      return `The sign-in callback opened without Google session data. Please start again from the Google button.${suffix}`
+    default:
+      return `Google sign-in could not be completed. Please try again or continue with email.${suffix}`
+  }
+}
+
 function LegalLinks({ action }: { action: "continuing" | "signing up" }) {
   return (
     <p className="mx-auto max-w-sm text-center text-xs leading-relaxed text-[#6F7C8B]">
@@ -127,7 +146,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get("error") === "oauth") {
-      setError("Google sign-in could not be completed. Please try again or continue with email.")
+      setError(getOAuthErrorMessage(params.get("reason"), params.get("code")))
     }
   }, [])
 
