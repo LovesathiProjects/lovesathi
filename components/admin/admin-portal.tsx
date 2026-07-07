@@ -413,33 +413,39 @@ function userMatchesLane(item: AdminUserItem, lane: AdminQueueFilter) {
 }
 
 function profileMatchesLane(profile: AdminProfileItem, lane: AdminQueueFilter) {
+  if (lane === "all") return true
   if (lane === "attention" || lane === "profiles") return profileNeedsAttention(profile)
-  return true
+  return false
 }
 
 function verificationMatchesLane(item: AdminVerificationItem, lane: AdminQueueFilter) {
+  if (lane === "all") return true
   if (lane === "attention") return verificationNeedsAttention(item)
-  return true
+  if (lane === "profiles") return verificationNeedsAttention(item)
+  return false
 }
 
 function reportMatchesLane(item: AdminReportItem, lane: AdminQueueFilter) {
+  if (lane === "all") return true
   if (lane === "attention" || lane === "reports") return reportNeedsAttention(item)
-  return true
+  return false
 }
 
 function eventMatchesLane(item: AdminEventItem, lane: AdminQueueFilter) {
+  if (lane === "all" || lane === "events") return true
   if (lane === "attention") return eventNeedsAttention(item)
-  if (lane === "events") return true
-  return true
+  return false
 }
 
 function auditMatchesLane(item: AdminAuditItem, lane: AdminQueueFilter) {
   const resource = normaliseStatus(item.resource)
+  if (lane === "all") return true
+  if (lane === "attention") return false
   if (lane === "profiles") return resource === "profile"
   if (lane === "reports") return resource === "report"
   if (lane === "events") return resource === "event"
   if (lane === "premium" || lane === "heritage") return resource === "entitlement"
-  return true
+  return false
 }
 
 export function AdminPortal() {
@@ -592,6 +598,18 @@ export function AdminPortal() {
       count: userItems.filter((item) => item.premium.planId === "heritage").length,
       detail: "High-touch members needing concierge care",
     },
+  ]
+  const selectedQueueFilter = queueFilters.find((filter) => filter.id === queueFilter) || queueFilters[0]
+  const urgentWorkCount =
+    attentionUsers.length + attentionProfiles.length + attentionVerifications.length + attentionReports.length + attentionEvents.length
+  const adminNavItems = [
+    { href: "#overview", label: "Overview", icon: Activity, count: urgentWorkCount },
+    { href: "#events", label: "Events", icon: CalendarDays, count: eventItems.length },
+    { href: "#members", label: "Members", icon: Users, count: filteredUsers.length },
+    { href: "#profiles", label: "Profiles", icon: UserRoundCheck, count: filteredProfiles.length + filteredVerifications.length },
+    { href: "#safety", label: "Safety", icon: ShieldCheck, count: filteredReports.length },
+    { href: "#premium", label: "Premium", icon: Crown, count: heritageUsers.length + paymentDueUsers.length },
+    { href: "#audit", label: "Audit", icon: Database, count: filteredAudit.length },
   ]
 
   useEffect(() => {
@@ -826,28 +844,48 @@ export function AdminPortal() {
 
   if (!sessionToken) {
     return (
-      <main className="luxe-page flex min-h-screen items-center justify-center px-4 py-10">
-        <section className="relative z-10 grid w-full max-w-6xl overflow-hidden rounded-[2rem] border border-[#E83262]/24 bg-white/8 shadow-2xl backdrop-blur-xl lg:grid-cols-[1fr_0.9fr]">
-          <div className="hidden min-h-[38rem] flex-col justify-between p-12 text-[#ffffff] lg:flex">
+      <main className="luxe-light-page flex min-h-screen items-center justify-center px-4 py-10">
+        <section className="grid w-full max-w-6xl overflow-hidden rounded-[1.75rem] border border-[#DDE4EE] bg-white shadow-[0_28px_90px_rgba(38,54,74,0.12)] lg:grid-cols-[1.02fr_0.98fr]">
+          <div className="hidden min-h-[38rem] flex-col justify-between border-r border-[#E6EAF1] bg-[#F7F9FC] p-10 text-[#26364A] lg:flex">
             <div>
-              <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-full bg-[#ffffff] text-[#E83262] shadow-xl">
-                <Lock className="h-7 w-7" />
+              <div className="mb-8 inline-flex items-center gap-3 rounded-xl border border-[#E6EAF1] bg-white px-3 py-2 shadow-sm">
+                <img src="/lovesathi-logo.jpeg" alt="LoveSathi" className="h-12 w-auto object-contain" />
               </div>
-              <p className="luxe-kicker mb-4 text-[#E83262]">admin.lovesathi.com</p>
-              <h1 className="luxe-title max-w-lg text-6xl font-bold text-[#ffffff]">
-                Private command room for the Lovesathi team.
+              <p className="luxe-kicker mb-4 text-[#E83262]">admin workspace</p>
+              <h1 className="max-w-xl text-5xl font-black leading-[0.95] tracking-[-0.055em] text-[#172235]">
+                A calmer CRM for member operations.
               </h1>
+              <p className="mt-5 max-w-lg text-base font-medium leading-8 text-[#6F7C8B]">
+                Work through profile quality, safety, events, and premium follow-up from one structured control surface.
+              </p>
             </div>
-            <p className="max-w-md text-lg leading-8 text-[#E83262]">
-              Review membership health, verification queues, safety reports, and launch readiness from one guarded portal.
-            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                { label: "Member queues", icon: Users },
+                { label: "Profile review", icon: UserRoundCheck },
+                { label: "Safety desk", icon: ShieldCheck },
+                { label: "Events desk", icon: CalendarDays },
+              ].map((item) => (
+                <div key={item.label} className="rounded-2xl border border-[#E6EAF1] bg-white p-4 shadow-sm">
+                  <item.icon className="mb-3 h-5 w-5 text-[#E83262]" />
+                  <p className="text-sm font-black text-[#26364A]">{item.label}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="bg-[#ffffff] p-7 sm:p-12">
-            <div className="mb-8">
-              <p className="luxe-kicker mb-3 text-[#E83262]">secure access</p>
-              <h2 className="font-serif text-5xl font-bold tracking-[-0.05em] text-[#26364A]">Admin sign in</h2>
-              <p className="mt-3 text-[#6F7C8B]">Use a Supabase account listed in the production ADMIN_EMAILS allowlist.</p>
+          <div className="bg-white p-7 sm:p-12">
+            <div className="mb-8 flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#172235] text-white shadow-[0_18px_40px_rgba(23,34,53,0.18)]">
+                <Lock className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="luxe-kicker mb-2 text-[#E83262]">secure access</p>
+                <h2 className="text-4xl font-black tracking-[-0.05em] text-[#172235]">Admin sign in</h2>
+                <p className="mt-3 max-w-md text-sm font-medium leading-6 text-[#6F7C8B]">
+                  Use a Supabase account listed in the production ADMIN_EMAILS allowlist.
+                </p>
+              </div>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-5">
@@ -859,7 +897,7 @@ export function AdminPortal() {
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   autoComplete="email"
-                  className="h-12 rounded-2xl bg-white"
+                  className="rounded-2xl bg-white"
                   required
                 />
               </div>
@@ -871,17 +909,17 @@ export function AdminPortal() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   autoComplete="current-password"
-                  className="h-12 rounded-2xl bg-white"
+                  className="rounded-2xl bg-white"
                   required
                 />
               </div>
               {error && (
-                <div className="rounded-2xl border border-[#E83262]/20 bg-[#E83262]/10 p-3 text-sm font-bold text-[#E83262]">
+                <div className="rounded-2xl border border-[#E83262]/20 bg-[#FFF4F7] p-3 text-sm font-bold text-[#C3264E]">
                   {error}
                 </div>
               )}
-              <Button className="luxe-button h-12 w-full rounded-2xl font-bold" disabled={authLoading}>
-                {authLoading ? "Signing in..." : "Enter admin portal"}
+              <Button className="h-[3.25rem] w-full rounded-2xl font-bold" disabled={authLoading}>
+                {authLoading ? "Signing in..." : "Enter admin workspace"}
               </Button>
             </form>
           </div>
@@ -891,57 +929,96 @@ export function AdminPortal() {
   }
 
   return (
-    <main className="luxe-light-page luxe-admin-grid min-h-screen px-4 py-6 sm:px-8 lg:px-10">
-      <header className="sticky top-3 z-30 mx-auto mb-8 flex max-w-7xl flex-col gap-4 rounded-[1.5rem] border border-[#482b1a]/10 bg-[#ffffff]/90 p-5 shadow-[0_24px_80px_rgba(24,17,13,0.1)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="luxe-kicker mb-2 text-[#E83262]">Lovesathi admin</p>
-          <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#26364A] sm:text-5xl">
-            Operations command center
-          </h1>
-          <p className="mt-2 text-sm text-[#6F7C8B]">
-            Signed in as {overview?.admin.email || "admin"} {generatedAt ? `- refreshed ${generatedAt}` : ""}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <div className="relative w-full sm:w-72">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9d7a55]" />
-            <Input
-              value={adminSearch}
-              onChange={(event) => setAdminSearch(event.target.value)}
-              placeholder="Search users, profiles, events..."
-              className="h-12 rounded-full border-[#482b1a]/15 bg-white pl-10 text-sm"
-            />
-          </div>
-          <Button
-            variant="outline"
-            className="rounded-full border-[#482b1a]/15 bg-white"
-            onClick={() => setRefreshIndex((value) => value + 1)}
-            disabled={refreshing}
-          >
-            <RefreshCw className={refreshing ? "mr-2 h-4 w-4 animate-spin" : "mr-2 h-4 w-4"} />
-            Refresh
-          </Button>
-          <Button asChild variant="outline" className="rounded-full border-[#482b1a]/15 bg-white">
-            <Link href="https://lovesathi.com">
-              View site
-              <ArrowUpRight className="ml-2 h-4 w-4" />
+    <main className="min-h-screen bg-[#F6F7FB] text-[#26364A]">
+      <div className="mx-auto grid min-h-screen max-w-[104rem] lg:grid-cols-[17rem_minmax(0,1fr)]">
+        <aside className="hidden border-r border-[#E1E7EF] bg-[#FFFFFF] px-4 py-5 lg:block">
+          <div className="sticky top-5 flex h-[calc(100dvh-2.5rem)] flex-col">
+            <Link href="/" className="mb-6 inline-flex rounded-xl border border-[#E6EAF1] bg-white px-3 py-2 no-underline shadow-sm">
+              <img src="/lovesathi-logo.jpeg" alt="LoveSathi" className="h-12 w-auto object-contain" />
             </Link>
-          </Button>
-          <Button variant="outline" className="rounded-full border-[#482b1a]/15 bg-white" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Sign out
-          </Button>
-        </div>
-      </header>
+            <div className="rounded-2xl border border-[#E6EAF1] bg-[#F7F9FC] p-4">
+              <p className="luxe-kicker text-[#E83262]">live lane</p>
+              <p className="mt-2 text-2xl font-black tracking-[-0.04em] text-[#172235]">{selectedQueueFilter.label}</p>
+              <p className="mt-2 text-xs font-semibold leading-5 text-[#6F7C8B]">{selectedQueueFilter.detail}</p>
+            </div>
+            <nav className="mt-5 space-y-1.5" aria-label="Admin workspace sections">
+              {adminNavItems.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className="group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold text-[#526071] no-underline transition hover:bg-[#FFF4F7] hover:text-[#E83262]"
+                >
+                  <span className="flex min-w-0 items-center gap-2.5">
+                    <item.icon className="h-4 w-4 shrink-0 text-[#8B98A8] transition group-hover:text-[#E83262]" />
+                    <span className="truncate">{item.label}</span>
+                  </span>
+                  <span className="rounded-full bg-[#EEF2F7] px-2 py-0.5 text-[0.68rem] font-black text-[#6F7C8B]">
+                    {item.count.toLocaleString("en-IN")}
+                  </span>
+                </a>
+              ))}
+            </nav>
+            <div className="mt-auto rounded-2xl border border-[#E6EAF1] bg-[#172235] p-4 text-white">
+              <ShieldCheck className="h-5 w-5 text-[#F04775]" />
+              <p className="mt-3 text-sm font-bold">Role gated workspace</p>
+              <p className="mt-2 text-xs leading-5 text-white/70">Every mutation still passes API allowlist checks and audit logging.</p>
+            </div>
+          </div>
+        </aside>
 
-      <div className="mx-auto max-w-7xl space-y-8">
+        <div className="min-w-0">
+          <header className="sticky top-0 z-30 border-b border-[#E1E7EF] bg-white/92 px-4 py-4 shadow-[0_12px_34px_rgba(38,54,74,0.06)] backdrop-blur-xl sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+              <div className="min-w-0">
+                <p className="luxe-kicker mb-2 text-[#E83262]">Lovesathi admin</p>
+                <h1 className="text-3xl font-black tracking-[-0.05em] text-[#172235] sm:text-4xl">
+                  Operations CRM
+                </h1>
+                <p className="mt-2 truncate text-sm font-medium text-[#6F7C8B]">
+                  {overview?.admin.email || "admin"} {generatedAt ? `- refreshed ${generatedAt}` : ""}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <div className="relative w-full sm:w-80">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8B98A8]" />
+                  <Input
+                    value={adminSearch}
+                    onChange={(event) => setAdminSearch(event.target.value)}
+                    placeholder="Search members, profiles, events..."
+                    className="rounded-2xl border-[#DDE4EE] bg-[#F7F9FC] pl-10 text-sm shadow-none"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  className="rounded-2xl border-[#DDE4EE] bg-white"
+                  onClick={() => setRefreshIndex((value) => value + 1)}
+                  disabled={refreshing}
+                >
+                  <RefreshCw className={refreshing ? "mr-2 h-4 w-4 animate-spin" : "mr-2 h-4 w-4"} />
+                  Refresh
+                </Button>
+                <Button asChild variant="outline" className="rounded-2xl border-[#DDE4EE] bg-white">
+                  <Link href="https://lovesathi.com">
+                    View site
+                    <ArrowUpRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button variant="ghost" className="rounded-2xl" onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign out
+                </Button>
+              </div>
+            </div>
+          </header>
+
+          <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         {error && (
           <div className="rounded-[1.5rem] border border-[#E83262]/20 bg-[#E83262]/10 p-4 font-semibold text-[#E83262]">
             {error}
           </div>
         )}
 
-        <section className="rounded-[2rem] border border-[#E83262]/24 bg-[#ffffff]/76 p-5 shadow-[0_24px_80px_rgba(24,17,13,0.08)] backdrop-blur-xl">
+        <section id="overview" className="scroll-mt-28 rounded-[1.5rem] border border-[#DDE4EE] bg-[#ffffff] p-5 shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="luxe-kicker mb-2 text-[#E83262]">command priorities</p>
@@ -1003,7 +1080,7 @@ export function AdminPortal() {
           </div>
         </section>
 
-        <section className="rounded-[2rem] border border-[#E83262]/24 bg-[#ffffff]/72 p-4 shadow-[0_24px_80px_rgba(24,17,13,0.07)] backdrop-blur-xl sm:p-5">
+        <section className="rounded-[1.5rem] border border-[#DDE4EE] bg-[#ffffff] p-4 shadow-[0_18px_52px_rgba(38,54,74,0.06)] sm:p-5">
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="luxe-kicker mb-2 text-[#E83262]">operations lanes</p>
@@ -1016,7 +1093,7 @@ export function AdminPortal() {
               mixed together.
             </p>
           </div>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7">
             {queueFilters.map((filter) => {
               const isActive = queueFilter === filter.id
               return (
@@ -1026,8 +1103,8 @@ export function AdminPortal() {
                   onClick={() => setQueueFilter(filter.id)}
                   className={
                     isActive
-                      ? "rounded-[1.45rem] border border-[#E83262] bg-[#26364A] p-4 text-left text-white shadow-[0_18px_50px_rgba(58,43,36,0.18)] transition hover:-translate-y-0.5"
-                      : "rounded-[1.45rem] border border-[#482b1a]/10 bg-white/70 p-4 text-left text-[#26364A] shadow-[0_14px_36px_rgba(24,17,13,0.04)] transition hover:-translate-y-0.5 hover:border-[#E83262]/45"
+                      ? "rounded-2xl border border-[#172235] bg-[#172235] p-3 text-left text-white shadow-[0_16px_36px_rgba(23,34,53,0.18)] transition hover:-translate-y-0.5"
+                      : "rounded-2xl border border-[#DDE4EE] bg-[#F7F9FC] p-3 text-left text-[#26364A] transition hover:-translate-y-0.5 hover:border-[#E83262]/35 hover:bg-white"
                   }
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -1042,7 +1119,7 @@ export function AdminPortal() {
                       {filter.count.toLocaleString("en-IN")}
                     </span>
                   </div>
-                  <p className={isActive ? "mt-3 text-xs leading-5 text-[#eadcc8]" : "mt-3 text-xs leading-5 text-[#6F7C8B]"}>
+                  <p className={isActive ? "mt-2 text-xs leading-5 text-white/70" : "mt-2 text-xs leading-5 text-[#6F7C8B]"}>
                     {filter.detail}
                   </p>
                 </button>
@@ -1058,8 +1135,8 @@ export function AdminPortal() {
           )}
         </section>
 
-        <section>
-          <Card className="luxe-card overflow-hidden rounded-[2rem] border-[#E83262]/24">
+        <section id="events" className="scroll-mt-28">
+          <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
             <CardHeader className="border-b border-[#482b1a]/10 bg-[#26364A] text-white">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
@@ -1432,8 +1509,8 @@ export function AdminPortal() {
           })}
         </section>
 
-        <section>
-          <Card className="luxe-card overflow-hidden rounded-[2rem] border-[#E83262]/24">
+        <section id="members" className="scroll-mt-28">
+          <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
             <CardHeader className="border-b border-[#482b1a]/10 bg-white/55">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -1461,136 +1538,130 @@ export function AdminPortal() {
                 </p>
               )}
               {filteredUsers.length ? (
-                <div className="grid gap-3 xl:grid-cols-2">
-                  {filteredUsers.map((item) => (
-                    <div key={item.id} className="rounded-[1.35rem] border border-[#482b1a]/10 bg-white/64 p-4 shadow-[0_16px_42px_rgba(24,17,13,0.04)]">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="overflow-hidden rounded-[1.25rem] border border-[#E1E7EF] bg-white">
+                  <div className="hidden grid-cols-[minmax(15rem,1.25fr)_0.7fr_0.8fr_0.9fr_minmax(18rem,1.2fr)] gap-4 border-b border-[#E1E7EF] bg-[#F7F9FC] px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#6F7C8B] xl:grid">
+                    <span>Member</span>
+                    <span>Profile</span>
+                    <span>Email</span>
+                    <span>Plan</span>
+                    <span>Actions</span>
+                  </div>
+                  <div className="divide-y divide-[#E1E7EF]">
+                    {filteredUsers.map((item) => (
+                      <div
+                        key={item.id}
+                        className="grid gap-4 px-4 py-4 text-sm xl:grid-cols-[minmax(15rem,1.25fr)_0.7fr_0.8fr_0.9fr_minmax(18rem,1.2fr)] xl:items-center"
+                      >
                         <div className="min-w-0">
-                          <p className="truncate font-bold text-[#26364A]">{item.email || "Email unavailable"}</p>
-                          <p className="mt-1 truncate text-sm text-[#6F7C8B]">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="truncate font-black text-[#172235]">{item.email || "Email unavailable"}</p>
+                            <StatusBadge status={item.status} />
+                          </div>
+                          <p className="mt-1 truncate text-sm font-semibold text-[#6F7C8B]">
                             {item.profileName || "No matrimony profile yet"}
                           </p>
-                          <p className="mt-1 text-xs font-black uppercase tracking-[0.12em] text-[#9d7a55]">
+                          <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-[#8B98A8]">
                             ID - {item.publicId || "Pending"}
                           </p>
-                          <p className="mt-1 break-all text-[0.68rem] font-semibold text-[#9d7a55]/80">
-                            Auth UUID - {item.id}
+                        </div>
+                        <div className="flex flex-wrap gap-2 xl:block">
+                          {item.profileReviewStatus && <StatusBadge status={item.profileReviewStatus} />}
+                          <p className="mt-1 text-xs font-semibold text-[#6F7C8B]">
+                            {item.profileCompleted ? "Complete" : "Draft or missing"}
                           </p>
                         </div>
-                        <StatusBadge status={item.status} />
-                      </div>
-                      <div className="mt-4 grid gap-2 text-xs font-semibold text-[#6F7C8B] sm:grid-cols-2">
-                        <span>Provider: {item.provider || "email"}</span>
-                        <span>Profile: {item.profileCompleted ? "Complete" : "Draft or missing"}</span>
-                        <span>Email: {item.emailConfirmedAt ? "Confirmed" : "Not confirmed"}</span>
-                        <span>Last sign-in: {formatDate(item.lastSignInAt)}</span>
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {item.profileReviewStatus && <StatusBadge status={item.profileReviewStatus} />}
-                        <StatusBadge status={item.premium.isPremium ? "premium" : "free"} />
-                        {!item.emailConfirmedAt && item.email && (
-                          <Badge variant="outline" className="border-[#E83262]/24 bg-[#E83262]/10 text-[#8a641f]">
-                            Verification email needed
-                          </Badge>
-                        )}
-                        {item.premium.planName && (
-                          <Badge variant="outline" className="border-[#E83262]/30 bg-[#F2F5FA] text-[#E83262]">
-                            {item.premium.planName}
-                            {item.premium.paymentDue && item.premium.graceUntil
-                              ? ` grace until ${formatDate(item.premium.graceUntil)}`
-                              : item.premium.activeUntil
-                                ? ` until ${formatDate(item.premium.activeUntil)}`
-                                : ""}
-                          </Badge>
-                        )}
-                        {item.premium.paymentDue && (
-                          <Badge variant="outline" className="border-[#b45309]/25 bg-[#fff7ed] text-[#9a3412]">
-                            Renewal payment due
-                          </Badge>
-                        )}
-                        {item.suspendedUntil && (
-                          <Badge variant="outline" className="border-[#E83262]/20 bg-[#E83262]/10 text-[#E83262]">
-                            Suspended until {formatDate(item.suspendedUntil)}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {item.status === "suspended" ? (
-                          <Button
-                            size="sm"
-                            className="rounded-full bg-[#1b6b43] text-white hover:bg-[#155333]"
-                            disabled={Boolean(actionKey)}
-                            onClick={() => handleAction("user", item.id, "active")}
-                          >
-                            <UserCheck className="mr-2 h-4 w-4" />
-                            Restore access
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="rounded-full border-[#E83262]/20 bg-[#E83262]/10 text-[#E83262]"
-                            disabled={Boolean(actionKey)}
-                            onClick={() => handleAction("user", item.id, "suspended")}
-                          >
-                            <Ban className="mr-2 h-4 w-4" />
-                            Suspend
-                          </Button>
-                        )}
-                        {!item.emailConfirmedAt && item.email && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="rounded-full border-[#E83262]/30 bg-[#E83262]/10 text-[#8a641f]"
-                            disabled={Boolean(actionKey)}
-                            onClick={() => handleAction("auth_email", item.id, "resend_confirmation")}
-                          >
-                            <Mail className="mr-2 h-4 w-4" />
-                            Resend verification
-                          </Button>
-                        )}
-                        {item.premium.isPremium && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="rounded-full border-[#E83262]/20 bg-[#E83262]/10 text-[#E83262]"
-                            disabled={Boolean(actionKey)}
-                            onClick={() => handleAction("entitlement", item.id, "canceled")}
-                          >
-                            <UserX className="mr-2 h-4 w-4" />
-                            Revoke premium
-                          </Button>
-                        )}
-                        {item.premium.isPremium && !item.premium.paymentDue && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="rounded-full border-[#b45309]/24 bg-[#fff7ed] text-[#9a3412]"
-                            disabled={Boolean(actionKey)}
-                            onClick={() => handleAction("entitlement", item.id, "past_due")}
-                          >
-                            <Clock3 className="mr-2 h-4 w-4" />
-                            Mark payment due
-                          </Button>
-                        )}
+                        <div>
+                          <p className="text-xs font-bold text-[#6F7C8B]">{item.emailConfirmedAt ? "Confirmed" : "Not confirmed"}</p>
+                          <p className="mt-1 text-xs font-semibold text-[#8B98A8]">{item.provider || "email"}</p>
+                        </div>
                         <div className="flex flex-wrap gap-2">
+                          <StatusBadge status={item.premium.isPremium ? "premium" : "free"} />
+                          {item.premium.planName && (
+                            <Badge variant="outline" className="border-[#E83262]/24 bg-[#FFF4F7] text-[#C3264E]">
+                              {item.premium.planName}
+                            </Badge>
+                          )}
+                          {item.premium.paymentDue && (
+                            <Badge variant="outline" className="border-[#b45309]/25 bg-[#fff7ed] text-[#9a3412]">
+                              Renewal due
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {item.status === "suspended" ? (
+                            <Button
+                              size="sm"
+                              className="rounded-xl bg-[#1b6b43] text-white hover:bg-[#155333]"
+                              disabled={Boolean(actionKey)}
+                              onClick={() => handleAction("user", item.id, "active")}
+                            >
+                              <UserCheck className="mr-2 h-4 w-4" />
+                              Restore
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="rounded-xl border-[#E83262]/20 bg-[#FFF4F7] text-[#C3264E]"
+                              disabled={Boolean(actionKey)}
+                              onClick={() => handleAction("user", item.id, "suspended")}
+                            >
+                              <Ban className="mr-2 h-4 w-4" />
+                              Suspend
+                            </Button>
+                          )}
+                          {!item.emailConfirmedAt && item.email && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="rounded-xl border-[#E83262]/20 bg-white"
+                              disabled={Boolean(actionKey)}
+                              onClick={() => handleAction("auth_email", item.id, "resend_confirmation")}
+                            >
+                              <Mail className="mr-2 h-4 w-4" />
+                              Resend
+                            </Button>
+                          )}
+                          {item.premium.isPremium && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="rounded-xl border-[#E83262]/20 bg-white text-[#C3264E]"
+                              disabled={Boolean(actionKey)}
+                              onClick={() => handleAction("entitlement", item.id, "canceled")}
+                            >
+                              Revoke
+                            </Button>
+                          )}
+                          {item.premium.isPremium && !item.premium.paymentDue && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="rounded-xl border-[#b45309]/24 bg-[#fff7ed] text-[#9a3412]"
+                              disabled={Boolean(actionKey)}
+                              onClick={() => handleAction("entitlement", item.id, "past_due")}
+                            >
+                              <Clock3 className="mr-2 h-4 w-4" />
+                              Due
+                            </Button>
+                          )}
                           {SUBSCRIPTION_PLANS.map((plan) => (
                             <Button
                               key={plan.id}
                               size="sm"
                               variant="outline"
-                              className="rounded-full border-[#E83262]/35 bg-[#FFFFFF]/82 text-[#26364A] hover:border-[#E83262] hover:bg-[#E83262]/18"
+                              className="rounded-xl border-[#DDE4EE] bg-white text-[#26364A]"
                               disabled={Boolean(actionKey)}
                               onClick={() => handleAction("entitlement", item.id, "active", { planId: plan.id })}
                             >
                               <Crown className="mr-2 h-4 w-4 text-[#E83262]" />
-                              Grant {plan.name}
+                              {plan.name}
                             </Button>
                           ))}
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <EmptyState copy={searchTerm ? "No users match this admin search." : "No auth users were returned yet."} />
@@ -1599,8 +1670,8 @@ export function AdminPortal() {
           </Card>
         </section>
 
-        <section>
-          <Card className="luxe-card overflow-hidden rounded-[2rem] border-[#E83262]/24">
+        <section id="premium" className="scroll-mt-28">
+          <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
             <CardHeader className="border-b border-[#482b1a]/10 bg-[#26364A] text-white">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
@@ -1673,8 +1744,8 @@ export function AdminPortal() {
           </Card>
         </section>
 
-        <section>
-          <Card className="luxe-card overflow-hidden rounded-[2rem] border-[#E83262]/24">
+        <section className="scroll-mt-28">
+          <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
             <CardHeader className="border-b border-[#482b1a]/10 bg-white/50">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
@@ -1809,8 +1880,8 @@ export function AdminPortal() {
           </Card>
         </section>
 
-        <section className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
-          <Card className="luxe-card rounded-[2rem] border-[#E83262]/24">
+        <section id="profiles" className="grid scroll-mt-28 gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+          <Card className="rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -1988,8 +2059,8 @@ export function AdminPortal() {
           </Card>
         </section>
 
-        <section className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-          <Card className="luxe-card rounded-[2rem] border-[#E83262]/24">
+        <section id="safety" className="grid scroll-mt-28 gap-5 lg:grid-cols-[0.95fr_1.05fr]">
+          <Card className="rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -2060,7 +2131,7 @@ export function AdminPortal() {
           </Card>
 
           <div className="space-y-5">
-            <Card className="luxe-card rounded-[2rem] border-[#E83262]/24">
+            <Card className="rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
               <CardHeader>
                 <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#26364A]">Launch readiness</CardTitle>
               </CardHeader>
@@ -2081,7 +2152,7 @@ export function AdminPortal() {
               </CardContent>
             </Card>
 
-            <Card className="luxe-card rounded-[2rem] border-[#E83262]/24">
+            <Card id="audit" className="scroll-mt-28 rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -2145,6 +2216,8 @@ export function AdminPortal() {
             </Card>
           </div>
         </section>
+          </div>
+        </div>
       </div>
     </main>
   )

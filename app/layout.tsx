@@ -104,7 +104,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${manrope.variable} ${cormorant.variable} ${dmMono.variable} antialiased bg-[#F6F7FB]`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${manrope.variable} ${cormorant.variable} ${dmMono.variable} antialiased bg-[#F6F7FB] light`}
+      style={{ colorScheme: "light" }}
+    >
       <body className="bg-[#F6F7FB] text-[#26364A]">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
           <SocketProvider>

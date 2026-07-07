@@ -74,10 +74,10 @@ function LegalLinks({ action }: { action: "continuing" | "signing up" }) {
 function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex flex-col items-center text-center">
-      <div className="mb-4 rounded-lg border border-[#E6EAF1] bg-white p-2 shadow-[0_18px_45px_rgba(38,54,74,0.08)]">
+      <div className="mb-4 rounded-xl border border-[#E6EAF1] bg-white p-2 shadow-[0_18px_45px_rgba(38,54,74,0.08)]">
         <LovesathiLogo imageClassName={compact ? "h-16" : "h-20 sm:h-24"} />
       </div>
-      <p className="mt-2 max-w-sm text-sm font-semibold uppercase tracking-[0.2em] text-[#E83262]">
+      <p className="mt-2 max-w-sm text-xs font-black uppercase tracking-[0.18em] text-[#E83262]">
         Premium matrimony
       </p>
     </div>
@@ -98,11 +98,11 @@ function AuthShell({
   return (
     <div className="luxe-light-page flex min-h-screen flex-col overflow-x-hidden px-4 py-5 sm:px-6">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
-        <Button variant="ghost" className="rounded-full text-[#26364A]" onClick={onBack}>
+        <Button variant="ghost" className="rounded-2xl text-[#26364A]" onClick={onBack}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-        <Link href="/" className="rounded-md border border-[#E6EAF1] bg-white px-2 py-1 no-underline">
+        <Link href="/" className="rounded-xl border border-[#E6EAF1] bg-white px-2 py-1 no-underline shadow-sm">
           <LovesathiLogo imageClassName="h-10" />
         </Link>
       </div>
@@ -116,10 +116,10 @@ function AuthShell({
             </p>
           </div>
         </div>
-        <div className="luxe-card mx-auto w-full max-w-xl rounded-[2rem] p-5 shadow-2xl sm:p-8">
+        <div className="mx-auto w-full max-w-xl rounded-[1.5rem] border border-[#DDE4EE] bg-white p-5 shadow-[0_28px_90px_rgba(38,54,74,0.12)] sm:p-8">
           <div className="mb-8 text-center">
             <p className="luxe-kicker mb-3 text-[#E83262]">{eyebrow}</p>
-            <h2 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#26364A] sm:text-5xl">
+            <h2 className="text-4xl font-black tracking-[-0.05em] text-[#172235] sm:text-5xl">
               {title}
             </h2>
           </div>
@@ -270,46 +270,46 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
 
   if (view === "landing") {
     return (
-      <div className="luxe-page flex min-h-screen flex-col overflow-x-hidden px-4 py-5 sm:px-6">
-        <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between rounded-lg border border-white/10 bg-white/8 px-4 py-3 text-[#ffffff] backdrop-blur-xl">
-          <Link href="/" className="flex items-center gap-3 text-[#ffffff] no-underline">
-            <span className="rounded-md border border-white/20 bg-white p-1">
+      <div className="luxe-light-page flex min-h-screen flex-col overflow-x-hidden px-4 py-5 sm:px-6">
+        <header className="mx-auto flex w-full max-w-6xl items-center justify-between rounded-2xl border border-[#DDE4EE] bg-white/92 px-4 py-3 shadow-[0_14px_40px_rgba(38,54,74,0.06)] backdrop-blur-xl">
+          <Link href="/" className="flex items-center gap-3 text-[#172235] no-underline">
+            <span className="rounded-xl border border-[#E6EAF1] bg-white p-1">
               <LovesathiLogo imageClassName="h-10" />
             </span>
           </Link>
-          <Button asChild variant="ghost" className="text-[#ffffff] hover:bg-white/10 hover:text-[#ffffff]">
+          <Button asChild variant="ghost" className="rounded-2xl text-[#26364A]">
             <Link href="/">Home</Link>
           </Button>
         </header>
 
-        <main className="relative z-10 mx-auto grid w-[calc(100vw-2rem)] min-w-0 max-w-6xl flex-1 items-center gap-10 overflow-hidden py-10 sm:w-full lg:grid-cols-[1.08fr_0.92fr]">
-          <section className="w-full min-w-0 max-w-full space-y-8 overflow-hidden text-[#ffffff]">
-            <div className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-full border border-[#E83262]/30 bg-white/8 px-4 py-2 backdrop-blur">
+        <main className="mx-auto grid w-[calc(100vw-2rem)] min-w-0 max-w-6xl flex-1 items-center gap-10 overflow-hidden py-10 sm:w-full lg:grid-cols-[1.02fr_0.98fr]">
+          <section className="hidden w-full min-w-0 max-w-full space-y-7 overflow-hidden text-[#172235] lg:block">
+            <div className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-full border border-[#E83262]/18 bg-white px-4 py-2 shadow-sm">
               <Sparkles className="h-4 w-4 text-[#E83262]" />
-              <span className="luxe-kicker max-w-full truncate text-[#E83262] sm:whitespace-normal">A private entrance to serious matrimony</span>
+              <span className="luxe-kicker max-w-full truncate text-[#E83262] sm:whitespace-normal">Private matrimony access</span>
             </div>
             <div className="space-y-5">
-              <h1 className="luxe-title max-w-[22rem] text-4xl font-bold text-[#ffffff] sm:max-w-3xl sm:text-7xl lg:text-8xl">
+              <h1 className="max-w-[22rem] text-4xl font-black leading-[0.95] tracking-[-0.06em] text-[#172235] sm:max-w-3xl sm:text-6xl lg:text-7xl">
                 <span className="block">Find a match</span>
                 <span className="block">with depth,</span>
                 <span className="block">dignity, and taste.</span>
               </h1>
-              <p className="max-w-[22rem] text-base leading-7 text-[#E83262] sm:max-w-2xl sm:text-lg sm:leading-8">
+              <p className="max-w-[22rem] text-base font-medium leading-7 text-[#6F7C8B] sm:max-w-2xl sm:text-lg sm:leading-8">
                 Lovesathi brings a luxury standard to matrimony: verified identity, rich profiles,
                 family context, and calm discovery for people ready to choose seriously.
               </p>
             </div>
             <div className="grid max-w-2xl gap-3 sm:grid-cols-3">
               {trustSignals.map((item) => (
-                <div key={item.label} className="rounded-3xl border border-white/10 bg-white/8 p-4 backdrop-blur">
+                <div key={item.label} className="rounded-2xl border border-[#DDE4EE] bg-white p-4 shadow-[0_14px_34px_rgba(38,54,74,0.06)]">
                   <item.icon className="mb-4 h-5 w-5 text-[#E83262]" />
-                  <p className="text-sm font-bold text-[#ffffff]">{item.label}</p>
+                  <p className="text-sm font-bold text-[#26364A]">{item.label}</p>
                 </div>
               ))}
             </div>
           </section>
 
-          <section className="luxe-card mx-auto w-full max-w-md rounded-lg p-5 sm:p-7">
+          <section className="mx-auto w-full max-w-md rounded-[1.5rem] border border-[#DDE4EE] bg-white p-5 shadow-[0_28px_90px_rgba(38,54,74,0.12)] sm:p-7">
             <div className="mb-8">
               <BrandMark compact />
               <p className="mx-auto mt-4 max-w-xs text-center text-[#6F7C8B]">
