@@ -1,6 +1,5 @@
 import { supabase } from './supabaseClient'
 import type { MatrimonyProfile, MatrimonyPreferences, VerificationPayload } from "@/lib/types"
-import { getPhoneValidationMessage, normalizePhoneNumber } from "@/lib/phone"
 
 // ============================================
 // TYPE DEFINITIONS
@@ -188,7 +187,7 @@ export async function saveStep1(
   try {
     const { data: userProfile, error: userProfileError } = await supabase
       .from('user_profiles')
-      .select('user_id, phone')
+      .select('user_id')
       .eq('user_id', userId)
       .maybeSingle()
 
@@ -198,11 +197,6 @@ export async function saveStep1(
 
     if (!userProfile) {
       throw new Error('Please complete age verification before profile setup.')
-    }
-
-    const phoneError = getPhoneValidationMessage(normalizePhoneNumber(userProfile.phone || ''))
-    if (phoneError) {
-      throw new Error('Please create your account with a valid phone number before profile setup.')
     }
 
     // Get existing profile to preserve other fields

@@ -319,14 +319,6 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.92);
   }
 
-  .luxe-orb {
-    position: absolute;
-    border-radius: 9999px;
-    filter: blur(2px);
-    pointer-events: none;
-    animation: luxe-float 8s ease-in-out infinite;
-  }
-
   .luxe-admin-grid {
     background-image:
       linear-gradient(rgba(183, 155, 98, 0.06) 1px, transparent 1px),
@@ -545,16 +537,6 @@
     justify-content: center !important;
     border-radius: 9999px !important;
     background: rgba(255, 255, 255, 0.9) !important;
-  }
-}
-
-@keyframes luxe-float {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(0, -18px, 0) scale(1.04);
   }
 }
 

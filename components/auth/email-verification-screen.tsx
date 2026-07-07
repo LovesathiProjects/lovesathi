@@ -61,7 +61,10 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
   const [isPhoneSending, setIsPhoneSending] = useState(false)
 
   const normalizedPhone = useMemo(() => normalizePhoneNumber(phoneInput), [phoneInput])
-  const phoneError = useMemo(() => getPhoneValidationMessage(normalizedPhone), [normalizedPhone])
+  const phoneError = useMemo(
+    () => (normalizedPhone ? getPhoneValidationMessage(normalizedPhone) : null),
+    [normalizedPhone],
+  )
 
   const rememberEmail = useCallback((email: string | null | undefined) => {
     const normalized = normalizeEmail(email || "")
@@ -244,11 +247,12 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
     setPhoneErrorMessage("")
     setPhoneStatusMessage("")
 
-    if (phoneError) {
-      setPhoneErrorMessage(phoneError)
+    if (!normalizedPhone || phoneError) {
+      const message = phoneError || "Enter a phone number to send OTP, or skip and add it later."
+      setPhoneErrorMessage(message)
       toast({
         title: "Check phone number",
-        description: phoneError,
+        description: message,
         variant: "destructive",
       })
       return
@@ -410,7 +414,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
               {stage === "done"
                 ? "Redirecting you to continue..."
                 : stage === "phone"
-                  ? "We verify phone once for trust and contact safety. You will not be asked again during onboarding."
+                  ? "Phone verification is optional now. Add it here, or skip and complete it later from Edit Profile."
                   : verificationReason === "unconfirmed"
                     ? "Your account exists, but email is not confirmed yet. Enter the 6-digit code from your email."
                     : "Enter the 6-digit code sent to your email. Phone verification comes next."}

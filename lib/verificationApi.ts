@@ -16,7 +16,7 @@ export interface UserProfile {
   user_id: string
   date_of_birth: string
   gender: 'male' | 'female' | 'prefer_not_to_say'
-  phone: string
+  phone?: string | null
   phone_verified_at?: string | null
   created_at?: string
   updated_at?: string
@@ -73,6 +73,16 @@ function getAuthMetadataPhone(user: any) {
   return String(user?.user_metadata?.phone || user?.phone || "").trim()
 }
 
+function getOptionalValidatedPhone(value: string) {
+  const normalizedPhone = normalizePhoneNumber(value)
+  if (!normalizedPhone) return { phone: null, error: null }
+
+  return {
+    phone: normalizedPhone,
+    error: getPhoneValidationMessage(normalizedPhone),
+  }
+}
+
 export async function saveDateOfBirth(dob: string, phoneInput?: string) {
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -99,11 +109,11 @@ export async function saveDateOfBirth(dob: string, phoneInput?: string) {
       throw new Error('You must be at least 18 years old to use Lovesathi')
     }
 
-    const normalizedPhone = normalizePhoneNumber(phoneInput || getAuthMetadataPhone(user))
-    const phoneError = getPhoneValidationMessage(normalizedPhone)
-    if (phoneError) {
-      throw new Error(phoneError)
+    const optionalPhone = getOptionalValidatedPhone(phoneInput || getAuthMetadataPhone(user))
+    if (optionalPhone.error) {
+      throw new Error(optionalPhone.error)
     }
+    const normalizedPhone = optionalPhone.phone
 
     // First, try to get existing profile
     const { data: existingProfile, error: fetchError } = await supabase
@@ -113,9 +123,11 @@ export async function saveDateOfBirth(dob: string, phoneInput?: string) {
       .maybeSingle() // Use maybeSingle() to avoid error if no row exists
 
     const phoneVerifiedAt =
-      (await getCurrentUserPhoneVerifiedAt(user, normalizedPhone)) ||
-      getUserPhoneVerifiedAt(user, normalizedPhone) ||
-      (phonesMatch(existingProfile?.phone, normalizedPhone) ? existingProfile?.phone_verified_at : null)
+      normalizedPhone
+        ? (await getCurrentUserPhoneVerifiedAt(user, normalizedPhone)) ||
+          getUserPhoneVerifiedAt(user, normalizedPhone) ||
+          (phonesMatch(existingProfile?.phone, normalizedPhone) ? existingProfile?.phone_verified_at : null)
+        : null
 
     let result
 
@@ -123,7 +135,7 @@ export async function saveDateOfBirth(dob: string, phoneInput?: string) {
       // Update existing profile
       result = await supabase
         .from('user_profiles')
-        .update({ 
+        .update({
           date_of_birth: dob,
           phone: normalizedPhone,
           ...(phoneVerifiedAt ? { phone_verified_at: phoneVerifiedAt } : {}),
@@ -204,16 +216,18 @@ export async function saveGender(gender: 'male' | 'female' | 'prefer_not_to_say'
       .eq('user_id', user.id)
       .maybeSingle() // Use maybeSingle() to avoid error if no row exists
 
-    const profilePhone = normalizePhoneNumber(existingProfile?.phone || getAuthMetadataPhone(user))
-    const phoneError = getPhoneValidationMessage(profilePhone)
-    if (phoneError) {
-      throw new Error(phoneError)
+    const optionalPhone = getOptionalValidatedPhone(existingProfile?.phone || getAuthMetadataPhone(user))
+    if (optionalPhone.error) {
+      throw new Error(optionalPhone.error)
     }
+    const profilePhone = optionalPhone.phone
 
     const phoneVerifiedAt =
-      (await getCurrentUserPhoneVerifiedAt(user, profilePhone)) ||
-      getUserPhoneVerifiedAt(user, profilePhone) ||
-      (phonesMatch(existingProfile?.phone, profilePhone) ? existingProfile?.phone_verified_at : null)
+      profilePhone
+        ? (await getCurrentUserPhoneVerifiedAt(user, profilePhone)) ||
+          getUserPhoneVerifiedAt(user, profilePhone) ||
+          (phonesMatch(existingProfile?.phone, profilePhone) ? existingProfile?.phone_verified_at : null)
+        : null
 
     let result
 
@@ -221,7 +235,7 @@ export async function saveGender(gender: 'male' | 'female' | 'prefer_not_to_say'
       // Update existing profile
       result = await supabase
         .from('user_profiles')
-        .update({ 
+        .update({
           gender,
           phone: profilePhone,
           ...(phoneVerifiedAt ? { phone_verified_at: phoneVerifiedAt } : {}),

@@ -22,9 +22,9 @@ const buttonVariants = cva(
         link: 'text-[#E83262] underline-offset-4 hover:underline hover:text-[#C3264E] font-semibold',
       },
       size: {
-        default: 'h-11 px-5 sm:px-6 py-2 has-[>svg]:px-4 sm:has-[>svg]:px-5',
-        sm: 'h-9 rounded-xl gap-1 sm:gap-1.5 px-3 sm:px-4 has-[>svg]:px-2 sm:has-[>svg]:px-3',
-        lg: 'h-12 rounded-2xl px-6 sm:px-8 text-base has-[>svg]:px-5 sm:has-[>svg]:px-7',
+        default: 'h-12 px-5 sm:px-6 py-2.5 has-[>svg]:px-4 sm:has-[>svg]:px-5',
+        sm: 'h-10 rounded-xl gap-1 sm:gap-1.5 px-3 sm:px-4 has-[>svg]:px-2 sm:has-[>svg]:px-3',
+        lg: 'h-14 rounded-2xl px-7 sm:px-9 text-base has-[>svg]:px-5 sm:has-[>svg]:px-7',
         icon: 'size-11 rounded-full',
       },
     },

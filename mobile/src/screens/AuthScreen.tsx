@@ -148,7 +148,7 @@ export function AuthScreen() {
 
             {isSignup && (
               <>
-                <Text style={styles.label}>Phone number</Text>
+                <Text style={styles.label}>Phone number (optional)</Text>
                 <TextInput
                   keyboardType="phone-pad"
                   onChangeText={(phone) => setFormData((current) => ({ ...current, phone }))}
@@ -157,6 +157,7 @@ export function AuthScreen() {
                   style={styles.input}
                   value={formData.phone}
                 />
+                <Text style={styles.helperText}>You can add and verify your phone later from Edit Profile.</Text>
               </>
             )}
 
@@ -362,6 +363,12 @@ const styles = StyleSheet.create({
     color: colors.roseDark,
     fontWeight: '700',
     textAlign: 'center',
+  },
+  helperText: {
+    marginTop: spacing.xs,
+    color: colors.muted,
+    fontSize: 12,
+    lineHeight: 18,
   },
   switchLink: {
     marginTop: spacing.md,

@@ -12,6 +12,16 @@ function getAuthMetadataPhone(user: any) {
   return String(user?.user_metadata?.phone || user?.phone || '').trim();
 }
 
+function getOptionalValidatedPhone(value: string) {
+  const normalizedPhone = normalizePhoneNumber(value);
+  if (!normalizedPhone) return { phone: null, error: null };
+
+  return {
+    phone: normalizedPhone,
+    error: getPhoneValidationMessage(normalizedPhone),
+  };
+}
+
 export async function saveDateOfBirth(dob: string, phoneInput?: string) {
   if (!supabase) return { success: false, error: 'Supabase is not configured.' };
 
@@ -33,9 +43,9 @@ export async function saveDateOfBirth(dob: string, phoneInput?: string) {
     }
     if (age < 18) throw new Error('You must be at least 18 years old to use Lovesathi');
 
-    const normalizedPhone = normalizePhoneNumber(phoneInput || getAuthMetadataPhone(user));
-    const phoneError = getPhoneValidationMessage(normalizedPhone);
-    if (phoneError) throw new Error(phoneError);
+    const optionalPhone = getOptionalValidatedPhone(phoneInput || getAuthMetadataPhone(user));
+    if (optionalPhone.error) throw new Error(optionalPhone.error);
+    const normalizedPhone = optionalPhone.phone;
 
     const { data: existingProfile } = await supabase
       .from('user_profiles')
@@ -44,11 +54,13 @@ export async function saveDateOfBirth(dob: string, phoneInput?: string) {
       .maybeSingle();
 
     const phoneVerifiedAt =
-      (await getCurrentUserPhoneVerifiedAt(user, normalizedPhone)) ||
-      getUserPhoneVerifiedAt(user, normalizedPhone) ||
-      (phonesMatch(existingProfile?.phone, normalizedPhone)
-        ? existingProfile?.phone_verified_at
-        : null);
+      normalizedPhone
+        ? (await getCurrentUserPhoneVerifiedAt(user, normalizedPhone)) ||
+          getUserPhoneVerifiedAt(user, normalizedPhone) ||
+          (phonesMatch(existingProfile?.phone, normalizedPhone)
+            ? existingProfile?.phone_verified_at
+            : null)
+        : null;
 
     const payload = {
       date_of_birth: dob,
@@ -110,16 +122,18 @@ export async function saveGender(gender: 'male' | 'female' | 'prefer_not_to_say'
       .eq('user_id', user.id)
       .maybeSingle();
 
-    const profilePhone = normalizePhoneNumber(existingProfile?.phone || getAuthMetadataPhone(user));
-    const phoneError = getPhoneValidationMessage(profilePhone);
-    if (phoneError) throw new Error(phoneError);
+    const optionalPhone = getOptionalValidatedPhone(existingProfile?.phone || getAuthMetadataPhone(user));
+    if (optionalPhone.error) throw new Error(optionalPhone.error);
+    const profilePhone = optionalPhone.phone;
 
     const phoneVerifiedAt =
-      (await getCurrentUserPhoneVerifiedAt(user, profilePhone)) ||
-      getUserPhoneVerifiedAt(user, profilePhone) ||
-      (phonesMatch(existingProfile?.phone, profilePhone)
-        ? existingProfile?.phone_verified_at
-        : null);
+      profilePhone
+        ? (await getCurrentUserPhoneVerifiedAt(user, profilePhone)) ||
+          getUserPhoneVerifiedAt(user, profilePhone) ||
+          (phonesMatch(existingProfile?.phone, profilePhone)
+            ? existingProfile?.phone_verified_at
+            : null)
+        : null;
 
     const payload = {
       gender,

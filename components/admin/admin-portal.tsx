@@ -827,16 +827,14 @@ export function AdminPortal() {
   if (!sessionToken) {
     return (
       <main className="luxe-page flex min-h-screen items-center justify-center px-4 py-10">
-        <div className="luxe-orb left-[-8rem] top-16 h-80 w-80 bg-[#E83262]/18" />
-        <div className="luxe-orb right-[-9rem] top-10 h-96 w-96 bg-[#E83262]/24" />
-        <section className="relative z-10 grid w-full max-w-6xl overflow-hidden rounded-[2.5rem] border border-[#E83262]/24 bg-white/8 shadow-2xl backdrop-blur-xl lg:grid-cols-[1fr_0.9fr]">
-          <div className="hidden min-h-[38rem] flex-col justify-between p-10 text-[#ffffff] lg:flex">
+        <section className="relative z-10 grid w-full max-w-6xl overflow-hidden rounded-[2rem] border border-[#E83262]/24 bg-white/8 shadow-2xl backdrop-blur-xl lg:grid-cols-[1fr_0.9fr]">
+          <div className="hidden min-h-[38rem] flex-col justify-between p-12 text-[#ffffff] lg:flex">
             <div>
               <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-full bg-[#ffffff] text-[#E83262] shadow-xl">
                 <Lock className="h-7 w-7" />
               </div>
               <p className="luxe-kicker mb-4 text-[#E83262]">admin.lovesathi.com</p>
-              <h1 className="luxe-title max-w-lg text-7xl font-bold text-[#ffffff]">
+              <h1 className="luxe-title max-w-lg text-6xl font-bold text-[#ffffff]">
                 Private command room for the Lovesathi team.
               </h1>
             </div>
@@ -845,7 +843,7 @@ export function AdminPortal() {
             </p>
           </div>
 
-          <div className="bg-[#ffffff] p-6 sm:p-10">
+          <div className="bg-[#ffffff] p-7 sm:p-12">
             <div className="mb-8">
               <p className="luxe-kicker mb-3 text-[#E83262]">secure access</p>
               <h2 className="font-serif text-5xl font-bold tracking-[-0.05em] text-[#26364A]">Admin sign in</h2>
@@ -894,7 +892,7 @@ export function AdminPortal() {
 
   return (
     <main className="luxe-light-page luxe-admin-grid min-h-screen px-4 py-6 sm:px-8 lg:px-10">
-      <header className="mx-auto mb-8 flex max-w-7xl flex-col gap-4 rounded-[2rem] border border-[#482b1a]/10 bg-[#ffffff]/82 p-5 shadow-[0_24px_80px_rgba(24,17,13,0.1)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+      <header className="sticky top-3 z-30 mx-auto mb-8 flex max-w-7xl flex-col gap-4 rounded-[1.5rem] border border-[#482b1a]/10 bg-[#ffffff]/90 p-5 shadow-[0_24px_80px_rgba(24,17,13,0.1)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="luxe-kicker mb-2 text-[#E83262]">Lovesathi admin</p>
           <h1 className="font-serif text-4xl font-bold tracking-[-0.05em] text-[#26364A] sm:text-5xl">
@@ -911,7 +909,7 @@ export function AdminPortal() {
               value={adminSearch}
               onChange={(event) => setAdminSearch(event.target.value)}
               placeholder="Search users, profiles, events..."
-              className="h-10 rounded-full border-[#482b1a]/15 bg-white pl-10 text-sm"
+              className="h-12 rounded-full border-[#482b1a]/15 bg-white pl-10 text-sm"
             />
           </div>
           <Button

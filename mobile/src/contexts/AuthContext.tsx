@@ -32,7 +32,7 @@ type AuthContextValue = {
   signUp: (input: {
     name: string;
     email: string;
-    phone: string;
+    phone?: string;
     password: string;
   }) => Promise<void>;
   signIn: (input: { email: string; password: string; phone?: string }) => Promise<void>;
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = useCallback(async (input: {
     name: string;
     email: string;
-    phone: string;
+    phone?: string;
     password: string;
   }) => {
     if (!supabase) {
@@ -102,9 +102,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const email = normalizeEmail(input.email);
-      const phone = normalizePhoneNumber(input.phone);
-      const phoneError = getPhoneValidationMessage(phone);
-      if (phoneError) throw new Error(phoneError);
+      const phone = normalizePhoneNumber(input.phone || '');
+      if (phone) {
+        const phoneError = getPhoneValidationMessage(phone);
+        if (phoneError) throw new Error(phoneError);
+      }
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -112,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         options: {
           data: {
             full_name: input.name,
-            phone,
+            ...(phone ? { phone } : {}),
           },
         },
       });
@@ -120,7 +122,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
 
       await AsyncStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, email);
-      await AsyncStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, phone);
+      if (phone) {
+        await AsyncStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, phone);
+      } else {
+        await AsyncStorage.removeItem(PHONE_VERIFICATION_STORAGE_KEY);
+      }
 
       if (data.session) {
         setSession(data.session);

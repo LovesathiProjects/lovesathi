@@ -1,4 +1,3 @@
-import { getPhoneValidationMessage, normalizePhoneNumber } from './phone';
 import { uploadMatrimonyPhoto } from './storageUpload';
 import { supabase } from './supabase';
 
@@ -25,17 +24,12 @@ export async function saveStep1(
   try {
     const { data: userProfile, error: userProfileError } = await supabase
       .from('user_profiles')
-      .select('user_id, phone')
+      .select('user_id')
       .eq('user_id', userId)
       .maybeSingle();
 
     if (userProfileError) throw userProfileError;
     if (!userProfile) throw new Error('Please complete age verification before profile setup.');
-
-    const phoneError = getPhoneValidationMessage(normalizePhoneNumber(userProfile.phone || ''));
-    if (phoneError) {
-      throw new Error('Please create your account with a valid phone number before profile setup.');
-    }
 
     const { data: existing } = await supabase
       .from('matrimony_profile_full')

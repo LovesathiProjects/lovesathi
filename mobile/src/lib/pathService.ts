@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import { getPhoneValidationMessage } from './phone';
 
 export async function completeOnboarding(userId: string) {
   if (!supabase) {
@@ -7,19 +6,6 @@ export async function completeOnboarding(userId: string) {
   }
 
   try {
-    const { data: profile, error: profileFetchError } = await supabase
-      .from('user_profiles')
-      .select('phone')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (profileFetchError) throw profileFetchError;
-
-    const phoneError = getPhoneValidationMessage(profile?.phone || '');
-    if (phoneError) {
-      throw new Error('Please add a valid phone number before completing onboarding.');
-    }
-
     const { data, error } = await supabase
       .from('user_profiles')
       .update({

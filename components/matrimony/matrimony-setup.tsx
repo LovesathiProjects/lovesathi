@@ -37,10 +37,8 @@ export function MatrimonySetup() {
 
   return (
     <div className="luxe-light-page relative flex min-h-screen flex-col overflow-hidden">
-      <div className="luxe-orb left-[-8rem] top-20 h-80 w-80 bg-[#E83262]/18" />
-      <div className="luxe-orb right-[-10rem] top-10 h-96 w-96 bg-[#E83262]/14" style={{ animationDelay: "1.2s" }} />
       {/* Header with exit button and progress */}
-      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[#E83262]/24 bg-white/82 px-4 py-4 shadow-[0_16px_60px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:px-6">
+      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[#E83262]/18 bg-white/90 px-4 py-4 shadow-[0_16px_60px_rgba(24,17,13,0.08)] backdrop-blur-xl sm:px-6">
         <button
           onClick={onExit}
           className="-ml-2 rounded-full border border-[#482b1a]/10 bg-white/70 p-2 text-[#26364A] transition-colors hover:border-[#E83262]/30 hover:bg-white"
@@ -98,7 +96,7 @@ export function MatrimonySetup() {
           </div>
         </aside>
         <main className="w-full min-w-0">
-          <div className="luxe-card overflow-hidden rounded-[1.75rem] p-4 sm:rounded-[2.25rem] sm:p-8">
+          <div className="luxe-card overflow-hidden rounded-[1.75rem] p-5 sm:rounded-[2rem] sm:p-9">
         <MatrimonySetupProvider>
           {step === 0 && (
             <Step1WelcomeIdentity onNext={() => setStep(1)} />

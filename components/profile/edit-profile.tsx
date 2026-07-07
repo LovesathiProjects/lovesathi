@@ -237,9 +237,11 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
 
       if (!name.trim()) throw new Error("Please enter a profile name.")
       const normalizedPhone = normalizePhoneNumber(phone)
-      const phoneError = getPhoneValidationMessage(normalizedPhone)
-      if (phoneError) throw new Error(phoneError)
-      if (normalizedPhone !== initialPhone) {
+      if (normalizedPhone) {
+        const phoneError = getPhoneValidationMessage(normalizedPhone)
+        if (phoneError) throw new Error(phoneError)
+      }
+      if (normalizedPhone && normalizedPhone !== initialPhone) {
         throw new Error("Phone number changes must be verified with OTP before they can be saved.")
       }
       if (uploadedPhotoUrls.length < 2) throw new Error("Please keep at least 2 profile photos.")
@@ -423,7 +425,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                 <div>
                   <PhoneNumberInput
                     id="edit-profile-phone"
-                    label="Phone Number"
+                    label="Phone Number (optional)"
                     value={phone}
                     onChange={setPhone}
                     onBlur={() => setPhone((value) => normalizePhoneNumber(value))}
@@ -433,7 +435,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                   <p className="text-xs text-[#6F7C8B]">
                     {phoneVerifiedAt
                       ? "Verified by OTP. Contact support if you need to change this number."
-                      : "Phone changes require OTP verification before saving."}
+                      : "Add and verify your phone when you are ready."}
                   </p>
                   {!phoneVerifiedAt && (
                     <Button

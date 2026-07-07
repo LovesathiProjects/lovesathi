@@ -163,9 +163,11 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
     try {
       const email = normalizeEmail(formData.email)
       const phone = normalizePhoneNumber(formData.phone)
-      const phoneError = getPhoneValidationMessage(phone)
-      if (phoneError) {
-        throw new Error(phoneError)
+      if (phone) {
+        const phoneError = getPhoneValidationMessage(phone)
+        if (phoneError) {
+          throw new Error(phoneError)
+        }
       }
       const { error: signUpError } = await supabase.auth.signUp({
         email,
@@ -173,14 +175,18 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
         options: {
           data: {
             full_name: formData.name,
-            phone,
+            ...(phone ? { phone } : {}),
           },
           emailRedirectTo: getEmailVerificationRedirectUrl(),
         },
       })
       if (signUpError) throw signUpError
       window.sessionStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, email)
-      window.sessionStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, phone)
+      if (phone) {
+        window.sessionStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, phone)
+      } else {
+        window.sessionStorage.removeItem(PHONE_VERIFICATION_STORAGE_KEY)
+      }
       router.push("/auth/verify-email")
     } catch (err: any) {
       setError(err.message || "Something went wrong")
@@ -494,10 +500,10 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             <div className="space-y-2">
               <PhoneNumberInput
                 id="signup-phone"
-                label="Phone Number"
-                required
+                label="Phone Number (optional)"
                 value={formData.phone}
                 onChange={(phone) => setFormData((prev) => ({ ...prev, phone }))}
+                helperText="You can add and verify your phone later from Edit Profile."
               />
             </div>
           </div>
