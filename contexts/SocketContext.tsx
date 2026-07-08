@@ -24,6 +24,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
   const [socket, setSocket] = useState<Socket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const socketRef = useRef<Socket | null>(null)
+  const socketFallbackLoggedRef = useRef(false)
 
   useEffect(() => {
     let mounted = true
@@ -51,7 +52,8 @@ export function SocketProvider({ children }: SocketProviderProps) {
           transports: ['websocket', 'polling'],
           reconnection: true,
           reconnectionDelay: 1000,
-          reconnectionAttempts: 5,
+          reconnectionAttempts: 2,
+          timeout: 3000,
         })
 
         newSocket.on('connect', () => {
@@ -68,8 +70,11 @@ export function SocketProvider({ children }: SocketProviderProps) {
           }
         })
 
-        newSocket.on('connect_error', (error) => {
-          console.error('Socket.io connection error:', error)
+        newSocket.on('connect_error', () => {
+          if (!socketFallbackLoggedRef.current && process.env.NODE_ENV === 'development') {
+            console.info('Socket.io unavailable; chat is using Supabase Realtime fallback.')
+            socketFallbackLoggedRef.current = true
+          }
           if (mounted) {
             setIsConnected(false)
           }

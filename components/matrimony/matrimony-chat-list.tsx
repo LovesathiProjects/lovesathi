@@ -411,6 +411,7 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
                 size="sm" 
                 className="rounded-full border border-[#E83262]/28 bg-white/72 p-2 hover:bg-[#F2F5FA]"
                 onClick={onBack}
+                aria-label="Back to discovery"
               >
                 <ArrowLeft className="w-5 h-5 text-black" />
               </Button>
@@ -454,6 +455,7 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
                     size="sm"
                     onClick={() => setIsHeaderMenuOpen(!isHeaderMenuOpen)}
                     className="text-[#26364A]"
+                    aria-label="Message list actions"
                   >
                     <MoreVertical className="w-5 h-5 text-black" />
                   </Button>

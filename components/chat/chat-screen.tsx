@@ -897,6 +897,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
                   isMatrimony ? "border-[#E83262]/28 bg-white/72 hover:bg-[#F2F5FA]" : "hover:bg-white/10 bg-white/10 border-white/20"
                 )}
                 onClick={onBack}
+                aria-label="Back to messages"
               >
                 <ArrowLeft className={cn("w-5 h-5", isMatrimony ? "text-black" : "text-white")} />
               </Button>
@@ -962,6 +963,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
                   size="sm"
                   className={cn("p-2 rounded-full", isMatrimony ? "hover:bg-gray-50 text-black" : "hover:bg-white/10 text-white")}
                   onClick={() => setIsHeaderMenuOpen(!isHeaderMenuOpen)}
+                  aria-label="Conversation actions"
                 >
                   <MoreVertical className={cn("w-5 h-5", isMatrimony ? "text-black" : "text-white")} />
                 </Button>
@@ -1359,6 +1361,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
               className="absolute right-1.5 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full bg-[linear-gradient(135deg,#E83262,#E83262)] p-0 shadow-[0_10px_24px_rgba(194,165,116,0.22)] transition-all duration-200 hover:scale-105 hover:brightness-110 disabled:opacity-50 disabled:hover:scale-100"
               onClick={handleSendMessage}
               disabled={!newMessage.trim() || uploading}
+              aria-label="Send message"
             >
               <Send className="w-4 h-4" />
             </Button>

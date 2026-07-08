@@ -110,6 +110,7 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
       className={`${manrope.variable} ${cormorant.variable} ${dmMono.variable} antialiased bg-[#F6F7FB] light`}
+      data-scroll-behavior="smooth"
       style={{ colorScheme: "light" }}
     >
       <body className="bg-[#F6F7FB] text-[#26364A]">

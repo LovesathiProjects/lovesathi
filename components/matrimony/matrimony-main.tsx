@@ -73,28 +73,31 @@ import { getProfileFallbackImage, getSafeProfilePhotos } from "@/lib/profileImag
 import { cn } from "@/lib/utils"
 import { LocationCascadeSelect } from "@/components/location/location-cascade-select"
 
+export type MatrimonyScreen =
+  | "discover"
+  | "messages"
+  | "activity"
+  | "chat"
+  | "profile"
+  | "edit-profile"
+  | "premium"
+  | "payment"
+  | "premium-features"
+  | "verification-status"
+  | "app-settings"
+  | "shortlist"
+  | "view-profile"
+  | "partner-preferences"
+  | "astrology"
+  | "phonebook"
+  | "safety-centre"
+  | "help-support"
+  | "success-stories"
+
 interface MatrimonyMainProps {
   onExit?: () => void
-  initialScreen?:
-    | "discover"
-    | "messages"
-    | "activity"
-    | "chat"
-    | "profile"
-    | "edit-profile"
-    | "premium"
-    | "payment"
-    | "premium-features"
-    | "verification-status"
-    | "app-settings"
-    | "shortlist"
-    | "view-profile"
-    | "partner-preferences"
-    | "astrology"
-    | "phonebook"
-    | "safety-centre"
-    | "help-support"
-    | "success-stories"
+  initialScreen?: MatrimonyScreen
+  initialChatId?: string | null
 }
 
 function MatrimonyListProfileCard({
@@ -603,32 +606,12 @@ function MatrimonyDiscoveryList({
 }
 
 
-export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyMainProps) {
+export function MatrimonyMain({ onExit, initialScreen = "discover", initialChatId = null }: MatrimonyMainProps) {
   const router = useRouter()
   const [profiles, setProfiles] = useState<MatrimonyProfile[]>([])
   const [loading, setLoading] = useState(true)
-  const [currentScreen, setCurrentScreen] = useState<
-    | "discover"
-    | "messages"
-    | "activity"
-    | "chat"
-    | "profile"
-    | "edit-profile"
-    | "premium"
-    | "payment"
-    | "premium-features"
-    | "verification-status"
-    | "app-settings"
-    | "shortlist"
-    | "view-profile"
-    | "partner-preferences"
-    | "astrology"
-    | "phonebook"
-    | "safety-centre"
-    | "help-support"
-    | "success-stories"
-  >(initialScreen)
-  const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
+  const [currentScreen, setCurrentScreen] = useState<MatrimonyScreen>(initialScreen)
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(initialChatId)
   const [viewedUserId, setViewedUserId] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [viewerLocation, setViewerLocation] = useState<string | null>(null)
@@ -660,6 +643,10 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     setCurrentScreen(initialScreen)
   }, [initialScreen])
 
+  useEffect(() => {
+    setSelectedChatId(initialChatId)
+  }, [initialChatId])
+
   const handleOpenShortlist = useCallback(() => {
     setCurrentScreen("shortlist")
     router.push("/matrimony/shortlist")
@@ -669,6 +656,25 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
     setCurrentScreen("discover")
     router.push("/matrimony/discovery")
   }, [router])
+
+  const handleOpenMessages = useCallback(() => {
+    setCurrentScreen("messages")
+    router.push("/matrimony/messages")
+  }, [router])
+
+  const handleOpenActivity = useCallback(() => {
+    setCurrentScreen("activity")
+    router.push("/matrimony/activity")
+  }, [router])
+
+  const handleOpenChat = useCallback(
+    (matchId: string) => {
+      setSelectedChatId(matchId)
+      setCurrentScreen("chat")
+      router.push(`/matrimony/chat/${encodeURIComponent(matchId)}`)
+    },
+    [router],
+  )
 
   const showSwipePaywall = useCallback(() => {
     toast({
@@ -1601,10 +1607,9 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         })
       }
 
-      setSelectedChatId(result.matchId)
-      setCurrentScreen("chat")
+      handleOpenChat(result.matchId)
     },
-    [currentUserId, showPremiumUpsell, toast, viewerIsPremium],
+    [currentUserId, handleOpenChat, showPremiumUpsell, toast, viewerIsPremium],
   )
 
   return (
@@ -1885,9 +1890,8 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       {currentScreen === "messages" && (
         <div className="fixed inset-0 flex h-[100dvh] flex-col overflow-hidden bg-[#F6F7FB]">
           <MatrimonyChatList onChatClick={(chatId) => {
-            setSelectedChatId(chatId)
-            setCurrentScreen("chat")
-          }} onBack={() => setCurrentScreen("discover")} />
+            handleOpenChat(chatId)
+          }} onBack={handleOpenDiscover} />
         </div>
       )}
 
@@ -1900,8 +1904,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
               setCurrentScreen("view-profile")
             }}
             onMatchClick={(matchId) => {
-              setSelectedChatId(matchId)
-              setCurrentScreen("chat")
+              handleOpenChat(matchId)
             }}
             onUpgrade={() =>
               showPremiumUpsell(
@@ -1910,7 +1913,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
                 "activity",
               )
             }
-            onBack={() => setCurrentScreen("discover")}
+            onBack={handleOpenDiscover}
           />
         </div>
       )}
@@ -1965,7 +1968,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
         <div className="fixed inset-0 z-50 h-[100svh] max-h-[100svh] overflow-hidden bg-background sm:h-[100dvh] sm:max-h-[100dvh]">
           <ChatScreen 
             matchId={selectedChatId} 
-            onBack={() => setCurrentScreen("messages")} 
+            onBack={handleOpenMessages}
             onViewProfile={(userId, mode) => {
               setViewedUserId(userId)
               setCameFromChat(true)
@@ -2078,12 +2081,16 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
             onBack={() => {
               if (cameFromChat) {
                 setCameFromChat(false)
-                setCurrentScreen("chat")
+                if (selectedChatId) {
+                  handleOpenChat(selectedChatId)
+                } else {
+                  handleOpenMessages()
+                }
               } else if (cameFromShortlist) {
                 setCameFromShortlist(false)
-                setCurrentScreen("shortlist")
+                handleOpenShortlist()
               } else {
-                setCurrentScreen("activity")
+                handleOpenActivity()
               }
             }}
           />
@@ -2111,8 +2118,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
           onStartChat={() => {
             setShowMatchNotification(false)
             if (matchedMatchId) {
-              setSelectedChatId(matchedMatchId)
-              setCurrentScreen("chat")
+              handleOpenChat(matchedMatchId)
             } else {
               console.error("No matchId available for chat")
             }
@@ -2193,8 +2199,8 @@ export function MatrimonyMain({ onExit, initialScreen = "discover" }: MatrimonyM
       {currentScreen !== "chat" && currentScreen !== "app-settings" && currentScreen !== "premium" && currentScreen !== "payment" && currentScreen !== "premium-features" && currentScreen !== "verification-status" && currentScreen !== "edit-profile" && currentScreen !== "view-profile" && currentScreen !== "partner-preferences" && currentScreen !== "astrology" && currentScreen !== "phonebook" && currentScreen !== "safety-centre" && currentScreen !== "help-support" && currentScreen !== "success-stories" && (
         <QuickActions
           activeTab={currentScreen}
-          onOpenChat={() => setCurrentScreen("messages")}
-          onOpenActivity={() => setCurrentScreen("activity")}
+          onOpenChat={handleOpenMessages}
+          onOpenActivity={handleOpenActivity}
           onOpenProfile={() => setCurrentScreen("profile")}
           onDiscover={handleOpenDiscover}
           onOpenShortlist={handleOpenShortlist}
