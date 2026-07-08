@@ -13,6 +13,9 @@ export type AdminAuditResource =
   | "site_setting"
   | "notification"
   | "success_story"
+  | "plan_pricing"
+  | "discount_banner"
+  | "user_discount"
 
 export async function writeAdminAuditLog(
   supabase: any,

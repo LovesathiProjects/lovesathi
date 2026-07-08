@@ -166,7 +166,7 @@ export function SettingsScreen({
             >
               Upgrade Membership
             </Button>
-            <p className="mt-2 text-center text-xs font-semibold text-[#6F7C8B]">Basic 90% OFF launch offer</p>
+            <p className="mt-2 text-center text-xs font-semibold text-[#6F7C8B]">Premium plans with real active pricing</p>
           </section>
 
           <nav className="mt-5 overflow-hidden rounded-[1.35rem] border border-[#E6EAF1] bg-white shadow-[0_12px_34px_rgba(31,44,60,0.05)]">

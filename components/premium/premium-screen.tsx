@@ -12,6 +12,29 @@ import { getUserEntitlementStatus, type EntitlementStatus } from "@/lib/planLimi
 import { supabase } from "@/lib/supabaseClient"
 import { getSubscriptionPlan, SUBSCRIPTION_PLANS } from "@/lib/subscriptionPlans"
 
+type PricingPlan = {
+  planId: string
+  durationLabel: string
+  priceLabel: string
+  priceAmount: number | null
+}
+
+type PricingBanner = {
+  id: string
+  title: string
+  bannerText: string
+  bannerImageUrl: string | null
+  discountPercent: number
+  planIds: string[]
+}
+
+type UserDiscount = {
+  id: string
+  planId: string | null
+  title: string
+  discountPercent: number
+}
+
 const premiumFeatures = [
   {
     icon: Star,
@@ -53,8 +76,19 @@ function formatEntitlementDate(value?: string | null) {
 export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSelect?: (planId: string) => void; onSubscribe?: (planId: string) => void; onBack?: () => void; mode?: 'matrimony' }) {
   const [selectedPlan, setSelectedPlan] = useState<string>("basic")
   const [entitlement, setEntitlement] = useState<EntitlementStatus | null>(null)
+  const [pricingPlans, setPricingPlans] = useState<Record<string, PricingPlan>>({})
+  const [pricingBanners, setPricingBanners] = useState<PricingBanner[]>([])
+  const [userDiscounts, setUserDiscounts] = useState<UserDiscount[]>([])
   const isMatrimony = true
   const activePlan = entitlement?.planId ? getSubscriptionPlan(entitlement.planId) : null
+  const displayPlans = SUBSCRIPTION_PLANS.map((plan) => {
+    const pricing = pricingPlans[plan.id]
+    return {
+      ...plan,
+      durationLabel: pricing?.durationLabel || plan.durationLabel,
+      priceLabel: pricing?.priceLabel || plan.priceLabel,
+    }
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -75,6 +109,39 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadPricing() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      const response = await fetch("/api/pricing", {
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      })
+      if (!response.ok) return
+      const payload = await response.json()
+      if (cancelled) return
+
+      const planMap: Record<string, PricingPlan> = {}
+      ;(payload.plans || []).forEach((plan: PricingPlan) => {
+        planMap[plan.planId] = plan
+      })
+      setPricingPlans(planMap)
+      setPricingBanners(payload.banners || [])
+      setUserDiscounts(payload.userDiscounts || [])
+    }
+
+    void loadPricing()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const activeBanner = pricingBanners[0]
 
   return (
     <div className={cn("relative min-h-[100dvh] w-full max-w-full overflow-x-hidden", isMatrimony ? "luxe-light-page" : "bg-[#0E0F12]")}>
@@ -127,7 +194,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
                 Unlock refined discovery, richer signals, and priority trust features without turning matrimony into noise.
               </p>
               <Badge className="mx-auto mt-4 max-w-full whitespace-normal rounded-full border border-[#E83262]/40 bg-[#ffffff]/14 px-4 py-2 text-center text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#fff7df] sm:text-sm sm:tracking-[0.18em]">
-                Basic plan includes 90% off
+                Real prices, admin-approved offers only
               </Badge>
               {entitlement?.isPremium && activePlan && (
                 <div className="mx-auto mt-5 max-w-xl rounded-[1.4rem] border border-[#E83262]/30 bg-white/12 p-4 text-left backdrop-blur-xl">
@@ -177,14 +244,33 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
           {/* Plans Section */}
           <div className="space-y-4">
             <div className="text-center">
-              <p className="luxe-kicker text-[0.68rem] text-[#E83262]">launch offer</p>
+              <p className="luxe-kicker text-[0.68rem] text-[#E83262]">premium plans</p>
               <h2 className={cn("font-serif text-4xl font-bold tracking-[-0.05em]", isMatrimony ? "text-[#26364A]" : "text-white")}>Choose Your Plan</h2>
               <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-[#6F7C8B]">
-                The 90% launch discount applies only to Basic. Essential, Signature, and Heritage stay at standard launch pricing for deeper contact reveal, shortlist, and concierge needs.
+                Prices shown are the active Lovesathi plan prices. Any seasonal or private discount appears only when the admin team publishes one.
               </p>
             </div>
+            {activeBanner && (
+              <div className="overflow-hidden rounded-[1.5rem] border border-[#E83262]/28 bg-[#FFF4F7] text-[#26364A] shadow-[0_18px_55px_rgba(24,17,13,0.08)]">
+                {activeBanner.bannerImageUrl && <img src={activeBanner.bannerImageUrl} alt="" className="h-36 w-full object-cover" />}
+                <div className="p-4 sm:p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="luxe-kicker text-[#E83262]">{activeBanner.discountPercent}% admin offer</p>
+                      <p className="mt-1 font-serif text-2xl font-bold tracking-[-0.04em]">{activeBanner.title}</p>
+                    </div>
+                    <Badge variant="outline" className="border-[#E83262]/24 bg-white text-[#C3264E]">
+                      {activeBanner.planIds.length ? activeBanner.planIds.join(", ") : "All plans"}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-[#6F7C8B]">{activeBanner.bannerText}</p>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              {SUBSCRIPTION_PLANS.map((plan) => (
+              {displayPlans.map((plan) => {
+                const privateDiscount = userDiscounts.find((discount) => !discount.planId || discount.planId === plan.id)
+                return (
                 <Card
                   key={plan.id}
                   className={cn(
@@ -219,13 +305,10 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
                       </div>
                       <div>
                         <div className={cn("text-2xl font-bold", isMatrimony ? "text-black" : "text-white")}>{plan.priceLabel}</div>
-                        {plan.originalPriceLabel && (
-                          <div className="mt-1 flex flex-wrap items-center gap-2">
-                            <div className={cn("text-sm line-through", isMatrimony ? "text-[#666666]" : "text-[#A1A1AA]")}>{plan.originalPriceLabel}</div>
-                            <Badge variant="secondary" className="text-xs bg-[#E83262]/10 text-[#E83262] border-[#E83262]/20">
-                              {plan.discountLabel}
-                            </Badge>
-                          </div>
+                        {privateDiscount && (
+                          <Badge variant="secondary" className="mt-2 bg-[#E83262]/10 text-[#E83262] border-[#E83262]/20">
+                            {privateDiscount.title}: {privateDiscount.discountPercent}% private discount
+                          </Badge>
                         )}
                       </div>
                     </div>
@@ -280,7 +363,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )})}
             </div>
           </div>
         </div>

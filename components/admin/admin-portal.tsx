@@ -91,6 +91,7 @@ type AdminProfileItem = {
   userId: string
   publicId: string | null
   email: string | null
+  phone: string | null
   name: string
   age: number | null
   gender: string | null
@@ -99,6 +100,13 @@ type AdminProfileItem = {
   education: string | null
   jobTitle: string | null
   bio: string | null
+  photos: string[]
+  personal: Record<string, unknown>
+  career: Record<string, unknown>
+  family: Record<string, unknown>
+  cultural: Record<string, unknown>
+  partnerPreferences: Record<string, unknown>
+  profileHidden: boolean
   photoCount: number
   completionSteps: number
   profileCompleted: boolean
@@ -115,6 +123,7 @@ type AdminUserItem = {
   id: string
   publicId: string | null
   email: string | null
+  phone: string | null
   status: string
   provider: string | null
   emailConfirmedAt: string | null
@@ -213,10 +222,21 @@ type AdminPlanItem = {
   id: string
   name: string
   durationLabel: string
+  durationDays?: number
   priceLabel: string
-  originalPriceLabel?: string
-  discountLabel?: string
+  priceAmount?: number | null
+  currency?: string
+  isActive?: boolean
+  updatedAt?: string | null
   features: string[]
+}
+
+type AdminPlanPriceDraft = {
+  planId: string
+  priceAmount: string
+  priceLabel: string
+  durationLabel: string
+  isActive: boolean
 }
 
 type AdminSubscriptionItem = {
@@ -309,6 +329,79 @@ type AdminSuccessStoryDraft = {
   displayOrder: string
 }
 
+type AdminDiscountBannerItem = {
+  id: string
+  title: string
+  bannerText: string
+  bannerImageUrl: string | null
+  discountPercent: number
+  planIds: string[]
+  status: string
+  startsAt: string | null
+  endsAt: string | null
+  updatedAt: string | null
+}
+
+type AdminDiscountBannerDraft = {
+  id: string | null
+  title: string
+  bannerText: string
+  bannerImageUrl: string
+  discountPercent: string
+  planIds: string[]
+  status: "draft" | "published" | "archived"
+  startsAt: string
+  endsAt: string
+}
+
+type AdminUserDiscountItem = {
+  id: string
+  userId: string
+  userEmail: string | null
+  profileName: string | null
+  planId: string | null
+  title: string
+  discountPercent: number
+  notes: string | null
+  status: string
+  startsAt: string | null
+  endsAt: string | null
+  updatedAt: string | null
+}
+
+type AdminUserDiscountDraft = {
+  id: string | null
+  userId: string
+  planId: string
+  title: string
+  discountPercent: string
+  notes: string
+  status: "active" | "expired" | "revoked"
+  startsAt: string
+  endsAt: string
+}
+
+type AdminProfileEditDraft = {
+  id: string
+  name: string
+  age: string
+  gender: string
+  createdBy: string
+  publicId: string
+  phone: string
+  bio: string
+  photosJson: string
+  personalJson: string
+  careerJson: string
+  familyJson: string
+  culturalJson: string
+  partnerPreferencesJson: string
+  profileCompleted: boolean
+  profileHidden: boolean
+  reviewStatus: string
+  notes: string
+}
+
 type AdminAuditItem = {
   id: string
   actorEmail: string | null
@@ -387,6 +480,8 @@ type AdminOverview = {
     siteSettings: QueueResult<AdminSiteSettingItem>
     notificationCampaigns: QueueResult<AdminNotificationCampaignItem>
     successStories: QueueResult<AdminSuccessStoryItem>
+    discountBanners: QueueResult<AdminDiscountBannerItem>
+    userDiscounts: QueueResult<AdminUserDiscountItem>
   }
   authEmailTelemetry: AuthEmailTelemetry
   readiness: ReadinessItem[]
@@ -472,6 +567,128 @@ function createEmptySuccessStoryDraft(): AdminSuccessStoryDraft {
     weddingDate: "",
     status: "draft",
     displayOrder: "0",
+  }
+}
+
+function createEmptyDiscountBannerDraft(): AdminDiscountBannerDraft {
+  return {
+    id: null,
+    title: "",
+    bannerText: "",
+    bannerImageUrl: "",
+    discountPercent: "0",
+    planIds: [],
+    status: "draft",
+    startsAt: "",
+    endsAt: "",
+  }
+}
+
+function createEmptyUserDiscountDraft(): AdminUserDiscountDraft {
+  return {
+    id: null,
+    userId: "",
+    planId: "",
+    title: "Private discount",
+    discountPercent: "10",
+    notes: "",
+    status: "active",
+    startsAt: "",
+    endsAt: "",
+  }
+}
+
+function safeJsonStringify(value: unknown) {
+  return JSON.stringify(value ?? {}, null, 2)
+}
+
+function parseJsonField(value: string, label: string) {
+  try {
+    const parsed = JSON.parse(value || "{}")
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new Error(`${label} must be a JSON object.`)
+    }
+    return parsed
+  } catch (error: any) {
+    throw new Error(error?.message || `${label} is invalid JSON.`)
+  }
+}
+
+function parsePhotosField(value: string) {
+  try {
+    const parsed = JSON.parse(value || "[]")
+    if (!Array.isArray(parsed)) throw new Error("Photos must be a JSON array.")
+    return parsed.map((item) => String(item || "").trim()).filter(Boolean)
+  } catch (error: any) {
+    throw new Error(error?.message || "Photos must be a JSON array.")
+  }
+}
+
+function planToPriceDraft(plan: AdminPlanItem): AdminPlanPriceDraft {
+  const numericPrice = plan.priceAmount ?? Number(String(plan.priceLabel || "").replace(/[^0-9]/g, ""))
+  return {
+    planId: plan.id,
+    priceAmount: numericPrice ? String(numericPrice) : "",
+    priceLabel: plan.priceLabel || "",
+    durationLabel: plan.durationLabel || "",
+    isActive: plan.isActive !== false,
+  }
+}
+
+function discountBannerToDraft(item: AdminDiscountBannerItem): AdminDiscountBannerDraft {
+  return {
+    id: item.id,
+    title: item.title,
+    bannerText: item.bannerText,
+    bannerImageUrl: item.bannerImageUrl || "",
+    discountPercent: String(item.discountPercent || 0),
+    planIds: item.planIds || [],
+    status:
+      item.status === "published" || item.status === "archived" || item.status === "draft"
+        ? item.status
+        : "draft",
+    startsAt: toDateTimeLocal(item.startsAt),
+    endsAt: toDateTimeLocal(item.endsAt),
+  }
+}
+
+function userDiscountToDraft(item: AdminUserDiscountItem): AdminUserDiscountDraft {
+  return {
+    id: item.id,
+    userId: item.userId,
+    planId: item.planId || "",
+    title: item.title,
+    discountPercent: String(item.discountPercent || 10),
+    notes: item.notes || "",
+    status:
+      item.status === "expired" || item.status === "revoked" || item.status === "active"
+        ? item.status
+        : "active",
+    startsAt: toDateTimeLocal(item.startsAt),
+    endsAt: toDateTimeLocal(item.endsAt),
+  }
+}
+
+function profileToEditDraft(profile: AdminProfileItem): AdminProfileEditDraft {
+  return {
+    id: profile.id,
+    name: profile.name || "",
+    age: profile.age ? String(profile.age) : "",
+    gender: profile.gender || "",
+    createdBy: profile.createdBy || "",
+    publicId: profile.publicId || "",
+    phone: profile.phone || "",
+    bio: profile.bio || "",
+    photosJson: JSON.stringify(profile.photos || [], null, 2),
+    personalJson: safeJsonStringify(profile.personal),
+    careerJson: safeJsonStringify(profile.career),
+    familyJson: safeJsonStringify(profile.family),
+    culturalJson: safeJsonStringify(profile.cultural),
+    partnerPreferencesJson: safeJsonStringify(profile.partnerPreferences),
+    profileCompleted: profile.profileCompleted,
+    profileHidden: profile.profileHidden,
+    reviewStatus: profile.reviewStatus || "pending",
+    notes: "Profile details updated by Lovesathi admin.",
   }
 }
 
@@ -676,6 +893,16 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
   const [settingsSaving, setSettingsSaving] = useState(false)
   const [successStoryDraft, setSuccessStoryDraft] = useState<AdminSuccessStoryDraft>(() => createEmptySuccessStoryDraft())
   const [successStorySaving, setSuccessStorySaving] = useState(false)
+  const [selectedProfile, setSelectedProfile] = useState<AdminProfileItem | null>(null)
+  const [profileEditDraft, setProfileEditDraft] = useState<AdminProfileEditDraft | null>(null)
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [planPriceDrafts, setPlanPriceDrafts] = useState<AdminPlanPriceDraft[]>([])
+  const [pricingSaving, setPricingSaving] = useState(false)
+  const [discountBannerDraft, setDiscountBannerDraft] = useState<AdminDiscountBannerDraft>(() => createEmptyDiscountBannerDraft())
+  const [discountBannerSaving, setDiscountBannerSaving] = useState(false)
+  const [discountBannerUploading, setDiscountBannerUploading] = useState(false)
+  const [userDiscountDraft, setUserDiscountDraft] = useState<AdminUserDiscountDraft>(() => createEmptyUserDiscountDraft())
+  const [userDiscountSaving, setUserDiscountSaving] = useState(false)
   const [pendingAction, setPendingAction] = useState<PendingAdminAction | null>(null)
   const [pendingActionNote, setPendingActionNote] = useState("")
 
@@ -704,10 +931,13 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
   const siteSettingItems = overview?.operations.siteSettings.items || []
   const notificationCampaignItems = overview?.operations.notificationCampaigns.items || []
   const successStoryItems = overview?.operations.successStories.items || []
+  const discountBannerItems = overview?.operations.discountBanners.items || []
+  const userDiscountItems = overview?.operations.userDiscounts.items || []
   const searchedUsers = userItems.filter((item) =>
     matchesSearch(
       [
         item.email,
+        item.phone,
         item.id,
         item.publicId,
         item.status,
@@ -725,6 +955,7 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
       [
         profile.name,
         profile.email,
+        profile.phone,
         profile.userId,
         profile.publicId,
         profile.gender,
@@ -774,6 +1005,12 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
   )
   const searchedSuccessStories = successStoryItems.filter((item) =>
     matchesSearch([item.coupleNames, item.city, item.story, item.status], searchTerm),
+  )
+  const searchedDiscountBanners = discountBannerItems.filter((item) =>
+    matchesSearch([item.title, item.bannerText, item.discountPercent, item.planIds.join(" "), item.status], searchTerm),
+  )
+  const searchedUserDiscounts = userDiscountItems.filter((item) =>
+    matchesSearch([item.userId, item.userEmail, item.profileName, item.planId, item.title, item.discountPercent, item.status, item.notes], searchTerm),
   )
   const searchedAudit = auditItems.filter((item) =>
     matchesSearch(
@@ -939,6 +1176,20 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
     if (!overview?.operations.siteSettings.items) return
     setSiteSettingDrafts(overview.operations.siteSettings.items)
   }, [overview?.generatedAt, overview?.operations.siteSettings.items])
+
+  useEffect(() => {
+    if (!overview?.operations.plans) return
+    setPlanPriceDrafts(overview.operations.plans.map(planToPriceDraft))
+  }, [overview?.generatedAt, overview?.operations.plans])
+
+  useEffect(() => {
+    if (!selectedProfile) return
+    const refreshed = profileItems.find((profile) => profile.id === selectedProfile.id)
+    if (refreshed) {
+      setSelectedProfile(refreshed)
+      setProfileEditDraft(profileToEditDraft(refreshed))
+    }
+  }, [overview?.generatedAt])
 
   async function handleLogin(event: FormEvent) {
     event.preventDefault()
@@ -1282,6 +1533,231 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
 
   function handleEditSuccessStory(item: AdminSuccessStoryItem) {
     setSuccessStoryDraft(successStoryToDraft(item))
+  }
+
+  function handleOpenProfile(profile: AdminProfileItem) {
+    setSelectedProfile(profile)
+    setProfileEditDraft(profileToEditDraft(profile))
+  }
+
+  function updateProfileEditDraft<K extends keyof AdminProfileEditDraft>(key: K, value: AdminProfileEditDraft[K]) {
+    setProfileEditDraft((previous) => (previous ? { ...previous, [key]: value } : previous))
+  }
+
+  async function saveProfileEditDraft() {
+    if (!sessionToken || !profileEditDraft) return
+    setProfileSaving(true)
+    setError(null)
+    try {
+      const response = await fetch("/api/admin/profile", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: profileEditDraft.id,
+          name: profileEditDraft.name,
+          age: profileEditDraft.age ? Number(profileEditDraft.age) : null,
+          gender: profileEditDraft.gender,
+          createdBy: profileEditDraft.createdBy,
+          publicId: profileEditDraft.publicId,
+          phone: profileEditDraft.phone,
+          bio: profileEditDraft.bio,
+          photos: parsePhotosField(profileEditDraft.photosJson),
+          personal: parseJsonField(profileEditDraft.personalJson, "Personal details"),
+          career: parseJsonField(profileEditDraft.careerJson, "Career details"),
+          family: parseJsonField(profileEditDraft.familyJson, "Family details"),
+          cultural: parseJsonField(profileEditDraft.culturalJson, "Cultural details"),
+          partnerPreferences: parseJsonField(profileEditDraft.partnerPreferencesJson, "Partner preferences"),
+          profileCompleted: profileEditDraft.profileCompleted,
+          profileHidden: profileEditDraft.profileHidden,
+          reviewStatus: profileEditDraft.reviewStatus,
+          notes: profileEditDraft.notes,
+        }),
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to save profile details")
+      }
+      setRefreshIndex((value) => value + 1)
+    } catch (err: any) {
+      setError(err.message || "Unable to save profile details")
+    } finally {
+      setProfileSaving(false)
+    }
+  }
+
+  function updatePlanPriceDraft(planId: string, key: keyof AdminPlanPriceDraft, value: string | boolean) {
+    setPlanPriceDrafts((drafts) =>
+      drafts.map((draft) => (draft.planId === planId ? { ...draft, [key]: value } : draft)),
+    )
+  }
+
+  async function savePlanPriceDraft(draft: AdminPlanPriceDraft) {
+    if (!sessionToken) return
+    setPricingSaving(true)
+    setError(null)
+    try {
+      const response = await fetch("/api/admin/pricing", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "plan_pricing",
+          planId: draft.planId,
+          priceAmount: Number(draft.priceAmount),
+          priceLabel: draft.priceLabel,
+          durationLabel: draft.durationLabel,
+          isActive: draft.isActive,
+        }),
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to save plan price")
+      }
+      setRefreshIndex((value) => value + 1)
+    } catch (err: any) {
+      setError(err.message || "Unable to save plan price")
+    } finally {
+      setPricingSaving(false)
+    }
+  }
+
+  function updateDiscountBannerDraft<K extends keyof AdminDiscountBannerDraft>(key: K, value: AdminDiscountBannerDraft[K]) {
+    setDiscountBannerDraft((previous) => ({ ...previous, [key]: value }))
+  }
+
+  function toggleDiscountBannerPlan(planId: string) {
+    setDiscountBannerDraft((previous) => ({
+      ...previous,
+      planIds: previous.planIds.includes(planId)
+        ? previous.planIds.filter((item) => item !== planId)
+        : [...previous.planIds, planId],
+    }))
+  }
+
+  async function uploadDiscountBanner(event: ChangeEvent<HTMLInputElement>) {
+    if (!sessionToken) return
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setDiscountBannerUploading(true)
+    setError(null)
+    try {
+      const formData = new FormData()
+      formData.append("banner", file)
+      if (discountBannerDraft.id) {
+        formData.append("bannerId", discountBannerDraft.id)
+      }
+
+      const response = await fetch("/api/admin/discount-banner", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+        body: formData,
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to upload discount banner")
+      }
+      updateDiscountBannerDraft("bannerImageUrl", payload.bannerUrl || "")
+    } catch (err: any) {
+      setError(err.message || "Unable to upload discount banner")
+    } finally {
+      setDiscountBannerUploading(false)
+      event.target.value = ""
+    }
+  }
+
+  async function saveDiscountBannerDraft(draft: AdminDiscountBannerDraft, statusOverride?: AdminDiscountBannerDraft["status"]) {
+    if (!sessionToken) return
+    setDiscountBannerSaving(true)
+    setError(null)
+    try {
+      const response = await fetch("/api/admin/pricing", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "discount_banner",
+          ...draft,
+          status: statusOverride || draft.status,
+          discountPercent: Number(draft.discountPercent) || 0,
+          startsAt: draft.startsAt ? new Date(draft.startsAt).toISOString() : null,
+          endsAt: draft.endsAt ? new Date(draft.endsAt).toISOString() : null,
+        }),
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to save discount banner")
+      }
+      setDiscountBannerDraft(createEmptyDiscountBannerDraft())
+      setRefreshIndex((value) => value + 1)
+    } catch (err: any) {
+      setError(err.message || "Unable to save discount banner")
+    } finally {
+      setDiscountBannerSaving(false)
+    }
+  }
+
+  async function saveDiscountBanner(statusOverride?: AdminDiscountBannerDraft["status"]) {
+    await saveDiscountBannerDraft(discountBannerDraft, statusOverride)
+  }
+
+  function handleEditDiscountBanner(item: AdminDiscountBannerItem) {
+    setDiscountBannerDraft(discountBannerToDraft(item))
+  }
+
+  function updateUserDiscountDraft<K extends keyof AdminUserDiscountDraft>(key: K, value: AdminUserDiscountDraft[K]) {
+    setUserDiscountDraft((previous) => ({ ...previous, [key]: value }))
+  }
+
+  async function saveUserDiscountDraft(draft: AdminUserDiscountDraft, statusOverride?: AdminUserDiscountDraft["status"]) {
+    if (!sessionToken) return
+    setUserDiscountSaving(true)
+    setError(null)
+    try {
+      const response = await fetch("/api/admin/pricing", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "user_discount",
+          ...draft,
+          planId: draft.planId || null,
+          status: statusOverride || draft.status,
+          discountPercent: Number(draft.discountPercent) || 0,
+          startsAt: draft.startsAt ? new Date(draft.startsAt).toISOString() : null,
+          endsAt: draft.endsAt ? new Date(draft.endsAt).toISOString() : null,
+        }),
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to save user discount")
+      }
+      setUserDiscountDraft(createEmptyUserDiscountDraft())
+      setRefreshIndex((value) => value + 1)
+    } catch (err: any) {
+      setError(err.message || "Unable to save user discount")
+    } finally {
+      setUserDiscountSaving(false)
+    }
+  }
+
+  async function saveUserDiscount(statusOverride?: AdminUserDiscountDraft["status"]) {
+    await saveUserDiscountDraft(userDiscountDraft, statusOverride)
+  }
+
+  function handleEditUserDiscount(item: AdminUserDiscountItem) {
+    setUserDiscountDraft(userDiscountToDraft(item))
   }
 
   if (loading && !sessionToken) {
@@ -2222,39 +2698,399 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
               </div>
             </CardHeader>
             <CardContent className="grid gap-3 p-5 sm:p-6 lg:grid-cols-2">
-              {planItems.map((plan) => (
-                <div key={plan.id} className="rounded-[1.35rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#172235]">{plan.name}</p>
-                      <p className="mt-1 text-sm font-semibold text-[#6F7C8B]">{plan.durationLabel}</p>
+              {planItems.map((plan) => {
+                const draft = planPriceDrafts.find((item) => item.planId === plan.id) || planToPriceDraft(plan)
+                return (
+                  <div key={plan.id} className="rounded-[1.35rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#172235]">{plan.name}</p>
+                        <p className="mt-1 text-sm font-semibold text-[#6F7C8B]">{plan.durationLabel}</p>
+                      </div>
+                      <StatusBadge status={draft.isActive ? "active" : "archived"} />
                     </div>
-                    {plan.discountLabel && (
-                      <Badge variant="outline" className="border-[#E83262]/24 bg-[#FFF4F7] text-[#C3264E]">
-                        {plan.discountLabel}
-                      </Badge>
-                    )}
+                    <div className="mt-4 grid gap-3">
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor={`plan-price-${plan.id}`}>Real price</Label>
+                          <Input
+                            id={`plan-price-${plan.id}`}
+                            type="number"
+                            min="1"
+                            value={draft.priceAmount}
+                            onChange={(event) => {
+                              const amount = event.target.value
+                              updatePlanPriceDraft(plan.id, "priceAmount", amount)
+                              updatePlanPriceDraft(plan.id, "priceLabel", amount ? `INR ${Number(amount || 0).toLocaleString("en-IN")}` : "")
+                            }}
+                            className="rounded-2xl bg-white"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`plan-label-${plan.id}`}>Display price</Label>
+                          <Input
+                            id={`plan-label-${plan.id}`}
+                            value={draft.priceLabel}
+                            onChange={(event) => updatePlanPriceDraft(plan.id, "priceLabel", event.target.value)}
+                            className="rounded-2xl bg-white"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`plan-duration-${plan.id}`}>Duration label</Label>
+                        <Input
+                          id={`plan-duration-${plan.id}`}
+                          value={draft.durationLabel}
+                          onChange={(event) => updatePlanPriceDraft(plan.id, "durationLabel", event.target.value)}
+                          className="rounded-2xl bg-white"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => updatePlanPriceDraft(plan.id, "isActive", !draft.isActive)}
+                        className={
+                          draft.isActive
+                            ? "rounded-2xl border border-[#1b6b43]/20 bg-[#1b6b43]/10 p-3 text-left text-sm font-bold text-[#1b6b43]"
+                            : "rounded-2xl border border-[#E83262]/20 bg-[#FFF4F7] p-3 text-left text-sm font-bold text-[#C3264E]"
+                        }
+                      >
+                        {draft.isActive ? "Visible in premium catalog" : "Hidden from premium catalog"}
+                      </button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="rounded-full bg-[#172235] text-white hover:bg-[#26364A]"
+                        disabled={pricingSaving}
+                        onClick={() => void savePlanPriceDraft(draft)}
+                      >
+                        <Save className="mr-2 h-4 w-4" />
+                        Save price
+                      </Button>
+                    </div>
+                    <ul className="mt-4 space-y-2 text-sm font-semibold leading-6 text-[#6F7C8B]">
+                      {plan.features.slice(0, 4).map((feature) => (
+                        <li key={feature} className="flex gap-2">
+                          <BadgeCheck className="mt-1 h-4 w-4 shrink-0 text-[#E83262]" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <div className="mt-4 flex flex-wrap items-end gap-2">
-                    <p className="font-serif text-4xl font-bold tracking-[-0.06em] text-[#26364A]">{plan.priceLabel}</p>
-                    {plan.originalPriceLabel && (
-                      <p className="pb-1 text-sm font-bold text-[#8B98A8] line-through">{plan.originalPriceLabel}</p>
-                    )}
-                  </div>
-                  <ul className="mt-4 space-y-2 text-sm font-semibold leading-6 text-[#6F7C8B]">
-                    {plan.features.slice(0, 4).map((feature) => (
-                      <li key={feature} className="flex gap-2">
-                        <BadgeCheck className="mt-1 h-4 w-4 shrink-0 text-[#E83262]" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+                )
+              })}
             </CardContent>
           </Card>
 
           <div className="space-y-5">
+            <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+              <CardHeader className="border-b border-[#E1E7EF]">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="luxe-kicker mb-2 text-[#E83262]">discount banner</p>
+                    <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#26364A]">
+                      Public offer message
+                    </CardTitle>
+                    <p className="mt-2 text-sm leading-6 text-[#6F7C8B]">
+                      Optional seasonal offers only appear when this banner is published. There is no default discount.
+                    </p>
+                  </div>
+                  <Megaphone className="h-6 w-6 text-[#E83262]" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 p-5 sm:p-6">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="discount-title">Offer title</Label>
+                    <Input
+                      id="discount-title"
+                      value={discountBannerDraft.title}
+                      onChange={(event) => updateDiscountBannerDraft("title", event.target.value)}
+                      placeholder="Eid offer, Christmas offer..."
+                      className="rounded-2xl bg-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="discount-percent">Discount percentage</Label>
+                    <Input
+                      id="discount-percent"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={discountBannerDraft.discountPercent}
+                      onChange={(event) => updateDiscountBannerDraft("discountPercent", event.target.value)}
+                      className="rounded-2xl bg-white"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="discount-copy">Banner text</Label>
+                  <Textarea
+                    id="discount-copy"
+                    value={discountBannerDraft.bannerText}
+                    onChange={(event) => updateDiscountBannerDraft("bannerText", event.target.value)}
+                    className="min-h-24 rounded-2xl bg-white"
+                    placeholder="Write the offer copy users should see."
+                  />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="discount-starts">Starts</Label>
+                    <Input
+                      id="discount-starts"
+                      type="datetime-local"
+                      value={discountBannerDraft.startsAt}
+                      onChange={(event) => updateDiscountBannerDraft("startsAt", event.target.value)}
+                      className="rounded-2xl bg-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="discount-ends">Ends</Label>
+                    <Input
+                      id="discount-ends"
+                      type="datetime-local"
+                      value={discountBannerDraft.endsAt}
+                      onChange={(event) => updateDiscountBannerDraft("endsAt", event.target.value)}
+                      className="rounded-2xl bg-white"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Plans included</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {planItems.map((plan) => (
+                      <Button
+                        key={plan.id}
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className={
+                          discountBannerDraft.planIds.includes(plan.id)
+                            ? "rounded-full border-[#E83262] bg-[#FFF4F7] text-[#C3264E]"
+                            : "rounded-full border-[#DDE4EE] bg-white"
+                        }
+                        onClick={() => toggleDiscountBannerPlan(plan.id)}
+                      >
+                        {plan.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="discount-image-url">Banner image URL</Label>
+                    <Input
+                      id="discount-image-url"
+                      value={discountBannerDraft.bannerImageUrl}
+                      onChange={(event) => updateDiscountBannerDraft("bannerImageUrl", event.target.value)}
+                      className="rounded-2xl bg-white"
+                      placeholder="https://..."
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="discount-banner-upload" className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#DDE4EE] bg-white px-4 py-2 text-sm font-bold text-[#26364A]">
+                      <Upload className="h-4 w-4 text-[#E83262]" />
+                      {discountBannerUploading ? "Uploading..." : "Upload banner image"}
+                    </Label>
+                    <input
+                      id="discount-banner-upload"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={(event) => void uploadDiscountBanner(event)}
+                    />
+                  </div>
+                </div>
+                {discountBannerDraft.bannerImageUrl && (
+                  <div className="overflow-hidden rounded-[1.25rem] border border-[#DDE4EE] bg-[#F7F9FC]">
+                    <img src={discountBannerDraft.bannerImageUrl} alt="" className="h-36 w-full object-cover" />
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  <Button className="luxe-button rounded-full" disabled={discountBannerSaving} onClick={() => void saveDiscountBanner()}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save draft
+                  </Button>
+                  <Button className="rounded-full bg-[#1b6b43] text-white hover:bg-[#155333]" disabled={discountBannerSaving} onClick={() => void saveDiscountBanner("published")}>
+                    Publish
+                  </Button>
+                  <Button variant="outline" className="rounded-full border-[#DDE4EE] bg-white" onClick={() => setDiscountBannerDraft(createEmptyDiscountBannerDraft())}>
+                    Clear
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {searchedDiscountBanners.length ? (
+                    searchedDiscountBanners.map((item) => (
+                      <div key={item.id} className="rounded-[1.25rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-bold text-[#26364A]">{item.title}</p>
+                            <p className="mt-1 text-sm leading-6 text-[#6F7C8B]">{item.bannerText}</p>
+                          </div>
+                          <StatusBadge status={item.status} />
+                        </div>
+                        <p className="mt-2 text-xs font-semibold text-[#9d7a55]">
+                          {item.discountPercent}% off | {item.planIds.length ? item.planIds.join(", ") : "All plans"} | Updated {formatDate(item.updatedAt)}
+                        </p>
+                        <div className="mt-3 flex gap-2">
+                          <Button size="sm" variant="outline" className="rounded-full border-[#DDE4EE] bg-white" onClick={() => handleEditDiscountBanner(item)}>
+                            <PenLine className="mr-2 h-4 w-4" />
+                            Edit
+                          </Button>
+                          {item.status !== "archived" && (
+                            <Button size="sm" variant="outline" className="rounded-full border-[#E83262]/20 bg-[#FFF4F7] text-[#C3264E]" onClick={() => {
+                              const draft = discountBannerToDraft(item)
+                              setDiscountBannerDraft(draft)
+                              void saveDiscountBannerDraft(draft, "archived")
+                            }}>
+                              Archive
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <EmptyState copy="No discount banners have been created yet." />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+              <CardHeader className="border-b border-[#E1E7EF]">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="luxe-kicker mb-2 text-[#E83262]">user discount</p>
+                    <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#26364A]">
+                      Individual grants
+                    </CardTitle>
+                    <p className="mt-2 text-sm leading-6 text-[#6F7C8B]">
+                      Grant a private discount by user ID. Use member search above to find the ID, phone, or email first.
+                    </p>
+                  </div>
+                  <Ticket className="h-6 w-6 text-[#E83262]" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 p-5 sm:p-6">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="user-discount-user">User ID</Label>
+                    <Input
+                      id="user-discount-user"
+                      value={userDiscountDraft.userId}
+                      onChange={(event) => updateUserDiscountDraft("userId", event.target.value)}
+                      className="rounded-2xl bg-white"
+                      placeholder="Supabase user UUID"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-discount-title">Title</Label>
+                    <Input
+                      id="user-discount-title"
+                      value={userDiscountDraft.title}
+                      onChange={(event) => updateUserDiscountDraft("title", event.target.value)}
+                      className="rounded-2xl bg-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-discount-percent">Discount percentage</Label>
+                    <Input
+                      id="user-discount-percent"
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={userDiscountDraft.discountPercent}
+                      onChange={(event) => updateUserDiscountDraft("discountPercent", event.target.value)}
+                      className="rounded-2xl bg-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-discount-plan">Plan</Label>
+                    <select
+                      id="user-discount-plan"
+                      value={userDiscountDraft.planId}
+                      onChange={(event) => updateUserDiscountDraft("planId", event.target.value)}
+                      className="h-10 w-full rounded-2xl border border-[#DDE4EE] bg-white px-3 text-sm font-semibold text-[#26364A]"
+                    >
+                      <option value="">All plans</option>
+                      {planItems.map((plan) => (
+                        <option key={plan.id} value={plan.id}>{plan.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-discount-status">Status</Label>
+                    <select
+                      id="user-discount-status"
+                      value={userDiscountDraft.status}
+                      onChange={(event) => updateUserDiscountDraft("status", event.target.value as AdminUserDiscountDraft["status"])}
+                      className="h-10 w-full rounded-2xl border border-[#DDE4EE] bg-white px-3 text-sm font-semibold text-[#26364A]"
+                    >
+                      <option value="active">Active</option>
+                      <option value="expired">Expired</option>
+                      <option value="revoked">Revoked</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="user-discount-starts">Starts</Label>
+                    <Input id="user-discount-starts" type="datetime-local" value={userDiscountDraft.startsAt} onChange={(event) => updateUserDiscountDraft("startsAt", event.target.value)} className="rounded-2xl bg-white" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-discount-ends">Ends</Label>
+                    <Input id="user-discount-ends" type="datetime-local" value={userDiscountDraft.endsAt} onChange={(event) => updateUserDiscountDraft("endsAt", event.target.value)} className="rounded-2xl bg-white" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="user-discount-notes">Internal note</Label>
+                  <Textarea id="user-discount-notes" value={userDiscountDraft.notes} onChange={(event) => updateUserDiscountDraft("notes", event.target.value)} className="min-h-24 rounded-2xl bg-white" />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button className="luxe-button rounded-full" disabled={userDiscountSaving} onClick={() => void saveUserDiscount()}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save user discount
+                  </Button>
+                  <Button variant="outline" className="rounded-full border-[#DDE4EE] bg-white" onClick={() => setUserDiscountDraft(createEmptyUserDiscountDraft())}>
+                    Clear
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {searchedUserDiscounts.length ? (
+                    searchedUserDiscounts.map((item) => (
+                      <div key={item.id} className="rounded-[1.25rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-bold text-[#26364A]">{item.profileName || item.userEmail || item.userId}</p>
+                            <p className="mt-1 text-sm text-[#6F7C8B]">{item.title} | {item.discountPercent}% off {item.planId || "all plans"}</p>
+                          </div>
+                          <StatusBadge status={item.status} />
+                        </div>
+                        <p className="mt-2 break-all text-xs font-semibold text-[#9d7a55]">{item.userId}</p>
+                        {item.notes && <p className="mt-2 text-xs leading-5 text-[#6F7C8B]">{item.notes}</p>}
+                        <div className="mt-3 flex gap-2">
+                          <Button size="sm" variant="outline" className="rounded-full border-[#DDE4EE] bg-white" onClick={() => handleEditUserDiscount(item)}>
+                            <PenLine className="mr-2 h-4 w-4" />
+                            Edit
+                          </Button>
+                          {item.status === "active" && (
+                            <Button size="sm" variant="outline" className="rounded-full border-[#E83262]/20 bg-[#FFF4F7] text-[#C3264E]" onClick={() => {
+                              const draft = userDiscountToDraft(item)
+                              setUserDiscountDraft(draft)
+                              void saveUserDiscountDraft(draft, "revoked")
+                            }}>
+                              Revoke
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <EmptyState copy="No individual discounts have been granted yet." />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
               <CardHeader className="border-b border-[#E1E7EF]">
                 <div className="flex items-start justify-between gap-4">
@@ -2768,6 +3604,10 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                           <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-[#8B98A8]">
                             ID - {item.publicId || "Pending"}
                           </p>
+                          <p className="mt-1 break-all text-xs font-semibold text-[#9d7a55]">
+                            User - {item.id}
+                          </p>
+                          {item.phone && <p className="mt-1 text-xs font-semibold text-[#9d7a55]">{item.phone}</p>}
                         </div>
                         <div className="flex flex-wrap gap-2 xl:block">
                           {item.profileReviewStatus && <StatusBadge status={item.profileReviewStatus} />}
@@ -2873,6 +3713,21 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                               {plan.name}
                             </Button>
                           ))}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="rounded-xl border-[#E83262]/24 bg-[#FFF4F7] text-[#C3264E]"
+                            onClick={() => {
+                              setUserDiscountDraft({
+                                ...createEmptyUserDiscountDraft(),
+                                userId: item.id,
+                                title: item.profileName ? `${item.profileName} private offer` : "Private discount",
+                              })
+                            }}
+                          >
+                            <Ticket className="mr-2 h-4 w-4" />
+                            Discount
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -3116,7 +3971,19 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
               )}
               {filteredProfiles.length ? (
                 filteredProfiles.map((profile) => (
-                  <div key={profile.id} className="rounded-[1.35rem] border border-[#482b1a]/10 bg-white/60 p-4">
+                  <div
+                    key={profile.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleOpenProfile(profile)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault()
+                        handleOpenProfile(profile)
+                      }
+                    }}
+                    className="cursor-pointer rounded-[1.35rem] border border-[#482b1a]/10 bg-white/60 p-4 transition hover:-translate-y-0.5 hover:border-[#E83262]/35 hover:bg-white"
+                  >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#26364A]">{profile.name}</p>
@@ -3128,6 +3995,7 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                             "Profile details pending"}
                         </p>
                         {profile.email && <p className="mt-1 text-xs font-semibold text-[#9d7a55]">{profile.email}</p>}
+                        {profile.phone && <p className="mt-1 text-xs font-semibold text-[#9d7a55]">{profile.phone}</p>}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <StatusBadge status={profile.reviewStatus} />
@@ -3164,9 +4032,24 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                     <div className="mt-4 flex flex-wrap gap-2">
                       <Button
                         size="sm"
+                        variant="outline"
+                        className="rounded-full border-[#DDE4EE] bg-white"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          handleOpenProfile(profile)
+                        }}
+                      >
+                        <Search className="mr-2 h-4 w-4" />
+                        Detailed info
+                      </Button>
+                      <Button
+                        size="sm"
                         className="rounded-full bg-[#1b6b43] text-white hover:bg-[#155333]"
                         disabled={Boolean(actionKey) || !profileReviewActionsReady}
-                        onClick={() => handleAction("profile", profile.id, "approved")}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          handleAction("profile", profile.id, "approved")
+                        }}
                       >
                         <CheckCircle2 className="mr-2 h-4 w-4" />
                         Approve
@@ -3176,7 +4059,10 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                         variant="outline"
                         className="rounded-full border-[#482b1a]/15 bg-white"
                         disabled={Boolean(actionKey) || !profileReviewActionsReady}
-                        onClick={() => handleAction("profile", profile.id, "in_review")}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          handleAction("profile", profile.id, "in_review")
+                        }}
                       >
                         <UserRoundCheck className="mr-2 h-4 w-4" />
                         In review
@@ -3186,7 +4072,10 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                         variant="outline"
                         className="rounded-full border-[#E83262]/20 bg-[#E83262]/10 text-[#E83262]"
                         disabled={Boolean(actionKey) || !profileReviewActionsReady}
-                        onClick={() => handleAction("profile", profile.id, "rejected")}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          handleAction("profile", profile.id, "rejected")
+                        }}
                       >
                         <UserX className="mr-2 h-4 w-4" />
                         Reject
@@ -3434,6 +4323,193 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
           </div>
         </div>
       </div>
+      {selectedProfile && profileEditDraft && (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-[#172235]/55 px-3 py-4 backdrop-blur-sm sm:items-center sm:px-5">
+          <section className="flex max-h-[calc(100dvh-2rem)] w-full max-w-6xl flex-col overflow-hidden rounded-[1.5rem] border border-[#DDE4EE] bg-white shadow-[0_32px_120px_rgba(23,34,53,0.28)]">
+            <div className="flex flex-col gap-4 border-b border-[#E1E7EF] bg-[#F7F9FC] p-5 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <p className="luxe-kicker mb-2 text-[#E83262]">profile dossier</p>
+                <h2 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#172235] sm:text-4xl">
+                  {selectedProfile.name}
+                </h2>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <StatusBadge status={selectedProfile.reviewStatus} />
+                  <StatusBadge status={selectedProfile.profileCompleted ? "complete" : "draft"} />
+                  {selectedProfile.profileHidden && <StatusBadge status="hidden" />}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  className="rounded-full bg-[#172235] text-white hover:bg-[#26364A]"
+                  disabled={profileSaving}
+                  onClick={() => void saveProfileEditDraft()}
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  {profileSaving ? "Saving..." : "Save profile"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="rounded-full border-[#DDE4EE] bg-white"
+                  onClick={() => {
+                    setSelectedProfile(null)
+                    setProfileEditDraft(null)
+                  }}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid min-h-0 flex-1 gap-0 overflow-y-auto lg:grid-cols-[0.36fr_0.64fr]">
+              <aside className="border-b border-[#E1E7EF] bg-white p-5 lg:border-b-0 lg:border-r">
+                <div className="grid gap-3">
+                  <div className="rounded-[1.25rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#8B98A8]">Identifiers</p>
+                    <div className="mt-3 space-y-2 text-sm font-semibold text-[#26364A]">
+                      <p className="break-all">Profile: {selectedProfile.id}</p>
+                      <p className="break-all">User: {selectedProfile.userId}</p>
+                      <p>Public ID: {selectedProfile.publicId || "Pending"}</p>
+                    </div>
+                  </div>
+                  <div className="rounded-[1.25rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#8B98A8]">Contact</p>
+                    <div className="mt-3 space-y-2 text-sm font-semibold text-[#26364A]">
+                      <p className="break-all">{selectedProfile.email || "Email unavailable"}</p>
+                      <p>{selectedProfile.phone || "Phone not provided"}</p>
+                    </div>
+                  </div>
+                  <div className="rounded-[1.25rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#8B98A8]">Snapshot</p>
+                    <div className="mt-3 grid gap-2 text-sm font-semibold text-[#6F7C8B]">
+                      <span>{selectedProfile.age ? `${selectedProfile.age} yrs` : "Age pending"}</span>
+                      <span>{selectedProfile.gender || "Gender pending"}</span>
+                      <span>{selectedProfile.city || "Location pending"}</span>
+                      <span>{selectedProfile.education || "Education pending"}</span>
+                      <span>{selectedProfile.jobTitle || "Career pending"}</span>
+                      <span>{selectedProfile.photoCount} photos</span>
+                    </div>
+                  </div>
+                  {selectedProfile.flags.length > 0 && (
+                    <div className="rounded-[1.25rem] border border-[#E83262]/20 bg-[#FFF4F7] p-4">
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#C3264E]">Flags</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {selectedProfile.flags.map((flag) => (
+                          <Badge key={flag} variant="outline" className="border-[#E83262]/24 bg-white text-[#C3264E]">
+                            {flag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" className="rounded-full bg-[#1b6b43] text-white hover:bg-[#155333]" onClick={() => handleAction("profile", selectedProfile.id, "approved")}>
+                      Approve
+                    </Button>
+                    <Button size="sm" variant="outline" className="rounded-full border-[#DDE4EE] bg-white" onClick={() => handleAction("profile", selectedProfile.id, "in_review")}>
+                      In review
+                    </Button>
+                    <Button size="sm" variant="outline" className="rounded-full border-[#E83262]/20 bg-[#FFF4F7] text-[#C3264E]" onClick={() => handleAction("profile", selectedProfile.id, "rejected")}>
+                      Reject
+                    </Button>
+                  </div>
+                </div>
+              </aside>
+
+              <div className="space-y-5 p-5">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="profile-edit-name">Name</Label>
+                    <Input id="profile-edit-name" value={profileEditDraft.name} onChange={(event) => updateProfileEditDraft("name", event.target.value)} className="rounded-2xl bg-white" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="profile-edit-age">Age</Label>
+                    <Input id="profile-edit-age" type="number" min="18" max="100" value={profileEditDraft.age} onChange={(event) => updateProfileEditDraft("age", event.target.value)} className="rounded-2xl bg-white" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="profile-edit-gender">Gender</Label>
+                    <Input id="profile-edit-gender" value={profileEditDraft.gender} onChange={(event) => updateProfileEditDraft("gender", event.target.value)} className="rounded-2xl bg-white" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="profile-edit-created-by">Created by</Label>
+                    <Input id="profile-edit-created-by" value={profileEditDraft.createdBy} onChange={(event) => updateProfileEditDraft("createdBy", event.target.value)} className="rounded-2xl bg-white" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="profile-edit-public-id">Public profile ID</Label>
+                    <Input id="profile-edit-public-id" value={profileEditDraft.publicId} onChange={(event) => updateProfileEditDraft("publicId", event.target.value)} className="rounded-2xl bg-white" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="profile-edit-phone">Phone</Label>
+                    <Input id="profile-edit-phone" value={profileEditDraft.phone} onChange={(event) => updateProfileEditDraft("phone", event.target.value)} className="rounded-2xl bg-white" placeholder="+91..." />
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <button
+                    type="button"
+                    onClick={() => updateProfileEditDraft("profileCompleted", !profileEditDraft.profileCompleted)}
+                    className={profileEditDraft.profileCompleted ? "rounded-2xl border border-[#1b6b43]/20 bg-[#1b6b43]/10 p-4 text-left text-sm font-bold text-[#1b6b43]" : "rounded-2xl border border-[#E83262]/20 bg-[#FFF4F7] p-4 text-left text-sm font-bold text-[#C3264E]"}
+                  >
+                    {profileEditDraft.profileCompleted ? "Profile complete" : "Profile draft"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateProfileEditDraft("profileHidden", !profileEditDraft.profileHidden)}
+                    className={profileEditDraft.profileHidden ? "rounded-2xl border border-[#E83262]/20 bg-[#FFF4F7] p-4 text-left text-sm font-bold text-[#C3264E]" : "rounded-2xl border border-[#1b6b43]/20 bg-[#1b6b43]/10 p-4 text-left text-sm font-bold text-[#1b6b43]"}
+                  >
+                    {profileEditDraft.profileHidden ? "Hidden from discovery" : "Visible in discovery"}
+                  </button>
+                  <div className="space-y-2">
+                    <Label htmlFor="profile-edit-review">Review status</Label>
+                    <select
+                      id="profile-edit-review"
+                      value={profileEditDraft.reviewStatus}
+                      onChange={(event) => updateProfileEditDraft("reviewStatus", event.target.value)}
+                      className="h-12 w-full rounded-2xl border border-[#DDE4EE] bg-white px-4 text-sm font-semibold text-[#26364A]"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="in_review">In review</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="profile-edit-bio">Bio</Label>
+                  <Textarea id="profile-edit-bio" value={profileEditDraft.bio} onChange={(event) => updateProfileEditDraft("bio", event.target.value)} className="min-h-28 rounded-2xl bg-white" />
+                </div>
+
+                <div className="grid gap-4 xl:grid-cols-2">
+                  {[
+                    ["Photos JSON", "photosJson"],
+                    ["Personal JSON", "personalJson"],
+                    ["Career JSON", "careerJson"],
+                    ["Family JSON", "familyJson"],
+                    ["Cultural JSON", "culturalJson"],
+                    ["Partner preferences JSON", "partnerPreferencesJson"],
+                  ].map(([label, key]) => (
+                    <div key={key} className="space-y-2">
+                      <Label htmlFor={`profile-edit-${key}`}>{label}</Label>
+                      <Textarea
+                        id={`profile-edit-${key}`}
+                        value={String(profileEditDraft[key as keyof AdminProfileEditDraft] || "")}
+                        onChange={(event) => updateProfileEditDraft(key as keyof AdminProfileEditDraft, event.target.value as never)}
+                        className="min-h-44 rounded-2xl bg-[#0f172a] font-mono text-xs text-white"
+                        spellCheck={false}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="profile-edit-notes">Audit note</Label>
+                  <Textarea id="profile-edit-notes" value={profileEditDraft.notes} onChange={(event) => updateProfileEditDraft("notes", event.target.value)} className="min-h-24 rounded-2xl bg-white" />
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
       {pendingAction && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#172235]/55 px-4 py-5 backdrop-blur-sm sm:items-center">
           <section className="w-full max-w-xl rounded-[1.5rem] border border-[#DDE4EE] bg-white p-5 shadow-[0_32px_120px_rgba(23,34,53,0.28)] sm:p-6">

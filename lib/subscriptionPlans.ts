@@ -8,8 +8,6 @@ export type SubscriptionPlan = {
   durationLabel: string
   durationDays: number
   priceLabel: string
-  originalPriceLabel?: string
-  discountLabel?: string
   popular?: boolean
   monthlySuperLikes: number | null
   shortlistLimit: number | null
@@ -30,16 +28,13 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     name: "Basic",
     durationLabel: "3 months",
     durationDays: 90,
-    priceLabel: "INR 233",
-    originalPriceLabel: "INR 2,329",
-    discountLabel: "90% off Basic",
+    priceLabel: "INR 2,329",
     monthlySuperLikes: 5,
     shortlistLimit: 30,
     contactViewLimit: 15,
     chatProfileLimit: 50,
     canSeeWhoShortlistedYou: false,
     features: [
-      "90% private launch discount",
       "30 shortlist saves",
       "5 Super Likes every month",
       "15 contact reveals",

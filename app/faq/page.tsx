@@ -85,9 +85,9 @@ const faqSections = [
           "Premium access continues for a 15-day grace period while renewal reminders are shown. If payment is not completed during grace, premium access expires automatically.",
       },
       {
-        question: "Is the launch discount permanent?",
+        question: "Do discounts apply to premium plans?",
         answer:
-          "The current launch offer gives 90% off the Basic plan only. Essential, Signature, and Heritage use standard launch pricing. Final payment, invoice, and renewal handling depends on the connected payment provider.",
+          "Premium plans show their real active prices by default. Seasonal offers, private discounts, and banner promotions appear only when the Lovesathi admin team publishes or grants them.",
       },
     ],
   },

@@ -8,7 +8,6 @@ import { getSubscriptionPlan } from "@/lib/subscriptionPlans"
 
 export function PaymentScreen({ planId, onCancel }: { planId: string; onSuccess?: () => void; onCancel?: () => void }) {
   const plan = getSubscriptionPlan(planId)
-  const pricingNote = plan.id === "basic" ? " with the Basic 90% launch offer." : " at standard launch pricing."
 
   return (
     <div className="luxe-light-page relative flex h-full min-h-screen flex-col">
@@ -27,7 +26,7 @@ export function PaymentScreen({ planId, onCancel }: { planId: string; onSuccess?
           <CardContent className="space-y-5">
             <p className="text-base leading-7 text-[#6F7C8B]">
               The selected plan is <span className="font-bold text-[#26364A]">{plan.name}</span> for{" "}
-              <span className="font-bold text-[#26364A]">{plan.priceLabel}</span>{pricingNote} Before launch, this screen should be connected to a real payment provider with subscriptions,
+              <span className="font-bold text-[#26364A]">{plan.priceLabel}</span>. Before launch, this screen should be connected to a real payment provider with subscriptions,
               invoices, refunds, and webhook-based entitlement updates. Until then, Lovesathi will not collect card details.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">

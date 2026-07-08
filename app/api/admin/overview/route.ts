@@ -29,6 +29,7 @@ type AdminProfileItem = {
   userId: string
   publicId: string | null
   email: string | null
+  phone: string | null
   name: string
   age: number | null
   gender: string | null
@@ -37,6 +38,13 @@ type AdminProfileItem = {
   education: string | null
   jobTitle: string | null
   bio: string | null
+  photos: string[]
+  personal: Record<string, unknown>
+  career: Record<string, unknown>
+  family: Record<string, unknown>
+  cultural: Record<string, unknown>
+  partnerPreferences: Record<string, unknown>
+  profileHidden: boolean
   photoCount: number
   completionSteps: number
   profileCompleted: boolean
@@ -53,6 +61,7 @@ type AdminUserItem = {
   id: string
   publicId: string | null
   email: string | null
+  phone: string | null
   status: string
   provider: string | null
   emailConfirmedAt: string | null
@@ -220,6 +229,46 @@ type AdminNotificationCampaignItem = {
   createdAt: string | null
 }
 
+type AdminPricingItem = {
+  planId: string
+  planName: string
+  durationLabel: string
+  durationDays: number
+  priceLabel: string
+  priceAmount: number | null
+  currency: string
+  isActive: boolean
+  updatedAt: string | null
+}
+
+type AdminDiscountBannerItem = {
+  id: string
+  title: string
+  bannerText: string
+  bannerImageUrl: string | null
+  discountPercent: number
+  planIds: string[]
+  status: string
+  startsAt: string | null
+  endsAt: string | null
+  updatedAt: string | null
+}
+
+type AdminUserDiscountItem = {
+  id: string
+  userId: string
+  userEmail: string | null
+  profileName: string | null
+  planId: string | null
+  title: string
+  discountPercent: number
+  notes: string | null
+  status: string
+  startsAt: string | null
+  endsAt: string | null
+  updatedAt: string | null
+}
+
 type AdminSuccessStoryItem = {
   id: string
   coupleNames: string
@@ -327,8 +376,12 @@ function getProfileFlags(row: any) {
   return flags
 }
 
-function mapProfile(row: any, userEmailMap = new Map<string, string | null>()): AdminProfileItem {
+function mapProfile(
+  row: any,
+  userMetaMap = new Map<string, { email: string | null; phone: string | null }>(),
+): AdminProfileItem {
   const photos = Array.isArray(row.photos) ? row.photos : []
+  const userMeta = userMetaMap.get(row.user_id)
   const city =
     getJsonText(row.career?.work_location, ["city", "state", "country"]) ||
     getJsonText(row.personal, ["city", "location"]) ||
@@ -338,7 +391,8 @@ function mapProfile(row: any, userEmailMap = new Map<string, string | null>()): 
     id: row.id,
     userId: row.user_id,
     publicId: row.public_profile_id || null,
-    email: userEmailMap.get(row.user_id) || null,
+    email: userMeta?.email || null,
+    phone: userMeta?.phone || null,
     name: row.name || "Unnamed profile",
     age: typeof row.age === "number" ? row.age : null,
     gender: row.gender || null,
@@ -347,6 +401,13 @@ function mapProfile(row: any, userEmailMap = new Map<string, string | null>()): 
     education: getJsonText(row.career, ["highest_education", "college"]),
     jobTitle: getJsonText(row.career, ["job_title", "company"]),
     bio: typeof row.bio === "string" ? row.bio : null,
+    photos,
+    personal: row.personal && typeof row.personal === "object" ? row.personal : {},
+    career: row.career && typeof row.career === "object" ? row.career : {},
+    family: row.family && typeof row.family === "object" ? row.family : {},
+    cultural: row.cultural && typeof row.cultural === "object" ? row.cultural : {},
+    partnerPreferences: row.partner_preferences && typeof row.partner_preferences === "object" ? row.partner_preferences : {},
+    profileHidden: Boolean(row.profile_hidden),
     photoCount: photos.length,
     completionSteps: countCompletedSteps(row),
     profileCompleted: Boolean(row.profile_completed),
@@ -474,7 +535,7 @@ function isMissingAdminReviewColumn(error: any) {
 
 async function loadAdminProfileRows(supabase: any): Promise<QueueResult<any>> {
   const enhancedSelect =
-    "id,user_id,public_profile_id,name,age,gender,created_by,photos,bio,personal,career,cultural,profile_completed,step1_completed,step2_completed,step3_completed,step4_completed,step5_completed,step6_completed,step7_completed,is_seeded_profile,admin_review_status,admin_review_notes,admin_reviewed_at,created_at,updated_at"
+    "id,user_id,public_profile_id,name,age,gender,created_by,photos,bio,personal,career,family,cultural,partner_preferences,profile_completed,profile_hidden,step1_completed,step2_completed,step3_completed,step4_completed,step5_completed,step6_completed,step7_completed,is_seeded_profile,admin_review_status,admin_review_notes,admin_reviewed_at,created_at,updated_at"
   const legacySelect =
     "id,user_id,public_profile_id,name,age,gender,created_by,photos,bio,personal,career,cultural,profile_completed,step1_completed,step2_completed,step3_completed,step4_completed,step5_completed,step6_completed,step7_completed,created_at,updated_at"
 
@@ -610,6 +671,20 @@ async function loadAuthUserProfileRows(supabase: any, userIds: string[]): Promis
   }
 }
 
+async function loadAccountProfileRows(supabase: any, userIds: string[]): Promise<QueueResult<any>> {
+  if (userIds.length === 0) {
+    return { status: "ok", items: [] }
+  }
+
+  return loadBatchedRows(
+    supabase,
+    "user_profiles",
+    "user_id,phone,phone_verified_at,updated_at",
+    "user_id",
+    userIds,
+  )
+}
+
 async function loadEntitlementRows(supabase: any, userIds: string[]): Promise<QueueResult<any>> {
   if (userIds.length === 0) {
     return { status: "ok", items: [] }
@@ -694,6 +769,35 @@ async function loadSuccessStoryRows(supabase: any): Promise<QueueResult<any>> {
   )
 }
 
+async function loadPlanPricingRows(supabase: any): Promise<QueueResult<any>> {
+  return safeRows<any>(() =>
+    supabase
+      .from("lovesathi_plan_pricing")
+      .select("plan_id,plan_name,duration_label,duration_days,price_label,price_amount,currency,is_active,updated_at")
+      .order("display_order", { ascending: true }),
+  )
+}
+
+async function loadDiscountBannerRows(supabase: any): Promise<QueueResult<any>> {
+  return safeRows<any>(() =>
+    supabase
+      .from("lovesathi_discount_banners")
+      .select("id,title,banner_text,banner_image_url,discount_percent,plan_ids,status,starts_at,ends_at,updated_at")
+      .order("updated_at", { ascending: false })
+      .limit(30),
+  )
+}
+
+async function loadUserDiscountRows(supabase: any): Promise<QueueResult<any>> {
+  return safeRows<any>(() =>
+    supabase
+      .from("lovesathi_user_discounts")
+      .select("id,user_id,plan_id,title,discount_percent,notes,status,starts_at,ends_at,updated_at")
+      .order("updated_at", { ascending: false })
+      .limit(80),
+  )
+}
+
 async function loadNameMap(supabase: any, userIds: string[]) {
   if (userIds.length === 0) {
     return new Map<string, string>()
@@ -704,7 +808,23 @@ async function loadNameMap(supabase: any, userIds: string[]) {
   return new Map<string, string>(rows.map((row) => [row.user_id, row.name || "Unnamed profile"]))
 }
 
-function mapAuthUser(user: any, profile?: any, entitlement?: any): AdminUserItem {
+function getAuthPhone(user: any, accountProfile?: any) {
+  const values = [
+    accountProfile?.phone,
+    user?.phone,
+    user?.user_metadata?.phone,
+  ]
+
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) {
+      return value.trim()
+    }
+  }
+
+  return null
+}
+
+function mapAuthUser(user: any, profile?: any, entitlement?: any, accountProfile?: any): AdminUserItem {
   const providers = Array.isArray(user?.app_metadata?.providers)
     ? user.app_metadata.providers.join(", ")
     : typeof user?.app_metadata?.provider === "string"
@@ -720,6 +840,7 @@ function mapAuthUser(user: any, profile?: any, entitlement?: any): AdminUserItem
     id: String(user?.id || ""),
     publicId: profile?.public_profile_id || null,
     email: typeof user?.email === "string" ? user.email : null,
+    phone: getAuthPhone(user, accountProfile),
     status,
     provider: providers,
     emailConfirmedAt: typeof user?.email_confirmed_at === "string" ? user.email_confirmed_at : null,
@@ -914,6 +1035,10 @@ export async function GET(request: Request) {
     siteSettingRows,
     notificationCampaignRows,
     successStoryRows,
+    accountProfileRows,
+    planPricingRows,
+    discountBannerRows,
+    userDiscountRows,
   ] = await Promise.all([
     loadAdminProfileRows(supabase),
     safeRows<any>(() =>
@@ -956,9 +1081,14 @@ export async function GET(request: Request) {
     loadSiteSettingRows(supabase),
     loadNotificationCampaignRows(supabase),
     loadSuccessStoryRows(supabase),
+    loadAccountProfileRows(supabase, authUserIds),
+    loadPlanPricingRows(supabase),
+    loadDiscountBannerRows(supabase),
+    loadUserDiscountRows(supabase),
   ])
 
   const userProfileMap = new Map(userProfileRows.items.map((item) => [item.user_id, item]))
+  const accountProfileMap = new Map(accountProfileRows.items.map((item) => [item.user_id, item]))
   const entitlementMap = new Map<string, any>()
   entitlementRows.items.forEach((item) => {
     const isActive = isEntitlementPremium(item)
@@ -968,10 +1098,21 @@ export async function GET(request: Request) {
       entitlementMap.set(item.user_id, item)
     }
   })
-  const userEmailMap = new Map<string, string | null>(
-    authUserRows.items.map((item) => [item.id, typeof item.email === "string" ? item.email : null]),
+  const userMetaMap = new Map<string, { email: string | null; phone: string | null }>(
+    authUserRows.items.map((item) => [
+      item.id,
+      {
+        email: typeof item.email === "string" ? item.email : null,
+        phone: getAuthPhone(item, accountProfileMap.get(item.id)),
+      },
+    ]),
   )
-  const authUsers = authUserRows.items.map((item) => mapAuthUser(item, userProfileMap.get(item.id), entitlementMap.get(item.id)))
+  const userEmailMap = new Map<string, string | null>(
+    Array.from(userMetaMap.entries()).map(([userId, meta]) => [userId, meta.email]),
+  )
+  const authUsers = authUserRows.items.map((item) =>
+    mapAuthUser(item, userProfileMap.get(item.id), entitlementMap.get(item.id), accountProfileMap.get(item.id)),
+  )
   const recentRegistrationSince = Date.now() - 7 * 24 * 60 * 60 * 1000
   const activeUserSince = Date.now() - 30 * 24 * 60 * 60 * 1000
   const unconfirmedUserCount = authUsers.filter((item) => item.status === "unconfirmed").length
@@ -1156,6 +1297,54 @@ export async function GET(request: Request) {
       updatedAt: item.updated_at || null,
     })),
   }
+  const pricingByPlanId = new Map<string, any>(planPricingRows.items.map((item) => [item.plan_id, item]))
+  const planCatalog = SUBSCRIPTION_PLANS.map((plan) => {
+    const pricing = pricingByPlanId.get(plan.id)
+    return {
+      ...plan,
+      durationLabel: pricing?.duration_label || plan.durationLabel,
+      durationDays: pricing?.duration_days || plan.durationDays,
+      priceLabel: pricing?.price_label || plan.priceLabel,
+      priceAmount: typeof pricing?.price_amount === "number" ? pricing.price_amount : null,
+      currency: pricing?.currency || "INR",
+      isActive: pricing ? Boolean(pricing.is_active) : true,
+      updatedAt: pricing?.updated_at || null,
+    }
+  })
+  const discountBanners: QueueResult<AdminDiscountBannerItem> = {
+    status: discountBannerRows.status,
+    detail: discountBannerRows.detail,
+    items: discountBannerRows.items.map((item) => ({
+      id: item.id,
+      title: item.title || "Untitled offer",
+      bannerText: item.banner_text || "",
+      bannerImageUrl: item.banner_image_url || null,
+      discountPercent: Number(item.discount_percent) || 0,
+      planIds: Array.isArray(item.plan_ids) ? item.plan_ids : [],
+      status: item.status || "draft",
+      startsAt: item.starts_at || null,
+      endsAt: item.ends_at || null,
+      updatedAt: item.updated_at || null,
+    })),
+  }
+  const userDiscounts: QueueResult<AdminUserDiscountItem> = {
+    status: userDiscountRows.status,
+    detail: userDiscountRows.detail,
+    items: userDiscountRows.items.map((item) => ({
+      id: item.id,
+      userId: item.user_id,
+      userEmail: userEmailMap.get(item.user_id) || null,
+      profileName: profileNameByUserId.get(item.user_id) || null,
+      planId: item.plan_id || null,
+      title: item.title || "Private discount",
+      discountPercent: Number(item.discount_percent) || 0,
+      notes: item.notes || null,
+      status: item.status || "active",
+      startsAt: item.starts_at || null,
+      endsAt: item.ends_at || null,
+      updatedAt: item.updated_at || null,
+    })),
+  }
   const allMetrics = [...metrics, ...userMetrics]
   const totalEvents = getMetricValue(allMetrics, "Total events")
   const profilesNeedingReview = getMetricValue(allMetrics, "Profiles needing review")
@@ -1290,7 +1479,7 @@ export async function GET(request: Request) {
       profiles: {
         status: profileRows.status,
         detail: profileRows.detail,
-        items: profileRows.items.map((item) => mapProfile(item, userEmailMap)),
+        items: profileRows.items.map((item) => mapProfile(item, userMetaMap)),
       } satisfies QueueResult<AdminProfileItem>,
       verifications,
       reports,
@@ -1316,7 +1505,7 @@ export async function GET(request: Request) {
       } satisfies QueueResult<AdminAuditItem>,
     },
     operations: {
-      plans: SUBSCRIPTION_PLANS,
+      plans: planCatalog,
       activeSubscriptions,
       paymentHistory: {
         status: allEntitlementRows.status,
@@ -1331,6 +1520,8 @@ export async function GET(request: Request) {
       siteSettings,
       notificationCampaigns,
       successStories,
+      discountBanners,
+      userDiscounts,
     },
     authEmailTelemetry,
     readiness: [
