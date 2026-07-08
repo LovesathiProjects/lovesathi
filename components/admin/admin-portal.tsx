@@ -406,6 +406,27 @@ export type AdminSection =
   | "stories"
   | "audit"
 
+type AdminActionResource =
+  | "verification"
+  | "report"
+  | "event_registration"
+  | "event_report"
+  | "profile"
+  | "user"
+  | "entitlement"
+  | "auth_email"
+
+type PendingAdminAction = {
+  resource: AdminActionResource
+  id: string
+  status: string
+  title: string
+  detail: string
+  defaultNote: string
+  destructive?: boolean
+  options?: Record<string, unknown>
+}
+
 const metricIcons = [Users, BadgeCheck, Clock3, ShieldCheck, FileWarning, Crown, MessageCircle, Database, Sparkles]
 const riskIcons = [FileWarning, UserRoundCheck, ShieldCheck, Mail, Crown, CalendarDays, Activity]
 const eventTypes: AdminEventType[] = ["meetup", "webinar", "workshop", "consultation", "community"]
@@ -648,12 +669,15 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
   const [eventDraft, setEventDraft] = useState<AdminEventDraft>(() => createEmptyEventDraft())
   const [eventSaving, setEventSaving] = useState(false)
   const [eventBannerUploading, setEventBannerUploading] = useState(false)
+  const [pendingEventDelete, setPendingEventDelete] = useState<AdminEventItem | null>(null)
   const [notificationDraft, setNotificationDraft] = useState<AdminNotificationDraft>(() => createEmptyNotificationDraft())
   const [notificationSaving, setNotificationSaving] = useState(false)
   const [siteSettingDrafts, setSiteSettingDrafts] = useState<AdminSiteSettingItem[]>([])
   const [settingsSaving, setSettingsSaving] = useState(false)
   const [successStoryDraft, setSuccessStoryDraft] = useState<AdminSuccessStoryDraft>(() => createEmptySuccessStoryDraft())
   const [successStorySaving, setSuccessStorySaving] = useState(false)
+  const [pendingAction, setPendingAction] = useState<PendingAdminAction | null>(null)
+  const [pendingActionNote, setPendingActionNote] = useState("")
 
   const generatedAt = overview?.generatedAt ? formatDate(overview.generatedAt) : null
   const refreshing = loading && Boolean(sessionToken)
@@ -940,29 +964,7 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
     setOverview(null)
   }
 
-  async function handleAction(
-    resource:
-      | "verification"
-      | "report"
-      | "event_registration"
-      | "event_report"
-      | "profile"
-      | "user"
-      | "entitlement"
-      | "auth_email",
-    id: string,
-    status: string,
-    options?: Record<string, unknown>,
-  ) {
-    if (!sessionToken) return
-    const confirmCopy =
-      resource === "auth_email" && status === "resend_confirmation"
-        ? "Resend a fresh email verification code to this user?"
-        : resource === "user" && status === "deleted"
-          ? "Permanently delete this user account? This cannot be undone."
-          : `Mark this ${resourceLabel(resource)} as ${statusLabel(status)}?`
-    if (!window.confirm(confirmCopy)) return
-
+  function buildAdminAction(resource: AdminActionResource, id: string, status: string, options?: Record<string, unknown>): PendingAdminAction {
     const defaultNote =
       resource === "verification" && status === "rejected"
         ? "Rejected by Lovesathi admin review."
@@ -984,6 +986,8 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                         ? "User access restored by Lovesathi admin review."
                         : resource === "entitlement" && status === "active"
                           ? "Premium access granted by Lovesathi admin."
+                          : resource === "entitlement" && status === "past_due"
+                            ? "Premium renewal marked due by Lovesathi admin."
                           : resource === "entitlement"
                             ? "Premium access revoked by Lovesathi admin."
                             : resource === "auth_email"
@@ -993,20 +997,47 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                                 : resource === "event_report"
                                   ? `Event report marked ${statusLabel(status)} by Lovesathi admin.`
                               : `Report marked ${statusLabel(status)} by Lovesathi admin.`
-    const shouldAskForNote =
-      resource === "report" ||
-      resource === "event_report" ||
-      resource === "event_registration" ||
-      resource === "user" ||
-      status === "rejected" ||
-      status === "in_review"
-    const noteInput = shouldAskForNote
-      ? window.prompt("Add an admin note for the audit trail:", defaultNote)
-      : defaultNote
+    const title =
+      resource === "auth_email" && status === "resend_confirmation"
+        ? "Resend verification email"
+        : resource === "user" && status === "deleted"
+          ? "Delete user permanently"
+          : `Confirm ${resourceLabel(resource)} update`
+    const detail =
+      resource === "auth_email" && status === "resend_confirmation"
+        ? "A fresh Supabase confirmation email will be sent to this member."
+        : resource === "user" && status === "deleted"
+          ? "This permanently removes the Supabase Auth user and attempts to remove their uploaded profile assets."
+          : resource === "entitlement" && status === "active"
+            ? `Grant ${statusLabel(String(options?.planId || "premium"))} premium access and write the action to the audit trail.`
+            : `Mark this ${resourceLabel(resource)} as ${statusLabel(status)} and write the action to the audit trail.`
 
-    if (noteInput === null) return
+    return {
+      resource,
+      id,
+      status,
+      options,
+      title,
+      detail,
+      defaultNote,
+      destructive:
+        (resource === "user" && (status === "deleted" || status === "suspended")) ||
+        status === "rejected" ||
+        status === "canceled" ||
+        status === "dismissed",
+    }
+  }
 
-    const key = `${resource}:${id}:${status}`
+  function handleAction(resource: AdminActionResource, id: string, status: string, options?: Record<string, unknown>) {
+    if (!sessionToken) return
+    const action = buildAdminAction(resource, id, status, options)
+    setPendingAction(action)
+    setPendingActionNote(action.defaultNote)
+  }
+
+  async function submitPendingAction() {
+    if (!sessionToken || !pendingAction) return
+    const key = `${pendingAction.resource}:${pendingAction.id}:${pendingAction.status}`
     setActionKey(key)
     setError(null)
     try {
@@ -1017,17 +1048,19 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          resource,
-          id,
-          status,
-          notes: noteInput.trim() || defaultNote,
-          ...options,
+          resource: pendingAction.resource,
+          id: pendingAction.id,
+          status: pendingAction.status,
+          notes: pendingActionNote.trim() || pendingAction.defaultNote,
+          ...pendingAction.options,
         }),
       })
       const payload = await response.json()
       if (!response.ok) {
         throw new Error(payload.error || "Unable to update admin record")
       }
+      setPendingAction(null)
+      setPendingActionNote("")
       setRefreshIndex((value) => value + 1)
     } catch (err: any) {
       setError(err.message || "Unable to update admin record")
@@ -1129,17 +1162,15 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
 
   function handleEditEvent(item: AdminEventItem) {
     setEventDraft(eventToDraft(item))
-    window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  async function deleteEvent(item: AdminEventItem) {
-    if (!sessionToken) return
-    if (!window.confirm(`Delete "${item.title}" permanently from the events desk?`)) return
+  async function confirmDeleteEvent() {
+    if (!sessionToken || !pendingEventDelete) return
 
     setEventSaving(true)
     setError(null)
     try {
-      const response = await fetch(`/api/admin/events?id=${encodeURIComponent(item.id)}`, {
+      const response = await fetch(`/api/admin/events?id=${encodeURIComponent(pendingEventDelete.id)}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${sessionToken}`,
@@ -1149,9 +1180,10 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
       if (!response.ok) {
         throw new Error(payload.error || "Unable to delete event")
       }
-      if (eventDraft.id === item.id) {
+      if (eventDraft.id === pendingEventDelete.id) {
         setEventDraft(createEmptyEventDraft())
       }
+      setPendingEventDelete(null)
       setRefreshIndex((value) => value + 1)
     } catch (err: any) {
       setError(err.message || "Unable to delete event")
@@ -1250,7 +1282,6 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
 
   function handleEditSuccessStory(item: AdminSuccessStoryItem) {
     setSuccessStoryDraft(successStoryToDraft(item))
-    document.getElementById("stories")?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
   if (loading && !sessionToken) {
@@ -1949,7 +1980,7 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                             variant="outline"
                             className="rounded-full border-[#E83262]/30 bg-white text-[#C3264E]"
                             disabled={eventSaving}
-                            onClick={() => void deleteEvent(item)}
+                            onClick={() => setPendingEventDelete(item)}
                           >
                             <Trash2 className="h-4 w-4" />
                             Delete
@@ -3403,6 +3434,116 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
           </div>
         </div>
       </div>
+      {pendingAction && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#172235]/55 px-4 py-5 backdrop-blur-sm sm:items-center">
+          <section className="w-full max-w-xl rounded-[1.5rem] border border-[#DDE4EE] bg-white p-5 shadow-[0_32px_120px_rgba(23,34,53,0.28)] sm:p-6">
+            <div className="flex items-start gap-4">
+              <div
+                className={
+                  pendingAction.destructive
+                    ? "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FFF4F7] text-[#C3264E]"
+                    : "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#F1F8F4] text-[#1b6b43]"
+                }
+              >
+                {pendingAction.destructive ? <AlertTriangle className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="luxe-kicker mb-2 text-[#E83262]">admin review</p>
+                <h2 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#172235]">
+                  {pendingAction.title}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-[#6F7C8B]">{pendingAction.detail}</p>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-2">
+              <Label htmlFor="admin-action-note">Audit note</Label>
+              <Textarea
+                id="admin-action-note"
+                value={pendingActionNote}
+                onChange={(event) => setPendingActionNote(event.target.value)}
+                className="min-h-28"
+                placeholder="Add the reason or operator note for this decision."
+              />
+            </div>
+
+            {error && (
+              <p className="mt-4 rounded-2xl border border-[#E83262]/20 bg-[#FFF4F7] p-3 text-sm font-bold text-[#C3264E]">
+                {error}
+              </p>
+            )}
+
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-full border-[#DDE4EE] bg-white"
+                disabled={Boolean(actionKey)}
+                onClick={() => {
+                  setPendingAction(null)
+                  setPendingActionNote("")
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                className={pendingAction.destructive ? "rounded-full bg-[#C3264E] text-white hover:bg-[#9f1f40]" : "luxe-button rounded-full"}
+                disabled={Boolean(actionKey)}
+                onClick={() => void submitPendingAction()}
+              >
+                {actionKey ? "Saving..." : "Confirm action"}
+              </Button>
+            </div>
+          </section>
+        </div>
+      )}
+      {pendingEventDelete && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#172235]/55 px-4 py-5 backdrop-blur-sm sm:items-center">
+          <section className="w-full max-w-lg rounded-[1.5rem] border border-[#DDE4EE] bg-white p-5 shadow-[0_32px_120px_rgba(23,34,53,0.28)] sm:p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FFF4F7] text-[#C3264E]">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="luxe-kicker mb-2 text-[#E83262]">delete event</p>
+                <h2 className="font-serif text-3xl font-bold tracking-[-0.05em] text-[#172235]">
+                  Delete {pendingEventDelete.title}?
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-[#6F7C8B]">
+                  This removes the event from the admin calendar and public event listings. Use archive when the event should stay in history.
+                </p>
+              </div>
+            </div>
+
+            {error && (
+              <p className="mt-4 rounded-2xl border border-[#E83262]/20 bg-[#FFF4F7] p-3 text-sm font-bold text-[#C3264E]">
+                {error}
+              </p>
+            )}
+
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-full border-[#DDE4EE] bg-white"
+                disabled={eventSaving}
+                onClick={() => setPendingEventDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                className="rounded-full bg-[#C3264E] text-white hover:bg-[#9f1f40]"
+                disabled={eventSaving}
+                onClick={() => void confirmDeleteEvent()}
+              >
+                {eventSaving ? "Deleting..." : "Delete event"}
+              </Button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   )
 }

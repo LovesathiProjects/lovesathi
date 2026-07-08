@@ -20,6 +20,7 @@ import {
   loadPublishedLovesathiEvents,
   type LovesathiEvent,
 } from "@/lib/events"
+import { EventRegistrationForm } from "@/components/events/event-registration-form"
 import { WHATSAPP_CHAT_URL } from "@/lib/support"
 
 export const dynamic = "force-dynamic"
@@ -112,21 +113,26 @@ function EventCard({ event, featured = false }: { event: LovesathiEvent; feature
         </p>
       )}
 
-      <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-        <Button asChild className="luxe-button rounded-md">
-          <a href={getEventCta(event)} target="_blank" rel="noreferrer">
-            {event.rsvpUrl ? "RSVP" : "Ask on WhatsApp"}
-            <ArrowRight className="h-4 w-4" />
-          </a>
-        </Button>
-        {event.whatsappUrl && event.rsvpUrl && (
+      <div className="mt-6 space-y-3">
+        <EventRegistrationForm eventId={event.id} eventTitle={event.title} featured={featured} />
+        <div className="flex flex-col gap-2 sm:flex-row">
+          {(event.rsvpUrl || event.whatsappUrl) && (
+            <Button asChild variant="outline" className={featured ? "rounded-md border-white/20 bg-white/10 text-white hover:bg-white/15" : "rounded-md border-[#482b1a]/15 bg-white"}>
+              <a href={getEventCta(event)} target="_blank" rel="noreferrer">
+                {event.rsvpUrl ? "Open RSVP link" : "Ask on WhatsApp"}
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            </Button>
+          )}
+          {event.whatsappUrl && event.rsvpUrl && (
           <Button asChild variant="outline" className={featured ? "rounded-md border-white/20 bg-white/10 text-white hover:bg-white/15" : "rounded-md border-[#482b1a]/15 bg-white"}>
             <a href={event.whatsappUrl} target="_blank" rel="noreferrer">
               <MessageCircle className="h-4 w-4" />
               WhatsApp
             </a>
           </Button>
-        )}
+          )}
+        </div>
       </div>
     </article>
   )
