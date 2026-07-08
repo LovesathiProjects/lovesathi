@@ -21,7 +21,7 @@ import { colors, radius, shadow, spacing } from '../theme';
 type AuthView = 'landing' | 'login' | 'signup';
 
 const trustSignals = ['Verified profiles', 'Premium discovery', 'Family-ready context'];
-const logoImage = require('../../assets/lovesathi-logo.jpeg');
+const logoImage = require('../../assets/lovesathi-logo.png');
 const WHATSAPP_URL = 'https://wa.me/919175554708';
 
 export function AuthScreen() {

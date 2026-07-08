@@ -849,7 +849,7 @@ export function AdminPortal() {
           <div className="hidden min-h-[38rem] flex-col justify-between border-r border-[#E6EAF1] bg-[#F7F9FC] p-10 text-[#26364A] lg:flex">
             <div>
               <div className="mb-8 inline-flex items-center gap-3 rounded-xl border border-[#E6EAF1] bg-white px-3 py-2 shadow-sm">
-                <img src="/lovesathi-logo.jpeg" alt="LoveSathi" className="h-12 w-auto object-contain" />
+                <img src="/lovesathi-logo.png" alt="LoveSathi" className="h-12 w-auto object-contain" />
               </div>
               <p className="luxe-kicker mb-4 text-[#E83262]">admin workspace</p>
               <h1 className="max-w-xl text-5xl font-black leading-[0.95] tracking-[-0.055em] text-[#172235]">
@@ -934,7 +934,7 @@ export function AdminPortal() {
         <aside className="hidden border-r border-[#E1E7EF] bg-[#FFFFFF] px-4 py-5 lg:block">
           <div className="sticky top-5 flex h-[calc(100dvh-2.5rem)] flex-col">
             <Link href="/" className="mb-6 inline-flex rounded-xl border border-[#E6EAF1] bg-white px-3 py-2 no-underline shadow-sm">
-              <img src="/lovesathi-logo.jpeg" alt="LoveSathi" className="h-12 w-auto object-contain" />
+              <img src="/lovesathi-logo.png" alt="LoveSathi" className="h-12 w-auto object-contain" />
             </Link>
             <div className="rounded-2xl border border-[#E6EAF1] bg-[#F7F9FC] p-4">
               <p className="luxe-kicker text-[#E83262]">live lane</p>

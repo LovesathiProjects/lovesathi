@@ -16,7 +16,7 @@ import type {
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const VerifyStack = createNativeStackNavigator<VerifyStackParamList>();
-const logoImage = require('../../assets/lovesathi-logo.jpeg');
+const logoImage = require('../../assets/lovesathi-logo.png');
 
 function AuthStackScreen() {
   return (

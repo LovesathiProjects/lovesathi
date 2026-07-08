@@ -9,7 +9,7 @@ import { colors, radius, shadow, spacing } from '../theme';
 import type { MainTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
-const logoImage = require('../../assets/lovesathi-logo.jpeg');
+const logoImage = require('../../assets/lovesathi-logo.png');
 
 const tabLabels: Record<keyof MainTabParamList, string> = {
   Discover: 'Discover',

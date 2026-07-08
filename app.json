@@ -24,8 +24,10 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./public/lovesathi-app-logo.png",
-        "backgroundColor": "#F7F3EE"
+        "foregroundImage": "./public/android-icon-foreground.png",
+        "backgroundImage": "./public/android-icon-background.png",
+        "monochromeImage": "./public/android-icon-monochrome.png",
+        "backgroundColor": "#FFFFFF"
       },
       "package": "com.lovesathi.app",
       "permissions": [
@@ -34,7 +36,7 @@
       ]
     },
     "web": {
-      "favicon": "./public/lovesathi-app-logo.png",
+      "favicon": "./public/favicon.ico",
       "bundler": "metro"
     },
     "plugins": []
