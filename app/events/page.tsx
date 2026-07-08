@@ -59,6 +59,17 @@ function EventCard({ event, featured = false }: { event: LovesathiEvent; feature
           : "overflow-hidden rounded-lg border border-[#482b1a]/10 bg-white/84 p-5 shadow-[0_20px_60px_rgba(38,54,74,0.08)] backdrop-blur-xl"
       }
     >
+      {event.bannerUrl && (
+        <div
+          className={
+            featured
+              ? "mb-5 overflow-hidden rounded-lg border border-white/12 bg-white/10"
+              : "mb-5 overflow-hidden rounded-lg border border-[#E6EAF1] bg-[#F8FAFD]"
+          }
+        >
+          <img src={event.bannerUrl} alt="" className="h-56 w-full object-cover" />
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <span
           className={
@@ -132,6 +143,11 @@ function CalendarPreview({ event }: { event?: LovesathiEvent }) {
 
   return (
     <div className="relative rounded-lg border border-[#E83262]/18 bg-white p-5 shadow-[0_30px_100px_rgba(38,54,74,0.13)]">
+      {event?.bannerUrl && (
+        <div className="mb-4 overflow-hidden rounded-lg border border-[#E6EAF1] bg-[#F8FAFD]">
+          <img src={event.bannerUrl} alt="" className="h-44 w-full object-cover" />
+        </div>
+      )}
       <div className="rounded-lg border border-[#E6EAF1] bg-[#F8FAFD] p-4">
         <div className="flex items-center justify-between border-b border-[#E6EAF1] pb-4">
           <div>
@@ -182,6 +198,7 @@ export default async function EventsPage() {
           </Link>
           <nav className="hidden items-center gap-8 text-sm font-semibold text-[#6F7C8B] md:flex">
             <Link href="/events">Events</Link>
+            <Link href="/success-stories">Stories</Link>
             <Link href="/safety">Safety</Link>
             <Link href="/contact">Contact</Link>
           </nav>

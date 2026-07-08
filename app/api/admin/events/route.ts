@@ -128,6 +128,7 @@ export async function POST(request: Request) {
   const eventType = cleanEventType(body.eventType)
   const rsvpUrl = cleanUrl(body.rsvpUrl)
   const whatsappUrl = cleanUrl(body.whatsappUrl) || WHATSAPP_CHAT_URL
+  const bannerUrl = cleanUrl(body.bannerUrl)
 
   if (!title || !summary || !city || !startsAt) {
     return NextResponse.json(
@@ -171,6 +172,7 @@ export async function POST(request: Request) {
     timezone: cleanText(body.timezone, 60) || "Asia/Kolkata",
     rsvp_url: rsvpUrl,
     whatsapp_url: whatsappUrl,
+    banner_url: bannerUrl,
     capacity,
     is_featured: Boolean(body.isFeatured),
     status,
@@ -222,4 +224,55 @@ export async function POST(request: Request) {
   })
 
   return NextResponse.json({ ok: true, event })
+}
+
+export async function DELETE(request: Request) {
+  const auth = await requireAdmin(request)
+  if (auth.response) {
+    return auth.response
+  }
+
+  const { searchParams } = new URL(request.url)
+  const id = searchParams.get("id")
+
+  if (!id || !uuidPattern.test(id)) {
+    return NextResponse.json({ error: "A valid event id is required." }, { status: 400 })
+  }
+
+  const { supabase, user } = auth.context
+  const { data: previousRecord, error: lookupError } = await supabase
+    .from("lovesathi_events")
+    .select("id,title,status,slug")
+    .eq("id", id)
+    .maybeSingle()
+
+  if (lookupError) {
+    return NextResponse.json({ error: lookupError.message }, { status: 400 })
+  }
+
+  if (!previousRecord) {
+    return NextResponse.json({ error: "Event not found." }, { status: 404 })
+  }
+
+  const { error } = await supabase.from("lovesathi_events").delete().eq("id", id)
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 })
+  }
+
+  await writeAdminAuditLog(supabase, {
+    actorId: user.id,
+    actorEmail: user.email || null,
+    resource: "event",
+    recordId: id,
+    previousStatus: previousRecord.status || null,
+    nextStatus: "deleted",
+    notes: "Event deleted from the Lovesathi admin portal.",
+    metadata: {
+      title: previousRecord.title,
+      slug: previousRecord.slug,
+    },
+  })
+
+  return NextResponse.json({ ok: true })
 }

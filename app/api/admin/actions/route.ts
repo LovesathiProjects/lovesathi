@@ -12,11 +12,14 @@ import {
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const verificationStatuses = new Set(["approved", "rejected", "in_review"])
 const reportStatuses = new Set(["reviewed", "resolved", "dismissed"])
+const eventRegistrationStatuses = new Set(["approved", "rejected", "canceled", "registered"])
+const eventReportStatuses = new Set(["reviewed", "resolved", "dismissed"])
 const profileReviewStatuses = new Set(["approved", "rejected", "in_review", "pending"])
-const userStatuses = new Set(["suspended", "active"])
+const userStatuses = new Set(["suspended", "active", "deleted"])
 const entitlementStatuses = new Set(["active", "past_due", "canceled"])
 const authEmailStatuses = new Set(["resend_confirmation"])
 const adminGrantPlanIds = new Set<string>(SUBSCRIPTION_PLANS.map((plan) => plan.id))
+const userDataBuckets = ["verification-documents", "face-scans", "matrimony-photos"]
 
 function cleanText(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim().slice(0, 500) : null
@@ -39,6 +42,33 @@ function getSiteOrigin(request: Request) {
   }
 
   return new URL(request.url).origin
+}
+
+async function removeUserStorageObjects(supabase: any, userId: string) {
+  for (const bucket of userDataBuckets) {
+    try {
+      const { data: files, error: listError } = await supabase.storage.from(bucket).list(userId, {
+        limit: 1000,
+        sortBy: { column: "name", order: "asc" },
+      })
+
+      if (listError || !files?.length) {
+        if (listError) {
+          console.warn(`[admin/actions] Unable to list ${bucket} for deleted user:`, listError.message)
+        }
+        continue
+      }
+
+      const filePaths = files.map((file: any) => `${userId}/${file.name}`)
+      const { error: removeError } = await supabase.storage.from(bucket).remove(filePaths)
+
+      if (removeError) {
+        console.warn(`[admin/actions] Unable to remove ${bucket} files for deleted user:`, removeError.message)
+      }
+    } catch (error: any) {
+      console.warn(`[admin/actions] Unable to clean ${bucket} for deleted user:`, error?.message || error)
+    }
+  }
 }
 
 export async function POST(request: Request) {
@@ -158,6 +188,96 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, record: data })
   }
 
+  if (resource === "event_registration") {
+    if (!eventRegistrationStatuses.has(status)) {
+      return NextResponse.json({ error: "Invalid event registration status." }, { status: 400 })
+    }
+
+    const notes = cleanText(body.notes)
+    const { data: previousRecord } = await supabase
+      .from("lovesathi_event_registrations")
+      .select("id,event_id,user_id,attendee_name,attendee_email,status")
+      .eq("id", id)
+      .maybeSingle()
+
+    const { data, error } = await supabase
+      .from("lovesathi_event_registrations")
+      .update({
+        status,
+        notes,
+      })
+      .eq("id", id)
+      .select("id,event_id,user_id,status,notes,updated_at")
+      .single()
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    await writeAdminAuditLog(supabase, {
+      actorId: user.id,
+      actorEmail: user.email || null,
+      resource: "event_registration",
+      recordId: id,
+      previousStatus: previousRecord?.status || null,
+      nextStatus: status,
+      notes,
+      metadata: {
+        eventId: previousRecord?.event_id || null,
+        userId: previousRecord?.user_id || null,
+        attendeeName: previousRecord?.attendee_name || null,
+        attendeeEmail: previousRecord?.attendee_email || null,
+      },
+    })
+
+    return NextResponse.json({ ok: true, record: data })
+  }
+
+  if (resource === "event_report") {
+    if (!eventReportStatuses.has(status)) {
+      return NextResponse.json({ error: "Invalid event report status." }, { status: 400 })
+    }
+
+    const notes = cleanText(body.notes)
+    const { data: previousRecord } = await supabase
+      .from("lovesathi_event_reports")
+      .select("id,event_id,reporter_id,reason,status")
+      .eq("id", id)
+      .maybeSingle()
+
+    const { data, error } = await supabase
+      .from("lovesathi_event_reports")
+      .update({
+        status,
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: user.id,
+      })
+      .eq("id", id)
+      .select("id,event_id,status,reviewed_at,reviewed_by")
+      .single()
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    await writeAdminAuditLog(supabase, {
+      actorId: user.id,
+      actorEmail: user.email || null,
+      resource: "event_report",
+      recordId: id,
+      previousStatus: previousRecord?.status || null,
+      nextStatus: status,
+      notes,
+      metadata: {
+        eventId: previousRecord?.event_id || null,
+        reporterId: previousRecord?.reporter_id || null,
+        reason: previousRecord?.reason || null,
+      },
+    })
+
+    return NextResponse.json({ ok: true, record: data })
+  }
+
   if (resource === "profile") {
     if (!profileReviewStatuses.has(status)) {
       return NextResponse.json({ error: "Invalid profile review status." }, { status: 400 })
@@ -209,8 +329,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid user status." }, { status: 400 })
     }
 
-    if (id === user.id && status === "suspended") {
-      return NextResponse.json({ error: "You cannot suspend your own active admin account." }, { status: 400 })
+    if (id === user.id && (status === "suspended" || status === "deleted")) {
+      return NextResponse.json({ error: "You cannot suspend or delete your own active admin account." }, { status: 400 })
     }
 
     const notes = cleanText(body.notes)
@@ -220,6 +340,31 @@ export async function POST(request: Request) {
       previousUser?.banned_until && new Date(previousUser.banned_until).getTime() > Date.now()
         ? "suspended"
         : "active"
+
+    if (status === "deleted") {
+      await removeUserStorageObjects(supabase, id)
+
+      const { error } = await supabase.auth.admin.deleteUser(id)
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 400 })
+      }
+
+      await writeAdminAuditLog(supabase, {
+        actorId: user.id,
+        actorEmail: user.email || null,
+        resource: "user",
+        recordId: id,
+        previousStatus,
+        nextStatus: "deleted",
+        notes,
+        metadata: {
+          email: previousUser?.email || null,
+        },
+      })
+
+      return NextResponse.json({ ok: true })
+    }
 
     const { data, error } = await supabase.auth.admin.updateUserById(id, {
       ban_duration: status === "suspended" ? "876000h" : "none",

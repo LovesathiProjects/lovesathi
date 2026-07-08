@@ -17,6 +17,7 @@ export type LovesathiEventRow = {
   timezone: string
   rsvp_url: string | null
   whatsapp_url: string | null
+  banner_url: string | null
   capacity: number | null
   is_featured: boolean
   status: LovesathiEventStatus
@@ -39,6 +40,7 @@ export type LovesathiEvent = {
   timezone: string
   rsvpUrl: string | null
   whatsappUrl: string | null
+  bannerUrl: string | null
   capacity: number | null
   isFeatured: boolean
   status: LovesathiEventStatus
@@ -48,7 +50,7 @@ export type LovesathiEvent = {
 }
 
 export const LOVESATHI_EVENT_SELECT =
-  "id,title,slug,summary,description,event_type,city,venue,starts_at,ends_at,timezone,rsvp_url,whatsapp_url,capacity,is_featured,status,published_at,created_at,updated_at"
+  "id,title,slug,summary,description,event_type,city,venue,starts_at,ends_at,timezone,rsvp_url,whatsapp_url,banner_url,capacity,is_featured,status,published_at,created_at,updated_at"
 
 export const LOVESATHI_EVENT_TYPES: LovesathiEventType[] = [
   "meetup",
@@ -75,6 +77,7 @@ export function mapLovesathiEvent(row: LovesathiEventRow): LovesathiEvent {
     timezone: row.timezone || "Asia/Kolkata",
     rsvpUrl: row.rsvp_url,
     whatsappUrl: row.whatsapp_url,
+    bannerUrl: row.banner_url,
     capacity: row.capacity,
     isFeatured: Boolean(row.is_featured),
     status: row.status,

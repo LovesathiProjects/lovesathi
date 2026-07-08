@@ -8,6 +8,11 @@ export type AdminAuditResource =
   | "entitlement"
   | "auth_email"
   | "event"
+  | "event_registration"
+  | "event_report"
+  | "site_setting"
+  | "notification"
+  | "success_story"
 
 export async function writeAdminAuditLog(
   supabase: any,
@@ -24,7 +29,7 @@ export async function writeAdminAuditLog(
     actorId: string
     actorEmail: string | null
     resource: AdminAuditResource
-    recordId: string
+    recordId: string | null
     previousStatus: string | null
     nextStatus: string
     notes: string | null

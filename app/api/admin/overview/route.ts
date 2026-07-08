@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/adminAuth"
 import { LOVESATHI_EVENT_SELECT, mapLovesathiEvent, type LovesathiEventRow } from "@/lib/events"
-import { getSubscriptionPlan } from "@/lib/subscriptionPlans"
+import { getSubscriptionPlan, SUBSCRIPTION_PLANS } from "@/lib/subscriptionPlans"
 import { isEntitlementPaymentDue, isEntitlementPremium } from "@/lib/subscriptionLifecycle"
 
 type CountResult = {
@@ -152,6 +152,85 @@ type AuthEmailTelemetry = {
   summary: AuthEmailSummaryItem[]
   counts: AuthEmailCount[]
   events: AuthEmailEvent[]
+}
+
+type AdminDashboardKpi = {
+  label: string
+  value: number
+  status: "ok" | "warning"
+  detail: string
+}
+
+type AdminSubscriptionItem = {
+  id: string
+  userId: string
+  userEmail: string | null
+  profileName: string | null
+  planId: string | null
+  planName: string | null
+  status: string | null
+  source: string | null
+  activeUntil: string | null
+  renewalDueAt: string | null
+  graceUntil: string | null
+  paymentDue: boolean
+}
+
+type AdminEventRegistrationItem = {
+  id: string
+  eventId: string
+  eventTitle: string
+  userId: string | null
+  attendeeName: string
+  attendeeEmail: string | null
+  attendeePhone: string | null
+  status: string
+  notes: string | null
+  createdAt: string | null
+}
+
+type AdminEventReportItem = {
+  id: string
+  eventId: string | null
+  eventTitle: string
+  reporterId: string | null
+  reason: string
+  description: string | null
+  status: string
+  createdAt: string | null
+  reviewedAt: string | null
+}
+
+type AdminSiteSettingItem = {
+  key: string
+  category: string
+  label: string
+  value: string
+  updatedAt: string | null
+}
+
+type AdminNotificationCampaignItem = {
+  id: string
+  channel: "push" | "email" | "sms"
+  audience: string
+  title: string
+  body: string
+  status: string
+  sentAt: string | null
+  createdAt: string | null
+}
+
+type AdminSuccessStoryItem = {
+  id: string
+  coupleNames: string
+  city: string | null
+  story: string
+  imageUrl: string | null
+  weddingDate: string | null
+  status: string
+  displayOrder: number
+  createdAt: string | null
+  updatedAt: string | null
 }
 
 const authEmailActions: Record<string, { label: string; description: string }> = {
@@ -553,6 +632,68 @@ async function loadEntitlementRows(supabase: any, userIds: string[]): Promise<Qu
   return result
 }
 
+async function loadAllEntitlementRows(supabase: any): Promise<QueueResult<any>> {
+  return safeRows<any>(() =>
+    supabase
+      .from("user_entitlements")
+      .select("id,user_id,plan_id,status,active_until,renewal_due_at,grace_until,source,updated_at")
+      .order("updated_at", { ascending: false })
+      .limit(120),
+  )
+}
+
+async function loadEventRegistrationRows(supabase: any): Promise<QueueResult<any>> {
+  return safeRows<any>(() =>
+    supabase
+      .from("lovesathi_event_registrations")
+      .select("id,event_id,user_id,attendee_name,attendee_email,attendee_phone,status,notes,created_at,updated_at")
+      .order("created_at", { ascending: false })
+      .limit(80),
+  )
+}
+
+async function loadEventReportRows(supabase: any): Promise<QueueResult<any>> {
+  return safeRows<any>(() =>
+    supabase
+      .from("lovesathi_event_reports")
+      .select("id,event_id,reporter_id,reason,description,status,created_at,reviewed_at")
+      .in("status", ["pending", "reviewed"])
+      .order("created_at", { ascending: false })
+      .limit(40),
+  )
+}
+
+async function loadSiteSettingRows(supabase: any): Promise<QueueResult<any>> {
+  return safeRows<any>(() =>
+    supabase
+      .from("lovesathi_site_settings")
+      .select("key,category,label,value,updated_at")
+      .order("category", { ascending: true })
+      .order("key", { ascending: true }),
+  )
+}
+
+async function loadNotificationCampaignRows(supabase: any): Promise<QueueResult<any>> {
+  return safeRows<any>(() =>
+    supabase
+      .from("lovesathi_notification_campaigns")
+      .select("id,channel,audience,title,body,status,sent_at,created_at,updated_at")
+      .order("created_at", { ascending: false })
+      .limit(40),
+  )
+}
+
+async function loadSuccessStoryRows(supabase: any): Promise<QueueResult<any>> {
+  return safeRows<any>(() =>
+    supabase
+      .from("lovesathi_success_stories")
+      .select("id,couple_names,city,story,image_url,wedding_date,status,display_order,created_at,updated_at")
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(40),
+  )
+}
+
 async function loadNameMap(supabase: any, userIds: string[]) {
   if (userIds.length === 0) {
     return new Map<string, string>()
@@ -747,6 +888,7 @@ export async function GET(request: Request) {
       safeCount(supabase, "Active premium", "user_entitlements", (query) =>
         query.in("status", ["active", "trialing", "past_due"]),
       ),
+      safeCount(supabase, "Total events", "lovesathi_events"),
       safeCount(supabase, "Published events", "lovesathi_events", (query) => query.eq("status", "published")),
       safeCount(supabase, "Draft events", "lovesathi_events", (query) => query.eq("status", "draft")),
       safeCount(supabase, "New profiles 7d", "matrimony_profile_full", (query) => query.gte("created_at", sevenDaysAgo)),
@@ -758,7 +900,21 @@ export async function GET(request: Request) {
 
   const authUserIds = unique(authUserRows.items.map((item) => item.id))
 
-  const [profileRows, verificationRows, reportRows, auditRows, eventRows, userProfileRows, entitlementRows] = await Promise.all([
+  const [
+    profileRows,
+    verificationRows,
+    reportRows,
+    auditRows,
+    eventRows,
+    userProfileRows,
+    entitlementRows,
+    allEntitlementRows,
+    eventRegistrationRows,
+    eventReportRows,
+    siteSettingRows,
+    notificationCampaignRows,
+    successStoryRows,
+  ] = await Promise.all([
     loadAdminProfileRows(supabase),
     safeRows<any>(() =>
       supabase
@@ -794,6 +950,12 @@ export async function GET(request: Request) {
     ),
     loadAuthUserProfileRows(supabase, authUserIds),
     loadEntitlementRows(supabase, authUserIds),
+    loadAllEntitlementRows(supabase),
+    loadEventRegistrationRows(supabase),
+    loadEventReportRows(supabase),
+    loadSiteSettingRows(supabase),
+    loadNotificationCampaignRows(supabase),
+    loadSuccessStoryRows(supabase),
   ])
 
   const userProfileMap = new Map(userProfileRows.items.map((item) => [item.user_id, item]))
@@ -810,9 +972,19 @@ export async function GET(request: Request) {
     authUserRows.items.map((item) => [item.id, typeof item.email === "string" ? item.email : null]),
   )
   const authUsers = authUserRows.items.map((item) => mapAuthUser(item, userProfileMap.get(item.id), entitlementMap.get(item.id)))
+  const recentRegistrationSince = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const activeUserSince = Date.now() - 30 * 24 * 60 * 60 * 1000
   const unconfirmedUserCount = authUsers.filter((item) => item.status === "unconfirmed").length
   const suspendedUserCount = authUsers.filter((item) => item.status === "suspended").length
   const premiumUserCount = authUsers.filter((item) => item.premium.isPremium).length
+  const activeUserCount = authUsers.filter((item) => {
+    const lastSeen = item.lastSignInAt ? new Date(item.lastSignInAt).getTime() : 0
+    return item.status === "active" && lastSeen >= activeUserSince
+  }).length
+  const recentRegistrationCount = authUsers.filter((item) => {
+    const createdAt = item.createdAt ? new Date(item.createdAt).getTime() : 0
+    return createdAt >= recentRegistrationSince
+  }).length
   const userMetrics: CountResult[] = [
     {
       label: "Auth users visible",
@@ -885,7 +1057,107 @@ export async function GET(request: Request) {
       reviewedAt: item.reviewed_at || null,
     })),
   }
+  const events = (eventRows.items as LovesathiEventRow[]).map(mapLovesathiEvent)
+  const eventTitleMap = new Map<string, string>(events.map((event) => [event.id, event.title]))
+  const profileNameByUserId = new Map<string, string | null>(
+    userProfileRows.items.map((item) => [item.user_id, item.name || null]),
+  )
+  const entitlementLedgerItems: AdminSubscriptionItem[] = allEntitlementRows.items.map((item) => {
+    const plan = item.plan_id ? getSubscriptionPlan(item.plan_id) : null
+    return {
+      id: item.id,
+      userId: item.user_id,
+      userEmail: userEmailMap.get(item.user_id) || null,
+      profileName: profileNameByUserId.get(item.user_id) || null,
+      planId: item.plan_id || null,
+      planName: plan?.name || null,
+      status: item.status || null,
+      source: item.source || null,
+      activeUntil: item.active_until || null,
+      renewalDueAt: item.renewal_due_at || null,
+      graceUntil: item.grace_until || null,
+      paymentDue: isEntitlementPaymentDue(item),
+    }
+  })
+  const activeSubscriptions: QueueResult<AdminSubscriptionItem> = {
+    status: allEntitlementRows.status,
+    detail: allEntitlementRows.detail,
+    items: entitlementLedgerItems.filter((item) => ["active", "trialing", "past_due"].includes(item.status || "")),
+  }
+  const eventRegistrations: QueueResult<AdminEventRegistrationItem> = {
+    status: eventRegistrationRows.status,
+    detail: eventRegistrationRows.detail,
+    items: eventRegistrationRows.items.map((item) => ({
+      id: item.id,
+      eventId: item.event_id,
+      eventTitle: eventTitleMap.get(item.event_id) || "Event unavailable",
+      userId: item.user_id || null,
+      attendeeName: item.attendee_name || "Guest",
+      attendeeEmail: item.attendee_email || null,
+      attendeePhone: item.attendee_phone || null,
+      status: item.status || "registered",
+      notes: item.notes || null,
+      createdAt: item.created_at || null,
+    })),
+  }
+  const eventReports: QueueResult<AdminEventReportItem> = {
+    status: eventReportRows.status,
+    detail: eventReportRows.detail,
+    items: eventReportRows.items.map((item) => ({
+      id: item.id,
+      eventId: item.event_id || null,
+      eventTitle: item.event_id ? eventTitleMap.get(item.event_id) || "Event unavailable" : "General event report",
+      reporterId: item.reporter_id || null,
+      reason: item.reason || "Event report",
+      description: item.description || null,
+      status: item.status || "pending",
+      createdAt: item.created_at || null,
+      reviewedAt: item.reviewed_at || null,
+    })),
+  }
+  const siteSettings: QueueResult<AdminSiteSettingItem> = {
+    status: siteSettingRows.status,
+    detail: siteSettingRows.detail,
+    items: siteSettingRows.items.map((item) => ({
+      key: item.key,
+      category: item.category || "general",
+      label: item.label || item.key,
+      value: item.value || "",
+      updatedAt: item.updated_at || null,
+    })),
+  }
+  const notificationCampaigns: QueueResult<AdminNotificationCampaignItem> = {
+    status: notificationCampaignRows.status,
+    detail: notificationCampaignRows.detail,
+    items: notificationCampaignRows.items.map((item) => ({
+      id: item.id,
+      channel: item.channel === "push" || item.channel === "email" || item.channel === "sms" ? item.channel : "email",
+      audience: item.audience || "all",
+      title: item.title || "Untitled campaign",
+      body: item.body || "",
+      status: item.status || "draft",
+      sentAt: item.sent_at || null,
+      createdAt: item.created_at || null,
+    })),
+  }
+  const successStories: QueueResult<AdminSuccessStoryItem> = {
+    status: successStoryRows.status,
+    detail: successStoryRows.detail,
+    items: successStoryRows.items.map((item) => ({
+      id: item.id,
+      coupleNames: item.couple_names || "Unnamed couple",
+      city: item.city || null,
+      story: item.story || "",
+      imageUrl: item.image_url || null,
+      weddingDate: item.wedding_date || null,
+      status: item.status || "draft",
+      displayOrder: Number(item.display_order) || 0,
+      createdAt: item.created_at || null,
+      updatedAt: item.updated_at || null,
+    })),
+  }
   const allMetrics = [...metrics, ...userMetrics]
+  const totalEvents = getMetricValue(allMetrics, "Total events")
   const profilesNeedingReview = getMetricValue(allMetrics, "Profiles needing review")
   const pendingVerifications = getMetricValue(allMetrics, "Pending verifications")
   const openReports = getMetricValue(allMetrics, "Open reports")
@@ -894,6 +1166,44 @@ export async function GET(request: Request) {
   const publishedEvents = getMetricValue(allMetrics, "Published events")
   const draftEvents = getMetricValue(allMetrics, "Draft events")
   const adminActions7d = getMetricValue(allMetrics, "Admin actions 7d")
+  const dashboard: AdminDashboardKpi[] = [
+    {
+      label: "Total Users",
+      value: authUsers.length || getMetricValue(allMetrics, "Registered users"),
+      status: authUserRows.status,
+      detail: authUserRows.detail || "Total Supabase Auth users visible to the admin API.",
+    },
+    {
+      label: "Active Users",
+      value: activeUserCount,
+      status: "ok",
+      detail: "Users not blocked who signed in within the last 30 days.",
+    },
+    {
+      label: "Premium Users",
+      value: premiumUserCount,
+      status: entitlementRows.status,
+      detail: "Users with an active, trialing, or grace-period premium entitlement.",
+    },
+    {
+      label: "Total Events",
+      value: totalEvents || eventRows.items.length,
+      status: eventRows.status,
+      detail: "Total event records created on the platform.",
+    },
+    {
+      label: "Pending Verifications",
+      value: pendingVerifications,
+      status: pendingVerifications > 0 ? "warning" : "ok",
+      detail: "Profiles waiting for admin identity or document approval.",
+    },
+    {
+      label: "Recent Registrations",
+      value: recentRegistrationCount,
+      status: "ok",
+      detail: "New users registered in the last 7 days.",
+    },
+  ]
   const risk: AdminRiskItem[] = [
     {
       label: "Safety reports",
@@ -968,6 +1278,7 @@ export async function GET(request: Request) {
     },
     host,
     generatedAt: new Date().toISOString(),
+    dashboard,
     metrics: allMetrics,
     risk,
     queues: {
@@ -986,7 +1297,7 @@ export async function GET(request: Request) {
       events: {
         status: eventRows.status,
         detail: eventRows.detail,
-        items: (eventRows.items as LovesathiEventRow[]).map(mapLovesathiEvent),
+        items: events,
       },
       audit: {
         status: auditRows.status,
@@ -1003,6 +1314,23 @@ export async function GET(request: Request) {
           createdAt: item.created_at || null,
         })),
       } satisfies QueueResult<AdminAuditItem>,
+    },
+    operations: {
+      plans: SUBSCRIPTION_PLANS,
+      activeSubscriptions,
+      paymentHistory: {
+        status: allEntitlementRows.status,
+        detail:
+          allEntitlementRows.status === "ok"
+            ? "Payment-provider records are not connected yet; this view shows entitlement changes and renewal state."
+            : allEntitlementRows.detail,
+        items: entitlementLedgerItems,
+      } satisfies QueueResult<AdminSubscriptionItem>,
+      eventRegistrations,
+      eventReports,
+      siteSettings,
+      notificationCampaigns,
+      successStories,
     },
     authEmailTelemetry,
     readiness: [
@@ -1029,7 +1357,7 @@ export async function GET(request: Request) {
         status: authUserRows.status,
         detail:
           authUserRows.status === "ok"
-            ? "Admins can inspect loaded auth users and suspend or restore access with audit notes."
+            ? "Admins can inspect loaded auth users, suspend, restore, or permanently delete accounts with audit notes."
             : authUserRows.detail || "Supabase Auth user management is not currently reachable.",
       },
       {
@@ -1055,6 +1383,38 @@ export async function GET(request: Request) {
           eventRows.status === "ok"
             ? "Admins can draft, publish, feature, and archive public Lovesathi events."
             : eventRows.detail || "Run the latest migration so event publishing can load.",
+      },
+      {
+        label: "Event registrations",
+        status: eventRegistrationRows.status,
+        detail:
+          eventRegistrationRows.status === "ok"
+            ? "Admins can review event registration rows when public registration is enabled."
+            : eventRegistrationRows.detail || "Run the admin operations migration so event registration lists can load.",
+      },
+      {
+        label: "Notifications",
+        status: notificationCampaignRows.status,
+        detail:
+          notificationCampaignRows.status === "ok"
+            ? "Notification drafts are recorded for push, email, and SMS provider handoff."
+            : notificationCampaignRows.detail || "Run the admin operations migration so notification drafts can load.",
+      },
+      {
+        label: "Site settings",
+        status: siteSettingRows.status,
+        detail:
+          siteSettingRows.status === "ok"
+            ? "Contact details and social links are editable from the admin operations surface."
+            : siteSettingRows.detail || "Run the admin operations migration so site settings can load.",
+      },
+      {
+        label: "Success stories",
+        status: successStoryRows.status,
+        detail:
+          successStoryRows.status === "ok"
+            ? "Admin-managed success stories are available with public-read support for published stories."
+            : successStoryRows.detail || "Run the admin operations migration so success stories can load.",
       },
       {
         label: "Supabase email",

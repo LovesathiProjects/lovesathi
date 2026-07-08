@@ -126,6 +126,7 @@ export default function Home() {
           <nav className="hidden items-center gap-8 text-sm font-semibold text-[#6F7C8B] md:flex">
             <a href="#experience">Experience</a>
             <Link href="/events">Events</Link>
+            <Link href="/success-stories">Stories</Link>
             <a href="#trust">Trust</a>
             <a href="#support">WhatsApp</a>
           </nav>
@@ -235,12 +236,17 @@ export default function Home() {
             <p className="mt-5 max-w-2xl text-lg leading-8 text-[#6F7C8B]">
               Explore LoveSathi meetups, workshops, and concierge support sessions as they are published.
             </p>
-            <Button asChild size="lg" className="luxe-button mt-7 rounded-md px-7">
-              <Link href="/events">
-                View events
-                <ArrowRight className="h-5 w-5" />
-              </Link>
-            </Button>
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <Button asChild size="lg" className="luxe-button rounded-md px-7">
+                <Link href="/events">
+                  View events
+                  <ArrowRight className="h-5 w-5" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="luxe-outline-button rounded-md px-7">
+                <Link href="/success-stories">Read stories</Link>
+              </Button>
+            </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
             {[

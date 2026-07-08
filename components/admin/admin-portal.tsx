@@ -1,6 +1,6 @@
 "use client"
 
-import type { FormEvent } from "react"
+import type { ChangeEvent, FormEvent } from "react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import {
@@ -9,12 +9,16 @@ import {
   ArrowUpRight,
   BadgeCheck,
   Ban,
+  Bell,
   CalendarDays,
   CheckCircle2,
   Clock3,
+  CreditCard,
   Crown,
   Database,
   FileWarning,
+  HeartHandshake,
+  ImageIcon,
   Lock,
   LogOut,
   Mail,
@@ -25,10 +29,15 @@ import {
   PlusCircle,
   RefreshCw,
   Rocket,
+  Save,
   Search,
+  Send,
+  Settings,
   ShieldCheck,
   Sparkles,
+  Trash2,
   Ticket,
+  Upload,
   UserCheck,
   UserRoundCheck,
   Users,
@@ -49,6 +58,13 @@ type AdminMetric = {
   value: number
   status: "ok" | "warning"
   detail?: string
+}
+
+type AdminDashboardKpi = {
+  label: string
+  value: number
+  status: "ok" | "warning"
+  detail: string
 }
 
 type ReadinessItem = {
@@ -165,6 +181,7 @@ type AdminEventItem = {
   timezone: string
   rsvpUrl: string | null
   whatsappUrl: string | null
+  bannerUrl: string | null
   capacity: number | null
   isFeatured: boolean
   status: AdminEventStatus
@@ -186,9 +203,110 @@ type AdminEventDraft = {
   endsAt: string
   rsvpUrl: string
   whatsappUrl: string
+  bannerUrl: string
   capacity: string
   status: AdminEventStatus
   isFeatured: boolean
+}
+
+type AdminPlanItem = {
+  id: string
+  name: string
+  durationLabel: string
+  priceLabel: string
+  originalPriceLabel?: string
+  discountLabel?: string
+  features: string[]
+}
+
+type AdminSubscriptionItem = {
+  id: string
+  userId: string
+  userEmail: string | null
+  profileName: string | null
+  planId: string | null
+  planName: string | null
+  status: string | null
+  source: string | null
+  activeUntil: string | null
+  renewalDueAt: string | null
+  graceUntil: string | null
+  paymentDue: boolean
+}
+
+type AdminEventRegistrationItem = {
+  id: string
+  eventId: string
+  eventTitle: string
+  userId: string | null
+  attendeeName: string
+  attendeeEmail: string | null
+  attendeePhone: string | null
+  status: string
+  notes: string | null
+  createdAt: string | null
+}
+
+type AdminEventReportItem = {
+  id: string
+  eventId: string | null
+  eventTitle: string
+  reporterId: string | null
+  reason: string
+  description: string | null
+  status: string
+  createdAt: string | null
+  reviewedAt: string | null
+}
+
+type AdminSiteSettingItem = {
+  key: string
+  category: string
+  label: string
+  value: string
+  updatedAt: string | null
+}
+
+type AdminNotificationCampaignItem = {
+  id: string
+  channel: "push" | "email" | "sms"
+  audience: string
+  title: string
+  body: string
+  status: string
+  sentAt: string | null
+  createdAt: string | null
+}
+
+type AdminNotificationDraft = {
+  channel: "push" | "email" | "sms"
+  audience: string
+  title: string
+  body: string
+}
+
+type AdminSuccessStoryItem = {
+  id: string
+  coupleNames: string
+  city: string | null
+  story: string
+  imageUrl: string | null
+  weddingDate: string | null
+  status: string
+  displayOrder: number
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+type AdminSuccessStoryDraft = {
+  id: string | null
+  coupleNames: string
+  city: string
+  story: string
+  imageUrl: string
+  weddingDate: string
+  status: "draft" | "published" | "archived"
+  displayOrder: string
 }
 
 type AdminAuditItem = {
@@ -249,6 +367,7 @@ type AdminOverview = {
   }
   host: string
   generatedAt: string
+  dashboard: AdminDashboardKpi[]
   metrics: AdminMetric[]
   risk: AdminRiskItem[]
   queues: {
@@ -258,6 +377,16 @@ type AdminOverview = {
     reports: QueueResult<AdminReportItem>
     events: QueueResult<AdminEventItem>
     audit: QueueResult<AdminAuditItem>
+  }
+  operations: {
+    plans: AdminPlanItem[]
+    activeSubscriptions: QueueResult<AdminSubscriptionItem>
+    paymentHistory: QueueResult<AdminSubscriptionItem>
+    eventRegistrations: QueueResult<AdminEventRegistrationItem>
+    eventReports: QueueResult<AdminEventReportItem>
+    siteSettings: QueueResult<AdminSiteSettingItem>
+    notificationCampaigns: QueueResult<AdminNotificationCampaignItem>
+    successStories: QueueResult<AdminSuccessStoryItem>
   }
   authEmailTelemetry: AuthEmailTelemetry
   readiness: ReadinessItem[]
@@ -284,9 +413,32 @@ function createEmptyEventDraft(): AdminEventDraft {
     endsAt: "",
     rsvpUrl: "",
     whatsappUrl: "",
+    bannerUrl: "",
     capacity: "",
     status: "draft",
     isFeatured: false,
+  }
+}
+
+function createEmptyNotificationDraft(): AdminNotificationDraft {
+  return {
+    channel: "push",
+    audience: "all",
+    title: "",
+    body: "",
+  }
+}
+
+function createEmptySuccessStoryDraft(): AdminSuccessStoryDraft {
+  return {
+    id: null,
+    coupleNames: "",
+    city: "",
+    story: "",
+    imageUrl: "",
+    weddingDate: "",
+    status: "draft",
+    displayOrder: "0",
   }
 }
 
@@ -308,6 +460,10 @@ function statusLabel(value: string) {
     .split(/[_\.]/)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ")
+}
+
+function resourceLabel(value: string) {
+  return statusLabel(value)
 }
 
 function toDateTimeLocal(value?: string | null) {
@@ -332,9 +488,26 @@ function eventToDraft(event: AdminEventItem): AdminEventDraft {
     endsAt: toDateTimeLocal(event.endsAt),
     rsvpUrl: event.rsvpUrl || "",
     whatsappUrl: event.whatsappUrl || "",
+    bannerUrl: event.bannerUrl || "",
     capacity: event.capacity ? String(event.capacity) : "",
     status: event.status,
     isFeatured: event.isFeatured,
+  }
+}
+
+function successStoryToDraft(story: AdminSuccessStoryItem): AdminSuccessStoryDraft {
+  return {
+    id: story.id,
+    coupleNames: story.coupleNames,
+    city: story.city || "",
+    story: story.story,
+    imageUrl: story.imageUrl || "",
+    weddingDate: story.weddingDate || "",
+    status:
+      story.status === "published" || story.status === "archived" || story.status === "draft"
+        ? story.status
+        : "draft",
+    displayOrder: String(story.displayOrder || 0),
   }
 }
 
@@ -462,10 +635,18 @@ export function AdminPortal() {
   const [queueFilter, setQueueFilter] = useState<AdminQueueFilter>("all")
   const [eventDraft, setEventDraft] = useState<AdminEventDraft>(() => createEmptyEventDraft())
   const [eventSaving, setEventSaving] = useState(false)
+  const [eventBannerUploading, setEventBannerUploading] = useState(false)
+  const [notificationDraft, setNotificationDraft] = useState<AdminNotificationDraft>(() => createEmptyNotificationDraft())
+  const [notificationSaving, setNotificationSaving] = useState(false)
+  const [siteSettingDrafts, setSiteSettingDrafts] = useState<AdminSiteSettingItem[]>([])
+  const [settingsSaving, setSettingsSaving] = useState(false)
+  const [successStoryDraft, setSuccessStoryDraft] = useState<AdminSuccessStoryDraft>(() => createEmptySuccessStoryDraft())
+  const [successStorySaving, setSuccessStorySaving] = useState(false)
 
   const generatedAt = overview?.generatedAt ? formatDate(overview.generatedAt) : null
   const refreshing = loading && Boolean(sessionToken)
   const searchTerm = adminSearch.trim().toLowerCase()
+  const dashboardKpis = overview?.dashboard || []
   const authEmailOverall =
     overview?.authEmailTelemetry.summary.find((item) => item.category === "email")?.overall ||
     overview?.authEmailTelemetry.counts.reduce((total, item) => total + item.total, 0) ||
@@ -479,6 +660,14 @@ export function AdminPortal() {
   const reportItems = overview?.queues.reports.items || []
   const eventItems = overview?.queues.events.items || []
   const auditItems = overview?.queues.audit.items || []
+  const planItems = overview?.operations.plans || []
+  const activeSubscriptionItems = overview?.operations.activeSubscriptions.items || []
+  const paymentHistoryItems = overview?.operations.paymentHistory.items || []
+  const eventRegistrationItems = overview?.operations.eventRegistrations.items || []
+  const eventReportItems = overview?.operations.eventReports.items || []
+  const siteSettingItems = overview?.operations.siteSettings.items || []
+  const notificationCampaignItems = overview?.operations.notificationCampaigns.items || []
+  const successStoryItems = overview?.operations.successStories.items || []
   const searchedUsers = userItems.filter((item) =>
     matchesSearch(
       [
@@ -527,6 +716,28 @@ export function AdminPortal() {
       [item.title, item.slug, item.summary, item.description, item.eventType, item.city, item.venue, item.status],
       searchTerm,
     ),
+  )
+  const searchedEventRegistrations = eventRegistrationItems.filter((item) =>
+    matchesSearch(
+      [
+        item.eventTitle,
+        item.attendeeName,
+        item.attendeeEmail,
+        item.attendeePhone,
+        item.status,
+        item.notes,
+      ],
+      searchTerm,
+    ),
+  )
+  const searchedEventReports = eventReportItems.filter((item) =>
+    matchesSearch([item.eventTitle, item.reason, item.description, item.status, item.reporterId], searchTerm),
+  )
+  const searchedNotifications = notificationCampaignItems.filter((item) =>
+    matchesSearch([item.channel, item.audience, item.title, item.body, item.status], searchTerm),
+  )
+  const searchedSuccessStories = successStoryItems.filter((item) =>
+    matchesSearch([item.coupleNames, item.city, item.story, item.status], searchTerm),
   )
   const searchedAudit = auditItems.filter((item) =>
     matchesSearch(
@@ -608,7 +819,11 @@ export function AdminPortal() {
     { href: "#members", label: "Members", icon: Users, count: filteredUsers.length },
     { href: "#profiles", label: "Profiles", icon: UserRoundCheck, count: filteredProfiles.length + filteredVerifications.length },
     { href: "#safety", label: "Safety", icon: ShieldCheck, count: filteredReports.length },
-    { href: "#premium", label: "Premium", icon: Crown, count: heritageUsers.length + paymentDueUsers.length },
+    { href: "#premium", label: "Premium", icon: Crown, count: activeSubscriptionItems.length },
+    { href: "#plans", label: "Plans", icon: CreditCard, count: planItems.length },
+    { href: "#notifications", label: "Notify", icon: Bell, count: notificationCampaignItems.length },
+    { href: "#settings", label: "Settings", icon: Settings, count: siteSettingItems.length },
+    { href: "#stories", label: "Stories", icon: HeartHandshake, count: successStoryItems.length },
     { href: "#audit", label: "Audit", icon: Database, count: filteredAudit.length },
   ]
 
@@ -682,6 +897,11 @@ export function AdminPortal() {
     }
   }, [sessionToken, refreshIndex])
 
+  useEffect(() => {
+    if (!overview?.operations.siteSettings.items) return
+    setSiteSettingDrafts(overview.operations.siteSettings.items)
+  }, [overview?.generatedAt, overview?.operations.siteSettings.items])
+
   async function handleLogin(event: FormEvent) {
     event.preventDefault()
     setAuthLoading(true)
@@ -707,7 +927,15 @@ export function AdminPortal() {
   }
 
   async function handleAction(
-    resource: "verification" | "report" | "profile" | "user" | "entitlement" | "auth_email",
+    resource:
+      | "verification"
+      | "report"
+      | "event_registration"
+      | "event_report"
+      | "profile"
+      | "user"
+      | "entitlement"
+      | "auth_email",
     id: string,
     status: string,
     options?: Record<string, unknown>,
@@ -716,7 +944,9 @@ export function AdminPortal() {
     const confirmCopy =
       resource === "auth_email" && status === "resend_confirmation"
         ? "Resend a fresh email verification code to this user?"
-        : `Mark this ${resource} as ${statusLabel(status)}?`
+        : resource === "user" && status === "deleted"
+          ? "Permanently delete this user account? This cannot be undone."
+          : `Mark this ${resourceLabel(resource)} as ${statusLabel(status)}?`
     if (!window.confirm(confirmCopy)) return
 
     const defaultNote =
@@ -734,6 +964,8 @@ export function AdminPortal() {
                   ? `Profile marked ${statusLabel(status)} by Lovesathi admin.`
                     : resource === "user" && status === "suspended"
                       ? "User access suspended by Lovesathi admin review."
+                      : resource === "user" && status === "deleted"
+                        ? "User account permanently deleted by Lovesathi admin review."
                       : resource === "user"
                         ? "User access restored by Lovesathi admin review."
                         : resource === "entitlement" && status === "active"
@@ -742,9 +974,18 @@ export function AdminPortal() {
                             ? "Premium access revoked by Lovesathi admin."
                             : resource === "auth_email"
                               ? "Confirmation code resent by Lovesathi admin."
+                              : resource === "event_registration"
+                                ? `Event registration marked ${statusLabel(status)} by Lovesathi admin.`
+                                : resource === "event_report"
+                                  ? `Event report marked ${statusLabel(status)} by Lovesathi admin.`
                               : `Report marked ${statusLabel(status)} by Lovesathi admin.`
     const shouldAskForNote =
-      resource === "report" || resource === "user" || status === "rejected" || status === "in_review"
+      resource === "report" ||
+      resource === "event_report" ||
+      resource === "event_registration" ||
+      resource === "user" ||
+      status === "rejected" ||
+      status === "in_review"
     const noteInput = shouldAskForNote
       ? window.prompt("Add an admin note for the audit trail:", defaultNote)
       : defaultNote
@@ -783,6 +1024,52 @@ export function AdminPortal() {
 
   function updateEventDraft<K extends keyof AdminEventDraft>(key: K, value: AdminEventDraft[K]) {
     setEventDraft((previous) => ({ ...previous, [key]: value }))
+  }
+
+  function updateNotificationDraft<K extends keyof AdminNotificationDraft>(key: K, value: AdminNotificationDraft[K]) {
+    setNotificationDraft((previous) => ({ ...previous, [key]: value }))
+  }
+
+  function updateSiteSettingDraft(key: string, value: string) {
+    setSiteSettingDrafts((items) => items.map((item) => (item.key === key ? { ...item, value } : item)))
+  }
+
+  function updateSuccessStoryDraft<K extends keyof AdminSuccessStoryDraft>(key: K, value: AdminSuccessStoryDraft[K]) {
+    setSuccessStoryDraft((previous) => ({ ...previous, [key]: value }))
+  }
+
+  async function uploadEventBanner(event: ChangeEvent<HTMLInputElement>) {
+    if (!sessionToken) return
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setEventBannerUploading(true)
+    setError(null)
+    try {
+      const formData = new FormData()
+      formData.append("banner", file)
+      if (eventDraft.id) {
+        formData.append("eventId", eventDraft.id)
+      }
+
+      const response = await fetch("/api/admin/event-banner", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+        body: formData,
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to upload event banner")
+      }
+      updateEventDraft("bannerUrl", payload.bannerUrl || "")
+    } catch (err: any) {
+      setError(err.message || "Unable to upload event banner")
+    } finally {
+      setEventBannerUploading(false)
+      event.target.value = ""
+    }
   }
 
   async function saveEventDraft(draft: AdminEventDraft, statusOverride?: AdminEventStatus) {
@@ -829,6 +1116,127 @@ export function AdminPortal() {
   function handleEditEvent(item: AdminEventItem) {
     setEventDraft(eventToDraft(item))
     window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  async function deleteEvent(item: AdminEventItem) {
+    if (!sessionToken) return
+    if (!window.confirm(`Delete "${item.title}" permanently from the events desk?`)) return
+
+    setEventSaving(true)
+    setError(null)
+    try {
+      const response = await fetch(`/api/admin/events?id=${encodeURIComponent(item.id)}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to delete event")
+      }
+      if (eventDraft.id === item.id) {
+        setEventDraft(createEmptyEventDraft())
+      }
+      setRefreshIndex((value) => value + 1)
+    } catch (err: any) {
+      setError(err.message || "Unable to delete event")
+    } finally {
+      setEventSaving(false)
+    }
+  }
+
+  async function saveNotification(status: "draft" | "sent" = "draft") {
+    if (!sessionToken) return
+    setNotificationSaving(true)
+    setError(null)
+    try {
+      const response = await fetch("/api/admin/notifications", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...notificationDraft,
+          status,
+        }),
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to save notification")
+      }
+      setNotificationDraft(createEmptyNotificationDraft())
+      setRefreshIndex((value) => value + 1)
+    } catch (err: any) {
+      setError(err.message || "Unable to save notification")
+    } finally {
+      setNotificationSaving(false)
+    }
+  }
+
+  async function saveSiteSettings() {
+    if (!sessionToken) return
+    setSettingsSaving(true)
+    setError(null)
+    try {
+      const response = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ items: siteSettingDrafts }),
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to save settings")
+      }
+      setRefreshIndex((value) => value + 1)
+    } catch (err: any) {
+      setError(err.message || "Unable to save settings")
+    } finally {
+      setSettingsSaving(false)
+    }
+  }
+
+  async function saveSuccessStoryDraft(draft: AdminSuccessStoryDraft, statusOverride?: AdminSuccessStoryDraft["status"]) {
+    if (!sessionToken) return
+    setSuccessStorySaving(true)
+    setError(null)
+    try {
+      const response = await fetch("/api/admin/success-stories", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...draft,
+          status: statusOverride || draft.status,
+          displayOrder: Number(draft.displayOrder) || 0,
+        }),
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to save success story")
+      }
+      setSuccessStoryDraft(createEmptySuccessStoryDraft())
+      setRefreshIndex((value) => value + 1)
+    } catch (err: any) {
+      setError(err.message || "Unable to save success story")
+    } finally {
+      setSuccessStorySaving(false)
+    }
+  }
+
+  async function saveSuccessStory(statusOverride?: AdminSuccessStoryDraft["status"]) {
+    await saveSuccessStoryDraft(successStoryDraft, statusOverride)
+  }
+
+  function handleEditSuccessStory(item: AdminSuccessStoryItem) {
+    setSuccessStoryDraft(successStoryToDraft(item))
+    document.getElementById("stories")?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
   if (loading && !sessionToken) {
@@ -1030,6 +1438,26 @@ export function AdminPortal() {
               A launch-safe queue view for reports, profile review, ID checks, email confirmation health, premium
               controls, and recent admin activity.
             </p>
+          </div>
+          <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+            {dashboardKpis.map((item, index) => {
+              const Icon = [Users, Activity, Crown, CalendarDays, ShieldCheck, UserCheck][index % 6]
+              return (
+                <div key={item.label} className="rounded-[1.25rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-[#E83262] shadow-sm">
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <StatusBadge status={item.status} />
+                  </div>
+                  <p className="mt-4 font-serif text-4xl font-bold tracking-[-0.06em] text-[#172235]">
+                    {item.value.toLocaleString("en-IN")}
+                  </p>
+                  <p className="mt-1 text-sm font-black text-[#26364A]">{item.label}</p>
+                  <p className="mt-2 text-xs leading-5 text-[#6F7C8B]">{item.detail}</p>
+                </div>
+              )
+            })}
           </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {(overview?.risk || []).map((item, index) => {
@@ -1332,6 +1760,39 @@ export function AdminPortal() {
                   </div>
                 </div>
 
+                <div className="space-y-3 rounded-[1.35rem] border border-[#482b1a]/10 bg-[#F7F9FC] p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <Label htmlFor="event-banner">Event banner</Label>
+                      <p className="mt-1 text-xs font-semibold text-[#6F7C8B]">
+                        Upload a designed visual or paste a hosted image URL.
+                      </p>
+                    </div>
+                    <label className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-[#E83262]/24 bg-white px-4 text-sm font-black text-[#E83262] transition hover:bg-[#FFF4F7]">
+                      <Upload className="h-4 w-4" />
+                      {eventBannerUploading ? "Uploading..." : "Upload"}
+                      <input
+                        id="event-banner"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="sr-only"
+                        disabled={eventBannerUploading}
+                        onChange={uploadEventBanner}
+                      />
+                    </label>
+                  </div>
+                  <Input
+                    value={eventDraft.bannerUrl}
+                    onChange={(event) => updateEventDraft("bannerUrl", event.target.value)}
+                    placeholder="https://.../event-banner.webp"
+                  />
+                  {eventDraft.bannerUrl && (
+                    <div className="overflow-hidden rounded-2xl border border-[#DDE4EE] bg-white">
+                      <img src={eventDraft.bannerUrl} alt="" className="h-40 w-full object-cover" />
+                    </div>
+                  )}
+                </div>
+
                 <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
                   <div className="space-y-2">
                     <Label htmlFor="event-capacity">Capacity</Label>
@@ -1390,6 +1851,11 @@ export function AdminPortal() {
                 {filteredEvents.length ? (
                   filteredEvents.map((item) => (
                     <article key={item.id} className="rounded-[1.5rem] border border-[#482b1a]/10 bg-white/70 p-4 shadow-[0_16px_42px_rgba(24,17,13,0.05)]">
+                      {item.bannerUrl && (
+                        <div className="mb-4 overflow-hidden rounded-[1.15rem] border border-[#DDE4EE] bg-[#F7F9FC]">
+                          <img src={item.bannerUrl} alt="" className="h-44 w-full object-cover" />
+                        </div>
+                      )}
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
@@ -1422,7 +1888,7 @@ export function AdminPortal() {
                               disabled={eventSaving}
                               onClick={() => void saveEventDraft(eventToDraft(item), "published")}
                             >
-                              Publish
+                              Approve / Publish
                             </Button>
                           ) : (
                             <Button
@@ -1443,9 +1909,19 @@ export function AdminPortal() {
                               disabled={eventSaving}
                               onClick={() => void saveEventDraft(eventToDraft(item), "archived")}
                             >
-                              Archive
+                              Reject / Archive
                             </Button>
                           )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="rounded-full border-[#E83262]/30 bg-white text-[#C3264E]"
+                            disabled={eventSaving}
+                            onClick={() => void deleteEvent(item)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </Button>
                         </div>
                       </div>
 
@@ -1489,6 +1965,163 @@ export function AdminPortal() {
           </Card>
         </section>
 
+        <section id="event-attendance" className="grid scroll-mt-28 gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+          <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+            <CardHeader className="border-b border-[#E1E7EF]">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="luxe-kicker mb-2 text-[#E83262]">attendance desk</p>
+                  <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#26364A]">
+                    Event registration list
+                  </CardTitle>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-[#6F7C8B]">
+                    Review event attendees, contact details, approval state, and admin notes.
+                  </p>
+                </div>
+                <StatusBadge status={overview?.operations.eventRegistrations.status || "pending"} />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 p-5 sm:p-6">
+              {overview?.operations.eventRegistrations.detail && (
+                <p className="rounded-2xl border border-[#E83262]/20 bg-[#E83262]/10 p-3 text-sm font-semibold text-[#8a641f]">
+                  {overview.operations.eventRegistrations.detail}
+                </p>
+              )}
+              {searchedEventRegistrations.length ? (
+                searchedEventRegistrations.map((item) => (
+                  <div key={item.id} className="rounded-[1.35rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#172235]">
+                          {item.attendeeName}
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-[#6F7C8B]">{item.eventTitle}</p>
+                        <p className="mt-1 text-xs font-bold uppercase tracking-[0.14em] text-[#8B98A8]">
+                          Registered {formatDate(item.createdAt)}
+                        </p>
+                      </div>
+                      <StatusBadge status={item.status} />
+                    </div>
+                    <div className="mt-3 grid gap-2 text-sm font-semibold text-[#6F7C8B] sm:grid-cols-2">
+                      <span>{item.attendeeEmail || "Email not provided"}</span>
+                      <span>{item.attendeePhone || "Phone not provided"}</span>
+                    </div>
+                    {item.notes && (
+                      <p className="mt-3 rounded-2xl border border-[#DDE4EE] bg-white p-3 text-xs leading-5 text-[#6F7C8B]">
+                        {item.notes}
+                      </p>
+                    )}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        className="rounded-full bg-[#1b6b43] text-white hover:bg-[#155333]"
+                        disabled={Boolean(actionKey)}
+                        onClick={() => handleAction("event_registration", item.id, "approved")}
+                      >
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full border-[#E83262]/20 bg-[#E83262]/10 text-[#C3264E]"
+                        disabled={Boolean(actionKey)}
+                        onClick={() => handleAction("event_registration", item.id, "rejected")}
+                      >
+                        Reject
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full border-[#DDE4EE] bg-white"
+                        disabled={Boolean(actionKey)}
+                        onClick={() => handleAction("event_registration", item.id, "canceled")}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <EmptyState copy={searchTerm ? "No event registrations match this search." : "No event registrations yet."} />
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+            <CardHeader className="border-b border-[#E1E7EF]">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="luxe-kicker mb-2 text-[#E83262]">event reports</p>
+                  <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#26364A]">
+                    Reported events
+                  </CardTitle>
+                  <p className="mt-2 text-sm leading-6 text-[#6F7C8B]">
+                    View reports connected to events and mark the review outcome.
+                  </p>
+                </div>
+                <StatusBadge status={overview?.operations.eventReports.status || "pending"} />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 p-5 sm:p-6">
+              {overview?.operations.eventReports.detail && (
+                <p className="rounded-2xl border border-[#E83262]/20 bg-[#E83262]/10 p-3 text-sm font-semibold text-[#8a641f]">
+                  {overview.operations.eventReports.detail}
+                </p>
+              )}
+              {searchedEventReports.length ? (
+                searchedEventReports.map((item) => (
+                  <div key={item.id} className="rounded-[1.35rem] border border-[#E1E7EF] bg-white p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#172235]">
+                          {item.eventTitle}
+                        </p>
+                        <p className="mt-1 text-sm font-bold text-[#E83262]">{statusLabel(item.reason)}</p>
+                      </div>
+                      <StatusBadge status={item.status} />
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-[#6F7C8B]">
+                      {item.description || "No extra event report detail was provided."}
+                    </p>
+                    <p className="mt-2 text-xs font-semibold text-[#9d7a55]">Submitted {formatDate(item.createdAt)}</p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        className="rounded-full bg-[#1b6b43] text-white hover:bg-[#155333]"
+                        disabled={Boolean(actionKey)}
+                        onClick={() => handleAction("event_report", item.id, "resolved")}
+                      >
+                        Resolve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full border-[#DDE4EE] bg-white"
+                        disabled={Boolean(actionKey)}
+                        onClick={() => handleAction("event_report", item.id, "reviewed")}
+                      >
+                        Reviewed
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full border-[#E83262]/20 bg-[#E83262]/10 text-[#C3264E]"
+                        disabled={Boolean(actionKey)}
+                        onClick={() => handleAction("event_report", item.id, "dismissed")}
+                      >
+                        Dismiss
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <EmptyState copy={searchTerm ? "No event reports match this search." : "No event reports need review."} />
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {(overview?.metrics || []).map((metric, index) => {
             const Icon = metricIcons[index % metricIcons.length]
@@ -1509,6 +2142,515 @@ export function AdminPortal() {
           })}
         </section>
 
+        <section id="plans" className="grid scroll-mt-28 gap-5 xl:grid-cols-[1fr_1fr]">
+          <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+            <CardHeader className="border-b border-[#E1E7EF]">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="luxe-kicker mb-2 text-[#E83262]">plans management</p>
+                  <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#26364A]">
+                    Premium plan catalog
+                  </CardTitle>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-[#6F7C8B]">
+                    Current launch plans used by the app. Admin can grant or revoke these plans from User management.
+                  </p>
+                </div>
+                <CreditCard className="h-6 w-6 text-[#E83262]" />
+              </div>
+            </CardHeader>
+            <CardContent className="grid gap-3 p-5 sm:p-6 lg:grid-cols-2">
+              {planItems.map((plan) => (
+                <div key={plan.id} className="rounded-[1.35rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#172235]">{plan.name}</p>
+                      <p className="mt-1 text-sm font-semibold text-[#6F7C8B]">{plan.durationLabel}</p>
+                    </div>
+                    {plan.discountLabel && (
+                      <Badge variant="outline" className="border-[#E83262]/24 bg-[#FFF4F7] text-[#C3264E]">
+                        {plan.discountLabel}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-end gap-2">
+                    <p className="font-serif text-4xl font-bold tracking-[-0.06em] text-[#26364A]">{plan.priceLabel}</p>
+                    {plan.originalPriceLabel && (
+                      <p className="pb-1 text-sm font-bold text-[#8B98A8] line-through">{plan.originalPriceLabel}</p>
+                    )}
+                  </div>
+                  <ul className="mt-4 space-y-2 text-sm font-semibold leading-6 text-[#6F7C8B]">
+                    {plan.features.slice(0, 4).map((feature) => (
+                      <li key={feature} className="flex gap-2">
+                        <BadgeCheck className="mt-1 h-4 w-4 shrink-0 text-[#E83262]" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <div className="space-y-5">
+            <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+              <CardHeader className="border-b border-[#E1E7EF]">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="luxe-kicker mb-2 text-[#E83262]">active subscriptions</p>
+                    <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#26364A]">
+                      Premium memberships
+                    </CardTitle>
+                  </div>
+                  <StatusBadge status={overview?.operations.activeSubscriptions.status || "pending"} />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3 p-5 sm:p-6">
+                {overview?.operations.activeSubscriptions.detail && (
+                  <p className="rounded-2xl border border-[#E83262]/20 bg-[#E83262]/10 p-3 text-sm font-semibold text-[#8a641f]">
+                    {overview.operations.activeSubscriptions.detail}
+                  </p>
+                )}
+                {activeSubscriptionItems.length ? (
+                  activeSubscriptionItems.slice(0, 8).map((item) => (
+                    <div key={item.id} className="rounded-[1.25rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-black text-[#172235]">{item.profileName || item.userEmail || "Member"}</p>
+                          <p className="mt-1 text-sm font-semibold text-[#6F7C8B]">
+                            {item.planName || item.planId || "Plan pending"} - {item.source || "admin"}
+                          </p>
+                        </div>
+                        <StatusBadge status={item.paymentDue ? "past_due" : item.status || "active"} />
+                      </div>
+                      <p className="mt-3 text-xs font-semibold text-[#9d7a55]">
+                        Active until {formatDate(item.activeUntil)} | Grace until {formatDate(item.graceUntil)}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <EmptyState copy="No active premium memberships are visible yet." />
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+              <CardHeader className="border-b border-[#E1E7EF]">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="luxe-kicker mb-2 text-[#E83262]">payment history</p>
+                    <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#26364A]">
+                      Entitlement ledger
+                    </CardTitle>
+                    <p className="mt-2 text-sm leading-6 text-[#6F7C8B]">
+                      Payment provider records are not connected in this phase; this shows admin entitlements and renewal states.
+                    </p>
+                  </div>
+                  <StatusBadge status={overview?.operations.paymentHistory.status || "pending"} />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3 p-5 sm:p-6">
+                {overview?.operations.paymentHistory.detail && (
+                  <p className="rounded-2xl border border-[#b45309]/20 bg-[#fff7ed] p-3 text-sm font-semibold text-[#9a3412]">
+                    {overview.operations.paymentHistory.detail}
+                  </p>
+                )}
+                {paymentHistoryItems.length ? (
+                  paymentHistoryItems.slice(0, 8).map((item) => (
+                    <div key={item.id} className="flex flex-col gap-2 rounded-[1.25rem] border border-[#E1E7EF] bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="font-bold text-[#172235]">{item.profileName || item.userEmail || item.userId}</p>
+                        <p className="text-sm font-semibold text-[#6F7C8B]">
+                          {item.planName || item.planId || "Plan pending"} - {item.source || "unknown source"}
+                        </p>
+                      </div>
+                      <StatusBadge status={item.status || "pending"} />
+                    </div>
+                  ))
+                ) : (
+                  <EmptyState copy="No entitlement ledger rows are available yet." />
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        <section id="notifications" className="grid scroll-mt-28 gap-5 xl:grid-cols-[0.85fr_1.15fr]">
+          <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+            <CardHeader className="border-b border-[#E1E7EF]">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="luxe-kicker mb-2 text-[#E83262]">notifications</p>
+                  <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#26364A]">
+                    Campaign composer
+                  </CardTitle>
+                  <p className="mt-2 text-sm leading-6 text-[#6F7C8B]">
+                    Save push, email, or SMS campaign records for provider handoff.
+                  </p>
+                </div>
+                <Bell className="h-6 w-6 text-[#E83262]" />
+              </div>
+            </CardHeader>
+            <CardContent className="p-5 sm:p-6">
+              <form
+                className="space-y-4"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  void saveNotification("draft")
+                }}
+              >
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="notification-channel">Channel</Label>
+                    <select
+                      id="notification-channel"
+                      value={notificationDraft.channel}
+                      onChange={(event) => updateNotificationDraft("channel", event.target.value as AdminNotificationDraft["channel"])}
+                      className="h-12 w-full rounded-2xl border border-[#DDE4EE] bg-white px-4 text-sm font-semibold text-[#26364A] outline-none focus:border-[#E83262]"
+                    >
+                      <option value="push">Push</option>
+                      <option value="email">Email</option>
+                      <option value="sms">SMS</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="notification-audience">Audience</Label>
+                    <Input
+                      id="notification-audience"
+                      value={notificationDraft.audience}
+                      onChange={(event) => updateNotificationDraft("audience", event.target.value)}
+                      placeholder="all, premium, pending_profiles"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="notification-title">Title</Label>
+                  <Input
+                    id="notification-title"
+                    value={notificationDraft.title}
+                    onChange={(event) => updateNotificationDraft("title", event.target.value)}
+                    placeholder="Profile verification reminder"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="notification-body">Message</Label>
+                  <Textarea
+                    id="notification-body"
+                    value={notificationDraft.body}
+                    onChange={(event) => updateNotificationDraft("body", event.target.value)}
+                    className="min-h-32"
+                    placeholder="Write the campaign message..."
+                    required
+                  />
+                </div>
+                <div className="rounded-2xl border border-[#b45309]/20 bg-[#fff7ed] p-3 text-xs font-semibold leading-5 text-[#9a3412]">
+                  Provider delivery is not wired here yet. “Mark sent” records the campaign as sent for manual handoff only.
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button type="submit" className="rounded-full" disabled={notificationSaving}>
+                    <Save className="h-4 w-4" />
+                    {notificationSaving ? "Saving..." : "Save draft"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-full border-[#E83262]/24 bg-[#E83262]/10 text-[#E83262]"
+                    disabled={notificationSaving}
+                    onClick={() => void saveNotification("sent")}
+                  >
+                    <Send className="h-4 w-4" />
+                    Mark sent
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+            <CardHeader className="border-b border-[#E1E7EF]">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="luxe-kicker mb-2 text-[#E83262]">campaign history</p>
+                  <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#26364A]">
+                    Recent notifications
+                  </CardTitle>
+                </div>
+                <StatusBadge status={overview?.operations.notificationCampaigns.status || "pending"} />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 p-5 sm:p-6">
+              {overview?.operations.notificationCampaigns.detail && (
+                <p className="rounded-2xl border border-[#E83262]/20 bg-[#E83262]/10 p-3 text-sm font-semibold text-[#8a641f]">
+                  {overview.operations.notificationCampaigns.detail}
+                </p>
+              )}
+              {searchedNotifications.length ? (
+                searchedNotifications.map((item) => (
+                  <div key={item.id} className="rounded-[1.35rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-black text-[#172235]">{item.title}</p>
+                        <p className="mt-1 text-sm font-semibold text-[#6F7C8B]">
+                          {statusLabel(item.channel)} to {item.audience}
+                        </p>
+                      </div>
+                      <StatusBadge status={item.status} />
+                    </div>
+                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-[#6F7C8B]">{item.body}</p>
+                    <p className="mt-2 text-xs font-semibold text-[#9d7a55]">
+                      Created {formatDate(item.createdAt)}
+                      {item.sentAt ? ` | Marked sent ${formatDate(item.sentAt)}` : ""}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <EmptyState copy={searchTerm ? "No notification campaigns match this search." : "No notification campaigns yet."} />
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        <section id="settings" className="grid scroll-mt-28 gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+          <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+            <CardHeader className="border-b border-[#E1E7EF]">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="luxe-kicker mb-2 text-[#E83262]">site settings</p>
+                  <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#26364A]">
+                    Contact and social links
+                  </CardTitle>
+                  <p className="mt-2 text-sm leading-6 text-[#6F7C8B]">
+                    Update support contact details and social channels from one place.
+                  </p>
+                </div>
+                <Settings className="h-6 w-6 text-[#E83262]" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4 p-5 sm:p-6">
+              {overview?.operations.siteSettings.detail && (
+                <p className="rounded-2xl border border-[#E83262]/20 bg-[#E83262]/10 p-3 text-sm font-semibold text-[#8a641f]">
+                  {overview.operations.siteSettings.detail}
+                </p>
+              )}
+              {siteSettingDrafts.length ? (
+                <div className="space-y-3">
+                  {siteSettingDrafts.map((item) => (
+                    <div key={item.key} className="space-y-2 rounded-[1.25rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Label htmlFor={`setting-${item.key}`}>{item.label}</Label>
+                        <Badge variant="outline" className="border-[#DDE4EE] bg-white text-[#6F7C8B]">
+                          {statusLabel(item.category)}
+                        </Badge>
+                      </div>
+                      <Input
+                        id={`setting-${item.key}`}
+                        value={item.value}
+                        onChange={(event) => updateSiteSettingDraft(item.key, event.target.value)}
+                        placeholder={item.key}
+                      />
+                      <p className="text-xs font-semibold text-[#9d7a55]">Key: {item.key}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState copy="No site settings are available yet. Run the latest migration to create contact and social settings." />
+              )}
+              <Button className="rounded-full" disabled={settingsSaving || siteSettingDrafts.length === 0} onClick={saveSiteSettings}>
+                <Save className="h-4 w-4" />
+                {settingsSaving ? "Saving..." : "Save settings"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card id="stories" className="scroll-mt-28 overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+            <CardHeader className="border-b border-[#E1E7EF]">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="luxe-kicker mb-2 text-[#E83262]">success stories</p>
+                  <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#26364A]">
+                    Marriage story publishing
+                  </CardTitle>
+                  <p className="mt-2 text-sm leading-6 text-[#6F7C8B]">
+                    Create, edit, publish, or archive success stories for the public website.
+                  </p>
+                </div>
+                <StatusBadge status={overview?.operations.successStories.status || "pending"} />
+              </div>
+            </CardHeader>
+            <CardContent className="grid gap-5 p-5 sm:p-6 xl:grid-cols-[0.85fr_1.15fr]">
+              <form
+                className="space-y-4 rounded-[1.35rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  void saveSuccessStory()
+                }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#E83262]">
+                      {successStoryDraft.id ? "Edit story" : "New story"}
+                    </p>
+                    <h3 className="mt-1 font-serif text-2xl font-bold tracking-[-0.04em] text-[#172235]">
+                      {successStoryDraft.coupleNames || "Celebrate a couple"}
+                    </h3>
+                  </div>
+                  {successStoryDraft.id && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="rounded-full border-[#DDE4EE] bg-white"
+                      onClick={() => setSuccessStoryDraft(createEmptySuccessStoryDraft())}
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      New
+                    </Button>
+                  )}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="story-couple">Couple names</Label>
+                    <Input
+                      id="story-couple"
+                      value={successStoryDraft.coupleNames}
+                      onChange={(event) => updateSuccessStoryDraft("coupleNames", event.target.value)}
+                      placeholder="Aarav & Siya"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="story-city">City</Label>
+                    <Input
+                      id="story-city"
+                      value={successStoryDraft.city}
+                      onChange={(event) => updateSuccessStoryDraft("city", event.target.value)}
+                      placeholder="Pune"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="story-body">Story</Label>
+                  <Textarea
+                    id="story-body"
+                    value={successStoryDraft.story}
+                    onChange={(event) => updateSuccessStoryDraft("story", event.target.value)}
+                    className="min-h-32"
+                    placeholder="Write the couple story..."
+                    required
+                  />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="story-image">Image URL</Label>
+                    <Input
+                      id="story-image"
+                      value={successStoryDraft.imageUrl}
+                      onChange={(event) => updateSuccessStoryDraft("imageUrl", event.target.value)}
+                      placeholder="Optional hosted visual"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="story-date">Wedding date</Label>
+                    <Input
+                      id="story-date"
+                      type="date"
+                      value={successStoryDraft.weddingDate}
+                      onChange={(event) => updateSuccessStoryDraft("weddingDate", event.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="story-status">Status</Label>
+                    <select
+                      id="story-status"
+                      value={successStoryDraft.status}
+                      onChange={(event) => updateSuccessStoryDraft("status", event.target.value as AdminSuccessStoryDraft["status"])}
+                      className="h-12 w-full rounded-2xl border border-[#DDE4EE] bg-white px-4 text-sm font-semibold text-[#26364A] outline-none focus:border-[#E83262]"
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="published">Published</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="story-order">Display order</Label>
+                    <Input
+                      id="story-order"
+                      type="number"
+                      value={successStoryDraft.displayOrder}
+                      onChange={(event) => updateSuccessStoryDraft("displayOrder", event.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button type="submit" className="rounded-full" disabled={successStorySaving}>
+                    <Save className="h-4 w-4" />
+                    {successStorySaving ? "Saving..." : "Save story"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-full border-[#E83262]/24 bg-[#E83262]/10 text-[#E83262]"
+                    disabled={successStorySaving}
+                    onClick={() => void saveSuccessStory("published")}
+                  >
+                    Publish
+                  </Button>
+                </div>
+              </form>
+
+              <div className="space-y-3">
+                {overview?.operations.successStories.detail && (
+                  <p className="rounded-2xl border border-[#E83262]/20 bg-[#E83262]/10 p-3 text-sm font-semibold text-[#8a641f]">
+                    {overview.operations.successStories.detail}
+                  </p>
+                )}
+                {searchedSuccessStories.length ? (
+                  searchedSuccessStories.map((item) => (
+                    <div key={item.id} className="rounded-[1.35rem] border border-[#E1E7EF] bg-white p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#172235]">
+                            {item.coupleNames}
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-[#6F7C8B]">
+                            {[item.city, item.weddingDate].filter(Boolean).join(" - ") || "Story detail pending"}
+                          </p>
+                        </div>
+                        <StatusBadge status={item.status} />
+                      </div>
+                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-[#6F7C8B]">{item.story}</p>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-full border-[#DDE4EE] bg-white"
+                          onClick={() => handleEditSuccessStory(item)}
+                        >
+                          <PenLine className="h-4 w-4" />
+                          Edit
+                        </Button>
+                        {item.status !== "published" && (
+                          <Button
+                            size="sm"
+                            className="rounded-full bg-[#1b6b43] text-white hover:bg-[#155333]"
+                            disabled={successStorySaving}
+                            onClick={() => void saveSuccessStoryDraft(successStoryToDraft(item), "published")}
+                          >
+                            Publish
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <EmptyState copy={searchTerm ? "No success stories match this search." : "No success stories have been created yet."} />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
         <section id="members" className="scroll-mt-28">
           <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
             <CardHeader className="border-b border-[#482b1a]/10 bg-white/55">
@@ -1520,7 +2662,7 @@ export function AdminPortal() {
                   </CardTitle>
                   <p className="mt-2 max-w-3xl text-sm leading-6 text-[#6F7C8B]">
                     Inspect loaded Supabase Auth users, email confirmation state, profile completion, review status,
-                    and suspend or restore access with an audit note.
+                    and suspend, restore, or delete access with an audit note.
                   </p>
                   {queueFilter !== "all" && (
                     <p className="mt-2 text-xs font-bold uppercase tracking-[0.16em] text-[#E83262]">
@@ -1622,6 +2764,16 @@ export function AdminPortal() {
                               Resend
                             </Button>
                           )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="rounded-xl border-[#E83262]/30 bg-white text-[#C3264E]"
+                            disabled={Boolean(actionKey)}
+                            onClick={() => handleAction("user", item.id, "deleted")}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </Button>
                           {item.premium.isPremium && (
                             <Button
                               size="sm"
@@ -2208,8 +3360,8 @@ export function AdminPortal() {
                 <div className="flex gap-3 rounded-2xl border border-white/10 bg-white/8 p-4">
                   <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-[#E83262]" />
                   <p>
-                    Account deletion, bulk edits, refunds, payment-provider changes, and webhook automation stay locked
-                    until those workflows get separate role gates and stronger confirmations.
+                    Payment-provider changes, refunds, bulk edits, OTP delivery, and webhook automation stay outside this
+                    phase until those workflows get separate role gates and stronger confirmations.
                   </p>
                 </div>
               </CardContent>
