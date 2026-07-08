@@ -17,7 +17,7 @@
     "native:build:android": "cd android && gradlew.bat :app:assembleDebug",
     "native:assemble:android": "cd android && gradlew.bat :app:assembleRelease",
     "native:bundle:android": "cd android && gradlew.bat :app:bundleRelease",
-    "seed:lovesathi-demo-female": "node scripts/seed-lovesathi-demo-female-profiles.mjs"
+    "seed:lovesathi-launch-profiles": "node scripts/seed-lovesathi-launch-profiles.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -61,6 +61,45 @@ function cleanPlanIds(value: unknown) {
     .filter((item) => planIds.has(item))
 }
 
+async function resolveDiscountProfile(supabase: any, body: any) {
+  const publicId = cleanText(body.publicId, 80)?.toUpperCase() || null
+
+  if (publicId) {
+    const { data, error } = await supabase
+      .from("matrimony_profile_full")
+      .select("user_id, public_profile_id")
+      .eq("public_profile_id", publicId)
+      .maybeSingle()
+
+    if (error) {
+      throw new Error(error.message)
+    }
+    if (!data?.user_id) {
+      throw new Error("No profile found for that public ID.")
+    }
+
+    return {
+      userId: data.user_id,
+      publicId: data.public_profile_id || publicId,
+    }
+  }
+
+  if (validateId(body.userId)) {
+    const { data } = await supabase
+      .from("matrimony_profile_full")
+      .select("public_profile_id")
+      .eq("user_id", body.userId)
+      .maybeSingle()
+
+    return {
+      userId: body.userId,
+      publicId: data?.public_profile_id || null,
+    }
+  }
+
+  throw new Error("A valid public profile ID is required.")
+}
+
 export async function POST(request: Request) {
   const auth = await requireAdmin(request)
   if (auth.response) {
@@ -187,9 +226,7 @@ export async function POST(request: Request) {
       if (id && !validateId(id)) {
         return NextResponse.json({ error: "A valid discount id is required." }, { status: 400 })
       }
-      if (!validateId(body.userId)) {
-        return NextResponse.json({ error: "A valid user id is required." }, { status: 400 })
-      }
+      const discountProfile = await resolveDiscountProfile(supabase, body)
 
       const planId = cleanText(body.planId, 40)
       if (planId && !planIds.has(planId)) {
@@ -198,7 +235,7 @@ export async function POST(request: Request) {
 
       const status = userDiscountStatuses.has(body.status) ? body.status : "active"
       const payload = {
-        user_id: body.userId,
+        user_id: discountProfile.userId,
         plan_id: planId,
         title: cleanText(body.title, 120) || "Private discount",
         discount_percent: cleanInteger(body.discountPercent, 1, 100, "Discount percentage"),
@@ -229,6 +266,7 @@ export async function POST(request: Request) {
         notes: payload.notes || `${payload.title} granted by Lovesathi admin.`,
         metadata: {
           userId: payload.user_id,
+          publicId: discountProfile.publicId,
           planId: payload.plan_id,
           discountPercent: payload.discount_percent,
         },

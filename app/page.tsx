@@ -28,7 +28,7 @@ const pillars = [
   {
     icon: MessageCircle,
     title: "Respectful chat",
-    description: "Conversations stay privacy-aware, contact-safe, and ready for real intent instead of casual noise.",
+    description: "Conversations stay privacy-aware, contact-safe, and built for serious commitment instead of casual noise.",
   },
 ]
 
@@ -149,7 +149,6 @@ export default function Home() {
               <h1 className="luxe-title max-w-[22rem] text-4xl font-bold text-[#26364A] sm:max-w-4xl sm:text-7xl lg:text-8xl">
                 <span className="block">LoveSathi</span>
                 <span className="block">premium matrimony</span>
-                <span className="block">with real intent.</span>
               </h1>
               <p className="max-w-[22rem] text-base leading-7 text-[#6F7C8B] sm:max-w-2xl sm:text-xl sm:leading-8">
                 A refined app for verified, family-aware life-partner discovery, built around privacy,

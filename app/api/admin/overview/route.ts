@@ -257,6 +257,7 @@ type AdminDiscountBannerItem = {
 type AdminUserDiscountItem = {
   id: string
   userId: string
+  publicId: string | null
   userEmail: string | null
   profileName: string | null
   planId: string | null
@@ -1203,6 +1204,9 @@ export async function GET(request: Request) {
   const profileNameByUserId = new Map<string, string | null>(
     userProfileRows.items.map((item) => [item.user_id, item.name || null]),
   )
+  const profilePublicIdByUserId = new Map<string, string | null>(
+    userProfileRows.items.map((item) => [item.user_id, item.public_profile_id || null]),
+  )
   const entitlementLedgerItems: AdminSubscriptionItem[] = allEntitlementRows.items.map((item) => {
     const plan = item.plan_id ? getSubscriptionPlan(item.plan_id) : null
     return {
@@ -1333,6 +1337,7 @@ export async function GET(request: Request) {
     items: userDiscountRows.items.map((item) => ({
       id: item.id,
       userId: item.user_id,
+      publicId: profilePublicIdByUserId.get(item.user_id) || null,
       userEmail: userEmailMap.get(item.user_id) || null,
       profileName: profileNameByUserId.get(item.user_id) || null,
       planId: item.plan_id || null,

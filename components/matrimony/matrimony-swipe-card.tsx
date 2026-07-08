@@ -45,7 +45,6 @@ interface MatrimonySwipeCardProps {
   verified?: boolean
   premium?: boolean
   viewerIsPremium?: boolean
-  demo?: boolean
   visibilityLabel?: string
   bio?: string
   interests?: string[]
@@ -81,7 +80,6 @@ export function MatrimonySwipeCard({
   verified,
   premium,
   viewerIsPremium = false,
-  demo,
   visibilityLabel,
   bio,
   interests,
@@ -534,7 +532,7 @@ export function MatrimonySwipeCard({
           alt=""
           className={cn(
             "absolute inset-0 h-full w-full object-cover transition-opacity duration-300",
-            premiumLocked && isTopCard && "scale-105 blur-[14px] brightness-90 saturate-75",
+            premiumLocked && isTopCard && "scale-105 blur-[7px] brightness-90 saturate-75",
             !isTopCard && "brightness-75 saturate-90",
           )}
           onError={() => setImageLoadFailed(true)}
@@ -1365,7 +1363,6 @@ export function MatrimonySwipeCard({
         religion: community, // Using community as religion for now
         verified,
         premium,
-        demo,
         visibilityLabel,
         phoneMasked,
         phone,

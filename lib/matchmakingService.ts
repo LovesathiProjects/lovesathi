@@ -1,7 +1,5 @@
 import { supabase } from "./supabaseClient"
 import {
-  FREE_PLAN_LIMITS,
-  getLimitMessage,
   getSwipeLimitStatus,
   normalizeLimitError,
   type UsageLimitStatus,
@@ -44,76 +42,8 @@ export interface ActivityItem {
   masked?: boolean
 }
 
-function isDemoProfileId(profileId: string) {
-  return profileId.startsWith("demo-")
-}
-
-function demoSwipeStorageKey(userId: string) {
-  return `lovesathi_demo_swipes:${userId}`
-}
-
-function demoActedStorageKey(userId: string) {
-  return `lovesathi_demo_acted_profiles:${userId}`
-}
-
-function getDemoSwipeRows(userId: string) {
-  if (typeof window === "undefined") return []
-
-  try {
-    const raw = localStorage.getItem(demoSwipeStorageKey(userId))
-    const rows = raw ? (JSON.parse(raw) as Array<{ targetId: string; action: string; createdAt: string }>) : []
-    const windowStart = Date.now() - FREE_PLAN_LIMITS.windowHours * 60 * 60 * 1000
-    const recentRows = rows.filter((row) => new Date(row.createdAt).getTime() >= windowStart)
-    if (recentRows.length !== rows.length) {
-      localStorage.setItem(demoSwipeStorageKey(userId), JSON.stringify(recentRows))
-    }
-    return recentRows
-  } catch {
-    return []
-  }
-}
-
-function getDemoActedProfileIds(userId: string) {
-  if (typeof window === "undefined") return []
-
-  try {
-    const raw = localStorage.getItem(demoActedStorageKey(userId))
-    const ids = raw ? (JSON.parse(raw) as string[]) : []
-    return Array.isArray(ids) ? ids.filter((id) => typeof id === "string") : []
-  } catch {
-    return []
-  }
-}
-
-function recordDemoActedProfile(userId: string, targetId: string) {
-  if (typeof window === "undefined") return
-  const ids = new Set(getDemoActedProfileIds(userId))
-  ids.add(targetId)
-  localStorage.setItem(demoActedStorageKey(userId), JSON.stringify(Array.from(ids)))
-}
-
-function recordDemoSwipe(userId: string, targetId: string, action: "like" | "pass" | "connect" | "super_like") {
-  if (typeof window === "undefined") return
-  const rows = getDemoSwipeRows(userId)
-  rows.push({ targetId, action, createdAt: new Date().toISOString() })
-  localStorage.setItem(demoSwipeStorageKey(userId), JSON.stringify(rows))
-  recordDemoActedProfile(userId, targetId)
-}
-
 export async function getMatrimonyDiscoverySwipeStatus(userId: string): Promise<UsageLimitStatus> {
-  const status = await getSwipeLimitStatus(userId)
-  if (status.isPremium) return status
-
-  const demoSwipeCount = getDemoSwipeRows(userId).length
-  const remaining = Math.max((status.remaining ?? FREE_PLAN_LIMITS.swipeActions) - demoSwipeCount, 0)
-
-  return {
-    allowed: remaining > 0,
-    isPremium: false,
-    remaining,
-    kind: remaining > 0 ? undefined : "swipe",
-    error: remaining > 0 ? undefined : getLimitMessage("swipe"),
-  }
+  return getSwipeLimitStatus(userId)
 }
 
 export async function recordMatrimonyLike(
@@ -125,11 +55,6 @@ export async function recordMatrimonyLike(
     const limitStatus = await getMatrimonyDiscoverySwipeStatus(likerId)
     if (!limitStatus.allowed) {
       return { success: false, error: limitStatus.error }
-    }
-
-    if (isDemoProfileId(likedId)) {
-      recordDemoSwipe(likerId, likedId, action)
-      return { success: true }
     }
 
     const payload = { liker_id: likerId, liked_id: likedId, action }
@@ -173,13 +98,6 @@ export async function recordMatrimonyLike(
 
 export async function createPremiumDirectMatrimonyMatch(otherUserId: string): Promise<LikeAction> {
   try {
-    if (isDemoProfileId(otherUserId)) {
-      return {
-        success: false,
-        error: "This preview profile is not chat-enabled yet. Chat and contact reveal work on real verified profiles.",
-      }
-    }
-
     const { data, error } = await supabase.rpc("create_lovesathi_premium_direct_match", {
       p_other_user_id: otherUserId,
     })
@@ -268,10 +186,8 @@ export async function getMatrimonyLikedProfiles(userId: string): Promise<string[
     const realLikedIds = likes?.map((item) => item.liked_id) || []
     const matchedIds =
       matchesError ? [] : matches?.map((match) => (match.user1_id === userId ? match.user2_id : match.user1_id)) || []
-    const demoRecentIds = getDemoSwipeRows(userId).map((row) => row.targetId)
-    const demoActedIds = getDemoActedProfileIds(userId)
 
-    return Array.from(new Set([...realLikedIds, ...matchedIds, ...demoRecentIds, ...demoActedIds]))
+    return Array.from(new Set([...realLikedIds, ...matchedIds]))
   } catch (error: any) {
     console.error("Error getting matrimony liked profiles:", error)
     return []
@@ -334,7 +250,7 @@ export async function getMatrimonyLikesReceived(userId: string): Promise<Activit
 }
 
 export async function recordMatrimonyProfileView(viewerId: string, viewedUserId: string): Promise<void> {
-  if (!viewerId || !viewedUserId || viewerId === viewedUserId || isDemoProfileId(viewedUserId)) return
+  if (!viewerId || !viewedUserId || viewerId === viewedUserId) return
 
   const now = new Date().toISOString()
   const { error } = await supabase

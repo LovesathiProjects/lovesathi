@@ -357,6 +357,7 @@ type AdminDiscountBannerDraft = {
 type AdminUserDiscountItem = {
   id: string
   userId: string
+  publicId: string | null
   userEmail: string | null
   profileName: string | null
   planId: string | null
@@ -371,7 +372,7 @@ type AdminUserDiscountItem = {
 
 type AdminUserDiscountDraft = {
   id: string | null
-  userId: string
+  publicId: string
   planId: string
   title: string
   discountPercent: string
@@ -587,7 +588,7 @@ function createEmptyDiscountBannerDraft(): AdminDiscountBannerDraft {
 function createEmptyUserDiscountDraft(): AdminUserDiscountDraft {
   return {
     id: null,
-    userId: "",
+    publicId: "",
     planId: "",
     title: "Private discount",
     discountPercent: "10",
@@ -655,7 +656,7 @@ function discountBannerToDraft(item: AdminDiscountBannerItem): AdminDiscountBann
 function userDiscountToDraft(item: AdminUserDiscountItem): AdminUserDiscountDraft {
   return {
     id: item.id,
-    userId: item.userId,
+    publicId: item.publicId || "",
     planId: item.planId || "",
     title: item.title,
     discountPercent: String(item.discountPercent || 10),
@@ -1010,7 +1011,7 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
     matchesSearch([item.title, item.bannerText, item.discountPercent, item.planIds.join(" "), item.status], searchTerm),
   )
   const searchedUserDiscounts = userDiscountItems.filter((item) =>
-    matchesSearch([item.userId, item.userEmail, item.profileName, item.planId, item.title, item.discountPercent, item.status, item.notes], searchTerm),
+    matchesSearch([item.publicId, item.userEmail, item.profileName, item.planId, item.title, item.discountPercent, item.status, item.notes], searchTerm),
   )
   const searchedAudit = auditItems.filter((item) =>
     matchesSearch(
@@ -1732,6 +1733,7 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
         body: JSON.stringify({
           type: "user_discount",
           ...draft,
+          publicId: draft.publicId.trim().toUpperCase(),
           planId: draft.planId || null,
           status: statusOverride || draft.status,
           discountPercent: Number(draft.discountPercent) || 0,
@@ -2964,7 +2966,7 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                       Individual grants
                     </CardTitle>
                     <p className="mt-2 text-sm leading-6 text-[#6F7C8B]">
-                      Grant a private discount by user ID. Use member search above to find the ID, phone, or email first.
+                      Grant a private discount by public profile ID. Use member search above to find the ID, phone, or email first.
                     </p>
                   </div>
                   <Ticket className="h-6 w-6 text-[#E83262]" />
@@ -2973,13 +2975,13 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
               <CardContent className="space-y-4 p-5 sm:p-6">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="user-discount-user">User ID</Label>
+                    <Label htmlFor="user-discount-user">Public profile ID</Label>
                     <Input
                       id="user-discount-user"
-                      value={userDiscountDraft.userId}
-                      onChange={(event) => updateUserDiscountDraft("userId", event.target.value)}
+                      value={userDiscountDraft.publicId}
+                      onChange={(event) => updateUserDiscountDraft("publicId", event.target.value.toUpperCase())}
                       className="rounded-2xl bg-white"
-                      placeholder="Supabase user UUID"
+                      placeholder="LSMUMF001"
                     />
                   </div>
                   <div className="space-y-2">
@@ -3060,12 +3062,14 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                       <div key={item.id} className="rounded-[1.25rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="font-bold text-[#26364A]">{item.profileName || item.userEmail || item.userId}</p>
+                            <p className="font-bold text-[#26364A]">{item.profileName || item.userEmail || item.publicId || "Member"}</p>
                             <p className="mt-1 text-sm text-[#6F7C8B]">{item.title} | {item.discountPercent}% off {item.planId || "all plans"}</p>
                           </div>
                           <StatusBadge status={item.status} />
                         </div>
-                        <p className="mt-2 break-all text-xs font-semibold text-[#9d7a55]">{item.userId}</p>
+                        <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#9d7a55]">
+                          ID - {item.publicId || "Pending"}
+                        </p>
                         {item.notes && <p className="mt-2 text-xs leading-5 text-[#6F7C8B]">{item.notes}</p>}
                         <div className="mt-3 flex gap-2">
                           <Button size="sm" variant="outline" className="rounded-full border-[#DDE4EE] bg-white" onClick={() => handleEditUserDiscount(item)}>
@@ -3604,9 +3608,6 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                           <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-[#8B98A8]">
                             ID - {item.publicId || "Pending"}
                           </p>
-                          <p className="mt-1 break-all text-xs font-semibold text-[#9d7a55]">
-                            User - {item.id}
-                          </p>
                           {item.phone && <p className="mt-1 text-xs font-semibold text-[#9d7a55]">{item.phone}</p>}
                         </div>
                         <div className="flex flex-wrap gap-2 xl:block">
@@ -3720,10 +3721,11 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                             onClick={() => {
                               setUserDiscountDraft({
                                 ...createEmptyUserDiscountDraft(),
-                                userId: item.id,
+                                publicId: item.publicId || "",
                                 title: item.profileName ? `${item.profileName} private offer` : "Private discount",
                               })
                             }}
+                            disabled={!item.publicId}
                           >
                             <Ticket className="mr-2 h-4 w-4" />
                             Discount
@@ -4366,9 +4368,8 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                   <div className="rounded-[1.25rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#8B98A8]">Identifiers</p>
                     <div className="mt-3 space-y-2 text-sm font-semibold text-[#26364A]">
-                      <p className="break-all">Profile: {selectedProfile.id}</p>
-                      <p className="break-all">User: {selectedProfile.userId}</p>
                       <p>Public ID: {selectedProfile.publicId || "Pending"}</p>
+                      <p className="break-all text-[#6F7C8B]">Profile record: {selectedProfile.id}</p>
                     </div>
                   </div>
                   <div className="rounded-[1.25rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
