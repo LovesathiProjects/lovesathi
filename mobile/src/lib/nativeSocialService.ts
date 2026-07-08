@@ -71,6 +71,7 @@ type MatchRow = {
   user2_id: string;
   matched_at?: string | null;
   is_active?: boolean | null;
+  archived_by?: string[] | null;
 };
 
 type ProfileRow = {
@@ -305,6 +306,15 @@ export async function createNativeDirectChat(targetUserId: string) {
     });
     if (error) throw error;
     if (typeof data !== 'string') throw new Error('Unable to create chat.');
+    const { error: unarchiveError } = await requireClient().rpc(
+      'unarchive_lovesathi_match_for_user',
+      {
+        p_match_id: data,
+      },
+    );
+    if (unarchiveError) {
+      console.warn('[createNativeDirectChat] Unable to unarchive chat:', unarchiveError.message);
+    }
     return data;
   } catch (error) {
     throw new Error(normalizeSocialError(error));
@@ -315,14 +325,16 @@ export async function loadNativeChats(userId: string): Promise<NativeChatPreview
   const client = requireClient();
   const { data: matches, error } = await client
     .from('matrimony_matches')
-    .select('id,user1_id,user2_id,matched_at,is_active')
+    .select('id,user1_id,user2_id,matched_at,is_active,archived_by')
     .eq('is_active', true)
     .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
     .order('matched_at', { ascending: false });
 
   if (error) throw error;
 
-  const matchRows = (matches ?? []) as MatchRow[];
+  const matchRows = ((matches ?? []) as MatchRow[]).filter(
+    (match) => !Array.isArray(match.archived_by) || !match.archived_by.includes(userId),
+  );
   if (!matchRows.length) return [];
 
   const matchIds = matchRows.map((match) => match.id);
@@ -516,7 +528,7 @@ export async function loadNativeActivity(userId: string): Promise<NativeActivity
     await Promise.all([
       client
         .from('matrimony_matches')
-        .select('id,user1_id,user2_id,matched_at,is_active')
+        .select('id,user1_id,user2_id,matched_at,is_active,archived_by')
         .eq('is_active', true)
         .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
         .order('matched_at', { ascending: false }),
@@ -543,7 +555,9 @@ export async function loadNativeActivity(userId: string): Promise<NativeActivity
   if (likesResult.error) throw likesResult.error;
   if (viewsResult.error) throw viewsResult.error;
 
-  const matches = (matchesResult.data ?? []) as MatchRow[];
+  const matches = ((matchesResult.data ?? []) as MatchRow[]).filter(
+    (match) => !Array.isArray(match.archived_by) || !match.archived_by.includes(userId),
+  );
   const likes = (likesResult.data ?? []) as LikeRow[];
   const views = (viewsResult.data ?? []) as ViewRow[];
   const userIds = Array.from(

@@ -100,6 +100,11 @@ export function MatrimonySetupScreen() {
   }, []);
 
   const pickPhotos = async () => {
+    if (photos.length >= 6) {
+      setError('You can upload up to 6 photos.');
+      return;
+    }
+
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       setError('Photo library permission is required.');
@@ -241,11 +246,24 @@ export function MatrimonySetupScreen() {
           {step + 1}/{stepTitles.length}
         </Text>
         <Text style={styles.stepTitle}>{stepTitles[step]}</Text>
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${((step + 1) / stepTitles.length) * 100}%` }]} />
+        </View>
+        <Text style={styles.headerCopy}>
+          Build a complete, family-ready profile. Your progress is saved step by step.
+        </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         {step === 0 && (
           <>
+            <View style={styles.introCard}>
+              <Text style={styles.introKicker}>Create your profile</Text>
+              <Text style={styles.introTitle}>Start with the essentials</Text>
+              <Text style={styles.introCopy}>
+                Add your name, creator details, and clear profile photos. We never use random stock people in your profile.
+              </Text>
+            </View>
             <Field label="Full name" value={name} onChangeText={setName} placeholder="Your full name" />
             {verifiedDob ? (
               <View style={styles.verifiedCard}>
@@ -270,11 +288,27 @@ export function MatrimonySetupScreen() {
               value={createdBy}
               onChange={(value) => setCreatedBy(value as typeof createdBy)}
             />
-            <LuxuryButton label="Add photos" onPress={() => void pickPhotos()} variant="secondary" />
-            <Text style={styles.helper}>Minimum 2 photos, maximum 6.</Text>
+            <LuxuryButton
+              disabled={isLoading || photos.length >= 6}
+              label={photos.length >= 6 ? 'Photo limit reached' : 'Add photos'}
+              onPress={() => void pickPhotos()}
+              variant="secondary"
+            />
+            <Text style={styles.helper}>Minimum 2 photos, maximum 6. {photos.length}/6 uploaded.</Text>
             <View style={styles.photoGrid}>
               {photos.map((photo, index) => (
-                <Image key={`${photo}-${index}`} source={{ uri: photo }} style={styles.photo} />
+                <View key={`${photo}-${index}`} style={styles.photoTile}>
+                  <Image source={{ uri: photo }} style={styles.photo} />
+                  {index === 0 ? <Text style={styles.primaryPhoto}>Primary</Text> : null}
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove photo ${index + 1}`}
+                    onPress={() => setPhotos((current) => current.filter((_, photoIndex) => photoIndex !== index))}
+                    style={styles.removePhoto}
+                  >
+                    <Text style={styles.removePhotoText}>x</Text>
+                  </Pressable>
+                </View>
               ))}
             </View>
           </>
@@ -459,7 +493,50 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
   },
+  progressTrack: {
+    height: 7,
+    marginTop: spacing.md,
+    overflow: 'hidden',
+    borderRadius: radius.pill,
+    backgroundColor: colors.line,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: radius.pill,
+    backgroundColor: colors.rose,
+  },
+  headerCopy: {
+    marginTop: spacing.sm,
+    color: colors.muted,
+    lineHeight: 20,
+  },
   content: { padding: spacing.lg, gap: spacing.md, paddingBottom: 120 },
+  introCard: {
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.card,
+    padding: spacing.lg,
+  },
+  introKicker: {
+    color: colors.rose,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
+  introTitle: {
+    marginTop: spacing.xs,
+    color: colors.mocha,
+    fontFamily: 'Georgia',
+    fontSize: 26,
+    fontWeight: '700',
+  },
+  introCopy: {
+    marginTop: spacing.sm,
+    color: colors.muted,
+    lineHeight: 22,
+  },
   footer: {
     padding: spacing.lg,
     gap: spacing.sm,
@@ -505,7 +582,45 @@ const styles = StyleSheet.create({
   },
   verifiedCopy: { marginTop: spacing.xs, color: colors.muted },
   photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  photo: { width: 96, height: 96, borderRadius: radius.sm },
+  photoTile: {
+    position: 'relative',
+    overflow: 'hidden',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.card,
+  },
+  photo: { width: 104, height: 104 },
+  primaryPhoto: {
+    position: 'absolute',
+    left: 7,
+    top: 7,
+    overflow: 'hidden',
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    color: colors.rose,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  removePhoto: {
+    position: 'absolute',
+    right: 7,
+    top: 7,
+    width: 26,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 13,
+    backgroundColor: colors.rose,
+  },
+  removePhotoText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '900',
+    lineHeight: 14,
+  },
   choiceWrap: { gap: spacing.sm },
   choice: {
     minHeight: 48,

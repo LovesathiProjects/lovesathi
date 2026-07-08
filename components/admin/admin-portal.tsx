@@ -393,6 +393,18 @@ type AdminOverview = {
 }
 
 type AdminQueueFilter = "all" | "attention" | "profiles" | "reports" | "events" | "premium" | "heritage"
+export type AdminSection =
+  | "overview"
+  | "events"
+  | "members"
+  | "profiles"
+  | "safety"
+  | "premium"
+  | "plans"
+  | "notifications"
+  | "settings"
+  | "stories"
+  | "audit"
 
 const metricIcons = [Users, BadgeCheck, Clock3, ShieldCheck, FileWarning, Crown, MessageCircle, Database, Sparkles]
 const riskIcons = [FileWarning, UserRoundCheck, ShieldCheck, Mail, Crown, CalendarDays, Activity]
@@ -621,7 +633,7 @@ function auditMatchesLane(item: AdminAuditItem, lane: AdminQueueFilter) {
   return false
 }
 
-export function AdminPortal() {
+export function AdminPortal({ section = "overview" }: { section?: AdminSection }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(true)
@@ -813,19 +825,21 @@ export function AdminPortal() {
   const selectedQueueFilter = queueFilters.find((filter) => filter.id === queueFilter) || queueFilters[0]
   const urgentWorkCount =
     attentionUsers.length + attentionProfiles.length + attentionVerifications.length + attentionReports.length + attentionEvents.length
-  const adminNavItems = [
-    { href: "#overview", label: "Overview", icon: Activity, count: urgentWorkCount },
-    { href: "#events", label: "Events", icon: CalendarDays, count: eventItems.length },
-    { href: "#members", label: "Members", icon: Users, count: filteredUsers.length },
-    { href: "#profiles", label: "Profiles", icon: UserRoundCheck, count: filteredProfiles.length + filteredVerifications.length },
-    { href: "#safety", label: "Safety", icon: ShieldCheck, count: filteredReports.length },
-    { href: "#premium", label: "Premium", icon: Crown, count: activeSubscriptionItems.length },
-    { href: "#plans", label: "Plans", icon: CreditCard, count: planItems.length },
-    { href: "#notifications", label: "Notify", icon: Bell, count: notificationCampaignItems.length },
-    { href: "#settings", label: "Settings", icon: Settings, count: siteSettingItems.length },
-    { href: "#stories", label: "Stories", icon: HeartHandshake, count: successStoryItems.length },
-    { href: "#audit", label: "Audit", icon: Database, count: filteredAudit.length },
+  const currentSection: AdminSection = section
+  const adminNavItems: Array<{ id: AdminSection; href: string; label: string; icon: typeof Activity; count: number }> = [
+    { id: "overview", href: "/admin", label: "Overview", icon: Activity, count: urgentWorkCount },
+    { id: "events", href: "/admin/events", label: "Events", icon: CalendarDays, count: eventItems.length },
+    { id: "members", href: "/admin/members", label: "Members", icon: Users, count: filteredUsers.length },
+    { id: "profiles", href: "/admin/profiles", label: "Profiles", icon: UserRoundCheck, count: filteredProfiles.length + filteredVerifications.length },
+    { id: "safety", href: "/admin/safety", label: "Safety", icon: ShieldCheck, count: filteredReports.length },
+    { id: "premium", href: "/admin/premium", label: "Premium", icon: Crown, count: activeSubscriptionItems.length },
+    { id: "plans", href: "/admin/plans", label: "Plans", icon: CreditCard, count: planItems.length },
+    { id: "notifications", href: "/admin/notifications", label: "Notify", icon: Bell, count: notificationCampaignItems.length },
+    { id: "settings", href: "/admin/settings", label: "Settings", icon: Settings, count: siteSettingItems.length },
+    { id: "stories", href: "/admin/stories", label: "Stories", icon: HeartHandshake, count: successStoryItems.length },
+    { id: "audit", href: "/admin/audit", label: "Audit", icon: Database, count: filteredAudit.length },
   ]
+  const currentNavItem = adminNavItems.find((item) => item.id === currentSection) || adminNavItems[0]
 
   useEffect(() => {
     let mounted = true
@@ -1346,24 +1360,42 @@ export function AdminPortal() {
             </Link>
             <div className="rounded-2xl border border-[#E6EAF1] bg-[#F7F9FC] p-4">
               <p className="luxe-kicker text-[#E83262]">live lane</p>
-              <p className="mt-2 text-2xl font-black tracking-[-0.04em] text-[#172235]">{selectedQueueFilter.label}</p>
-              <p className="mt-2 text-xs font-semibold leading-5 text-[#6F7C8B]">{selectedQueueFilter.detail}</p>
+              <p className="mt-2 text-2xl font-black tracking-[-0.04em] text-[#172235]">{currentNavItem.label}</p>
+              <p className="mt-2 text-xs font-semibold leading-5 text-[#6F7C8B]">
+                {currentSection === "overview" ? selectedQueueFilter.detail : "Focused module view"}
+              </p>
             </div>
             <nav className="mt-5 space-y-1.5" aria-label="Admin workspace sections">
               {adminNavItems.map((item) => (
-                <a
-                  key={item.href}
+                <Link
+                  key={item.id}
                   href={item.href}
-                  className="group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold text-[#526071] no-underline transition hover:bg-[#FFF4F7] hover:text-[#E83262]"
+                  className={
+                    item.id === currentSection
+                      ? "group flex items-center justify-between rounded-xl bg-[#172235] px-3 py-2.5 text-sm font-bold text-white no-underline shadow-sm transition"
+                      : "group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold text-[#526071] no-underline transition hover:bg-[#FFF4F7] hover:text-[#E83262]"
+                  }
                 >
                   <span className="flex min-w-0 items-center gap-2.5">
-                    <item.icon className="h-4 w-4 shrink-0 text-[#8B98A8] transition group-hover:text-[#E83262]" />
+                    <item.icon
+                      className={
+                        item.id === currentSection
+                          ? "h-4 w-4 shrink-0 text-[#F7C9D5]"
+                          : "h-4 w-4 shrink-0 text-[#8B98A8] transition group-hover:text-[#E83262]"
+                      }
+                    />
                     <span className="truncate">{item.label}</span>
                   </span>
-                  <span className="rounded-full bg-[#EEF2F7] px-2 py-0.5 text-[0.68rem] font-black text-[#6F7C8B]">
+                  <span
+                    className={
+                      item.id === currentSection
+                        ? "rounded-full bg-white/12 px-2 py-0.5 text-[0.68rem] font-black text-white"
+                        : "rounded-full bg-[#EEF2F7] px-2 py-0.5 text-[0.68rem] font-black text-[#6F7C8B]"
+                    }
+                  >
                     {item.count.toLocaleString("en-IN")}
                   </span>
-                </a>
+                </Link>
               ))}
             </nav>
             <div className="mt-auto rounded-2xl border border-[#E6EAF1] bg-[#172235] p-4 text-white">
@@ -1426,7 +1458,7 @@ export function AdminPortal() {
           </div>
         )}
 
-        <section id="overview" className="scroll-mt-28 rounded-[1.5rem] border border-[#DDE4EE] bg-[#ffffff] p-5 shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+        <section id="overview" className={currentSection === "overview" ? "scroll-mt-28 rounded-[1.5rem] border border-[#DDE4EE] bg-[#ffffff] p-5 shadow-[0_18px_52px_rgba(38,54,74,0.07)]" : "hidden"}>
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="luxe-kicker mb-2 text-[#E83262]">command priorities</p>
@@ -1508,7 +1540,7 @@ export function AdminPortal() {
           </div>
         </section>
 
-        <section className="rounded-[1.5rem] border border-[#DDE4EE] bg-[#ffffff] p-4 shadow-[0_18px_52px_rgba(38,54,74,0.06)] sm:p-5">
+        <section className={currentSection === "overview" ? "rounded-[1.5rem] border border-[#DDE4EE] bg-[#ffffff] p-4 shadow-[0_18px_52px_rgba(38,54,74,0.06)] sm:p-5" : "hidden"}>
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="luxe-kicker mb-2 text-[#E83262]">operations lanes</p>
@@ -1563,7 +1595,7 @@ export function AdminPortal() {
           )}
         </section>
 
-        <section id="events" className="scroll-mt-28">
+        <section id="events" className={currentSection === "events" ? "scroll-mt-28" : "hidden"}>
           <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
             <CardHeader className="border-b border-[#482b1a]/10 bg-[#26364A] text-white">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -1965,7 +1997,7 @@ export function AdminPortal() {
           </Card>
         </section>
 
-        <section id="event-attendance" className="grid scroll-mt-28 gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+        <section id="event-attendance" className={currentSection === "events" ? "grid scroll-mt-28 gap-5 xl:grid-cols-[1.1fr_0.9fr]" : "hidden"}>
           <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
             <CardHeader className="border-b border-[#E1E7EF]">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -2122,7 +2154,7 @@ export function AdminPortal() {
           </Card>
         </section>
 
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <section className={currentSection === "overview" ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "hidden"}>
           {(overview?.metrics || []).map((metric, index) => {
             const Icon = metricIcons[index % metricIcons.length]
             return (
@@ -2142,7 +2174,7 @@ export function AdminPortal() {
           })}
         </section>
 
-        <section id="plans" className="grid scroll-mt-28 gap-5 xl:grid-cols-[1fr_1fr]">
+        <section id="plans" className={currentSection === "plans" ? "grid scroll-mt-28 gap-5 xl:grid-cols-[1fr_1fr]" : "hidden"}>
           <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
             <CardHeader className="border-b border-[#E1E7EF]">
               <div className="flex items-start justify-between gap-4">
@@ -2274,7 +2306,7 @@ export function AdminPortal() {
           </div>
         </section>
 
-        <section id="notifications" className="grid scroll-mt-28 gap-5 xl:grid-cols-[0.85fr_1.15fr]">
+        <section id="notifications" className={currentSection === "notifications" ? "grid scroll-mt-28 gap-5 xl:grid-cols-[0.85fr_1.15fr]" : "hidden"}>
           <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
             <CardHeader className="border-b border-[#E1E7EF]">
               <div className="flex items-start justify-between gap-4">
@@ -2410,8 +2442,8 @@ export function AdminPortal() {
           </Card>
         </section>
 
-        <section id="settings" className="grid scroll-mt-28 gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-          <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+        <section id="settings" className={currentSection === "settings" || currentSection === "stories" ? "grid scroll-mt-28 gap-5" : "hidden"}>
+          <Card className={currentSection === "settings" ? "overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]" : "hidden"}>
             <CardHeader className="border-b border-[#E1E7EF]">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -2462,7 +2494,7 @@ export function AdminPortal() {
             </CardContent>
           </Card>
 
-          <Card id="stories" className="scroll-mt-28 overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+          <Card id="stories" className={currentSection === "stories" ? "scroll-mt-28 overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]" : "hidden"}>
             <CardHeader className="border-b border-[#E1E7EF]">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -2651,7 +2683,7 @@ export function AdminPortal() {
           </Card>
         </section>
 
-        <section id="members" className="scroll-mt-28">
+        <section id="members" className={currentSection === "members" ? "scroll-mt-28" : "hidden"}>
           <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
             <CardHeader className="border-b border-[#482b1a]/10 bg-white/55">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -2822,7 +2854,7 @@ export function AdminPortal() {
           </Card>
         </section>
 
-        <section id="premium" className="scroll-mt-28">
+        <section id="premium" className={currentSection === "premium" ? "scroll-mt-28" : "hidden"}>
           <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
             <CardHeader className="border-b border-[#482b1a]/10 bg-[#26364A] text-white">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -2896,7 +2928,7 @@ export function AdminPortal() {
           </Card>
         </section>
 
-        <section className="scroll-mt-28">
+        <section className={currentSection === "overview" ? "scroll-mt-28" : "hidden"}>
           <Card className="overflow-hidden rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
             <CardHeader className="border-b border-[#482b1a]/10 bg-white/50">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -3032,7 +3064,7 @@ export function AdminPortal() {
           </Card>
         </section>
 
-        <section id="profiles" className="grid scroll-mt-28 gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+        <section id="profiles" className={currentSection === "profiles" ? "grid scroll-mt-28 gap-5 xl:grid-cols-[1.05fr_0.95fr]" : "hidden"}>
           <Card className="rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
@@ -3211,8 +3243,8 @@ export function AdminPortal() {
           </Card>
         </section>
 
-        <section id="safety" className="grid scroll-mt-28 gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-          <Card className="rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+        <section id="safety" className={currentSection === "safety" ? "grid scroll-mt-28 gap-5 lg:grid-cols-[0.95fr_1.05fr]" : currentSection === "audit" ? "scroll-mt-28" : "hidden"}>
+          <Card className={currentSection === "safety" ? "rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]" : "hidden"}>
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -3282,8 +3314,8 @@ export function AdminPortal() {
             </CardContent>
           </Card>
 
-          <div className="space-y-5">
-            <Card className="rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+          <div className={currentSection === "audit" ? "" : "space-y-5"}>
+            <Card className={currentSection === "safety" ? "rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]" : "hidden"}>
               <CardHeader>
                 <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#26364A]">Launch readiness</CardTitle>
               </CardHeader>
@@ -3304,7 +3336,7 @@ export function AdminPortal() {
               </CardContent>
             </Card>
 
-            <Card id="audit" className="scroll-mt-28 rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]">
+            <Card id="audit" className={currentSection === "audit" ? "scroll-mt-28 rounded-[1.5rem] border-[#DDE4EE] bg-white shadow-[0_18px_52px_rgba(38,54,74,0.07)]" : "hidden"}>
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -3346,7 +3378,7 @@ export function AdminPortal() {
               </CardContent>
             </Card>
 
-            <Card className="luxe-dark-card rounded-[2rem] border-[#E83262]/24 text-[#ffffff]">
+            <Card className={currentSection === "safety" ? "luxe-dark-card rounded-[2rem] border-[#E83262]/24 text-[#ffffff]" : "hidden"}>
               <CardHeader>
                 <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#ffffff]">Admin safety model</CardTitle>
               </CardHeader>

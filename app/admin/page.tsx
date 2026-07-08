@@ -11,5 +11,5 @@ export const metadata: Metadata = {
 }
 
 export default function AdminPage() {
-  return <AdminPortal />
+  return <AdminPortal section="overview" />
 }

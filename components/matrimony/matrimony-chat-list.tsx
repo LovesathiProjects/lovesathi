@@ -269,11 +269,9 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
       // Mark all messages as deleted for this user (soft delete - hides from UI but keeps in DB)
       await deleteAllMessagesForUser(matchId, currentUserId, 'matrimony')
 
-      // Delete the chat (set is_active to false)
-      const { error } = await supabase
-        .from('matrimony_matches')
-        .update({ is_active: false })
-        .eq('id', matchId)
+      const { error } = await supabase.rpc('archive_lovesathi_match_for_user', {
+        p_match_id: matchId,
+      })
 
       if (error) {
         console.error('Error deleting chat:', error)
@@ -309,14 +307,17 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
         )
       )
 
-      // Delete all selected chats (set is_active to false)
-      const { error } = await supabase
-        .from('matrimony_matches')
-        .update({ is_active: false })
-        .in('id', matchIds)
+      const archiveResults = await Promise.all(
+        matchIds.map((matchId) =>
+          supabase.rpc('archive_lovesathi_match_for_user', {
+            p_match_id: matchId,
+          }),
+        ),
+      )
+      const archiveError = archiveResults.find((result) => result.error)?.error
 
-      if (error) {
-        console.error('Error deleting chats:', error)
+      if (archiveError) {
+        console.error('Error deleting chats:', archiveError)
         return
       }
 

@@ -32,6 +32,7 @@ export function MatrimonySetup() {
   const onExit = () => {
     if (confirm("Exit setup? Your progress is saved as draft.")) {
       toast.message("You can return to complete your matrimony setup later.")
+      router.push("/")
     }
   }
 
@@ -59,7 +60,10 @@ export function MatrimonySetup() {
             />
           ))}
         </div>
-        <div className="w-10 text-right text-xs font-bold uppercase tracking-[0.16em] text-[#E83262]">{step + 1}/7</div>
+        <div className="flex min-w-12 flex-col items-end">
+          <span className="text-xs font-bold uppercase tracking-[0.16em] text-[#E83262]">{step + 1}/7</span>
+          <span className="hidden max-w-40 truncate text-xs font-semibold text-[#6F7C8B] sm:block">{stepTitles[step]}</span>
+        </div>
       </div>
 
       {/* Main Content */}

@@ -16,13 +16,14 @@ export async function getMatchId(
 ): Promise<string | null> {
   try {
     const tableName = 'matrimony_matches'
+    const [user1Id, user2Id] = [userId, otherUserId].sort()
     
     const { data, error } = await supabase
       .from(tableName)
-      .select('id')
+      .select('id, archived_by')
       .eq('is_active', true)
-      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
-      .or(`user1_id.eq.${otherUserId},user2_id.eq.${otherUserId}`)
+      .eq('user1_id', user1Id)
+      .eq('user2_id', user2Id)
       .single()
 
     if (error) {
@@ -30,26 +31,16 @@ export async function getMatchId(
       return null
     }
 
-    // Verify both users are in the match
-    const { data: matchData, error: matchError } = await supabase
-      .from(tableName)
-      .select('user1_id, user2_id')
-      .eq('id', data.id)
-      .single()
-
-    if (matchError || !matchData) {
-      console.error('[getMatchId] Match verification error:', matchError)
-      return null
+    if (Array.isArray(data.archived_by) && data.archived_by.includes(userId)) {
+      const { error: unarchiveError } = await supabase.rpc('unarchive_lovesathi_match_for_user', {
+        p_match_id: data.id,
+      })
+      if (unarchiveError) {
+        console.warn('[getMatchId] Unable to unarchive chat:', unarchiveError.message)
+      }
     }
 
-    const isUser1 = matchData.user1_id === userId || matchData.user1_id === otherUserId
-    const isUser2 = matchData.user2_id === userId || matchData.user2_id === otherUserId
-
-    if (isUser1 && isUser2) {
-      return data.id
-    }
-
-    return null
+    return data.id
   } catch (error: any) {
     console.error('[getMatchId] Exception:', error)
     return null

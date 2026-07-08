@@ -23,6 +23,14 @@ export interface Match {
   matchedAt: string
 }
 
+type MatrimonyMatchRow = {
+  id: string
+  user1_id: string
+  user2_id: string
+  matched_at: string
+  archived_by?: string[] | null
+}
+
 export interface ActivityItem {
   id: string
   type: "match" | "like" | "super_like" | "view"
@@ -177,11 +185,21 @@ export async function createPremiumDirectMatrimonyMatch(otherUserId: string): Pr
     })
 
     if (error) throw error
+    const matchId = typeof data === "string" ? data : undefined
+
+    if (matchId) {
+      const { error: unarchiveError } = await supabase.rpc("unarchive_lovesathi_match_for_user", {
+        p_match_id: matchId,
+      })
+      if (unarchiveError) {
+        console.warn("[createPremiumDirectMatrimonyMatch] Unable to unarchive chat:", unarchiveError.message)
+      }
+    }
 
     return {
       success: true,
       isMatch: true,
-      matchId: typeof data === "string" ? data : undefined,
+      matchId,
     }
   } catch (error: any) {
     console.error("Error creating premium direct match:", error)
@@ -199,7 +217,12 @@ export async function getMatrimonyMatches(userId: string): Promise<Match[]> {
 
     if (error) throw error
 
-    const userMatches = matches?.filter((match) => match.user1_id === userId || match.user2_id === userId) || []
+    const userMatches =
+      ((matches || []) as MatrimonyMatchRow[]).filter(
+        (match) =>
+          (match.user1_id === userId || match.user2_id === userId) &&
+          !(Array.isArray(match.archived_by) && match.archived_by.includes(userId)),
+      ) || []
     if (userMatches.length === 0) return []
 
     const enriched = await Promise.all(

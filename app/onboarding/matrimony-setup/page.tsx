@@ -16,6 +16,7 @@ export default function MatrimonySetupPage() {
         const { data: { user } } = await supabase.auth.getUser()
         
         if (!user) {
+          router.push('/auth')
           setIsCheckingProfile(false)
           return
         }
@@ -46,13 +47,15 @@ export default function MatrimonySetupPage() {
 
   if (isCheckingProfile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#F6F7FB] px-4">
+        <div className="rounded-[2rem] border border-[#E1E7EF] bg-white/86 p-8 text-center shadow-[0_24px_70px_rgba(24,17,13,0.08)]">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-[#E83262] border-t-transparent" />
+          <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#26364A]">Preparing your profile</p>
+          <p className="mt-2 text-sm text-[#6F7C8B]">Checking your saved setup securely.</p>
+        </div>
       </div>
     )
   }
 
   return <MatrimonySetup />
 }
-
-
