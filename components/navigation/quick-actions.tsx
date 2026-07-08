@@ -35,15 +35,16 @@ export function QuickActions({
   
   const tabs: Array<{
     id: string
+    label: string
     icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
     onClick?: () => void
     show: boolean
   }> = [
-    { id: "discover", icon: Compass, onClick: onDiscover, show: !!onDiscover },
-    { id: "shortlist", icon: Star, onClick: onOpenShortlist, show: showShortlist && !!onOpenShortlist },
-    { id: "messages", icon: MessageCircle, onClick: onOpenChat, show: true },
-    { id: "activity", icon: Bell, onClick: onOpenActivity, show: !!onOpenActivity },
-    { id: "profile", icon: User, onClick: onOpenProfile, show: true },
+    { id: "discover", label: "Discover", icon: Compass, onClick: onDiscover, show: !!onDiscover },
+    { id: "shortlist", label: "Shortlist", icon: Star, onClick: onOpenShortlist, show: showShortlist && !!onOpenShortlist },
+    { id: "messages", label: "Messages", icon: MessageCircle, onClick: onOpenChat, show: true },
+    { id: "activity", label: "Activity", icon: Bell, onClick: onOpenActivity, show: !!onOpenActivity },
+    { id: "profile", label: "Profile", icon: User, onClick: onOpenProfile, show: true },
   ].filter(tab => tab.show)
 
   return (
@@ -63,6 +64,10 @@ export function QuickActions({
           return (
             <button
               key={tab.id}
+              type="button"
+              aria-label={tab.label}
+              title={tab.label}
+              aria-current={isActive ? "page" : undefined}
               onClick={tab.onClick}
               className={cn(
                 "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-150 ease-in-out sm:h-11 sm:w-11",

@@ -957,7 +957,6 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
         profile.name,
         profile.email,
         profile.phone,
-        profile.userId,
         profile.publicId,
         profile.gender,
         profile.city,
@@ -3161,7 +3160,7 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                   paymentHistoryItems.slice(0, 8).map((item) => (
                     <div key={item.id} className="flex flex-col gap-2 rounded-[1.25rem] border border-[#E1E7EF] bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="font-bold text-[#172235]">{item.profileName || item.userEmail || item.userId}</p>
+                        <p className="font-bold text-[#172235]">{item.profileName || item.userEmail || "Member account"}</p>
                         <p className="text-sm font-semibold text-[#6F7C8B]">
                           {item.planName || item.planId || "Plan pending"} - {item.source || "unknown source"}
                         </p>
@@ -3933,7 +3932,7 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                         </div>
                         <div>
                           <p className="font-semibold text-[#26364A]">{event.email || "Email not exposed in audit payload"}</p>
-                          <p className="mt-1 truncate text-xs text-[#6F7C8B]">{event.userId || "User ID unavailable"}</p>
+                          <p className="mt-1 text-xs text-[#6F7C8B]">Auth audit event</p>
                         </div>
                         <div className="sm:text-right">
                           <p className="font-semibold text-[#26364A]">{formatDate(event.createdAt)}</p>
@@ -4369,7 +4368,6 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#8B98A8]">Identifiers</p>
                     <div className="mt-3 space-y-2 text-sm font-semibold text-[#26364A]">
                       <p>Public ID: {selectedProfile.publicId || "Pending"}</p>
-                      <p className="break-all text-[#6F7C8B]">Profile record: {selectedProfile.id}</p>
                     </div>
                   </div>
                   <div className="rounded-[1.25rem] border border-[#E1E7EF] bg-[#F7F9FC] p-4">
