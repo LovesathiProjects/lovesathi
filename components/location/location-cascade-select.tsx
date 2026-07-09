@@ -235,11 +235,15 @@ export function LocationPreferencePicker({
   value,
   onChange,
   label = "Preferred Locations",
+  helperText,
+  addLabel = "Add location",
   cascadeClassName,
 }: {
   value?: string[]
   onChange: (value: string[]) => void
   label?: string
+  helperText?: string
+  addLabel?: string
   cascadeClassName?: string
 }) {
   const [draft, setDraft] = useState<LocationValue>({})
@@ -255,7 +259,10 @@ export function LocationPreferencePicker({
 
   return (
     <div className="space-y-3">
-      <Label className="text-black">{label}</Label>
+      <div className="space-y-1">
+        <Label className="text-base font-black text-[#26364A]">{label}</Label>
+        {helperText && <p className="text-sm font-semibold leading-6 text-[#6F7C8B]">{helperText}</p>}
+      </div>
       <LocationCascadeSelect
         value={draft}
         onChange={setDraft}
@@ -267,11 +274,11 @@ export function LocationPreferencePicker({
       <Button
         type="button"
         variant="outline"
-        className="rounded-full border-[#482b1a]/15 bg-white"
+        className="rounded-full border-[#D9DFE8] bg-white px-4 font-black text-[#526173] hover:border-[#E83262]/35 hover:text-[#E83262]"
         onClick={addLocation}
         disabled={!draft.city || !draft.state || !draft.country}
       >
-        Add location
+        {addLabel}
       </Button>
       {selected.length > 0 && (
         <div className="flex flex-wrap gap-2">

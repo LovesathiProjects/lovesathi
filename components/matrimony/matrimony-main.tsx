@@ -422,28 +422,33 @@ function MatrimonyDiscoveryList({
             Filters
             {hasFilters && <span className="h-2 w-2 rounded-full bg-[#E83262]" />}
           </button>
-          <button
-            type="button"
-            onClick={handleNearbyChipClick}
-            className={cn(
-              "inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold shadow-sm transition",
-              quickFilters.nearby
-                ? "border-[#E83262]/40 bg-[#FFF3F7] text-[#E83262]"
-                : "border-[#D9DFE8] bg-white text-[#526173] hover:border-[#E83262]/30",
-            )}
-          >
-            <MapPin className="h-4 w-4" />
-            {nearbyCity ? `Nearby ${nearbyCity}` : "Set Nearby"}
-            {quickFilters.nearby && <X className="h-3.5 w-3.5 text-[#E83262]" />}
-          </button>
-          <button
-            type="button"
-            onClick={openNearbyEditor}
-            className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#D9DFE8] bg-white px-3 py-2 text-sm font-bold text-[#526173] shadow-sm transition hover:border-[#E83262]/30 hover:text-[#E83262]"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-            Edit
-          </button>
+          <div className="inline-flex shrink-0 overflow-hidden rounded-full border border-[#D9DFE8] bg-white shadow-sm">
+            <button
+              type="button"
+              onClick={handleNearbyChipClick}
+              aria-pressed={quickFilters.nearby}
+              className={cn(
+                "inline-flex min-w-0 items-center gap-2 px-4 py-2 text-sm font-bold transition",
+                quickFilters.nearby
+                  ? "bg-[#FFF3F7] text-[#E83262]"
+                  : "text-[#526173] hover:bg-[#FFF8FA] hover:text-[#E83262]",
+              )}
+            >
+              <MapPin className="h-4 w-4 shrink-0" />
+              <span className="min-w-0 max-w-[11rem] truncate">
+                {nearbyCity ? `Search city: ${nearbyCity}` : "Set search city"}
+              </span>
+              {quickFilters.nearby && <X className="h-3.5 w-3.5 shrink-0 text-[#E83262]" />}
+            </button>
+            <button
+              type="button"
+              onClick={openNearbyEditor}
+              className="inline-flex items-center gap-1.5 border-l border-[#E7EAF0] px-3 py-2 text-sm font-bold text-[#526173] transition hover:bg-[#FFF8FA] hover:text-[#E83262]"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              Change city
+            </button>
+          </div>
           {quickFilterChips.map((chip) => {
             const active = quickFilters[chip.key]
             return (
@@ -554,10 +559,10 @@ function MatrimonyDiscoveryList({
       <Dialog open={showNearbyEditor} onOpenChange={setShowNearbyEditor}>
         <DialogContent className="max-h-[calc(100svh-1rem)] w-[min(calc(100vw-1rem),34rem)] max-w-[calc(100vw-1rem)] overflow-hidden rounded-[1.5rem] border border-[#E7EAF0] bg-white p-0 text-[#26364A] shadow-[0_30px_80px_rgba(31,44,60,0.24)] sm:max-h-[calc(100dvh-2rem)]">
           <div className="min-w-0 border-b border-[#E7EAF0] px-5 py-4">
-            <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-[#E83262]">Discovery location</p>
-            <DialogTitle className="mt-1 text-2xl font-black tracking-[-0.04em]">Edit Nearby</DialogTitle>
+            <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-[#E83262]">Search city</p>
+            <DialogTitle className="mt-1 text-2xl font-black tracking-[-0.04em]">Change Search City</DialogTitle>
             <DialogDescription className="mt-1 text-sm font-semibold leading-6 text-[#6F7C8B]">
-              Your profile can prefill Nearby, but this lets you tune discovery without changing your saved profile.
+              This updates the quick city chip only. Your saved profile and partner preferences stay unchanged.
             </DialogDescription>
           </div>
           <div className="min-w-0 space-y-5 overflow-y-auto overflow-x-hidden px-5 py-5">
@@ -576,7 +581,7 @@ function MatrimonyDiscoveryList({
                 onClick={clearNearbyLocation}
                 className="w-full rounded-full px-4 font-black text-[#6F7C8B] hover:text-[#E83262] sm:w-auto"
               >
-                Clear Nearby
+                Clear search city
               </Button>
               <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
                 <Button
@@ -586,7 +591,7 @@ function MatrimonyDiscoveryList({
                   disabled={!viewerLocation}
                   className="w-full min-w-0 rounded-full border-[#D9DFE8] bg-white px-4 font-black text-[#526173] sm:w-auto"
                 >
-                  Use profile location
+                  Use profile city
                 </Button>
                 <Button
                   type="button"
@@ -594,7 +599,7 @@ function MatrimonyDiscoveryList({
                   disabled={!nearbyDraft.country || !nearbyDraft.state || !nearbyDraft.city}
                   className="w-full rounded-full bg-[#E83262] px-5 font-black text-white hover:bg-[#C3264E] sm:w-auto"
                 >
-                  Apply Nearby
+                  Apply search city
                 </Button>
               </div>
             </div>

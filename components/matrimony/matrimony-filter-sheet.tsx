@@ -73,7 +73,7 @@ const categories: Array<{ id: FilterCategory; label: string; badge?: (filters: F
   { id: "religion", label: "Religion" },
   { id: "motherTongue", label: "Mother Tongue" },
   { id: "caste", label: "Caste Subcaste", badge: (filters) => filters.communities.length },
-  { id: "location", label: "Location", badge: (filters) => filters.locations.length },
+  { id: "location", label: "Preferred City", badge: (filters) => filters.locations.length },
   { id: "income", label: "Income" },
   { id: "education", label: "Education", badge: (filters) => filters.educationPrefs.length },
   { id: "occupation", label: "Occupation", badge: (filters) => filters.professionPrefs.length },
@@ -228,7 +228,9 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
         <LocationPreferencePicker
           value={filters.locations}
           onChange={(locations) => setFilters((prev) => ({ ...prev, locations }))}
-          label="Location Preferences"
+          label="Preferred city / area"
+          helperText="Used inside filters to narrow compatible profiles by their listed city."
+          addLabel="Add preferred city"
           cascadeClassName="grid grid-cols-1 gap-4"
         />
       )
