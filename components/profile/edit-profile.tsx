@@ -872,6 +872,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                   <LocationPreferencePicker
                     value={partnerPreferences.locations || []}
                     onChange={(locations) => setNested("partner", "locations", locations)}
+                    allowOpenToAll
                   />
                 </div>
                 <div className="space-y-2 sm:col-span-2">

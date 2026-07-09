@@ -15,6 +15,8 @@ type LocationOption = {
   code?: string
 }
 
+const OPEN_TO_ALL_LOCATION_PREFERENCE = "Open to all"
+
 async function loadLocationOptions(type: "countries" | "states" | "cities", params?: Record<string, string>) {
   const searchParams = new URLSearchParams({ type, ...(params || {}) })
   const response = await fetch(`/api/locations?${searchParams.toString()}`)
@@ -237,6 +239,7 @@ export function LocationPreferencePicker({
   label = "Preferred Locations",
   helperText,
   addLabel = "Add location",
+  allowOpenToAll = false,
   cascadeClassName,
 }: {
   value?: string[]
@@ -244,17 +247,24 @@ export function LocationPreferencePicker({
   label?: string
   helperText?: string
   addLabel?: string
+  allowOpenToAll?: boolean
   cascadeClassName?: string
 }) {
   const [draft, setDraft] = useState<LocationValue>({})
   const selected = value || []
   const draftLabel = formatLocationValue(draft)
+  const openToAllSelected = selected.includes(OPEN_TO_ALL_LOCATION_PREFERENCE)
 
   function addLocation() {
     if (!draft.city || !draft.state || !draft.country) return
     if (selected.includes(draftLabel)) return
-    onChange([...selected, draftLabel])
+    onChange([...selected.filter((item) => item !== OPEN_TO_ALL_LOCATION_PREFERENCE), draftLabel])
     setDraft({})
+  }
+
+  function toggleOpenToAll() {
+    setDraft({})
+    onChange(openToAllSelected ? [] : [OPEN_TO_ALL_LOCATION_PREFERENCE])
   }
 
   return (
@@ -263,6 +273,22 @@ export function LocationPreferencePicker({
         <Label className="text-base font-black text-[#26364A]">{label}</Label>
         {helperText && <p className="text-sm font-semibold leading-6 text-[#6F7C8B]">{helperText}</p>}
       </div>
+      {allowOpenToAll && (
+        <Button
+          type="button"
+          variant="outline"
+          aria-pressed={openToAllSelected}
+          className={cn(
+            "rounded-full px-4 font-black transition",
+            openToAllSelected
+              ? "border-[#E83262] bg-[#E83262] text-white shadow-[0_12px_28px_rgba(232,50,98,0.18)] hover:bg-[#C3264E] hover:text-white"
+              : "border-[#D9DFE8] bg-white text-[#526173] hover:border-[#E83262]/35 hover:text-[#E83262]",
+          )}
+          onClick={toggleOpenToAll}
+        >
+          {OPEN_TO_ALL_LOCATION_PREFERENCE}
+        </Button>
+      )}
       <LocationCascadeSelect
         value={draft}
         onChange={setDraft}

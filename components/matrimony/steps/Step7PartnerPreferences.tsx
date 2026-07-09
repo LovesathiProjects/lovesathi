@@ -299,11 +299,16 @@ export function Step7PartnerPreferences({ onNext, onBack }: { onNext: () => void
           <div>
             <h3 className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#26364A]">Location</h3>
             <p className="text-sm leading-6 text-[#6F7C8B]">
-              Add preferred cities by choosing country, state, then city.
+              Choose Open to all or add preferred cities by country, state, and city.
             </p>
           </div>
         </div>
-        <LocationPreferencePicker value={values.locations} onChange={setLocations} label="Preferred Cities" />
+        <LocationPreferencePicker
+          value={values.locations}
+          onChange={setLocations}
+          label="Preferred Cities"
+          allowOpenToAll
+        />
       </section>
 
       <section className="rounded-[1.75rem] border border-[#E83262]/24 bg-[#ffffff]/76 p-5 shadow-[0_18px_55px_rgba(24,17,13,0.08)] backdrop-blur">

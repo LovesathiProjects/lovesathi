@@ -62,6 +62,7 @@ export function MatrimonyOnboarding({ onComplete }: MatrimonyOnboardingProps) {
                     value={preferredLocations}
                     onChange={setPreferredLocations}
                     label="Preferred Locations"
+                    allowOpenToAll
                   />
                 </div>
                 <div>

@@ -275,6 +275,7 @@ export function MatrimonyPreferencesSettings({ onBack }: MatrimonyPreferencesSet
               value={settings.locations}
               onChange={(locations) => setSettings((prev) => ({ ...prev, locations }))}
               label="Preferred Cities"
+              allowOpenToAll
             />
           </CardContent>
         </Card>
