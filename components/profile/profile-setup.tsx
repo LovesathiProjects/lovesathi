@@ -15,6 +15,7 @@ import { BackFloatingButton } from "@/components/navigation/back-floating-button
 import { StaticBackground } from "@/components/discovery/static-background"
 import { LocationCascadeSelect } from "@/components/location/location-cascade-select"
 import { formatLocationValue, parseLocationValue } from "@/lib/location"
+import { EDUCATION_OPTIONS } from "@/lib/matrimonyOptions"
 
 interface ProfileSetupProps {
   onComplete?: () => void
@@ -175,12 +176,11 @@ export function ProfileSetup({ onComplete, onBack }: ProfileSetupProps) {
                       <SelectValue placeholder="Select education level" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="high-school">High School</SelectItem>
-                      <SelectItem value="some-college">Some College</SelectItem>
-                      <SelectItem value="bachelors">Bachelor's Degree</SelectItem>
-                      <SelectItem value="masters">Master's Degree</SelectItem>
-                      <SelectItem value="phd">PhD</SelectItem>
-                      <SelectItem value="professional">Professional Degree</SelectItem>
+                      {EDUCATION_OPTIONS.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

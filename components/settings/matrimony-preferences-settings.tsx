@@ -13,7 +13,7 @@ import { StaticBackground } from "@/components/discovery/static-background"
 import { supabase } from "@/lib/supabaseClient"
 import { useToast } from "@/hooks/use-toast"
 import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
-import { COMMUNITY_PREFERENCE_OPTIONS } from "@/lib/matrimonyOptions"
+import { COMMUNITY_PREFERENCE_OPTIONS, EDUCATION_PREFERENCE_OPTIONS } from "@/lib/matrimonyOptions"
 import { FREE_VERIFIED_FILTER_MATCH_LIMIT, useVerifiedFilterAllowance } from "@/hooks/useVerifiedFilterAllowance"
 import { SearchableMultiSelect } from "@/components/ui/searchable-select"
 
@@ -30,11 +30,6 @@ interface MatrimonyPreferences {
   verifiedOnly: boolean
   premiumOnly: boolean
 }
-
-const educationOptions = [
-  "Any professional degree", "MBA", "B.Tech", "MBBS", "CA", "CS", 
-  "Ph.D", "Masters", "Bachelors", "Diploma", "Any"
-]
 
 const professionOptions = [
   "IT background", "Same profession", "Business", "Doctor", "Engineer", 
@@ -290,18 +285,14 @@ export function MatrimonyPreferencesSettings({ onBack }: MatrimonyPreferencesSet
             <CardTitle>Education Preferences</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {educationOptions.map((education) => (
-                <Button
-                  key={education}
-                  variant={settings.educationPrefs.includes(education) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleArrayToggle("educationPrefs", education)}
-                >
-                  {education}
-                </Button>
-              ))}
-            </div>
+            <SearchableMultiSelect
+              values={settings.educationPrefs}
+              onValuesChange={(educationPrefs) => setSettings((prev) => ({ ...prev, educationPrefs }))}
+              options={EDUCATION_PREFERENCE_OPTIONS.map((education) => ({ value: education, label: education }))}
+              placeholder="Select preferred education"
+              searchPlaceholder="Search education..."
+              emptyMessage="No education found."
+            />
           </CardContent>
         </Card>
 

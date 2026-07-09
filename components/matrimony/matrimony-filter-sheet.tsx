@@ -10,7 +10,7 @@ import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
 import { SearchableMultiSelect } from "@/components/ui/searchable-select"
-import { COMMUNITY_PREFERENCE_OPTIONS } from "@/lib/matrimonyOptions"
+import { COMMUNITY_PREFERENCE_OPTIONS, EDUCATION_PREFERENCE_OPTIONS } from "@/lib/matrimonyOptions"
 import { FREE_VERIFIED_FILTER_MATCH_LIMIT, useVerifiedFilterAllowance } from "@/hooks/useVerifiedFilterAllowance"
 import { cn } from "@/lib/utils"
 
@@ -96,7 +96,6 @@ const checkboxGroups = {
   horoscope: ["All", "Manglik", "Non-Manglik", "Horoscope available"],
 }
 
-const educationOptions = ["Any", "B.Com", "B.Sc", "B.E / B.Tech", "MBA", "MCA", "M.Sc", "M.A", "MBBS", "CA", "PhD"]
 const occupationOptions = ["Any", "Administration", "Admin Professional", "Analyst", "Data Scientist", "Engineer", "HR Professional", "Marketing Manager", "Nurse", "Software & IT", "Teacher"]
 const dietOptions = ["Any", "Vegetarian", "Eggetarian", "Non-vegetarian", "Pescatarian", "Vegan", "Jain", "Other"]
 const lifestyleOptions = ["Any", "Non-smoker", "Non-drinker", "Smoker", "Drinker"]
@@ -241,7 +240,7 @@ export function MatrimonyFilterSheet({ open, onOpenChange, onApplyFilters }: Mat
         <SearchableMultiSelect
           values={filters.educationPrefs}
           onValuesChange={(educationPrefs) => setFilters((prev) => ({ ...prev, educationPrefs }))}
-          options={educationOptions.map((item) => ({ value: item, label: item }))}
+          options={EDUCATION_PREFERENCE_OPTIONS.map((item) => ({ value: item, label: item }))}
           placeholder="Select education"
           searchPlaceholder="Search education..."
           emptyMessage="No education found."

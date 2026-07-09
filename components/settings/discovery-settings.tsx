@@ -10,7 +10,8 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, MapPin, Users, Filter } from "lucide-react"
 import { StaticBackground } from "@/components/discovery/static-background"
-import { RELIGION_OPTIONS } from "@/lib/matrimonyOptions"
+import { EDUCATION_PREFERENCE_OPTIONS, RELIGION_OPTIONS } from "@/lib/matrimonyOptions"
+import { SearchableMultiSelect } from "@/components/ui/searchable-select"
 
 interface DiscoverySettingsProps {
   onBack?: () => void
@@ -27,8 +28,6 @@ interface DiscoverySettings {
   religion: string[]
   lifestyle: string[]
 }
-
-const educationOptions = ["High School", "Bachelor's Degree", "Master's Degree", "PhD", "Trade School", "Some College"]
 
 const religionOptions = ["Prefer not to say", ...RELIGION_OPTIONS]
 
@@ -208,18 +207,14 @@ export function DiscoverySettings({ onBack }: DiscoverySettingsProps = {}) {
             {/* Education */}
             <div className="space-y-3">
               <Label className="font-medium">Education</Label>
-              <div className="flex flex-wrap gap-2">
-                {educationOptions.map((option) => (
-                  <Button
-                    key={option}
-                    variant={settings.education.includes(option) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleArrayToggle("education", option)}
-                  >
-                    {option}
-                  </Button>
-                ))}
-              </div>
+              <SearchableMultiSelect
+                values={settings.education}
+                onValuesChange={(education) => setSettings((prev) => ({ ...prev, education }))}
+                options={EDUCATION_PREFERENCE_OPTIONS.map((option) => ({ value: option, label: option }))}
+                placeholder="Select education"
+                searchPlaceholder="Search education..."
+                emptyMessage="No education found."
+              />
             </div>
 
             <Separator />

@@ -11,7 +11,7 @@ import { useMatrimonySetupStore } from "@/components/matrimony/store"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { LocationPreferencePicker } from "@/components/location/location-cascade-select"
-import { COMMUNITY_PREFERENCE_OPTIONS } from "@/lib/matrimonyOptions"
+import { COMMUNITY_PREFERENCE_OPTIONS, EDUCATION_PREFERENCE_OPTIONS } from "@/lib/matrimonyOptions"
 import { SearchableMultiSelect } from "@/components/ui/searchable-select"
 
 type PreferenceKey =
@@ -75,25 +75,6 @@ const preferenceGroups: Array<{
     description: "Choose whether self-managed or family-managed profiles are preferred.",
     options: ["Any", "Self", "Parent", "Sibling", "Family managed"],
   },
-]
-
-const EDUCATION_PREFERENCE_OPTIONS = [
-  "Any",
-  "High School",
-  "Diploma",
-  "Bachelor's Degree",
-  "Master's Degree",
-  "MBA",
-  "M.Tech",
-  "MBBS",
-  "MD/MS",
-  "CA",
-  "CS",
-  "LLB",
-  "PhD",
-  "IIT / NIT",
-  "IIM / ISB",
-  "Foreign University",
 ]
 
 const PROFESSION_PREFERENCE_OPTIONS = [

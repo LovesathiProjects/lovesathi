@@ -100,6 +100,78 @@ interface MatrimonyMainProps {
   initialChatId?: string | null
 }
 
+const PROFESSIONAL_DEGREE_KEYWORDS = [
+  "BCA",
+  "B.E.",
+  "B.Tech",
+  "B.Arch",
+  "B.Des",
+  "B.Ed",
+  "B.Pharm",
+  "LLB",
+  "MBBS",
+  "BDS",
+  "BAMS",
+  "BHMS",
+  "BPT",
+  "BHM",
+  "MBA",
+  "PGDM",
+  "MCA",
+  "M.E.",
+  "M.Tech",
+  "M.Arch",
+  "M.Des",
+  "M.Ed",
+  "M.Pharm",
+  "LLM",
+  "MD",
+  "MS",
+  "MDS",
+  "MPH",
+  "CA",
+  "CS",
+  "CMA",
+  "CFA",
+  "FRM",
+  "Medical Degree",
+  "Law Degree",
+  "Chartered Accountant",
+  "Professional Degree",
+]
+
+function compactEducationValue(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, "")
+}
+
+function isOpenEducationPreference(preference: string) {
+  const normalized = preference.trim().toLowerCase()
+  return normalized === "any" || normalized === "open to all"
+}
+
+function educationMatchesPreference(education: string, preference: string) {
+  const educationText = education.trim().toLowerCase()
+  const preferenceText = preference.trim().toLowerCase()
+  if (!educationText || isOpenEducationPreference(preference)) return false
+
+  const compactEducation = compactEducationValue(educationText)
+  const compactPreference = compactEducationValue(preferenceText)
+
+  if (preferenceText === "any professional degree") {
+    return PROFESSIONAL_DEGREE_KEYWORDS.some((keyword) => {
+      const keywordText = keyword.toLowerCase()
+      return educationText.includes(keywordText) || compactEducation.includes(compactEducationValue(keywordText))
+    })
+  }
+
+  return (
+    educationText.includes(preferenceText) ||
+    preferenceText.includes(educationText) ||
+    compactEducation.includes(compactPreference) ||
+    compactPreference.includes(compactEducation)
+  )
+}
+
 function MatrimonyListProfileCard({
   profile,
   viewerIsPremium,
@@ -1070,12 +1142,12 @@ export function MatrimonyMain({ onExit, initialScreen = "discover", initialChatI
 
               // Apply education filter
               if (appliedFilters.educationPrefs && appliedFilters.educationPrefs.length > 0) {
-                if (!appliedFilters.educationPrefs.includes("Any")) {
+                const shouldFilterEducation = !appliedFilters.educationPrefs.some(isOpenEducationPreference)
+                if (shouldFilterEducation) {
                   const education = (careerData?.highest_education || "").toLowerCase()
-                  const matchesEducation = appliedFilters.educationPrefs.some(pref => {
-                    return education.includes(pref.toLowerCase()) ||
-                           pref.toLowerCase().includes(education)
-                  })
+                  const matchesEducation = appliedFilters.educationPrefs.some((pref) =>
+                    educationMatchesPreference(education, pref),
+                  )
                   if (!matchesEducation) {
                     return null
                   }
