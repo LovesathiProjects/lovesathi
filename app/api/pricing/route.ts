@@ -116,7 +116,7 @@ export async function GET(request: Request) {
   const banners = (bannerRows || []).filter(isWindowActive).map((row: any) => ({
     id: row.id,
     title: row.title,
-    bannerText: row.banner_text,
+    bannerText: row.banner_text || null,
     bannerImageUrl: row.banner_image_url || null,
     discountPercent: row.discount_percent,
     planIds: Array.isArray(row.plan_ids) ? row.plan_ids : [],

@@ -2787,12 +2787,12 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
               <CardHeader className="border-b border-[#E1E7EF]">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="luxe-kicker mb-2 text-[#E83262]">discount banner</p>
+                    <p className="luxe-kicker mb-2 text-[#E83262]">public discount</p>
                     <CardTitle className="font-serif text-3xl tracking-[-0.04em] text-[#26364A]">
-                      Public offer message
+                      Public offer
                     </CardTitle>
                     <p className="mt-2 text-sm leading-6 text-[#6F7C8B]">
-                      Optional seasonal offers only appear when this banner is published. There is no default discount.
+                      Publish a percentage discount for selected plans. Banner copy and image are optional.
                     </p>
                   </div>
                   <Megaphone className="h-6 w-6 text-[#E83262]" />
@@ -2824,13 +2824,13 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="discount-copy">Banner text</Label>
+                  <Label htmlFor="discount-copy">Banner text (optional)</Label>
                   <Textarea
                     id="discount-copy"
                     value={discountBannerDraft.bannerText}
                     onChange={(event) => updateDiscountBannerDraft("bannerText", event.target.value)}
                     className="min-h-24 rounded-2xl bg-white"
-                    placeholder="Write the offer copy users should see."
+                    placeholder="Leave blank if this offer should only appear on plan prices."
                   />
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -2878,7 +2878,7 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                 </div>
                 <div className="grid gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="discount-image-url">Banner image URL</Label>
+                    <Label htmlFor="discount-image-url">Banner image URL (optional)</Label>
                     <Input
                       id="discount-image-url"
                       value={discountBannerDraft.bannerImageUrl}
@@ -2925,7 +2925,7 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="font-bold text-[#26364A]">{item.title}</p>
-                            <p className="mt-1 text-sm leading-6 text-[#6F7C8B]">{item.bannerText}</p>
+                            {item.bannerText && <p className="mt-1 text-sm leading-6 text-[#6F7C8B]">{item.bannerText}</p>}
                           </div>
                           <StatusBadge status={item.status} />
                         </div>

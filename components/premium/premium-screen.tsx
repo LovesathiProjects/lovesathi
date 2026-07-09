@@ -28,7 +28,7 @@ type PricingPlan = {
 type PricingBanner = {
   id: string
   title: string
-  bannerText: string
+  bannerText: string | null
   bannerImageUrl: string | null
   discountPercent: number
   planIds: string[]
@@ -167,7 +167,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
     }
   }, [])
 
-  const activeBanner = pricingBanners[0]
+  const activeBanner = pricingBanners.find((banner) => Boolean(banner.bannerImageUrl || banner.bannerText?.trim()))
 
   return (
     <div className={cn("relative min-h-[100dvh] w-full max-w-full overflow-x-hidden", isMatrimony ? "luxe-light-page" : "bg-[#0E0F12]")}>
@@ -289,7 +289,9 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
                       {activeBanner.planIds.length ? activeBanner.planIds.join(", ") : "All plans"}
                     </Badge>
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-[#6F7C8B]">{activeBanner.bannerText}</p>
+                  {activeBanner.bannerText && (
+                    <p className="mt-2 text-sm leading-6 text-[#6F7C8B]">{activeBanner.bannerText}</p>
+                  )}
                 </div>
               </div>
             )}

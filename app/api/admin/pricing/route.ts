@@ -179,8 +179,8 @@ export async function POST(request: Request) {
 
       const status = bannerStatuses.has(body.status) ? body.status : "draft"
       const payload = {
-        title: cleanRequiredText(body.title, "Banner title", 120),
-        banner_text: cleanRequiredText(body.bannerText, "Banner text", 600),
+        title: cleanRequiredText(body.title, "Offer title", 120),
+        banner_text: cleanText(body.bannerText, 600),
         banner_image_url: cleanUrl(body.bannerImageUrl),
         discount_percent: cleanInteger(body.discountPercent, 0, 100, "Discount percentage"),
         plan_ids: cleanPlanIds(body.planIds),
@@ -207,7 +207,7 @@ export async function POST(request: Request) {
         recordId: data.id,
         previousStatus: null,
         nextStatus: status,
-        notes: cleanText(body.notes, 500) || `${payload.title} discount banner saved.`,
+        notes: cleanText(body.notes, 500) || `${payload.title} public discount saved.`,
         metadata: {
           discountPercent: payload.discount_percent,
           planIds: payload.plan_ids,
