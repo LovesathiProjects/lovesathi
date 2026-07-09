@@ -56,6 +56,9 @@ const LIMIT_COPY: Record<LimitKind, string> = {
   directChat: `Free plan direct chat limit reached. You can open ${FREE_PLAN_LIMITS.directChats} starter chats with free profiles and send ${FREE_PLAN_LIMITS.directChatMessagesPerPerson} message to each. Upgrade for unlimited chat.`,
 }
 
+const FREE_DIRECT_MESSAGE_LIMIT_COPY =
+  "Free starter direct chat includes one message per profile. Upgrade for unlimited chat."
+
 function windowStartIso() {
   return new Date(Date.now() - FREE_PLAN_LIMITS.windowHours * 60 * 60 * 1000).toISOString()
 }
@@ -93,6 +96,7 @@ export function normalizeLimitError(errorMessage?: string | null) {
   const lower = errorMessage.toLowerCase()
 
   if (lower.includes("swipe limit")) return getLimitMessage("swipe")
+  if (lower.includes("one message per profile")) return FREE_DIRECT_MESSAGE_LIMIT_COPY
   if (lower.includes("direct chat") || lower.includes("starter chat")) return getLimitMessage("directChat")
   if (lower.includes("conversation limit")) return getLimitMessage("messagePerson")
   if (lower.includes("message limit")) return getLimitMessage("messagePeople")
@@ -190,6 +194,54 @@ export async function getSwipeLimitStatus(userId: string): Promise<UsageLimitSta
   }
 }
 
+async function getFreeStarterDirectMessageStatus(
+  senderId: string,
+  receiverId: string
+): Promise<UsageLimitStatus | null> {
+  const { data: starterChat, error: starterError } = await supabase
+    .from("lovesathi_free_direct_chats")
+    .select("created_at")
+    .eq("initiator_id", senderId)
+    .eq("recipient_id", receiverId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (starterError) {
+    if (!tableMissing(starterError)) {
+      console.warn("[getFreeStarterDirectMessageStatus] Unable to read starter chat:", starterError.message)
+    }
+    return null
+  }
+
+  const createdAt = typeof starterChat?.created_at === "string" ? starterChat.created_at : null
+  if (!createdAt) return null
+
+  const { count, error: countError } = await supabase
+    .from("messages")
+    .select("*", { count: "exact", head: true })
+    .eq("sender_id", senderId)
+    .eq("receiver_id", receiverId)
+    .gte("created_at", createdAt)
+
+  if (countError) {
+    if (!tableMissing(countError)) {
+      console.warn("[getFreeStarterDirectMessageStatus] Unable to read starter chat usage:", countError.message)
+    }
+    return null
+  }
+
+  const used = count || 0
+  const remaining = Math.max(FREE_PLAN_LIMITS.directChatMessagesPerPerson - used, 0)
+  return {
+    allowed: used < FREE_PLAN_LIMITS.directChatMessagesPerPerson,
+    isPremium: false,
+    remaining,
+    kind: used < FREE_PLAN_LIMITS.directChatMessagesPerPerson ? undefined : "directChat",
+    error: used < FREE_PLAN_LIMITS.directChatMessagesPerPerson ? undefined : FREE_DIRECT_MESSAGE_LIMIT_COPY,
+  }
+}
+
 export async function getMessageSendLimitStatus(senderId: string, receiverId: string): Promise<UsageLimitStatus> {
   const entitlement = await getUserEntitlementStatus(senderId)
   if (entitlement.isPremium) {
@@ -226,6 +278,9 @@ export async function getMessageSendLimitStatus(senderId: string, receiverId: st
       remaining: Math.max(chatProfileLimit - contactedPeople.size, 0),
     }
   }
+
+  const freeStarterDirectStatus = await getFreeStarterDirectMessageStatus(senderId, receiverId)
+  if (freeStarterDirectStatus) return freeStarterDirectStatus
 
   const since = windowStartIso()
   const [{ count: samePersonCount, error: samePersonError }, { data: peopleRows, error: peopleError }] =
