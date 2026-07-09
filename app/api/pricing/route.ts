@@ -2,6 +2,12 @@ import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { SUBSCRIPTION_PLANS } from "@/lib/subscriptionPlans"
 
+export const dynamic = "force-dynamic"
+
+const noStoreHeaders = {
+  "Cache-Control": "no-store, max-age=0",
+}
+
 function createServiceClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -15,6 +21,15 @@ function createServiceClient() {
   })
 }
 
+function pricingResponse(payload: Record<string, unknown>) {
+  return NextResponse.json(payload, { headers: noStoreHeaders })
+}
+
+function parsePriceAmount(priceLabel: string) {
+  const amount = Number(priceLabel.replace(/[^0-9]/g, ""))
+  return Number.isFinite(amount) && amount > 0 ? amount : null
+}
+
 function defaultPlans() {
   return SUBSCRIPTION_PLANS.map((plan, index) => ({
     planId: plan.id,
@@ -22,7 +37,7 @@ function defaultPlans() {
     durationLabel: plan.durationLabel,
     durationDays: plan.durationDays,
     priceLabel: plan.priceLabel,
-    priceAmount: null,
+    priceAmount: parsePriceAmount(plan.priceLabel),
     currency: "INR",
     isActive: true,
     displayOrder: index * 10 + 10,
@@ -39,7 +54,7 @@ function isWindowActive(row: any) {
 export async function GET(request: Request) {
   const supabase = createServiceClient()
   if (!supabase) {
-    return NextResponse.json({
+    return pricingResponse({
       plans: defaultPlans(),
       banners: [],
       userDiscounts: [],
@@ -102,7 +117,7 @@ export async function GET(request: Request) {
     displayOrder: row.display_order,
   }))
 
-  return NextResponse.json({
+  return pricingResponse({
     plans: configuredPlans.length ? configuredPlans : defaultPlans(),
     banners: (bannerRows || []).filter(isWindowActive).map((row: any) => ({
       id: row.id,

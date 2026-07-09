@@ -17,6 +17,7 @@ type PricingPlan = {
   durationLabel: string
   priceLabel: string
   priceAmount: number | null
+  currency?: string | null
 }
 
 type PricingBanner = {
@@ -33,6 +34,13 @@ type UserDiscount = {
   planId: string | null
   title: string
   discountPercent: number
+}
+
+type AppliedDiscount = {
+  id: string
+  title: string
+  discountPercent: number
+  source: "published" | "private"
 }
 
 const premiumFeatures = [
@@ -73,6 +81,61 @@ function formatEntitlementDate(value?: string | null) {
   return new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(new Date(value))
 }
 
+function parsePriceAmount(priceLabel?: string | null) {
+  const amount = Number(String(priceLabel || "").replace(/[^0-9]/g, ""))
+  return Number.isFinite(amount) && amount > 0 ? amount : null
+}
+
+function formatPriceLabel(amount: number, currency = "INR") {
+  return `${currency} ${amount.toLocaleString("en-IN")}`
+}
+
+function normalizeDiscountPercent(value: unknown) {
+  const amount = Number(value)
+  if (!Number.isFinite(amount)) return 0
+  return Math.max(0, Math.min(100, Math.round(amount)))
+}
+
+function isPublicOfferForPlan(offer: PricingBanner, planId: string) {
+  return !offer.planIds.length || offer.planIds.includes(planId)
+}
+
+function isPrivateOfferForPlan(offer: UserDiscount, planId: string) {
+  return !offer.planId || offer.planId === planId
+}
+
+function resolveAppliedDiscount(planId: string, banners: PricingBanner[], privateDiscounts: UserDiscount[]) {
+  const candidates: AppliedDiscount[] = [
+    ...privateDiscounts
+      .filter((discount) => isPrivateOfferForPlan(discount, planId))
+      .map((discount) => ({
+        id: discount.id,
+        title: discount.title || "Private discount",
+        discountPercent: normalizeDiscountPercent(discount.discountPercent),
+        source: "private" as const,
+      })),
+    ...banners
+      .filter((banner) => isPublicOfferForPlan(banner, planId))
+      .map((banner) => ({
+        id: banner.id,
+        title: banner.title || "Published offer",
+        discountPercent: normalizeDiscountPercent(banner.discountPercent),
+        source: "published" as const,
+      })),
+  ].filter((discount) => discount.discountPercent > 0)
+
+  return candidates.sort((first, second) => {
+    if (second.discountPercent !== first.discountPercent) {
+      return second.discountPercent - first.discountPercent
+    }
+    return first.source === "private" ? -1 : 1
+  })[0] || null
+}
+
+function getDiscountedAmount(priceAmount: number, discountPercent: number) {
+  return Math.max(0, Math.round((priceAmount * (100 - discountPercent)) / 100))
+}
+
 export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSelect?: (planId: string) => void; onSubscribe?: (planId: string) => void; onBack?: () => void; mode?: 'matrimony' }) {
   const [selectedPlan, setSelectedPlan] = useState<string>("basic")
   const [entitlement, setEntitlement] = useState<EntitlementStatus | null>(null)
@@ -83,10 +146,30 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
   const activePlan = entitlement?.planId ? getSubscriptionPlan(entitlement.planId) : null
   const displayPlans = SUBSCRIPTION_PLANS.map((plan) => {
     const pricing = pricingPlans[plan.id]
+    const currency = pricing?.currency || "INR"
+    const basePriceLabel = pricing?.priceLabel || plan.priceLabel
+    const basePriceAmount = pricing?.priceAmount ?? parsePriceAmount(basePriceLabel)
+    const appliedDiscount = resolveAppliedDiscount(plan.id, pricingBanners, userDiscounts)
+    const discountedAmount =
+      basePriceAmount !== null && appliedDiscount
+        ? getDiscountedAmount(basePriceAmount, appliedDiscount.discountPercent)
+        : null
+    const discountedPriceLabel =
+      discountedAmount !== null && appliedDiscount
+        ? formatPriceLabel(discountedAmount, currency)
+        : null
+    const discountSavingsLabel =
+      basePriceAmount !== null && discountedAmount !== null && appliedDiscount
+        ? formatPriceLabel(basePriceAmount - discountedAmount, currency)
+        : null
+
     return {
       ...plan,
       durationLabel: pricing?.durationLabel || plan.durationLabel,
-      priceLabel: pricing?.priceLabel || plan.priceLabel,
+      priceLabel: discountedPriceLabel || basePriceLabel,
+      basePriceLabel,
+      appliedDiscount,
+      discountSavingsLabel,
     }
   })
 
@@ -119,6 +202,7 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
       } = await supabase.auth.getSession()
 
       const response = await fetch("/api/pricing", {
+        cache: "no-store",
         headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
       })
       if (!response.ok) return
@@ -269,7 +353,9 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               {displayPlans.map((plan) => {
-                const privateDiscount = userDiscounts.find((discount) => !discount.planId || discount.planId === plan.id)
+                const appliedDiscount = plan.appliedDiscount
+                const hasDiscountedPrice = Boolean(appliedDiscount && plan.priceLabel !== plan.basePriceLabel)
+                const discountLabel = appliedDiscount?.source === "private" ? "Private offer" : "Published offer"
                 return (
                 <Card
                   key={plan.id}
@@ -304,11 +390,22 @@ export function PremiumScreen({ onPlanSelect, onSubscribe, onBack }: { onPlanSel
                         <p className={cn("text-sm", isMatrimony ? "text-[#666666]" : "text-[#A1A1AA]")}>{plan.durationLabel}</p>
                       </div>
                       <div>
+                        {hasDiscountedPrice && (
+                          <div className={cn("text-sm font-semibold line-through", isMatrimony ? "text-[#8A96A6]" : "text-white/55")}>
+                            {plan.basePriceLabel}
+                          </div>
+                        )}
                         <div className={cn("text-2xl font-bold", isMatrimony ? "text-black" : "text-white")}>{plan.priceLabel}</div>
-                        {privateDiscount && (
+                        {appliedDiscount && (
                           <Badge variant="secondary" className="mt-2 bg-[#E83262]/10 text-[#E83262] border-[#E83262]/20">
-                            {privateDiscount.title}: {privateDiscount.discountPercent}% private discount
+                            {discountLabel}: {appliedDiscount.discountPercent}% off
                           </Badge>
+                        )}
+                        {appliedDiscount && (
+                          <p className={cn("mt-2 text-xs leading-5", isMatrimony ? "text-[#6F7C8B]" : "text-white/65")}>
+                            {appliedDiscount.title}
+                            {plan.discountSavingsLabel ? ` - You save ${plan.discountSavingsLabel}` : ""}
+                          </p>
                         )}
                       </div>
                     </div>
