@@ -108,6 +108,9 @@ const CONTACT_REQUEST_PATTERN =
   /\b(?:send|share|give|drop|type)\s+(?:me\s+)?(?:your|ur|u r\s+)?(?:phone|mobile|number|digits|contact|whatsapp|wa)\b/i
 const SOCIAL_LABEL_PATTERN =
   /\b(?:my|mine|mera|meri)\s+(?:telegram|tg|insta|instagram|ig|snap|snapchat|facebook|fb|signal)\s*(?:id|handle|username|user)?\s*(?:is|:|-)\s*@?[a-z0-9._]{3,}\b/i
+const CONTACT_CONTEXT_PATTERN =
+  /\b(?:phone|mobile|number|digits|contact|whatsapp|watsapp|wa|instagram|insta|ig|telegram|tg|snapchat|snap|facebook|fb|signal|email|gmail|yahoo|icloud|outlook|hotmail|dm|message|msg|text|call|reach|handle|username)\b/i
+const EXPLICIT_DIGIT_PATTERN = /[0-9]/
 
 function unicodeDigitToAscii(char: string) {
   const codePoint = char.codePointAt(0)
@@ -232,6 +235,15 @@ export function containsShareableNumber(content: string, contextMessages: string
   if (currentSignature.length >= CONTACT_DIGIT_THRESHOLD) return true
 
   if (contextMessages.length === 0) return false
+
+  const currentHasContactContext =
+    EXPLICIT_DIGIT_PATTERN.test(content) ||
+    currentSignature.length >= 2 ||
+    CONTACT_CONTEXT_PATTERN.test(normalizeReadableContactText(content))
+
+  if (!currentHasContactContext) {
+    return false
+  }
 
   const contextContent = [...contextMessages, content].join(" ")
   if (containsContactDetailPattern(contextContent)) return true

@@ -236,11 +236,12 @@ export function subscribeToMessages(
         event: 'INSERT',
         schema: 'public',
         table: 'messages',
-        filter: `match_id=eq.${matchId}&match_type=eq.${matchType}`,
+        filter: `match_id=eq.${matchId}`,
       },
       (payload) => {
-        if (callbacks.onInsert) {
-          callbacks.onInsert(payload.new as Message)
+        const message = payload.new as Message
+        if (message.match_type === matchType && callbacks.onInsert) {
+          callbacks.onInsert(message)
         }
       }
     )
@@ -250,11 +251,12 @@ export function subscribeToMessages(
         event: 'UPDATE',
         schema: 'public',
         table: 'messages',
-        filter: `match_id=eq.${matchId}&match_type=eq.${matchType}`,
+        filter: `match_id=eq.${matchId}`,
       },
       (payload) => {
-        if (callbacks.onUpdate) {
-          callbacks.onUpdate(payload.new as Message)
+        const message = payload.new as Message
+        if (message.match_type === matchType && callbacks.onUpdate) {
+          callbacks.onUpdate(message)
         }
       }
     )
@@ -264,11 +266,16 @@ export function subscribeToMessages(
         event: 'DELETE',
         schema: 'public',
         table: 'messages',
-        filter: `match_id=eq.${matchId}&match_type=eq.${matchType}`,
       },
       (payload) => {
-        if (callbacks.onDelete) {
-          callbacks.onDelete((payload.old as { id: string }).id)
+        const oldMessage = payload.old as Partial<Message>
+        if (
+          oldMessage.match_id === matchId &&
+          (!oldMessage.match_type || oldMessage.match_type === matchType) &&
+          oldMessage.id &&
+          callbacks.onDelete
+        ) {
+          callbacks.onDelete(oldMessage.id)
         }
       }
     )
