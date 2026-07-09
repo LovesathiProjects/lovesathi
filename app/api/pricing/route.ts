@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { applyDiscountsToPlans, parsePriceAmount } from "@/lib/pricingDiscounts"
 import { SUBSCRIPTION_PLANS } from "@/lib/subscriptionPlans"
 
 export const dynamic = "force-dynamic"
@@ -23,11 +24,6 @@ function createServiceClient() {
 
 function pricingResponse(payload: Record<string, unknown>) {
   return NextResponse.json(payload, { headers: noStoreHeaders })
-}
-
-function parsePriceAmount(priceLabel: string) {
-  const amount = Number(priceLabel.replace(/[^0-9]/g, ""))
-  return Number.isFinite(amount) && amount > 0 ? amount : null
 }
 
 function defaultPlans() {
@@ -55,7 +51,7 @@ export async function GET(request: Request) {
   const supabase = createServiceClient()
   if (!supabase) {
     return pricingResponse({
-      plans: defaultPlans(),
+      plans: applyDiscountsToPlans(defaultPlans(), []),
       banners: [],
       userDiscounts: [],
     })
@@ -116,19 +112,21 @@ export async function GET(request: Request) {
     isActive: Boolean(row.is_active),
     displayOrder: row.display_order,
   }))
+  const plans = configuredPlans.length ? configuredPlans : defaultPlans()
+  const banners = (bannerRows || []).filter(isWindowActive).map((row: any) => ({
+    id: row.id,
+    title: row.title,
+    bannerText: row.banner_text,
+    bannerImageUrl: row.banner_image_url || null,
+    discountPercent: row.discount_percent,
+    planIds: Array.isArray(row.plan_ids) ? row.plan_ids : [],
+    startsAt: row.starts_at || null,
+    endsAt: row.ends_at || null,
+  }))
 
   return pricingResponse({
-    plans: configuredPlans.length ? configuredPlans : defaultPlans(),
-    banners: (bannerRows || []).filter(isWindowActive).map((row: any) => ({
-      id: row.id,
-      title: row.title,
-      bannerText: row.banner_text,
-      bannerImageUrl: row.banner_image_url || null,
-      discountPercent: row.discount_percent,
-      planIds: Array.isArray(row.plan_ids) ? row.plan_ids : [],
-      startsAt: row.starts_at || null,
-      endsAt: row.ends_at || null,
-    })),
+    plans: applyDiscountsToPlans(plans, banners, userDiscounts),
+    banners,
     userDiscounts,
   })
 }
