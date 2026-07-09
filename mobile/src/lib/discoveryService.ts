@@ -84,6 +84,14 @@ function normalizeGender(value: unknown) {
   return textValue(value).toLowerCase();
 }
 
+function resolveBinaryGender(...values: unknown[]) {
+  for (const value of values) {
+    const gender = normalizeGender(value);
+    if (gender === 'male' || gender === 'female') return gender;
+  }
+  return '';
+}
+
 function calculateMatchScore(
   viewer: ProfileRow | undefined,
   candidate: ProfileRow,
@@ -249,7 +257,7 @@ export async function loadDiscovery(userId: string): Promise<DiscoverySnapshot> 
     (shortlistResult.data ?? []).map((row) => row.shortlisted_user_id),
   );
   const viewer = rows.find((row) => row.user_id === userId);
-  const viewerGender = normalizeGender(userResult.data?.gender ?? viewer?.gender);
+  const viewerGender = resolveBinaryGender(userResult.data?.gender, viewer?.gender);
 
   const profiles = rows
     .filter((row) => row.user_id !== userId && !actedIds.has(row.user_id) && textValue(row.name))

@@ -172,6 +172,28 @@ function educationMatchesPreference(education: string, preference: string) {
   )
 }
 
+function normalizeBinaryGender(value: unknown): "male" | "female" | null {
+  const normalized = String(value || "").trim().toLowerCase()
+  if (normalized === "male") return "male"
+  if (normalized === "female") return "female"
+  return null
+}
+
+function getOppositeDiscoveryGender(value: unknown): "male" | "female" | null {
+  const gender = normalizeBinaryGender(value)
+  if (gender === "male") return "female"
+  if (gender === "female") return "male"
+  return null
+}
+
+function getOppositeDiscoveryGenderFromSources(...values: unknown[]): "male" | "female" | null {
+  for (const value of values) {
+    const oppositeGender = getOppositeDiscoveryGender(value)
+    if (oppositeGender) return oppositeGender
+  }
+  return null
+}
+
 function MatrimonyListProfileCard({
   profile,
   viewerIsPremium,
@@ -957,15 +979,27 @@ export function MatrimonyMain({ onExit, initialScreen = "discover", initialChatI
         setViewerIsPremium(entitlement.isPremium)
         setViewerEntitlement(entitlement)
 
-        // Fetch current user's gender from user_profiles
-        const { data: currentUserProfile, error: currentUserError } = await supabase
-          .from("user_profiles")
-          .select("gender")
-          .eq("user_id", user.id)
-          .single()
+        const [
+          { data: currentUserProfile, error: currentUserError },
+          { data: currentMatrimonyProfileFallback, error: currentMatrimonyProfileError },
+        ] = await Promise.all([
+          supabase
+            .from("user_profiles")
+            .select("gender")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+          supabase
+            .from("matrimony_profile_full")
+            .select("user_id, gender, career, cultural")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+        ])
 
-        if (currentUserError && currentUserError.code !== 'PGRST116') {
+        if (currentUserError) {
           console.error("Error fetching current user profile:", currentUserError)
+        }
+        if (currentMatrimonyProfileError) {
+          console.error("Error fetching current matrimony profile:", currentMatrimonyProfileError)
         }
 
         // Fetch matrimony profiles from consolidated table (only completed ones)
@@ -1035,9 +1069,13 @@ export function MatrimonyMain({ onExit, initialScreen = "discover", initialChatI
         const premiumUserIds = new Set<string>((premiumIds as string[] | null) || [])
         const contactMap = await getProfileContacts(userIds)
 
-        // Get current user's gender for filtering
-        const currentUserGender = currentUserProfile?.gender?.toLowerCase()
-        const currentMatrimonyProfile = profileRows.find((profile) => profile.user_id === user.id)
+        const currentMatrimonyProfile =
+          profileRows.find((profile) => profile.user_id === user.id) || currentMatrimonyProfileFallback
+        const targetDiscoveryGender = getOppositeDiscoveryGenderFromSources(
+          currentUserProfile?.gender,
+          currentMatrimonyProfile?.gender,
+          user.user_metadata?.gender,
+        )
         const currentCareer = (currentMatrimonyProfile?.career as any) || {}
         const currentCultural = (currentMatrimonyProfile?.cultural as any) || {}
         const currentWorkLocation = currentCareer?.work_location || {}
@@ -1078,18 +1116,10 @@ export function MatrimonyMain({ onExit, initialScreen = "discover", initialChatI
               return null
             }
 
-            // Filter by gender preference
-            // If current user is male, show only female profiles
-            // If current user is female, show only male profiles
-            // If current user gender is not set or is 'prefer_not_to_say', show all profiles
-            const profileGender = String(matrimonyProfile.gender || "").toLowerCase()
-            if (currentUserGender === 'male' && profileGender !== 'female') {
+            const profileGender = normalizeBinaryGender(matrimonyProfile.gender)
+            if (targetDiscoveryGender && profileGender !== targetDiscoveryGender) {
               return null
             }
-            if (currentUserGender === 'female' && profileGender !== 'male') {
-              return null
-            }
-            // If currentUserGender is null or 'prefer_not_to_say', show all profiles
 
             // Calculate age (prefer from profile, fallback to DOB calculation)
             let calculatedAge = matrimonyProfile.age || 0
