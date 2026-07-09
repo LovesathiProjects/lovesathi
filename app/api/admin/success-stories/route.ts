@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { writeAdminAuditLog } from "@/lib/adminAudit"
 import { requireAdmin } from "@/lib/adminAuth"
 
-const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const storyStatuses = new Set(["draft", "published", "archived"])
 
 function cleanText(value: unknown, maxLength: number) {

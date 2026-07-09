@@ -3,7 +3,7 @@ import { writeAdminAuditLog } from "@/lib/adminAudit"
 import { requireAdmin } from "@/lib/adminAuth"
 import { SUBSCRIPTION_PLANS } from "@/lib/subscriptionPlans"
 
-const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const planIds = new Set<string>(SUBSCRIPTION_PLANS.map((plan) => plan.id))
 const bannerStatuses = new Set(["draft", "published", "archived"])
 const userDiscountStatuses = new Set(["active", "expired", "revoked"])
