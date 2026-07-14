@@ -174,16 +174,13 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
       <DialogContent className="!flex h-[min(calc(100svh-1rem),880px)] max-h-[calc(100svh-1rem)] w-[min(calc(100vw-1rem),34rem)] max-w-none gap-0 overflow-hidden rounded-2xl bg-white p-0 shadow-2xl sm:h-[min(calc(100dvh-2rem),900px)] sm:max-h-[calc(100dvh-2rem)] sm:w-[min(calc(100vw-2rem),38rem)] sm:max-w-none sm:rounded-3xl md:w-[min(calc(100vw-3rem),44rem)] lg:w-[min(calc(100vw-4rem),48rem)]" showCloseButton={false}>
         <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-2xl sm:rounded-3xl">
           {/* Photo Section */}
-          <div className="relative h-[clamp(11.5rem,28svh,18rem)] min-h-[11.5rem] max-h-72 flex-shrink-0 overflow-hidden rounded-t-2xl sm:h-[min(34dvh,23rem)] sm:max-h-96 sm:rounded-t-3xl" onClick={handlePhotoClick}>
+          <div className="relative h-[clamp(11.5rem,28svh,18rem)] min-h-[11.5rem] max-h-72 flex-shrink-0 overflow-hidden rounded-t-2xl bg-[#F7F1F3] sm:h-[min(34dvh,23rem)] sm:max-h-96 sm:rounded-t-3xl" onClick={handlePhotoClick}>
             <img
               src={currentPhoto}
               alt={`${profile.name} photo ${currentPhotoIndex + 1}`}
-              className="w-full h-full object-cover"
+              className="h-full w-full object-contain object-center"
               onError={handlePhotoError}
             />
-
-            {/* Gradient overlay for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
             {/* Photo navigation arrows */}
             {availablePhotos.length > 1 && (
@@ -221,7 +218,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                     key={index}
                     className={cn(
                       "h-1.5 rounded-full transition-all duration-300",
-                      index === currentPhotoIndex ? "bg-white w-8" : "bg-white/40 w-1.5",
+                      index === currentPhotoIndex ? "w-8 bg-[#26364A]" : "w-1.5 bg-[#26364A]/35",
                     )}
                   />
                 ))}
