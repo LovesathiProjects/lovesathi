@@ -16,7 +16,7 @@ const securityHeaders = {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     "img-src 'self' data: blob: https://*.supabase.co",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://socket.lovesathi.com wss://socket.lovesathi.com https://*.onrender.com wss://*.onrender.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
     "frame-src 'self' https://accounts.google.com https://appleid.apple.com",
     "object-src 'none'",
     "upgrade-insecure-requests",

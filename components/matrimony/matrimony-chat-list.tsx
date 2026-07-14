@@ -22,7 +22,6 @@ import {
 import { getMatrimonyMatches, type Match } from "@/lib/matchmakingService"
 import { supabase } from "@/lib/supabaseClient"
 import { getLastMessage, getUnreadCount, subscribeToMessages, deleteAllMessagesForUser } from "@/lib/chatService"
-import { useSocket } from "@/hooks/useSocket"
 import type { Message } from "@/lib/types"
 import { RealtimeChannel } from "@supabase/supabase-js"
 import { formatPublicProfileName, getDisplayInitial } from "@/lib/displayName"
@@ -58,71 +57,7 @@ export function MatrimonyChatList({ onChatClick, onBack }: MatrimonyChatListProp
   const headerMenuRef = useRef<HTMLDivElement>(null)
   const channelsRef = useRef<Map<string, RealtimeChannel>>(new Map())
 
-  // Socket.io integration for real-time updates
-  const { isConnected, joinConversation } = useSocket({
-    onMessage: async (message: Message) => {
-      if (!currentUserId) return
-
-      // Update the chat list when a new message arrives
-      setChats((prevChats) => {
-        const chatIndex = prevChats.findIndex((chat) => chat.matchId === message.match_id)
-        
-        if (chatIndex === -1) {
-          // This is a new conversation, reload the entire list
-          return prevChats
-        }
-
-        const updatedChats = [...prevChats]
-        const chat = updatedChats[chatIndex]
-
-        // Update last message and timestamp
-        chat.lastMessage = message.content
-        chat.timestamp = message.created_at
-
-        // Update unread count if we're the receiver
-        if (message.receiver_id === currentUserId) {
-          // Fetch the actual unread count from database
-          getUnreadCount(message.match_id, currentUserId, 'matrimony').then((count) => {
-            setChats((currentChats) => {
-              const index = currentChats.findIndex((c) => c.matchId === message.match_id)
-              if (index !== -1) {
-                const updated = [...currentChats]
-                updated[index].unreadCount = count
-                // Re-sort to ensure most recent is first
-                updated.sort((a, b) => {
-                  const timeA = new Date(a.timestamp).getTime()
-                  const timeB = new Date(b.timestamp).getTime()
-                  return timeB - timeA
-                })
-                return updated
-              }
-              return currentChats
-            })
-          })
-        }
-
-        // Move this chat to the top (most recent first)
-        updatedChats.splice(chatIndex, 1)
-        updatedChats.unshift(chat)
-
-        return updatedChats
-      })
-    },
-    onError: (error) => {
-      console.error('Socket error in matrimony chat list:', error)
-    },
-  })
-
-  // Join all conversation rooms when chats are loaded and socket is connected
-  useEffect(() => {
-    if (isConnected && chats.length > 0 && joinConversation) {
-      chats.forEach((chat) => {
-        joinConversation(chat.matchId)
-      })
-    }
-  }, [isConnected, chats, joinConversation])
-
-  // Set up Supabase Realtime subscriptions for all chats (as fallback)
+  // Subscribe to each matched conversation through Supabase Realtime.
   useEffect(() => {
     if (!currentUserId || chats.length === 0) return
 

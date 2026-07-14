@@ -39,7 +39,7 @@ Proxy: DNS only, if using Cloudflare
 - Recent matrimony profile quality queue.
 - Identity verification queue with approve, in-review, and reject actions.
 - Safety report queue with resolve, reviewed, and dismiss actions.
-- Readiness warnings for subdomain, Supabase email configuration, and socket domain.
+- Readiness warnings for subdomain and Supabase email configuration.
 
 ## Intentionally not included yet
 

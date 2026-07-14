@@ -29,7 +29,7 @@ This keeps the remaining matrimony-specific product gaps visible after the first
 
 - In-app notification center.
 - Email/SMS notifications for interests, accepted requests, matches, verification status, and profile reminders.
-- Socket domain health checks and production chat monitoring.
+- Supabase Realtime monitoring and production chat delivery checks.
 - Safer message moderation and block/report visibility.
 
 ## Priority 5: Launch Polish

@@ -52,7 +52,7 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=...
 1. Auth - done: email/password, session, email OTP, resend, and verification routing
 2. Onboarding - done at foundation level: optional phone OTP, DOB, gender, ID, and 7-step matrimony setup wired to Supabase
 3. Discovery - connect `matrimonyService`, swipe limits, shortlist, contact reveal
-4. Chat - connect Socket.IO + `chatService`
+4. Chat - connect Supabase Realtime + `chatService`
 5. Profile centre - edit profile, preferences, subscriptions, settings
 6. Subscriptions - native Play Billing and App Store flows
 7. Admin - keep as web unless a separate admin app is needed
@@ -63,7 +63,7 @@ These files in the root `lib/` folder are mostly platform-agnostic and should be
 
 - `matrimonyService.ts`, `matchmakingService.ts`, `matrimonyShortlistService.ts`
 - `planLimits.ts`, `profileContacts.ts`, `contactSafety.ts`
-- `chatService.ts` (needs Socket.IO client setup for React Native)
+- `chatService.ts` (needs Supabase Realtime subscription setup for React Native)
 - `schemas/matrimony.ts`, `types.ts`, `displayName.ts`, `profileImages.ts`
 
 Keep web-only for now:

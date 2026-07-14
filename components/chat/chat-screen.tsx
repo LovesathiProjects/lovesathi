@@ -28,7 +28,6 @@ import { blockUser } from "@/lib/blockService"
 import type { Message } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { RealtimeChannel } from "@supabase/supabase-js"
-import { useSocket } from "@/hooks/useSocket"
 import { useMessageNotifications } from "@/hooks/useMessageNotifications"
 import { MessageActionMenu } from "@/components/chat/message-action-menu"
 import { ReportDialog } from "@/components/chat/report-dialog"
@@ -85,10 +84,6 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
     anchorElement: HTMLDivElement | null
     preferredPlacement: VerticalPlacement
   } | null>(null)
-  const [isTyping, setIsTyping] = useState(false)
-  const [otherUserTyping, setOtherUserTyping] = useState(false)
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const typingEmitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
@@ -129,48 +124,6 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
       preferredPlacement,
     })
   }
-
-  // Socket.io integration
-  const { joinConversation, leaveConversation, sendMessageSocket, sendTyping, isConnected } = useSocket({
-    onMessage: async (message: Message) => {
-      // Only add message if it's for this conversation and not already present
-      if (message.match_id === matchId) {
-        setMessages((prev) => {
-          // Prevent duplicates
-          if (prev.some((m) => m.id === message.id)) {
-            return prev
-          }
-          return [...prev, message]
-        })
-
-        // Mark as delivered if we're the receiver
-        if (message.receiver_id === currentUserId && !message.delivered_at) {
-          markMessageDelivered(message.id, currentUserId).then((updated) => {
-            applyLocalMessageUpdate(updated)
-          })
-        }
-      }
-    },
-    onError: (error) => {
-      console.error('Socket error in chat:', error)
-    },
-    onTyping: (data) => {
-      if (data.matchId === matchId && data.userId === chatUser?.id) {
-        setOtherUserTyping(data.isTyping)
-        
-        // Auto-hide typing indicator after 3 seconds of no typing
-        if (typingTimeoutRef.current) {
-          clearTimeout(typingTimeoutRef.current)
-        }
-        
-        if (data.isTyping) {
-          typingTimeoutRef.current = setTimeout(() => {
-            setOtherUserTyping(false)
-          }, 3000)
-        }
-      }
-    },
-  })
 
   // In-page notification handler
   const handleInPageNotification = (message: Message, senderName: string) => {
@@ -374,26 +327,8 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
       }
       messageElementMapRef.current.clear()
       seenInFlightRef.current.clear()
-      
-      // Clean up typing timeouts
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current)
-      }
-      if (typingEmitTimeoutRef.current) {
-        clearTimeout(typingEmitTimeoutRef.current)
-      }
     }
   }, [])
-
-  // Cleanup typing when leaving chat
-  useEffect(() => {
-    return () => {
-      // Stop typing when component unmounts or matchId changes
-      if (matchId && chatUser?.id && isConnected && sendTyping) {
-        sendTyping(matchId, chatUser.id, false)
-      }
-    }
-  }, [matchId, chatUser?.id, isConnected, sendTyping])
 
   // Load match and user info
   useEffect(() => {
@@ -547,7 +482,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
     }
   }, [chatUser?.id, currentUserId, matchId])
 
-  // Set up real-time subscription (Supabase Realtime as fallback)
+  // Supabase Realtime is the sole source for message delivery and updates.
   useEffect(() => {
     if (!matchId || !currentUserId || !matchType) return
 
@@ -562,10 +497,27 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
       {
         onInsert: async (message: Message) => {
           setMessages((prev) => {
-            // Avoid duplicates
             if (prev.some((m) => m.id === message.id)) {
               return prev
             }
+
+            // The INSERT event can arrive before sendMessageService resolves.
+            // Replace that pending optimistic message instead of rendering both.
+            const optimisticIndex = prev.findIndex(
+              (item) =>
+                item.id.startsWith('temp-') &&
+                item.match_id === message.match_id &&
+                item.sender_id === message.sender_id &&
+                item.receiver_id === message.receiver_id &&
+                item.content === message.content,
+            )
+
+            if (optimisticIndex >= 0) {
+              const next = [...prev]
+              next[optimisticIndex] = message
+              return next
+            }
+
             return [...prev, message]
           })
 
@@ -600,17 +552,6 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
     }
   }, [matchId, currentUserId, matchType])
 
-  // Join Socket.io conversation room
-  useEffect(() => {
-    if (!matchId || !isConnected) return
-
-    joinConversation(matchId)
-
-    return () => {
-      leaveConversation(matchId)
-    }
-  }, [matchId, isConnected, joinConversation, leaveConversation])
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
@@ -622,24 +563,6 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
   const hideMessageForCurrentUser = (message: Message) => {
     if (!currentUserId) return false
     return (message.deleted_by || []).includes(currentUserId)
-  }
-
-  // Handle typing indicator
-  const handleTyping = () => {
-    if (!matchId || !chatUser?.id || !currentUserId || !isConnected) return
-
-    // Clear existing timeout
-    if (typingEmitTimeoutRef.current) {
-      clearTimeout(typingEmitTimeoutRef.current)
-    }
-
-    // Emit typing start
-    sendTyping(matchId, chatUser.id, true)
-
-    // Emit typing stop after 2 seconds of no typing
-    typingEmitTimeoutRef.current = setTimeout(() => {
-      sendTyping(matchId, chatUser.id, false)
-    }, 2000)
   }
 
   const handleSendMessage = async () => {
@@ -710,17 +633,6 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
         prev.map((m) => (m.id === tempMessage.id ? sentMessage : m))
       )
 
-      // Also send via Socket.io for real-time delivery
-      if (sentMessage && isConnected) {
-        sendMessageSocket(matchId, chatUser.id, sentMessage)
-      }
-      
-      // Stop typing indicator
-      if (typingEmitTimeoutRef.current) {
-        clearTimeout(typingEmitTimeoutRef.current)
-      }
-      sendTyping(matchId, chatUser.id, false)
-      
       setReplyPreview(null)
     } catch (error: any) {
       console.error('Error sending message:', error)
@@ -993,7 +905,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
                 </div>
                 <div className="flex items-center space-x-2">
                   <p className={cn("text-sm", isMatrimony ? "text-[#444444]" : "text-[#A1A1AA]")}>
-                    {otherUserTyping ? "typing..." : chatPresence.label || "Lovesathi match"}
+                    {chatPresence.label || "Lovesathi match"}
                   </p>
                 </div>
               </div>
@@ -1355,24 +1267,6 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
           </div>
         )}
         
-        {/* Typing Indicator */}
-        {otherUserTyping && (
-          <div className="mb-3 flex justify-start">
-            <div className={cn(
-              "max-w-[85%] rounded-2xl rounded-bl-md border px-4 py-2 shadow-lg backdrop-blur-sm sm:max-w-[80%]",
-              isMatrimony ? "border-[#E83262]/24 bg-[#F6F7FB]/92 text-[#26364A]" : "bg-white/15 border-white/20 text-white"
-            )}>
-              <div className="flex items-center space-x-1">
-                <div className="flex space-x-1">
-                  <div className={cn("w-2 h-2 rounded-full animate-bounce", isMatrimony ? "bg-[#444444]" : "bg-white/70")} style={{ animationDelay: '0ms' }} />
-                  <div className={cn("w-2 h-2 rounded-full animate-bounce", isMatrimony ? "bg-[#444444]" : "bg-white/70")} style={{ animationDelay: '150ms' }} />
-                  <div className={cn("w-2 h-2 rounded-full animate-bounce", isMatrimony ? "bg-[#444444]" : "bg-white/70")} style={{ animationDelay: '300ms' }} />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
         <div ref={messagesEndRef} />
       </div>
 
@@ -1409,10 +1303,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
             <Input
               placeholder="Type a message... contact details are blocked"
               value={newMessage}
-              onChange={(e) => {
-                setNewMessage(e.target.value)
-                handleTyping()
-              }}
+              onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               className={cn(
                 "h-12 rounded-full border-2 pr-12 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_10px_26px_rgba(24,17,13,0.05)] backdrop-blur-sm transition-colors focus:border-[#E83262]/50",

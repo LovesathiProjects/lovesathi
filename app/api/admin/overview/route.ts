@@ -1618,9 +1618,9 @@ export async function GET(request: Request) {
         detail: "Confirm Supabase Auth email templates and redirect URLs before relying on confirmation and recovery email.",
       },
       {
-        label: "Socket domain",
-        status: "warning",
-        detail: "Confirm socket.lovesathi.com DNS and Render custom domain before relying on live chat.",
+        label: "Chat delivery",
+        status: "ok",
+        detail: "Matched conversations use Supabase Realtime with persisted messages as the source of truth.",
       },
     ],
   })

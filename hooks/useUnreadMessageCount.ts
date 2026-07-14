@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useSocket } from './useSocket'
 import { getTotalUnreadCount } from '@/lib/chatService'
 import { supabase } from '@/lib/supabaseClient'
 import type { Message } from '@/lib/types'
@@ -41,33 +40,7 @@ export function useUnreadMessageCount() {
     fetchUnreadCount(currentUserId)
   }, [currentUserId])
 
-  // Listen for new messages via Socket.io
-  useSocket({
-    onMessage: (message: Message) => {
-      if (!currentUserId) return
-
-      // Only count messages where current user is the receiver
-      if (message.receiver_id === currentUserId) {
-        // Prevent duplicate processing
-        if (processedMessageIds.current.has(message.id)) {
-          return
-        }
-
-        processedMessageIds.current.add(message.id)
-
-        // Only increment if message hasn't been seen
-        if (!message.seen_at) {
-          console.log('[useUnreadMessageCount] New unread message via Socket.io, incrementing count')
-          setUnreadCount((prev) => prev + 1)
-        }
-      }
-    },
-    onError: (error) => {
-      console.error('Socket error in unread count:', error)
-    },
-  })
-
-  // Listen for message INSERT and UPDATE events via Supabase Realtime
+  // Listen for message INSERT and UPDATE events through Supabase Realtime.
   useEffect(() => {
     if (!currentUserId) return
 
@@ -201,4 +174,3 @@ export function useUnreadMessageCount() {
 
   return unreadCount
 }
-

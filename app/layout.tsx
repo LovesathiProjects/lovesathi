@@ -5,7 +5,6 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "sonner"
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster"
-import { SocketProvider } from "@/contexts/SocketContext"
 import { LUXURY_THEME } from "@/lib/luxuryTheme"
 
 const manrope = Manrope({
@@ -115,11 +114,9 @@ export default function RootLayout({
     >
       <body className="bg-[#F6F7FB] text-[#26364A]">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
-          <SocketProvider>
-            {children}
-            <Toaster />
-            <ShadcnToaster />
-          </SocketProvider>
+          {children}
+          <Toaster />
+          <ShadcnToaster />
         </ThemeProvider>
       </body>
     </html>

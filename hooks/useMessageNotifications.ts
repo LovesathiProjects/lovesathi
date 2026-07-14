@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { useSocket } from './useSocket'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 import { useToast } from './use-toast'
 import { supabase } from '@/lib/supabaseClient'
 import type { Message } from '@/lib/types'
@@ -15,26 +15,52 @@ interface UseMessageNotificationsOptions {
 export function useMessageNotifications(options: UseMessageNotificationsOptions = {}) {
   const { currentMatchId, currentPage = 'other', onInPageNotification } = options
   const { toast } = useToast()
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const currentUserIdRef = useRef<string | null>(null)
   const senderNamesCache = useRef<Map<string, string>>(new Map())
+  const channelRef = useRef<RealtimeChannel | null>(null)
+  const notificationOptionsRef = useRef<UseMessageNotificationsOptions>({
+    currentMatchId,
+    currentPage,
+    onInPageNotification,
+  })
 
-  // Get current user ID
   useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        currentUserIdRef.current = user.id
-      }
+    notificationOptionsRef.current = {
+      currentMatchId,
+      currentPage,
+      onInPageNotification,
     }
-    getCurrentUser()
+  }, [currentMatchId, currentPage, onInPageNotification])
+
+  useEffect(() => {
+    let active = true
+
+    const syncCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      const userId = user?.id ?? null
+      currentUserIdRef.current = userId
+      if (active) setCurrentUserId(userId)
+    }
+
+    void syncCurrentUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return
+      const userId = session?.user.id ?? null
+      currentUserIdRef.current = userId
+      setCurrentUserId(userId)
+    })
+
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
   }, [])
 
-  // Fetch sender name from cache or database
-  const getSenderName = async (senderId: string): Promise<string> => {
-    // Check cache first
-    if (senderNamesCache.current.has(senderId)) {
-      return senderNamesCache.current.get(senderId)!
-    }
+  const getSenderName = useCallback(async (senderId: string): Promise<string> => {
+    const cachedName = senderNamesCache.current.get(senderId)
+    if (cachedName) return cachedName
 
     try {
       const { data: matrimonyProfile } = await supabase
@@ -43,55 +69,68 @@ export function useMessageNotifications(options: UseMessageNotificationsOptions 
         .eq('user_id', senderId)
         .single()
 
-      if (matrimonyProfile?.name) {
-        senderNamesCache.current.set(senderId, matrimonyProfile.name)
-        return matrimonyProfile.name
-      }
-
-      return 'Unknown User'
+      const senderName = matrimonyProfile?.name || 'Lovesathi member'
+      senderNamesCache.current.set(senderId, senderName)
+      return senderName
     } catch (error) {
       console.error('Error fetching sender name:', error)
-      return 'Unknown User'
+      return 'Lovesathi member'
     }
-  }
+  }, [])
 
-  // Handle incoming messages
-  const handleMessage = async (message: Message) => {
-    // Don't show notification for messages sent by current user
-    if (message.sender_id === currentUserIdRef.current) {
-      return
-    }
+  useEffect(() => {
+    if (!currentUserId) return
 
-    // Get sender name
-    const senderName = await getSenderName(message.sender_id)
+    const channel = supabase
+      .channel(`message-notifications:${currentUserId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${currentUserId}`,
+        },
+        (payload) => {
+          const message = payload.new as Message
 
-    // Check if user is on the chat page for this specific match
-    const isOnCurrentChat = currentPage === 'chat' && currentMatchId === message.match_id
+          if (message.sender_id === currentUserIdRef.current) return
 
-    if (isOnCurrentChat) {
-      // Show in-page notification
-      if (onInPageNotification) {
-        onInPageNotification(message, senderName)
-      }
-    } else {
-      // Show toast notification
-      toast({
-        title: 'New Message',
-        description: `New message from ${senderName}`,
-        duration: 5000,
+          void (async () => {
+            const senderName = await getSenderName(message.sender_id)
+            const currentOptions = notificationOptionsRef.current
+            const isOnCurrentChat =
+              currentOptions.currentPage === 'chat' &&
+              currentOptions.currentMatchId === message.match_id
+
+            if (isOnCurrentChat) {
+              currentOptions.onInPageNotification?.(message, senderName)
+              return
+            }
+
+            toast({
+              title: 'New Message',
+              description: `New message from ${senderName}`,
+              duration: 5000,
+            })
+          })()
+        },
+      )
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          console.error('Supabase Realtime error in message notifications')
+        }
       })
+
+    channelRef.current = channel
+
+    return () => {
+      if (channelRef.current === channel) {
+        channelRef.current = null
+      }
+      void supabase.removeChannel(channel)
     }
-  }
+  }, [currentUserId, getSenderName, toast])
 
-  // Set up socket listener
-  useSocket({
-    onMessage: handleMessage,
-    onError: (error) => {
-      console.error('Socket error in notifications:', error)
-    },
-  })
-
-  return {
-    // Expose any utility functions if needed
-  }
+  return {}
 }
