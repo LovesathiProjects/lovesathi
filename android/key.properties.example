@@ -1,0 +1,7 @@
+# Copy this file to android/key.properties. The real file is gitignored.
+# Keep the upload keystore and these passwords in secure storage outside the repository.
+# Do not create a replacement key after the first bundle is uploaded to Google Play.
+storeFile=C:\\path\\to\\lovesathi-upload.jks
+storePassword=replace-with-keystore-password
+keyAlias=replace-with-key-alias
+keyPassword=replace-with-key-password

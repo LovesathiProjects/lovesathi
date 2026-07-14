@@ -1,13 +1,13 @@
 # Lovesathi Play Store Release Runbook
 
-Last updated: June 9, 2026
+Last updated: July 14, 2026
 
 ## Current Android App Details
 
 - App name: `Lovesathi`
 - Android package ID: `com.lovesathi.app`
-- Version code: `1`
-- Version name: `1.0`
+- Version code: `3`
+- Version name: `1.0.2`
 - Target SDK: `36`
 - Native wrapper: Capacitor
 - Hosted app loaded by wrapper: `https://lovesathi.com`
@@ -20,12 +20,16 @@ The Android project is already scaffolded in `android/`. The app is a thin nativ
 Use these repo commands:
 
 ```powershell
+npm run native:doctor:android
 npm run native:sync
 npm run native:assemble:android
 npm run native:bundle:android
+npm run native:install:android
+npm run native:test:android
+npm run native:test:android:connected
 ```
 
-`native:bundle:android` is the Play Store build command. It creates the release `.aab` after Android SDK, Java, and signing are configured.
+`native:bundle:android` is the Play Store build command. It syncs the Capacitor shell and creates the release `.aab` only after Android SDK, JDK 17+, and signing are configured. It refuses to produce a debug-signed substitute.
 
 ## One-Time Machine Setup
 
@@ -36,7 +40,7 @@ Install Android Studio, then install these from Android Studio SDK Manager:
 - Android SDK Platform-Tools
 - Android SDK Command-line Tools
 
-Install JDK 17 or JDK 21 and make sure `java -version` shows 17+.
+Install JDK 17 or JDK 21. `npm run native:doctor:android` selects JDK 17+ via `JAVA_HOME`, even if an old Java runtime appears first on Windows `PATH`.
 
 Create `android/local.properties` from `android/local.properties.example`:
 
@@ -52,12 +56,11 @@ The release `.aab` must be signed before Play Console accepts it.
 
 Recommended safe path:
 
-1. Open Android Studio.
-2. Open `android/`.
-3. Use `Build > Generate Signed App Bundle / APK`.
-4. Choose `Android App Bundle`.
-5. Create or select a Lovesathi upload keystore.
-6. Save the keystore outside the repo or in a secure password manager.
+1. Use the existing Lovesathi upload keystore. Do not create a replacement key after a bundle has been uploaded to Play Console.
+2. Copy `android/key.properties.example` to `android/key.properties`.
+3. Set the keystore path, alias, and passwords in the ignored `android/key.properties` file.
+4. Run `npm run native:bundle:android`.
+5. Save the upload keystore and its credentials in secure backup storage before the first Play Console upload.
 
 Never commit these files:
 
@@ -105,16 +108,20 @@ If the Android app sells digital premium features inside the app, Google may req
 
 ## Current Local Blockers
 
-This Windows machine is not ready to build the final `.aab` yet:
+This Windows machine has Android SDK Platform 36, an emulator, and JDK 17 installed. The repo scripts configure them for the build process. The remaining release prerequisite is the ignored `android/key.properties` file containing the credentials for the existing upload keystore.
 
-- Active Java is currently Java 8, but Android Gradle Plugin needs Java 17+.
-- Android SDK is not configured yet.
-- `android/local.properties` is missing.
-
-After Android Studio and JDK 17+ are installed, run:
+Run:
 
 ```powershell
-java -version
-npm run native:sync
-npm run native:bundle:android
+npm run native:doctor:android
+npm run native:build:android
+npm run native:install:android
+npm run native:test:android:connected
+```
+
+For a physical phone, enable Developer options and USB debugging, approve the device fingerprint, then use:
+
+```powershell
+adb devices -l
+npm run native:install:android -- -Serial <device-serial>
 ```

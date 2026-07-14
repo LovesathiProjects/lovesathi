@@ -24,8 +24,9 @@ Lovesathi is currently a production Next.js web app with Capacitor wrapper confi
 ## What is not native-ready yet
 
 - Native iOS folder has not been generated yet because it requires macOS and Xcode.
-- Android release signing, Play Store upload, and physical-device QA are not complete yet.
-- This Windows machine still needs Android Studio/SDK and active JDK 17+ before a Play Store `.aab` can be generated locally.
+- Android release signing is guarded by `android/key.properties`; it needs the existing upload key credentials before a Play Store `.aab` can be generated.
+- Android SDK Platform 36, a Pixel emulator, and JDK 17 are installed. `npm run native:doctor:android`, `npm run native:build:android`, and `npm run native:install:android` provide the repeatable local test path.
+- Physical-device QA still needs a USB-debugging-enabled Android phone connected to this machine.
 - Native push notifications are not configured.
 - Native deep links/universal links are not configured.
 - Native app icons and splash assets need final high-resolution PNG exports before store submission.

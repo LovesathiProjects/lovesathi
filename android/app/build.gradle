@@ -1,14 +1,39 @@
+import java.util.Properties
+
 apply plugin: 'com.android.application'
+
+def releaseSigningProperties = new Properties()
+def releaseSigningPropertiesFile = rootProject.file('key.properties')
+
+if (releaseSigningPropertiesFile.exists()) {
+    releaseSigningPropertiesFile.withInputStream { releaseSigningProperties.load(it) }
+}
+
+def requiredReleaseSigningProperties = ['storeFile', 'storePassword', 'keyAlias', 'keyPassword']
+def missingReleaseSigningProperties = requiredReleaseSigningProperties.findAll {
+    !releaseSigningProperties.getProperty(it)?.trim()
+}
+def releaseSigningConfigured = releaseSigningPropertiesFile.exists() && missingReleaseSigningProperties.isEmpty()
+def releaseStoreFile = releaseSigningConfigured
+    ? rootProject.file(releaseSigningProperties.getProperty('storeFile'))
+    : null
+def releaseTaskRequested = gradle.startParameter.taskNames.any { taskName ->
+    def normalizedTaskName = taskName.toLowerCase()
+    normalizedTaskName.contains('assemblerelease') || normalizedTaskName.contains('bundlerelease')
+}
 
 android {
     namespace = "com.lovesathi.app"
     compileSdk = rootProject.ext.compileSdkVersion
+    buildFeatures {
+        buildConfig = true
+    }
     defaultConfig {
         applicationId "com.lovesathi.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName '1.0.1'
+        versionCode 3
+        versionName '1.0.2'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +41,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (releaseSigningConfigured) {
+            release {
+                storeFile releaseStoreFile
+                storePassword releaseSigningProperties.getProperty('storePassword')
+                keyAlias releaseSigningProperties.getProperty('keyAlias')
+                keyPassword releaseSigningProperties.getProperty('keyPassword')
+            }
+        }
+    }
     buildTypes {
         release {
+            if (releaseSigningConfigured) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -51,4 +89,20 @@ try {
     }
 } catch(Exception ignored) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}
+
+gradle.projectsEvaluated {
+    if (releaseTaskRequested && !releaseSigningConfigured) {
+        def reason = releaseSigningPropertiesFile.exists()
+            ? "missing ${missingReleaseSigningProperties.join(', ')}"
+            : 'android/key.properties is missing'
+        throw new GradleException(
+            "Release signing is not configured: ${reason}. " +
+            'Copy android/key.properties.example to android/key.properties and set the Lovesathi upload-key values.'
+        )
+    }
+
+    if (releaseTaskRequested && !releaseStoreFile.exists()) {
+        throw new GradleException("Release signing keystore was not found at ${releaseStoreFile}.")
+    }
 }
