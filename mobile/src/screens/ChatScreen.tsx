@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -17,9 +18,14 @@ import { ProfilePhoto } from '../components/ProfilePhoto';
 import { useAuth } from '../contexts/AuthContext';
 import {
   loadNativeChats,
+  loadNativeChatPresence,
   loadNativeMessages,
+  getNativeChatPresenceStatus,
+  NATIVE_CHAT_PRESENCE_HEARTBEAT_MS,
   sendNativeMessage,
+  subscribeToNativeChatPresence,
   subscribeToNativeMessages,
+  touchNativeChatPresence,
   type NativeChatPreview,
   type NativeMessage,
 } from '../lib/nativeSocialService';
@@ -41,6 +47,8 @@ export function ChatScreen() {
   const [messageLoading, setMessageLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [peerLastSeenAt, setPeerLastSeenAt] = useState<string | null>(null);
+  const [presenceClock, setPresenceClock] = useState(() => Date.now());
 
   const applyChatPreview = useCallback((message: NativeMessage) => {
     setChats((current) => {
@@ -152,6 +160,45 @@ export function ChatScreen() {
     };
   }, [applyChatPreview, selectedChat?.matchId, user?.id]);
 
+  // Activity is updated only while a member is inside an existing match chat.
+  useEffect(() => {
+    if (!selectedChat || !user) {
+      setPeerLastSeenAt(null);
+      return undefined;
+    }
+
+    let active = true;
+    const otherUserId = selectedChat.otherUserId;
+    const touchOwnPresence = () => {
+      void touchNativeChatPresence();
+      setPresenceClock(Date.now());
+    };
+
+    void loadNativeChatPresence(otherUserId).then((presence) => {
+      if (active) setPeerLastSeenAt(presence?.lastSeenAt ?? null);
+    });
+    touchOwnPresence();
+
+    const unsubscribe = subscribeToNativeChatPresence(otherUserId, {
+      onChange: (presence) => {
+        if (active) setPeerLastSeenAt(presence.lastSeenAt);
+      },
+      onError: (subscriptionError) => console.warn(subscriptionError.message),
+    });
+    const heartbeat = setInterval(touchOwnPresence, NATIVE_CHAT_PRESENCE_HEARTBEAT_MS);
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      setPresenceClock(Date.now());
+      if (nextState === 'active') touchOwnPresence();
+    });
+
+    return () => {
+      active = false;
+      clearInterval(heartbeat);
+      appStateSubscription.remove();
+      unsubscribe();
+    };
+  }, [selectedChat?.matchId, selectedChat?.otherUserId, user?.id]);
+
   const sendMessage = useCallback(async () => {
     if (!user || !selectedChat || sending) return;
     const content = draft.trim();
@@ -190,6 +237,10 @@ export function ChatScreen() {
       ),
     [messages, user],
   );
+  const peerPresence = useMemo(
+    () => getNativeChatPresenceStatus(peerLastSeenAt, presenceClock),
+    [peerLastSeenAt, presenceClock],
+  );
 
   if (loading) {
     return (
@@ -211,11 +262,14 @@ export function ChatScreen() {
           <Pressable style={styles.backButton} onPress={() => setSelectedChat(null)}>
             <Text style={styles.backText}>Back</Text>
           </Pressable>
-          <ProfilePhoto initials={getInitials(selectedChat.name)} uri={selectedChat.photo} size={46} />
+          <View style={styles.photoPresence}>
+            <ProfilePhoto initials={getInitials(selectedChat.name)} uri={selectedChat.photo} size={46} />
+            {peerPresence.isOnline && <View style={styles.onlineDot} />}
+          </View>
           <View style={styles.chatHeaderText}>
             <Text style={styles.threadName} numberOfLines={1}>{selectedChat.name}</Text>
             <Text style={styles.threadPreview} numberOfLines={1}>
-              {selectedChat.isPremium ? 'Premium member' : 'Lovesathi match'}
+              {peerPresence.label || (selectedChat.isPremium ? 'Premium member' : 'Lovesathi match')}
             </Text>
           </View>
         </View>
@@ -518,6 +572,20 @@ const styles = StyleSheet.create({
   chatHeaderText: {
     flex: 1,
     minWidth: 0,
+  },
+  photoPresence: {
+    position: 'relative',
+  },
+  onlineDot: {
+    position: 'absolute',
+    right: -1,
+    bottom: -1,
+    width: 13,
+    height: 13,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: colors.card,
+    backgroundColor: '#2EAE73',
   },
   messageList: {
     flexGrow: 1,

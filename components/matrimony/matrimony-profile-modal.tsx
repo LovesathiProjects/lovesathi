@@ -77,14 +77,17 @@ function DossierSection({
 
 export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, onNotNow, onChat, onSuperLike, onPhoneUpgrade, onRevealPhone, viewerProfile = null, viewerIsPremium = false, isMatched = false }: MatrimonyProfileModalProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
-  const [photoFailed, setPhotoFailed] = useState(false)
+  const [failedPhotoSources, setFailedPhotoSources] = useState<string[]>([])
   const [revealedPhone, setRevealedPhone] = useState<string | null>(null)
   const phoneIsRevealed = Boolean(revealedPhone)
   const displayPhone = revealedPhone || profile.phoneMasked || (profile.phone ? maskPhoneForDisplay(profile.phone) : null)
   const displayName = formatPublicProfileName(profile.name)
   const publicProfileId = getPublicProfileId(profile)
   const visiblePhotos = getSafeProfilePhotos(profile.photos, profile.name, profile.id, viewerIsPremium || isMatched ? undefined : 1)
-  const currentPhoto = photoFailed ? getProfileFallbackImage(profile.name, profile.id) : visiblePhotos[currentPhotoIndex]
+  const fallbackPhoto = getProfileFallbackImage(profile.name, profile.id)
+  const galleryPhotos = visiblePhotos.filter((photo) => !failedPhotoSources.includes(photo))
+  const availablePhotos = galleryPhotos.length > 0 ? galleryPhotos : [fallbackPhoto]
+  const currentPhoto = availablePhotos[currentPhotoIndex] || fallbackPhoto
   const personal = profile.personal || {}
   const career = profile.career || {}
   const cultural = profile.cultural || {}
@@ -122,8 +125,19 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
   useEffect(() => {
     setRevealedPhone(null)
     setCurrentPhotoIndex(0)
-    setPhotoFailed(false)
+    setFailedPhotoSources([])
   }, [profile.id])
+
+  useEffect(() => {
+    setCurrentPhotoIndex((index) => Math.min(index, Math.max(availablePhotos.length - 1, 0)))
+  }, [availablePhotos.length])
+
+  const handlePhotoError = () => {
+    if (currentPhoto === fallbackPhoto) return
+    setFailedPhotoSources((current) =>
+      current.includes(currentPhoto) ? current : [...current, currentPhoto],
+    )
+  }
 
   const handlePhotoClick = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -132,7 +146,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
 
     if (clickX > cardWidth / 2) {
       // Right side - next photo
-      if (currentPhotoIndex < visiblePhotos.length - 1) {
+      if (currentPhotoIndex < availablePhotos.length - 1) {
         setCurrentPhotoIndex((prev) => prev + 1)
       }
     } else {
@@ -144,7 +158,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
   }
 
   const nextPhoto = () => {
-    if (currentPhotoIndex < visiblePhotos.length - 1) {
+    if (currentPhotoIndex < availablePhotos.length - 1) {
       setCurrentPhotoIndex((prev) => prev + 1)
     }
   }
@@ -162,17 +176,17 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
           {/* Photo Section */}
           <div className="relative h-[clamp(11.5rem,28svh,18rem)] min-h-[11.5rem] max-h-72 flex-shrink-0 overflow-hidden rounded-t-2xl sm:h-[min(34dvh,23rem)] sm:max-h-96 sm:rounded-t-3xl" onClick={handlePhotoClick}>
             <img
-              src={currentPhoto || getProfileFallbackImage(profile.name, profile.id)}
+              src={currentPhoto}
               alt={`${profile.name} photo ${currentPhotoIndex + 1}`}
               className="w-full h-full object-cover"
-              onError={() => setPhotoFailed(true)}
+              onError={handlePhotoError}
             />
 
             {/* Gradient overlay for better text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
             {/* Photo navigation arrows */}
-            {visiblePhotos.length > 1 && (
+            {availablePhotos.length > 1 && (
               <>
                 {currentPhotoIndex > 0 && (
                   <button
@@ -185,7 +199,7 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
                     <ChevronLeft className="w-5 h-5 text-white" />
                   </button>
                 )}
-                {currentPhotoIndex < visiblePhotos.length - 1 && (
+                {currentPhotoIndex < availablePhotos.length - 1 && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
@@ -200,9 +214,9 @@ export function MatrimonyProfileModal({ profile, open, onOpenChange, onConnect, 
             )}
 
             {/* Photo indicators */}
-            {visiblePhotos.length > 1 && (
+            {availablePhotos.length > 1 && (
               <div className="absolute top-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20">
-                {visiblePhotos.map((_, index) => (
+                {availablePhotos.map((_, index) => (
                   <div
                     key={index}
                     className={cn(

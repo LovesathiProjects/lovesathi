@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image, StyleSheet, Text, ViewStyle } from 'react-native';
 import { colors, radius } from '../theme';
@@ -10,11 +11,18 @@ type ProfilePhotoProps = {
 };
 
 export function ProfilePhoto({ initials, size = 74, style, uri }: ProfilePhotoProps) {
-  if (uri) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [uri]);
+
+  if (uri && !imageFailed) {
     return (
       <Image
         source={{ uri }}
         resizeMode="cover"
+        onError={() => setImageFailed(true)}
         style={[
           styles.photo,
           { width: size, height: size, borderRadius: size / 2 },

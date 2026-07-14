@@ -40,6 +40,7 @@ export function DiscoveryScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [photoFailed, setPhotoFailed] = useState(false);
 
   const loadProfiles = useCallback(async (refresh = false) => {
     if (!user) return;
@@ -64,6 +65,10 @@ export function DiscoveryScreen() {
   }, [loadProfiles]);
 
   const profile = profiles[0];
+
+  useEffect(() => {
+    setPhotoFailed(false);
+  }, [profile?.id]);
 
   const removeCurrentProfile = useCallback((profileId: string) => {
     setProfiles((current) => current.filter((item) => item.id !== profileId));
@@ -179,13 +184,18 @@ export function DiscoveryScreen() {
       ) : (
         <View style={[styles.cardShell, isWide && styles.cardShellWide]}>
           <View style={styles.photoPanel}>
-            {profile.photos[0] ? (
-              <Image source={{ uri: profile.photos[0] }} resizeMode="cover" style={styles.fill} />
+            {profile.photos[0] && !photoFailed ? (
+              <Image
+                source={{ uri: profile.photos[0] }}
+                resizeMode="cover"
+                style={styles.fill}
+                onError={() => setPhotoFailed(true)}
+              />
             ) : (
               <LinearGradient colors={[colors.champagneSoft, '#CDB88E', colors.ink]} style={styles.fill} />
             )}
             <LinearGradient colors={['transparent', 'rgba(20,32,51,0.15)', 'rgba(20,32,51,0.9)']} style={styles.fill} />
-            {!profile.photos[0] && (
+            {(!profile.photos[0] || photoFailed) && (
               <ProfilePhoto initials={getInitials(profile.name)} size={138} />
             )}
             <View style={styles.topActions}>

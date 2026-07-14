@@ -532,7 +532,7 @@ export function MatrimonySwipeCard({
           alt=""
           className={cn(
             "absolute inset-0 h-full w-full object-cover transition-opacity duration-300",
-            premiumLocked && isTopCard && "scale-105 blur-[7px] brightness-90 saturate-75",
+            premiumLocked && isTopCard && "scale-105 blur-[3.5px] brightness-90 saturate-75",
             !isTopCard && "brightness-75 saturate-90",
           )}
           onError={() => setImageLoadFailed(true)}

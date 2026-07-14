@@ -69,7 +69,7 @@ import { calculateAgeFromDate } from "@/lib/age"
 import { formatLocationValue, getLocationCity, parseLocationValue, type LocationValue } from "@/lib/location"
 import { formatPublicProfileName } from "@/lib/displayName"
 import { getPublicProfileId } from "@/lib/profileIdentity"
-import { getProfileFallbackImage, getSafeProfilePhotos } from "@/lib/profileImages"
+import { getProfileFallbackImage, getProfilePhotoSources, getSafeProfilePhotos } from "@/lib/profileImages"
 import { cn } from "@/lib/utils"
 import { LocationCascadeSelect } from "@/components/location/location-cascade-select"
 
@@ -253,7 +253,7 @@ function MatrimonyListProfileCard({
             <img
               src={primaryPhoto}
               alt={profile.name}
-              className={`h-full min-h-[13.5rem] w-full object-cover ${isPremiumLocked ? "blur-[5px] scale-105 opacity-80" : ""}`}
+              className={`h-full min-h-[13.5rem] w-full object-cover ${isPremiumLocked ? "blur-[2.5px] scale-105 opacity-80" : ""}`}
               onError={() => setPhotoFailed(true)}
             />
           ) : (
@@ -851,6 +851,30 @@ export function MatrimonyMain({ onExit, initialScreen = "discover", initialChatI
     return status
   }, [])
 
+  const refreshViewerEntitlement = useCallback(async (userId: string) => {
+    const entitlement = await getUserEntitlementStatus(userId)
+    setViewerIsPremium(entitlement.isPremium)
+    setViewerEntitlement(entitlement)
+    return entitlement
+  }, [])
+
+  useEffect(() => {
+    if (!currentUserId) return
+
+    const refreshOnReturn = () => {
+      if (document.visibilityState === "visible") {
+        void refreshViewerEntitlement(currentUserId)
+      }
+    }
+
+    window.addEventListener("focus", refreshOnReturn)
+    document.addEventListener("visibilitychange", refreshOnReturn)
+    return () => {
+      window.removeEventListener("focus", refreshOnReturn)
+      document.removeEventListener("visibilitychange", refreshOnReturn)
+    }
+  }, [currentUserId, refreshViewerEntitlement])
+
   const ensureSwipeAllowed = useCallback(
     async (userId: string) => {
       const status = await refreshSwipeLimitStatus(userId)
@@ -975,9 +999,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover", initialChatI
 
         setCurrentUserId(user.id)
         await refreshSwipeLimitStatus(user.id)
-        const entitlement = await getUserEntitlementStatus(user.id)
-        setViewerIsPremium(entitlement.isPremium)
-        setViewerEntitlement(entitlement)
+        await refreshViewerEntitlement(user.id)
 
         const [
           { data: currentUserProfile, error: currentUserError },
@@ -1092,7 +1114,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover", initialChatI
         const combinedProfiles = profileRows
           .map((matrimonyProfile) => {
             // Extract data from JSONB fields
-            const photosData = (matrimonyProfile.photos as string[]) || []
+            const photosData = getProfilePhotoSources(matrimonyProfile.photos)
             const personalData = (matrimonyProfile.personal as any) || {}
             const careerData = (matrimonyProfile.career as any) || {}
             const culturalData = (matrimonyProfile.cultural as any) || {}
@@ -1323,7 +1345,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover", initialChatI
     }
 
     fetchProfiles()
-  }, [appliedFilters, refreshSwipeLimitStatus])
+  }, [appliedFilters, refreshSwipeLimitStatus, refreshViewerEntitlement])
 
   // Prevent body scroll when on discover screen
   useEffect(() => {
@@ -1719,6 +1741,25 @@ export function MatrimonyMain({ onExit, initialScreen = "discover", initialChatI
     [currentUserId, handleOpenChat, showPremiumUpsell, toast, viewerIsPremium],
   )
 
+  const handleOpenDiscoveryProfile = useCallback(
+    async (profile: MatrimonyProfile) => {
+      const entitlement = currentUserId ? await refreshViewerEntitlement(currentUserId) : null
+      const canViewPremiumProfile = entitlement?.isPremium ?? viewerIsPremium
+
+      if (profile.premium && !canViewPremiumProfile) {
+        showPremiumUpsell(
+          "Unlock premium profile details",
+          "Premium profiles are visible to free members, but photos and full details unlock with a paid Lovesathi plan.",
+          "discover",
+        )
+        return
+      }
+
+      setShortlistModalProfile(profile)
+    },
+    [currentUserId, refreshViewerEntitlement, showPremiumUpsell, viewerIsPremium],
+  )
+
   return (
     <AppLayout 
       activeTab="discover" 
@@ -1748,17 +1789,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover", initialChatI
             setAppliedFilters(null)
             setCurrentCardIndex(0)
           }}
-          onOpenProfile={(profile) => {
-            if (profile.premium && !viewerIsPremium) {
-              showPremiumUpsell(
-                "Unlock premium profile details",
-                "Premium profiles are visible to free members, but photos and full details unlock with a paid Lovesathi plan.",
-                "discover",
-              )
-              return
-            }
-            setShortlistModalProfile(profile)
-          }}
+          onOpenProfile={(profile) => void handleOpenDiscoveryProfile(profile)}
           onInterest={(profile) => {
             void handleProfileAction(profile, "like")
           }}

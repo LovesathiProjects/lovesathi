@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -35,7 +35,14 @@ import { ReportDialog } from "@/components/chat/report-dialog"
 import { getPreferredVerticalPlacement, type VerticalPlacement } from "@/components/chat/menu-position"
 import { getMessageSendLimitStatus } from "@/lib/planLimits"
 import { formatPublicProfileName, getDisplayInitial } from "@/lib/displayName"
-import { getProfileFallbackImage } from "@/lib/profileImages"
+import { getSafeProfilePhotos } from "@/lib/profileImages"
+import {
+  CHAT_PRESENCE_HEARTBEAT_MS,
+  getChatPresence,
+  getChatPresenceStatus,
+  subscribeToChatPresence,
+  touchChatPresence,
+} from "@/lib/chatPresence"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,7 +59,6 @@ interface ChatUser {
   id: string
   name: string
   avatar: string
-  isOnline: boolean
   lastSeen?: string
   isPremium: boolean
 }
@@ -87,6 +93,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
   const [uploading, setUploading] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [chatUser, setChatUser] = useState<ChatUser | null>(null)
+  const [presenceClock, setPresenceClock] = useState(() => Date.now())
   const [matchType, setMatchType] = useState<'matrimony'>('matrimony')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const channelRef = useRef<RealtimeChannel | null>(null)
@@ -450,11 +457,12 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
           console.error('Error loading profile:', profileError)
         }
 
+        const [avatar] = getSafeProfilePhotos(profile?.photos, profile?.name, otherUserId, 1)
+
         setChatUser({
           id: otherUserId,
           name: profile?.name || 'Unknown',
-          avatar: (profile?.photos as string[])?.[0] || getProfileFallbackImage(profile?.name, otherUserId),
-          isOnline: false,
+          avatar,
           isPremium: false,
         })
 
@@ -484,6 +492,60 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
 
     loadMatchInfo()
   }, [matchId])
+
+  // Presence is refreshed only while a verified chat match is open. The table's
+  // RLS policy independently prevents non-matches from reading another member's activity.
+  useEffect(() => {
+    if (!matchId || !currentUserId || !chatUser?.id) return
+
+    let active = true
+    const otherUserId = chatUser.id
+
+    const applyPresence = (lastSeenAt: string) => {
+      if (!active) return
+      setChatUser((current) =>
+        current?.id === otherUserId ? { ...current, lastSeen: lastSeenAt } : current,
+      )
+      setPresenceClock(Date.now())
+    }
+
+    const loadPeerPresence = async () => {
+      const presence = await getChatPresence(otherUserId)
+      if (presence) applyPresence(presence.lastSeenAt)
+    }
+
+    const touchOwnPresence = () => {
+      void touchChatPresence()
+      setPresenceClock(Date.now())
+    }
+
+    touchOwnPresence()
+    void loadPeerPresence()
+
+    const channel = subscribeToChatPresence(otherUserId, {
+      onChange: (presence) => applyPresence(presence.lastSeenAt),
+      onError: (error) => console.warn("Chat presence subscription error:", error.message),
+    })
+
+    const heartbeat = window.setInterval(() => {
+      setPresenceClock(Date.now())
+      if (document.visibilityState === "visible") touchOwnPresence()
+    }, CHAT_PRESENCE_HEARTBEAT_MS)
+
+    const handleVisibilityChange = () => {
+      setPresenceClock(Date.now())
+      if (document.visibilityState === "visible") touchOwnPresence()
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    return () => {
+      active = false
+      window.clearInterval(heartbeat)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      supabase.removeChannel(channel)
+    }
+  }, [chatUser?.id, currentUserId, matchId])
 
   // Set up real-time subscription (Supabase Realtime as fallback)
   useEffect(() => {
@@ -839,6 +901,10 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
 
   const isMatrimony = matchType === 'matrimony'
   const chatDisplayName = formatPublicProfileName(chatUser?.name)
+  const chatPresence = useMemo(
+    () => getChatPresenceStatus(chatUser?.lastSeen, presenceClock),
+    [chatUser?.lastSeen, presenceClock],
+  )
 
   if (loading) {
     return (
@@ -911,7 +977,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
                     {getDisplayInitial(chatUser.name)}
                   </AvatarFallback>
                 </Avatar>
-                {chatUser.isOnline && (
+                {chatPresence.isOnline && (
                   <div className={cn("absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 rounded-full", isMatrimony ? "border-white" : "border-[#0E0F12]")} />
                 )}
               </div>
@@ -927,7 +993,7 @@ export function ChatScreen({ matchId, onBack, onViewProfile }: ChatScreenProps) 
                 </div>
                 <div className="flex items-center space-x-2">
                   <p className={cn("text-sm", isMatrimony ? "text-[#444444]" : "text-[#A1A1AA]")}>
-                    {isTyping ? "typing..." : chatUser.isOnline ? "Online now" : ""}
+                    {otherUserTyping ? "typing..." : chatPresence.label || "Lovesathi match"}
                   </p>
                 </div>
               </div>

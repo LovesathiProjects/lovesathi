@@ -37,6 +37,14 @@ export type NativeChatPreview = {
   isPremium: boolean;
 };
 
+export type NativeChatPresence = {
+  userId: string;
+  lastSeenAt: string;
+};
+
+export const NATIVE_CHAT_PRESENCE_HEARTBEAT_MS = 45_000;
+export const NATIVE_CHAT_PRESENCE_ONLINE_WINDOW_MS = 2 * 60_000;
+
 export type NativeActivityType = 'match' | 'like' | 'super_like' | 'view' | 'shortlist';
 
 export type NativeActivityItem = {
@@ -119,6 +127,22 @@ function objectValue(value: unknown): Record<string, unknown> {
 
 function textValue(value: unknown, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+}
+
+function presenceUnavailable(error: { code?: string; message?: string } | null) {
+  return (
+    error?.code === '42P01' ||
+    error?.code === 'PGRST202' ||
+    /lovesathi_chat_presence|touch_lovesathi_chat_presence|does not exist/i.test(error?.message ?? '')
+  );
+}
+
+function mapChatPresence(value: unknown): NativeChatPresence | null {
+  if (!value || typeof value !== 'object') return null;
+  const row = value as { user_id?: unknown; last_seen_at?: unknown };
+  if (typeof row.user_id !== 'string' || typeof row.last_seen_at !== 'string') return null;
+
+  return { userId: row.user_id, lastSeenAt: row.last_seen_at };
 }
 
 function safePhotos(value: unknown) {
@@ -519,6 +543,113 @@ export function subscribeToNativeMessages(
       void client.removeChannel(channel);
       channel = null;
     }
+  };
+}
+
+export async function touchNativeChatPresence() {
+  const { data, error } = await requireClient().rpc('touch_lovesathi_chat_presence');
+
+  if (error) {
+    if (!presenceUnavailable(error)) {
+      console.warn('[touchNativeChatPresence] Unable to update presence:', error.message);
+    }
+    return null;
+  }
+
+  return typeof data === 'string' ? data : null;
+}
+
+export async function loadNativeChatPresence(userId: string): Promise<NativeChatPresence | null> {
+  const { data, error } = await requireClient()
+    .from('lovesathi_chat_presence')
+    .select('user_id,last_seen_at')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    if (!presenceUnavailable(error)) {
+      console.warn('[loadNativeChatPresence] Unable to read presence:', error.message);
+    }
+    return null;
+  }
+
+  return mapChatPresence(data);
+}
+
+export function subscribeToNativeChatPresence(
+  userId: string,
+  callbacks: {
+    onChange?: (presence: NativeChatPresence) => void;
+    onError?: (error: Error) => void;
+  },
+) {
+  const client = requireClient();
+  let channel: RealtimeChannel | null = client
+    .channel(`native-chat-presence:${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'lovesathi_chat_presence',
+        filter: `user_id=eq.${userId}`,
+      },
+      (payload) => {
+        const presence = mapChatPresence(payload.new);
+        if (presence) callbacks.onChange?.(presence);
+      },
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'lovesathi_chat_presence',
+        filter: `user_id=eq.${userId}`,
+      },
+      (payload) => {
+        const presence = mapChatPresence(payload.new);
+        if (presence) callbacks.onChange?.(presence);
+      },
+    )
+    .subscribe((status) => {
+      if (status === 'CHANNEL_ERROR') {
+        callbacks.onError?.(new Error('Realtime chat presence subscription failed.'));
+      }
+    });
+
+  return () => {
+    if (channel) {
+      void client.removeChannel(channel);
+      channel = null;
+    }
+  };
+}
+
+export function getNativeChatPresenceStatus(lastSeenAt?: string | null, now = Date.now()) {
+  if (!lastSeenAt) return { isOnline: false, label: '' };
+
+  const lastSeenMs = Date.parse(lastSeenAt);
+  if (!Number.isFinite(lastSeenMs)) return { isOnline: false, label: '' };
+
+  const elapsedMs = Math.max(0, now - lastSeenMs);
+  if (elapsedMs <= NATIVE_CHAT_PRESENCE_ONLINE_WINDOW_MS) {
+    return { isOnline: true, label: 'Online now' };
+  }
+
+  const elapsedMinutes = Math.floor(elapsedMs / 60_000);
+  if (elapsedMinutes < 60) return { isOnline: false, label: `Last seen ${elapsedMinutes}m ago` };
+
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  if (elapsedHours < 24) return { isOnline: false, label: `Last seen ${elapsedHours}h ago` };
+
+  const elapsedDays = Math.floor(elapsedHours / 24);
+  if (elapsedDays === 1) return { isOnline: false, label: 'Last seen yesterday' };
+  if (elapsedDays < 7) return { isOnline: false, label: `Last seen ${elapsedDays}d ago` };
+
+  return {
+    isOnline: false,
+    label: `Last seen ${new Date(lastSeenMs).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`,
   };
 }
 

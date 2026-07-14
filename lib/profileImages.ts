@@ -47,10 +47,40 @@ export function getProfileFallbackImage(name?: string | null, seed?: string | nu
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 }
 
-export function getSafeProfilePhotos(photos?: string[] | null, name?: string | null, seed?: string | null, limit?: number) {
-  const cleaned = Array.isArray(photos)
-    ? photos.filter((photo): photo is string => typeof photo === "string" && photo.trim().length > 0)
-    : []
+function getPhotoValues(value: unknown, depth = 0): string[] {
+  if (depth > 2) return []
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => getPhotoValues(item, depth + 1))
+  }
+
+  if (typeof value !== "string") return []
+  const trimmed = value.trim()
+  if (!trimmed) return []
+
+  if ((trimmed.startsWith("[") || trimmed.startsWith('"')) && trimmed.length < 250_000) {
+    try {
+      return getPhotoValues(JSON.parse(trimmed), depth + 1)
+    } catch {
+      // A URL can legitimately start with a bracket-like character, so retain it below.
+    }
+  }
+
+  return [trimmed]
+}
+
+function isRenderablePhotoSource(source: string) {
+  return /^(https?:\/\/|blob:|data:image\/|\/)/i.test(source)
+}
+
+export function getProfilePhotoSources(photos?: unknown) {
+  return Array.from(
+    new Set(getPhotoValues(photos).filter(isRenderablePhotoSource)),
+  )
+}
+
+export function getSafeProfilePhotos(photos?: unknown, name?: string | null, seed?: string | null, limit?: number) {
+  const cleaned = getProfilePhotoSources(photos)
   const safePhotos = cleaned.length > 0 ? cleaned : [getProfileFallbackImage(name, seed)]
   return typeof limit === "number" ? safePhotos.slice(0, Math.max(limit, 1)) : safePhotos
 }
