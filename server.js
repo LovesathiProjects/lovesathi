@@ -36,6 +36,53 @@ const socketUserMap = new Map();
 // Store user rooms: userId -> Set of matchIds
 const userRooms = new Map();
 
+// Socket events are delivery hints only; the database remains the message source
+// of truth. Validate the active matrimony match before every client-directed emit.
+async function getActiveMatchForUser(matchId, userId) {
+  if (typeof matchId !== 'string' || !matchId || !userId) {
+    return null;
+  }
+
+  const { data: match, error } = await supabaseAdmin
+    .from('matrimony_matches')
+    .select('id,user1_id,user2_id')
+    .eq('id', matchId)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (error || !match) {
+    return null;
+  }
+
+  if (match.user1_id === userId) {
+    return { id: match.id, otherUserId: match.user2_id };
+  }
+
+  if (match.user2_id === userId) {
+    return { id: match.id, otherUserId: match.user1_id };
+  }
+
+  return null;
+}
+
+async function getPersistedMessage(matchId, senderId, receiverId, messageId) {
+  if (typeof messageId !== 'string' || !messageId) {
+    return null;
+  }
+
+  const { data: message, error } = await supabaseAdmin
+    .from('messages')
+    .select('*')
+    .eq('id', messageId)
+    .eq('match_id', matchId)
+    .eq('match_type', 'matrimony')
+    .eq('sender_id', senderId)
+    .eq('receiver_id', receiverId)
+    .maybeSingle();
+
+  return error ? null : message;
+}
+
 // Middleware to authenticate socket connections
 io.use(async (socket, next) => {
   try {
@@ -72,25 +119,31 @@ io.on('connection', (socket) => {
   userRooms.set(userId, new Set());
 
   // Handle joining a conversation room
-  socket.on('join_conversation', (data) => {
+  socket.on('join_conversation', async (data = {}) => {
     try {
-      const { matchId } = data;
+      const matchId = data.matchId;
       
       if (!matchId) {
         socket.emit('error', { message: 'matchId is required' });
         return;
       }
 
+      const match = await getActiveMatchForUser(matchId, userId);
+      if (!match) {
+        socket.emit('error', { message: 'You are not allowed to access this conversation' });
+        return;
+      }
+
       // Join the room
-      socket.join(`conversation:${matchId}`);
+      socket.join(`conversation:${match.id}`);
       
       // Track the room for this user
       const rooms = userRooms.get(userId) || new Set();
-      rooms.add(matchId);
+      rooms.add(match.id);
       userRooms.set(userId, rooms);
 
-      console.log(`User ${userId} joined conversation: ${matchId}`);
-      socket.emit('joined_conversation', { matchId });
+      console.log(`User ${userId} joined conversation: ${match.id}`);
+      socket.emit('joined_conversation', { matchId: match.id });
     } catch (error) {
       console.error('Error joining conversation:', error);
       socket.emit('error', { message: 'Failed to join conversation' });
@@ -123,35 +176,53 @@ io.on('connection', (socket) => {
   });
 
   // Handle sending a message
-  socket.on('send_message', async (data) => {
+  socket.on('send_message', async (data = {}) => {
     try {
       const { matchId, receiverId, message } = data;
+      const messageId = message?.id;
 
-      if (!matchId || !receiverId || !message) {
+      if (!matchId || !receiverId || !messageId) {
         socket.emit('error', { message: 'Missing required fields' });
         return;
       }
 
+      const match = await getActiveMatchForUser(matchId, userId);
+      if (!match || match.otherUserId !== receiverId) {
+        socket.emit('error', { message: 'You are not allowed to message this member' });
+        return;
+      }
+
+      const persistedMessage = await getPersistedMessage(
+        match.id,
+        userId,
+        match.otherUserId,
+        messageId,
+      );
+      if (!persistedMessage) {
+        socket.emit('error', { message: 'Message could not be verified' });
+        return;
+      }
+
       // Get receiver's socket ID
-      const receiverSocketId = userSocketMap.get(receiverId);
+      const receiverSocketId = userSocketMap.get(match.otherUserId);
 
       if (receiverSocketId) {
         // Emit to the receiver with the full message object
         io.to(receiverSocketId).emit('receive_message', {
-          matchId,
+          matchId: match.id,
           senderId: userId,
-          message: message, // Full Message object
+          message: persistedMessage,
           timestamp: new Date().toISOString(),
         });
-        console.log(`Message sent from ${userId} to ${receiverId} in match ${matchId}`);
+        console.log(`Message sent from ${userId} to ${match.otherUserId} in match ${match.id}`);
       } else {
-        console.log(`Receiver ${receiverId} is not connected`);
+        console.log(`Receiver ${match.otherUserId} is not connected`);
       }
 
       // Confirm to sender
       socket.emit('message_sent', {
-        matchId,
-        receiverId,
+        matchId: match.id,
+        receiverId: match.otherUserId,
         success: true,
       });
     } catch (error) {
@@ -161,7 +232,7 @@ io.on('connection', (socket) => {
   });
 
   // Handle typing indicator
-  socket.on('typing', (data) => {
+  socket.on('typing', async (data = {}) => {
     try {
       const { matchId, receiverId, isTyping } = data;
 
@@ -169,15 +240,20 @@ io.on('connection', (socket) => {
         return;
       }
 
+      const match = await getActiveMatchForUser(matchId, userId);
+      if (!match || match.otherUserId !== receiverId) {
+        return;
+      }
+
       // Get receiver's socket ID
-      const receiverSocketId = userSocketMap.get(receiverId);
+      const receiverSocketId = userSocketMap.get(match.otherUserId);
 
       if (receiverSocketId) {
         // Emit to the receiver
         io.to(receiverSocketId).emit('typing', {
-          matchId,
+          matchId: match.id,
           userId,
-          isTyping,
+          isTyping: isTyping === true,
         });
       }
     } catch (error) {
