@@ -20,7 +20,8 @@ import { calculateAgeFromDate, formatDateForDisplay } from "@/lib/age"
 import { LocationCascadeSelect, LocationPreferencePicker } from "@/components/location/location-cascade-select"
 import { formatLocationValue, parseLocationValue, type LocationValue } from "@/lib/location"
 import { getPhoneValidationMessage, normalizePhoneNumber } from "@/lib/phone"
-import { PHONE_VERIFICATION_STORAGE_KEY } from "@/lib/authRedirects"
+import { PHONE_VERIFICATION_STORAGE_KEY, setVerificationStorageItem } from "@/lib/authRedirects"
+import { validateProfilePhoto, validateSavedProfilePhotos } from "@/lib/profilePhotos"
 import {
   BODY_TYPE_OPTIONS,
   COMPLEXION_OPTIONS,
@@ -102,10 +103,17 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
   const [customCommunityEntry, setCustomCommunityEntry] = useState(false)
   const [customSubCommunityEntry, setCustomSubCommunityEntry] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const previewUrls = useRef(new Set<string>())
+  const saveInProgress = useRef(false)
   const { toast } = useToast()
 
   useEffect(() => {
     void fetchProfile()
+    const urls = previewUrls.current
+    return () => {
+      for (const url of urls) URL.revokeObjectURL(url)
+      urls.clear()
+    }
   }, [])
 
   async function fetchProfile() {
@@ -169,18 +177,29 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
   }
 
   function handlePhotoUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = event.target.files
-    if (!files) return
+    const files = Array.from(event.target.files || [])
+    event.target.value = ""
+    if (saveInProgress.current || !files.length) return
 
     const remaining = Math.max(0, 6 - photos.length)
-    const next = Array.from(files)
-      .slice(0, remaining)
-      .map((file) => ({ url: URL.createObjectURL(file), file }))
-
-    setPhotos((prev) => [...prev, ...next])
+    const next: PhotoItem[] = []
+    for (const file of files.slice(0, remaining)) {
+      try {
+        validateProfilePhoto(file)
+        const url = URL.createObjectURL(file)
+        previewUrls.current.add(url)
+        next.push({ url, file })
+      } catch (error) {
+        toast({ title: "Could not add photo", description: error instanceof Error ? error.message : "Choose another photo.", variant: "destructive" })
+      }
+    }
+    setPhotos((prev) => [...prev, ...next].slice(0, 6))
   }
 
   function removePhoto(index: number) {
+    if (saveInProgress.current) return
+    const url = photos[index]?.url
+    if (previewUrls.current.delete(url)) URL.revokeObjectURL(url)
     setPhotos((prev) => prev.filter((_, i) => i !== index))
   }
 
@@ -216,6 +235,8 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
   }
 
   async function handleSave() {
+    if (saveInProgress.current) return
+    saveInProgress.current = true
     try {
       setSaving(true)
       const {
@@ -224,15 +245,6 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
 
       if (!user) {
         throw new Error("Please sign in to continue.")
-      }
-
-      const uploadedPhotoUrls: string[] = []
-      for (const photo of photos) {
-        if (photo.file) {
-          uploadedPhotoUrls.push(await uploadAsset(photo.file))
-        } else {
-          uploadedPhotoUrls.push(photo.url)
-        }
       }
 
       if (!name.trim()) throw new Error("Please enter a profile name.")
@@ -244,10 +256,24 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
       if (normalizedPhone && normalizedPhone !== initialPhone) {
         throw new Error("Phone number changes must be verified with OTP before they can be saved.")
       }
-      if (uploadedPhotoUrls.length < 2) throw new Error("Please keep at least 2 profile photos.")
+      if (photos.length < 2) throw new Error("Please keep at least 2 profile photos.")
       if (bio.trim().length > 0 && bio.trim().length < 20) {
         throw new Error("About Me should be at least 20 characters.")
       }
+
+      const uploadedPhotoUrls: string[] = []
+      for (const photo of photos) {
+        if (photo.file) {
+          const url = await uploadAsset(photo.file)
+          uploadedPhotoUrls.push(url)
+          // Retain each completed upload even if a later upload or profile save fails.
+          setPhotos((current) => current.map((item) => item === photo ? { url } : item))
+          if (previewUrls.current.delete(photo.url)) URL.revokeObjectURL(photo.url)
+        } else {
+          uploadedPhotoUrls.push(photo.url)
+        }
+      }
+      validateSavedProfilePhotos(uploadedPhotoUrls)
 
       const updateData: any = {
         user_id: user.id,
@@ -307,6 +333,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
         variant: "destructive",
       })
     } finally {
+      saveInProgress.current = false
       setSaving(false)
     }
   }
@@ -323,7 +350,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
       return
     }
 
-    window.sessionStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, normalizedPhone)
+    setVerificationStorageItem(PHONE_VERIFICATION_STORAGE_KEY, normalizedPhone)
     router.push(`/auth/verify-email?reason=phone&phone=${encodeURIComponent(normalizedPhone)}`)
   }
 
@@ -391,7 +418,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                       <div className="aspect-square overflow-hidden rounded-2xl border border-[#E83262]/24 bg-[#26364A] shadow-sm">
                         <img src={photo.url || "/placeholder.svg"} alt={`Photo ${index + 1}`} className="h-full w-full object-cover" />
                       </div>
-                      <Button size="sm" className="luxe-button w-full rounded-full" onClick={() => removePhoto(index)}>
+                      <Button size="sm" className="luxe-button w-full rounded-full" onClick={() => removePhoto(index)} disabled={saving}>
                         <X className="w-4 h-4 mr-1" />
                         Remove
                       </Button>
@@ -407,7 +434,7 @@ export function EditProfile({ onBack, onSave }: EditProfileProps) {
                     </button>
                   )}
                 </div>
-                <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoUpload} />
+                <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" multiple className="hidden" onChange={handlePhotoUpload} disabled={saving} />
               </CardContent>
             </Card>
           </TabsContent>

@@ -235,7 +235,7 @@ export async function loadDiscovery(userId: string): Promise<DiscoverySnapshot> 
   const ids = rows.map((row) => row.user_id);
   const [verificationResult, premiumResult, premium] = await Promise.all([
     ids.length
-      ? client.from('id_verifications').select('user_id,verification_status').in('user_id', ids)
+      ? client.rpc('get_lovesathi_verification_statuses', { p_user_ids: ids })
       : Promise.resolve({ data: [], error: null }),
     ids.length
       ? client.rpc('get_lovesathi_premium_profile_ids', { p_user_ids: ids })
@@ -243,10 +243,10 @@ export async function loadDiscovery(userId: string): Promise<DiscoverySnapshot> 
     isPremiumMember(userId),
   ]);
 
-  const verifiedIds = new Set(
+  const verifiedIds = new Set<string>(
     (verificationResult.data ?? [])
-      .filter((row) => row.verification_status === 'approved')
-      .map((row) => row.user_id),
+      .filter((row: { verification_status: string }) => row.verification_status === 'approved')
+      .map((row: { user_id: string }) => row.user_id),
   );
   const premiumIds = new Set<string>((premiumResult.data as string[] | null) ?? []);
   const actedIds = new Set((likesResult.data ?? []).map((row) => row.liked_id));

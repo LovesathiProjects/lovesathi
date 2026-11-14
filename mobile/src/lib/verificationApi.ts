@@ -6,6 +6,7 @@ import {
   phonesMatch,
 } from './phone';
 import { supabase } from './supabase';
+import { calculateAgeFromDate } from './age';
 import { type UploadFile, uploadToStorageBucket } from './storageUpload';
 
 function getAuthMetadataPhone(user: any) {
@@ -34,13 +35,8 @@ export async function saveDateOfBirth(dob: string, phoneInput?: string) {
     if (authError) throw new Error(`Authentication error: ${authError.message}`);
     if (!user) throw new Error('User not authenticated');
 
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
+    const age = calculateAgeFromDate(dob);
+    if (age === null) throw new Error('Enter a valid date of birth');
     if (age < 18) throw new Error('You must be at least 18 years old to use Lovesathi');
 
     const optionalPhone = getOptionalValidatedPhone(phoneInput || getAuthMetadataPhone(user));

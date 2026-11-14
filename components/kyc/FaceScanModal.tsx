@@ -1,6 +1,7 @@
 "use client"
 
 import { FaceScanner } from "@/components/FaceScanner"
+import { imageDataUrlToBlob } from "@/lib/imageData"
 
 interface FaceScanModalProps {
   isOpen: boolean
@@ -22,8 +23,7 @@ export function FaceScanModal({ isOpen, onClose, onScanComplete }: FaceScanModal
   const handleCapture = async (imageUri: string) => {
     try {
       // Convert data URL to Blob
-      const response = await fetch(imageUri)
-      const blob = await response.blob()
+      const blob = imageDataUrlToBlob(imageUri)
       
       // Call parent callback
       onScanComplete(blob)

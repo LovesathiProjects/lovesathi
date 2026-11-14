@@ -145,12 +145,10 @@ export async function getShortlistedProfiles(
   }
 
   const { data: verifications } = await supabase
-    .from("id_verifications")
-    .select("user_id, verification_status")
-    .in("user_id", targetIds)
+    .rpc("get_lovesathi_verification_statuses", { p_user_ids: targetIds })
 
   const verificationMap = new Map<string, string | undefined>()
-  verifications?.forEach((verification) => {
+  verifications?.forEach((verification: { user_id: string; verification_status: string }) => {
     verificationMap.set(verification.user_id, verification.verification_status)
   })
 

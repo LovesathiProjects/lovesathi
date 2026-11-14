@@ -333,6 +333,7 @@ export async function getUnreadCount(matchId: string, userId: string, matchType:
       .eq('match_type', matchType)
       .eq('receiver_id', userId)
       .is('seen_at', null)
+      .not('deleted_by', 'cs', `{${userId}}`)
 
     if (error) {
       console.error('[getUnreadCount] Error:', error)
@@ -356,6 +357,7 @@ export async function getTotalUnreadCount(userId: string): Promise<number> {
       .select('*', { count: 'exact', head: true })
       .eq('receiver_id', userId)
       .is('seen_at', null)
+      .not('deleted_by', 'cs', `{${userId}}`)
 
     if (error) {
       console.error('[getTotalUnreadCount] Error:', error)
@@ -488,7 +490,7 @@ export async function deleteAllMessagesForUser(
       
       // Skip if already deleted for this user
       if (currentDeletedBy.includes(userId)) {
-        return Promise.resolve()
+        return true
       }
 
       const updatedDeletedBy = [...currentDeletedBy, userId]
@@ -500,11 +502,13 @@ export async function deleteAllMessagesForUser(
 
       if (error) {
         console.error(`[deleteAllMessagesForUser] Error updating message ${message.id}:`, error)
+        return false
       }
+      return true
     })
 
-    await Promise.all(updatePromises)
-    return true
+    const results = await Promise.all(updatePromises)
+    return results.every(Boolean)
   } catch (error) {
     console.error('[deleteAllMessagesForUser] Exception:', error)
     return false

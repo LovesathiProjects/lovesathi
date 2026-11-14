@@ -22,6 +22,9 @@ export async function saveStep1(
   if (!supabase) return { success: false, error: 'Supabase is not configured.' };
 
   try {
+    if (data.photoUrls.length < 2 || data.photoUrls.length > 6 || data.photoUrls.some((url) => !/^https?:\/\//i.test(url))) {
+      throw new Error('Please upload between 2 and 6 photos before continuing.');
+    }
     const { data: userProfile, error: userProfileError } = await supabase
       .from('user_profiles')
       .select('user_id')
@@ -31,11 +34,13 @@ export async function saveStep1(
     if (userProfileError) throw userProfileError;
     if (!userProfile) throw new Error('Please complete age verification before profile setup.');
 
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from('matrimony_profile_full')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
+
+    if (existingError) throw existingError;
 
     const profileData: any = {
       user_id: userId,

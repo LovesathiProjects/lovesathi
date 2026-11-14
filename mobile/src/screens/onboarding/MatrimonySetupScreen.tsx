@@ -1,5 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Image,
   Pressable,
@@ -41,6 +41,7 @@ export function MatrimonySetupScreen() {
   const { refreshAppFlow } = useAuth();
   const [step, setStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const uploadInProgress = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState('');
@@ -100,41 +101,38 @@ export function MatrimonySetupScreen() {
   }, []);
 
   const pickPhotos = async () => {
+    if (uploadInProgress.current) return;
     if (photos.length >= 6) {
       setError('You can upload up to 6 photos.');
       return;
     }
 
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setError('Photo library permission is required.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      allowsMultipleSelection: true,
-      selectionLimit: Math.max(1, 6 - photos.length),
-      quality: 0.85,
-    });
-
-    if (result.canceled || !result.assets?.length) return;
-
+    uploadInProgress.current = true;
     setIsLoading(true);
     setError(null);
     try {
-      const uploaded: string[] = [];
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) throw new Error('Photo library permission is required.');
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsMultipleSelection: true,
+        selectionLimit: Math.max(1, 6 - photos.length),
+        quality: 0.85,
+      });
+      if (result.canceled || !result.assets?.length) return;
       for (const asset of result.assets.slice(0, 6 - photos.length)) {
         const url = await uploadMatrimonyPhoto({
           uri: asset.uri,
           name: asset.fileName || `photo-${Date.now()}.jpg`,
           mimeType: asset.mimeType || 'image/jpeg',
+          size: asset.fileSize,
         });
-        uploaded.push(url);
+        setPhotos((current) => [...current, url].slice(0, 6));
       }
-      setPhotos((current) => [...current, ...uploaded].slice(0, 6));
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : 'Photo upload failed.');
     } finally {
+      uploadInProgress.current = false;
       setIsLoading(false);
     }
   };
@@ -148,6 +146,7 @@ export function MatrimonySetupScreen() {
   };
 
   const handleNext = async () => {
+    if (uploadInProgress.current) return;
     setError(null);
     setIsLoading(true);
 

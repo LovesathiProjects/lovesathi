@@ -11,7 +11,7 @@ Phone is collected on Create Account for email/password users. Social users can 
 
 1. Authentication > Providers > Email: enabled.
 2. Authentication > Providers > Email: Confirm email enabled.
-3. Authentication > Email Templates > Confirm signup: include `{{ .Token }}` so users receive a 6-digit code.
+3. Authentication > Email Templates > Confirm signup: include `{{ .Token }}` so users receive an email code. The clients accept the configured 6–10 digit length without truncating longer codes. Phone OTP remains six digits.
 4. Authentication > Providers > Phone: enabled.
 5. Configure Twilio/Twilio Verify as the Supabase phone SMS provider.
 6. Authentication > URL Configuration: add the production site URL and callback URL.

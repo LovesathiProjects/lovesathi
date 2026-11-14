@@ -4,6 +4,8 @@
  */
 
 import { supabase } from './supabaseClient'
+import { calculateAgeFromDate } from './age'
+import { privateStorageReference } from './privateStorage'
 import { getPhoneValidationMessage, getUserPhoneVerifiedAt, normalizePhoneNumber, phonesMatch } from '@/lib/phone'
 import { getCurrentUserPhoneVerifiedAt } from '@/lib/phoneVerificationRecords'
 
@@ -95,14 +97,8 @@ export async function saveDateOfBirth(dob: string, phoneInput?: string) {
       throw new Error('User not authenticated')
     }
 
-    // Calculate age
-    const birthDate = new Date(dob)
-    const today = new Date()
-    let age = today.getFullYear() - birthDate.getFullYear()
-    const monthDiff = today.getMonth() - birthDate.getMonth()
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--
-    }
+    const age = calculateAgeFromDate(dob)
+    if (age === null) throw new Error('Enter a valid date of birth')
 
     // Validate age
     if (age < 18) {
@@ -376,16 +372,11 @@ export async function uploadIDDocument(file: File) {
       throw new Error(`Storage upload failed: ${error.message}. Please check if storage policies are applied.`)
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('verification-documents')
-      .getPublicUrl(fileName)
-
     return { 
       success: true, 
       data: {
         path: data.path,
-        url: urlData.publicUrl,
+        url: privateStorageReference('verification-documents', data.path),
         fileName: file.name,
         fileSize: file.size
       }
@@ -422,16 +413,11 @@ export async function uploadFaceScan(file: File) {
       throw new Error(`Storage upload failed: ${error.message}. Please check if storage policies are applied.`)
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('face-scans')
-      .getPublicUrl(fileName)
-
     return { 
       success: true, 
       data: {
         path: data.path,
-        url: urlData.publicUrl,
+        url: privateStorageReference('face-scans', data.path),
         fileName: file.name,
         fileSize: file.size
       }

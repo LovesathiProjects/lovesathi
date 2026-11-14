@@ -13,6 +13,9 @@ import {
   PHONE_VERIFICATION_STORAGE_KEY,
   getEmailVerificationRedirectUrl,
   normalizeEmail,
+  getVerificationStorageItem,
+  setVerificationStorageItem,
+  removeVerificationStorageItem,
 } from "@/lib/authRedirects"
 import { hasConfirmedEmailOrOAuth } from "@/lib/authUser"
 import {
@@ -28,20 +31,14 @@ import {
   verifyCurrentUserPhoneOtp,
 } from "@/lib/phoneOtp"
 import { supabase } from "@/lib/supabaseClient"
+import { MAX_EMAIL_OTP_LENGTH, normalizeEmailOtp, isCompleteEmailOtp, verifyEmailCode } from "@/lib/emailOtp"
 
 interface EmailVerificationScreenProps {
   onVerified?: () => void
 }
 
 type VerificationReason = "unconfirmed" | "expired" | "phone" | null
-type EmailOtpVerificationType = "email" | "signup"
 type VerificationStage = "loading" | "email" | "phone" | "done"
-
-const EMAIL_OTP_LENGTH = 6
-
-function normalizeOtpCode(value: string) {
-  return value.replace(/\D/g, "").slice(0, EMAIL_OTP_LENGTH)
-}
 
 export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenProps) {
   const router = useRouter()
@@ -70,19 +67,19 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
     const normalized = normalizeEmail(email || "")
     if (!normalized) return
     setEmailInput(normalized)
-    window.sessionStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, normalized)
+    setVerificationStorageItem(EMAIL_VERIFICATION_STORAGE_KEY, normalized)
   }, [])
 
   const rememberPhone = useCallback((phone: string | null | undefined) => {
     const normalized = normalizePhoneNumber(phone || "")
     if (!normalized) return
     setPhoneInput(normalized)
-    window.sessionStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, normalized)
+    setVerificationStorageItem(PHONE_VERIFICATION_STORAGE_KEY, normalized)
   }, [])
 
   const clearPendingVerification = useCallback(() => {
-    window.sessionStorage.removeItem(EMAIL_VERIFICATION_STORAGE_KEY)
-    window.sessionStorage.removeItem(PHONE_VERIFICATION_STORAGE_KEY)
+    removeVerificationStorageItem(EMAIL_VERIFICATION_STORAGE_KEY)
+    removeVerificationStorageItem(PHONE_VERIFICATION_STORAGE_KEY)
   }, [])
 
   const continueToOnboarding = useCallback(() => {
@@ -103,10 +100,10 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
     setVerificationReason(reason === "unconfirmed" || reason === "expired" || reason === "phone" ? reason : null)
 
     const rememberedEmail = normalizeEmail(
-      params.get("email") || window.sessionStorage.getItem(EMAIL_VERIFICATION_STORAGE_KEY) || "",
+      params.get("email") || getVerificationStorageItem(EMAIL_VERIFICATION_STORAGE_KEY) || "",
     )
     const rememberedPhone = normalizePhoneNumber(
-      params.get("phone") || window.sessionStorage.getItem(PHONE_VERIFICATION_STORAGE_KEY) || "",
+      params.get("phone") || getVerificationStorageItem(PHONE_VERIFICATION_STORAGE_KEY) || "",
     )
 
     if (rememberedEmail) rememberEmail(rememberedEmail)
@@ -138,29 +135,11 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
   }, [continueToOnboarding, rememberEmail, rememberPhone])
 
   useEffect(() => {
-    void loadVerificationState()
-  }, [loadVerificationState])
-
-  const verifyEmailOtp = async (email: string, token: string) => {
-    const verificationTypes: EmailOtpVerificationType[] = ["email", "signup"]
-    let lastError: any = null
-
-    for (const type of verificationTypes) {
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token,
-        type,
-        options: {
-          redirectTo: getEmailVerificationRedirectUrl(),
-        },
-      })
-
-      if (!error) return data
-      lastError = error
-    }
-
-    throw lastError || new Error("Unable to verify this code.")
-  }
+    void loadVerificationState().catch(() => {
+      setStage("email")
+      toast({ title: "Could not check verification", description: "Please enter your email and code, or try again when your connection is restored.", variant: "destructive" })
+    })
+  }, [loadVerificationState, toast])
 
   const handleResendEmail = async () => {
     const email = normalizeEmail(emailInput)
@@ -202,7 +181,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
 
   const handleVerifyEmailCode = async () => {
     const email = normalizeEmail(emailInput)
-    const token = normalizeOtpCode(emailOtpCode)
+    const token = normalizeEmailOtp(emailOtpCode)
 
     if (!email) {
       toast({
@@ -213,10 +192,10 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
       return
     }
 
-    if (token.length !== EMAIL_OTP_LENGTH) {
+    if (!isCompleteEmailOtp(token)) {
       toast({
         title: "Enter the email code",
-        description: "Please enter the complete 6-digit code from your email.",
+        description: "Please enter the complete code from your email (6 to 10 digits).",
         variant: "destructive",
       })
       return
@@ -224,7 +203,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
 
     setIsEmailBusy(true)
     try {
-      const data = await verifyEmailOtp(email, token)
+      const data = await verifyEmailCode(supabase, email, token)
       rememberEmail(data.user?.email || email)
       rememberPhone(getAuthUserPhone(data.user) || phoneInput)
       toast({
@@ -416,8 +395,8 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
                 : stage === "phone"
                   ? "Phone verification is optional now. Add it here, or skip and complete it later from Edit Profile."
                   : verificationReason === "unconfirmed"
-                    ? "Your account exists, but email is not confirmed yet. Enter the 6-digit code from your email."
-                    : "Enter the 6-digit code sent to your email. Phone verification comes next."}
+                    ? "Your account exists, but email is not confirmed yet. Enter the code from your email."
+                    : "Enter the code sent to your email. Phone verification comes next."}
             </p>
           </div>
 
@@ -443,11 +422,11 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
                   type="text"
                   inputMode="numeric"
                   value={emailOtpCode}
-                  onChange={(e) => setEmailOtpCode(normalizeOtpCode(e.target.value))}
-                  placeholder="Enter 6-digit code"
+                  onChange={(e) => setEmailOtpCode(normalizeEmailOtp(e.target.value))}
+                  placeholder="Enter email code"
                   autoComplete="one-time-code"
                   className="h-14 rounded-2xl text-center text-2xl font-semibold tracking-[0.35em]"
-                  maxLength={EMAIL_OTP_LENGTH}
+                  maxLength={MAX_EMAIL_OTP_LENGTH}
                 />
               </div>
 
@@ -456,7 +435,7 @@ export function EmailVerificationScreen({ onVerified }: EmailVerificationScreenP
                 onClick={handleVerifyEmailCode}
                 className="w-full font-semibold"
                 size="lg"
-                disabled={isEmailBusy || !normalizeEmail(emailInput) || emailOtpCode.length !== EMAIL_OTP_LENGTH}
+                disabled={isEmailBusy || !normalizeEmail(emailInput) || !isCompleteEmailOtp(emailOtpCode)}
               >
                 {isEmailBusy ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
                 Verify Email Code

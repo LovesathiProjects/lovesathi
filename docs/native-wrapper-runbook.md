@@ -26,11 +26,11 @@ The Android project has already been generated in `android/`. Use `native:add:an
 
 ## Android build requirements
 
-- JDK 17 or newer.
+- JDK 21 or newer (Capacitor 8 compiles Java 21 source).
 - Android Studio or Android command-line SDK.
 - `ANDROID_HOME` set to the SDK path, or `android/local.properties` created from `android/local.properties.example`.
 
-Current workstation note, June 9, 2026: Java 8 is active on `PATH`, Android SDK is not configured, and `android/local.properties` is missing. Install Android Studio plus JDK 17 or 21 before generating the Play Store bundle.
+The npm Android commands support macOS, Linux, and Windows. Run `npm run native:doctor:android` for current workstation prerequisites. See `docs/BUG_AUDIT.md` for the latest verified state.
 
 ```bash
 npm run native:add:ios

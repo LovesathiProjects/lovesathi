@@ -1076,9 +1076,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover", initialChatI
           userIds.length > 0
             ? await Promise.all([
                 supabase
-                  .from("id_verifications")
-                  .select("user_id, verification_status")
-                  .in("user_id", userIds),
+                  .rpc("get_lovesathi_verification_statuses", { p_user_ids: userIds }),
                 supabase.rpc("get_lovesathi_premium_profile_ids", { p_user_ids: userIds }),
               ])
             : [
@@ -1121,7 +1119,7 @@ export function MatrimonyMain({ onExit, initialScreen = "discover", initialChatI
             const familyData = (matrimonyProfile.family as any) || {}
             const preferenceData = (matrimonyProfile.partner_preferences as any) || {}
             const bioText = matrimonyProfile.bio || null
-            const verification = verifications?.find((v) => v.user_id === matrimonyProfile.user_id)
+            const verification = verifications?.find((v: { user_id: string; verification_status: string }) => v.user_id === matrimonyProfile.user_id)
             const contact = contactMap.get(matrimonyProfile.user_id)
 
             // Skip if no essential data

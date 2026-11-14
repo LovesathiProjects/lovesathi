@@ -17,12 +17,17 @@ import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import { toast } from "sonner"
 import { calculateAgeFromDate, formatDateForDisplay } from "@/lib/age"
+import { isSavedProfilePhoto } from "@/lib/profilePhotos"
 
 type FormValues = z.infer<typeof welcomeIdentitySchema>
 
 export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
   const { welcome, setPartial } = useMatrimonySetupStore()
-  const [photos, setPhotos] = React.useState<string[]>(welcome.photoUrls || (welcome.photoUrl ? [welcome.photoUrl] : []))
+  const [photos, setPhotos] = React.useState<string[]>(() =>
+    (welcome.photoUrls || (welcome.photoUrl ? [welcome.photoUrl] : [])).filter(isSavedProfilePhoto),
+  )
+  const uploadInProgress = React.useRef(false)
+  const photoInputRef = React.useRef<HTMLInputElement>(null)
   const [isLoading, setIsLoading] = React.useState(false)
   const [verifiedDob, setVerifiedDob] = React.useState<string | null>(null)
   const [verifiedGender, setVerifiedGender] = React.useState<"Male" | "Female" | "Other" | null>(null)
@@ -95,6 +100,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
   }, [form, setPartial, welcome.gender])
 
   const uploadPhotoFiles = async (files: File[]) => {
+    if (uploadInProgress.current) return
     const remainingSlots = 6 - photos.length
     const selectedFiles = files.slice(0, remainingSlots)
 
@@ -105,25 +111,35 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
 
     if (!selectedFiles.length) return
 
+    uploadInProgress.current = true
     setIsLoading(true)
     try {
-      const urls: string[] = []
+      let next = [...photos]
+      let uploadedCount = 0
+      const failures: string[] = []
       for (const file of selectedFiles) {
-        const url = await uploadAsset(file)
-        urls.push(url)
+        try {
+          const url = await uploadAsset(file)
+          next = [...next, url]
+          setPhotos(next)
+          setPartial("welcome", { photoUrls: next })
+          uploadedCount++
+        } catch (error) {
+          failures.push(error instanceof Error ? error.message : "Photo upload failed. Please try again.")
+        }
       }
-      const next = [...photos, ...urls].slice(0, 6)
-      setPhotos(next)
-      setPartial("welcome", { photoUrls: next })
-      toast.success(urls.length === 1 ? "Photo uploaded" : `${urls.length} photos uploaded`)
+      if (uploadedCount) toast.success(uploadedCount === 1 ? "Photo uploaded" : `${uploadedCount} photos uploaded`)
+      if (failures.length) toast.error(`${failures.length} photo(s) failed. ${failures[0]}`)
     } catch (uploadError: any) {
       toast.error(uploadError?.message || "Photo upload failed. Please try again.")
     } finally {
+      uploadInProgress.current = false
       setIsLoading(false)
     }
   }
 
   const onSubmit = async (values: FormValues) => {
+    if (uploadInProgress.current) return
     if (photos.length < 2) {
       toast.error("Please upload at least 2 photos")
       return
@@ -220,7 +236,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
                 <div>
                   <p className="font-serif text-2xl font-bold tracking-[-0.04em] text-[#26364A]">Profile photos</p>
                   <p className="mt-1 text-sm leading-6 text-[#6F7C8B]">
-                    Add 2 to 6 clear photos. Use real profile photos, not unknown stock images.
+                    Add 2 to 6 clear photos. JPG, PNG, WebP, GIF or AVIF, up to 10 MB each.
                   </p>
                   <p className="mt-1 text-xs font-black uppercase tracking-[0.14em] text-[#E83262]">
                     {photos.length}/6 uploaded
@@ -232,21 +248,25 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
                 variant="outline"
                 disabled={isLoading || photos.length >= 6}
                 className="rounded-full border-[#E83262] bg-[#E83262] px-5 text-white transition-all duration-200 hover:border-[#C3264E] hover:bg-[#C3264E]"
-                onClick={() => {
-                  const input = document.createElement("input")
-                  input.type = "file"
-                  input.accept = "image/*"
-                  input.multiple = true
-                  input.onchange = () => {
-                    const files = Array.from(input.files || [])
-                    void uploadPhotoFiles(files)
-                  }
-                  input.click()
-                }}
+                onClick={() => photoInputRef.current?.click()}
               >
                 <Upload className="mr-2 h-4 w-4" />
                 {isLoading ? "Uploading..." : photos.length >= 6 ? "Photo limit reached" : "Upload photos"}
               </Button>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                multiple
+                hidden
+                disabled={isLoading || photos.length >= 6}
+                aria-label="Upload profile photos"
+                onChange={(event) => {
+                  const files = Array.from(event.target.files || [])
+                  event.target.value = ""
+                  void uploadPhotoFiles(files)
+                }}
+              />
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -269,6 +289,7 @@ export function Step1WelcomeIdentity({ onNext }: { onNext: () => void }) {
                       setPartial("welcome", { photoUrls: next })
                     }}
                     aria-label={`Remove photo ${idx + 1}`}
+                    disabled={isLoading}
                   >
                     <X className="h-3.5 w-3.5" />
                   </Button>

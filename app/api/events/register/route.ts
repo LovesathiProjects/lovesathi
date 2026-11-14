@@ -46,6 +46,9 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Invalid registration request." }, { status: 400 })
   }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Invalid registration request." }, { status: 400 })
+  }
 
   const eventId = typeof body.eventId === "string" && uuidPattern.test(body.eventId) ? body.eventId : null
   const attendeeName = cleanText(body.attendeeName, 120)

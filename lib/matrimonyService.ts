@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient'
+import { validateProfilePhoto, validateSavedProfilePhotos } from './profilePhotos'
 import type { MatrimonyProfile, MatrimonyPreferences, VerificationPayload } from "@/lib/types"
 
 // ============================================
@@ -138,33 +139,20 @@ export async function clearDraft() {
  * Upload photo to Supabase Storage
  */
 export async function uploadAsset(file: File): Promise<string> {
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('User not authenticated')
-    
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${user.id}/${Date.now()}.${fileExt}`
+  const extension = validateProfilePhoto(file)
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) throw new Error('Please sign in again before uploading photos.')
 
-    const { data, error } = await supabase.storage
-      .from('matrimony-photos')
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false,
-      })
-
-    if (error) throw error
-
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('matrimony-photos')
-      .getPublicUrl(fileName)
-
-    return urlData.publicUrl
-  } catch (error: any) {
-    console.error('Error uploading asset:', error)
-    // Fallback to object URL for development
-    return URL.createObjectURL(file)
-  }
+  const fileName = `${user.id}/${crypto.randomUUID()}.${extension}`
+  const bucket = supabase.storage.from('matrimony-photos')
+  const { data, error } = await bucket.upload(fileName, file, {
+    cacheControl: '3600',
+    upsert: false,
+    contentType: file.type,
+  })
+  if (error) throw new Error(`Photo upload failed: ${error.message}`)
+  if (!data?.path) throw new Error('Photo upload did not finish. Please try again.')
+  return bucket.getPublicUrl(data.path).data.publicUrl
 }
 
 // ============================================
@@ -185,6 +173,7 @@ export async function saveStep1(
   }
 ): Promise<ServiceResponse> {
   try {
+    validateSavedProfilePhotos(data.photoUrls)
     const { data: userProfile, error: userProfileError } = await supabase
       .from('user_profiles')
       .select('user_id')
@@ -200,11 +189,13 @@ export async function saveStep1(
     }
 
     // Get existing profile to preserve other fields
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from('matrimony_profile_full')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle()
+
+    if (existingError) throw existingError
 
     const profileData: any = {
       user_id: userId,

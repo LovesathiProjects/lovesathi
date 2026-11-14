@@ -19,6 +19,8 @@ import {
   getEmailVerificationRedirectUrl,
   isEmailNotConfirmedError,
   normalizeEmail,
+  setVerificationStorageItem,
+  removeVerificationStorageItem,
 } from "@/lib/authRedirects"
 import { hasConfirmedEmailOrOAuth } from "@/lib/authUser"
 import { getPhoneValidationMessage, normalizePhoneNumber } from "@/lib/phone"
@@ -169,23 +171,28 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           throw new Error(phoneError)
         }
       }
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password: formData.password,
         options: {
           data: {
-            full_name: formData.name,
+            full_name: formData.name.trim(),
             ...(phone ? { phone } : {}),
           },
           emailRedirectTo: getEmailVerificationRedirectUrl(),
         },
       })
       if (signUpError) throw signUpError
-      window.sessionStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, email)
+      if (!data.user) throw new Error("Account creation did not finish. Please try again.")
+      setVerificationStorageItem(EMAIL_VERIFICATION_STORAGE_KEY, email)
       if (phone) {
-        window.sessionStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, phone)
+        setVerificationStorageItem(PHONE_VERIFICATION_STORAGE_KEY, phone)
       } else {
-        window.sessionStorage.removeItem(PHONE_VERIFICATION_STORAGE_KEY)
+        removeVerificationStorageItem(PHONE_VERIFICATION_STORAGE_KEY)
+      }
+      if (data.session) {
+        await handlePostLogin(data.user.id)
+        return
       }
       router.push("/auth/verify-email")
     } catch (err: any) {
@@ -202,9 +209,9 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
       } = await supabase.auth.getUser()
 
       if (user && !hasConfirmedEmailOrOAuth(user)) {
-        window.sessionStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, normalizeEmail(user.email || ""))
+        setVerificationStorageItem(EMAIL_VERIFICATION_STORAGE_KEY, normalizeEmail(user.email || ""))
         if (user.user_metadata?.phone || user.phone) {
-          window.sessionStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, normalizePhoneNumber(String(user.user_metadata?.phone || user.phone || "")))
+          setVerificationStorageItem(PHONE_VERIFICATION_STORAGE_KEY, normalizePhoneNumber(String(user.user_metadata?.phone || user.phone || "")))
         }
         router.push("/auth/verify-email?reason=unconfirmed")
         return
@@ -254,9 +261,9 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
     } catch (err: any) {
       if (isEmailNotConfirmedError(err)) {
         const email = normalizeEmail(formData.email)
-        window.sessionStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, email)
+        setVerificationStorageItem(EMAIL_VERIFICATION_STORAGE_KEY, email)
         if (formData.phone) {
-          window.sessionStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, normalizePhoneNumber(formData.phone))
+          setVerificationStorageItem(PHONE_VERIFICATION_STORAGE_KEY, normalizePhoneNumber(formData.phone))
         }
         router.push("/auth/verify-email?reason=unconfirmed")
         return

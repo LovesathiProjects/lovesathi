@@ -7,15 +7,12 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   EMAIL_VERIFICATION_STORAGE_KEY,
   normalizeEmail,
+  MAX_EMAIL_OTP_LENGTH,
+  normalizeEmailOtp,
+  isCompleteEmailOtp,
 } from '../lib/authHelpers';
 import { supabase } from '../lib/supabase';
 import { colors, radius, shadow, spacing } from '../theme';
-
-const EMAIL_OTP_LENGTH = 6;
-
-function normalizeOtp(value: string) {
-  return value.replace(/\D/g, '').slice(0, EMAIL_OTP_LENGTH);
-}
 
 export function VerifyEmailScreen() {
   const { refreshAppFlow, signOut } = useAuth();
@@ -28,7 +25,7 @@ export function VerifyEmailScreen() {
   useEffect(() => {
     AsyncStorage.getItem(EMAIL_VERIFICATION_STORAGE_KEY).then((value) => {
       setEmail(value || '');
-    });
+    }).catch(() => setError('Enter the email used to create your account.'));
   }, []);
 
   const resendCode = async () => {
@@ -50,7 +47,7 @@ export function VerifyEmailScreen() {
       if (resendError) throw resendError;
 
       await AsyncStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, normalizedEmail);
-      setStatus('A fresh 6-digit email code has been sent.');
+      setStatus('A fresh email code has been sent.');
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : 'Could not resend the code.');
     } finally {
@@ -61,14 +58,14 @@ export function VerifyEmailScreen() {
   const verifyCode = async () => {
     if (!supabase) return;
     const normalizedEmail = normalizeEmail(email);
-    const token = normalizeOtp(otp);
+    const token = normalizeEmailOtp(otp);
 
     if (!normalizedEmail) {
       setError('Enter the email used to create your account.');
       return;
     }
-    if (token.length !== EMAIL_OTP_LENGTH) {
-      setError('Enter the complete 6-digit email code.');
+    if (!isCompleteEmailOtp(token)) {
+      setError('Enter the complete email code (6 to 10 digits).');
       return;
     }
 
@@ -77,23 +74,12 @@ export function VerifyEmailScreen() {
     setStatus('Verifying your email...');
 
     try {
-      let lastError: Error | null = null;
-      for (const type of ['email', 'signup'] as const) {
-        const { error: verifyError } = await supabase.auth.verifyOtp({
-          email: normalizedEmail,
-          token,
-          type,
-        });
-        if (!verifyError) {
-          lastError = null;
-          break;
-        }
-        lastError = verifyError;
-      }
-
-      if (lastError) throw lastError;
-
-      await AsyncStorage.removeItem(EMAIL_VERIFICATION_STORAGE_KEY);
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+        email: normalizedEmail, token, type: 'email',
+      });
+      if (verifyError) throw verifyError;
+      if (!data.session || !data.user) throw new Error('Your session could not be established. Please request a fresh email code.');
+      await AsyncStorage.removeItem(EMAIL_VERIFICATION_STORAGE_KEY).catch(() => {});
       setStatus('Email verified. Continuing securely...');
       await refreshAppFlow();
     } catch (nextError) {
@@ -110,7 +96,7 @@ export function VerifyEmailScreen() {
         <Text style={styles.kicker}>Account verification</Text>
         <Text style={styles.title}>Verify your email</Text>
         <Text style={styles.copy}>
-          Enter the 6-digit code Lovesathi sent to your email address.
+          Enter the code Lovesathi sent to your email address.
         </Text>
 
         <Text style={styles.label}>Email</Text>
@@ -128,8 +114,8 @@ export function VerifyEmailScreen() {
         <TextInput
           autoComplete="one-time-code"
           keyboardType="number-pad"
-          maxLength={EMAIL_OTP_LENGTH}
-          onChangeText={(value) => setOtp(normalizeOtp(value))}
+          maxLength={MAX_EMAIL_OTP_LENGTH}
+          onChangeText={(value) => setOtp(normalizeEmailOtp(value))}
           placeholder="000000"
           placeholderTextColor={colors.taupe}
           style={[styles.input, styles.otpInput]}
@@ -140,7 +126,7 @@ export function VerifyEmailScreen() {
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         <LuxuryButton
-          disabled={isBusy || otp.length !== EMAIL_OTP_LENGTH}
+          disabled={isBusy || !isCompleteEmailOtp(otp)}
           label={isBusy ? 'Please wait...' : 'Verify email'}
           onPress={() => void verifyCode()}
         />

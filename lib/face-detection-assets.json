@@ -1,0 +1,13 @@
+{
+  "version": "0.4.1646425229",
+  "files": [
+    "face_detection.js",
+    "face_detection_short.binarypb",
+    "face_detection_short_range.tflite",
+    "face_detection_solution_simd_wasm_bin.js",
+    "face_detection_solution_simd_wasm_bin.wasm",
+    "face_detection_solution_simd_wasm_bin.data",
+    "face_detection_solution_wasm_bin.js",
+    "face_detection_solution_wasm_bin.wasm"
+  ]
+}

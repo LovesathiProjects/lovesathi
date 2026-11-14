@@ -52,6 +52,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { supabase } from "@/lib/supabaseClient"
 import { SUBSCRIPTION_PLANS } from "@/lib/subscriptionPlans"
+import { VerificationFilePreview } from "@/components/admin/verification-file-preview"
 
 type AdminMetric = {
   label: string
@@ -4125,6 +4126,7 @@ export function AdminPortal({ section = "overview" }: { section?: AdminSection }
                     </p>
                     <p className="mt-1 text-xs text-[#d9c8a8]">Submitted {formatDate(item.createdAt)}</p>
                     <div className="mt-4 flex flex-wrap gap-2">
+                      <VerificationFilePreview id={item.id} sessionToken={sessionToken} />
                       <Button
                         size="sm"
                         className="rounded-full bg-[#1b6b43] text-white hover:bg-[#155333]"

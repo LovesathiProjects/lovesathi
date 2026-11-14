@@ -35,6 +35,8 @@ export function FaceScanner({
   const streamRef = useRef<MediaStream | null>(null)
   const autoCaptureTimerRef = useRef<NodeJS.Timeout | null>(null)
   const faceDetectedStartTimeRef = useRef<number | null>(null)
+  const cameraRequestRef = useRef(0)
+  const capturedRef = useRef(false)
 
   const [permissionStatus, setPermissionStatus] = useState<"granted" | "denied" | "prompt">("prompt")
   const [isLoading, setIsLoading] = useState(true)
@@ -47,15 +49,22 @@ export function FaceScanner({
     isModelLoaded,
     detectFace,
     cleanup: cleanupFaceDetection,
+    modelError,
+    retry: retryFaceDetection,
   } = useFaceDetection()
 
   /**
    * Request camera permission and start stream
    */
   const requestCameraPermission = async () => {
+    const request = ++cameraRequestRef.current
     try {
       setIsLoading(true)
       setError(null)
+      setIsCameraReady(false)
+      capturedRef.current = false
+      streamRef.current?.getTracks().forEach(track => track.stop())
+      streamRef.current = null
 
       // Check if navigator.mediaDevices is available (web only)
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -72,27 +81,23 @@ export function FaceScanner({
         audio: false,
       })
 
-      streamRef.current = stream
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        
-        // Wait for video to be ready
-        await new Promise<void>((resolve) => {
-          if (!videoRef.current) return
-          
-          videoRef.current.onloadedmetadata = () => {
-            videoRef.current?.play()
-            resolve()
-          }
-        })
-
-        setIsCameraReady(true)
-        setPermissionStatus("granted")
+      const video = videoRef.current
+      if (request !== cameraRequestRef.current || !video) {
+        stream.getTracks().forEach(track => track.stop())
+        return
       }
+      streamRef.current = stream
+      video.srcObject = stream
+      await video.play()
+      if (request !== cameraRequestRef.current) return
+      setIsCameraReady(true)
+      setPermissionStatus("granted")
 
       setIsLoading(false)
     } catch (err: any) {
+      if (request !== cameraRequestRef.current) return
+      streamRef.current?.getTracks().forEach(track => track.stop())
+      streamRef.current = null
       console.error("Camera permission error:", err)
       
       let errorMessage = "Failed to access camera"
@@ -122,6 +127,7 @@ export function FaceScanner({
     requestCameraPermission()
 
     return () => {
+      cameraRequestRef.current += 1
       // Cleanup on unmount
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop())
@@ -141,6 +147,7 @@ export function FaceScanner({
     if (!isCameraReady || !isModelLoaded || !videoRef.current) return
 
     let rafId: number | null = null
+    let cancelled = false
     let lastDetectionTime = 0
     const detectionInterval = 200 // Detect every 200ms for performance
 
@@ -152,12 +159,13 @@ export function FaceScanner({
         lastDetectionTime = timestamp
       }
       
-      rafId = requestAnimationFrame(detect)
+      if (!cancelled) rafId = requestAnimationFrame(detect)
     }
 
     rafId = requestAnimationFrame(detect)
 
     return () => {
+      cancelled = true
       if (rafId) cancelAnimationFrame(rafId)
     }
   }, [isCameraReady, isModelLoaded, detectFace])
@@ -198,10 +206,11 @@ export function FaceScanner({
    * Capture image from video feed
    */
   const handleCapture = async () => {
-    if (!videoRef.current || !canvasRef.current) return
+    if (!videoRef.current || !canvasRef.current || capturedRef.current || !faceDetected || !isModelLoaded) return
 
     const video = videoRef.current
     const canvas = canvasRef.current
+    if (!video.videoWidth || !video.videoHeight) return
 
     // Set canvas size to match video
     canvas.width = video.videoWidth
@@ -218,6 +227,7 @@ export function FaceScanner({
 
     // Convert to data URL
     const imageUri = canvas.toDataURL("image/jpeg", 0.92)
+    capturedRef.current = true
 
     // Stop camera
     if (streamRef.current) {
@@ -252,9 +262,10 @@ export function FaceScanner({
    * Get instruction text
    */
   const getInstructionText = () => {
+    if (error) return error
+    if (modelError) return modelError
     if (isLoading) return "Initializing camera..."
     if (!isModelLoaded) return "Loading face detection model..."
-    if (error) return error
     if (!faceDetected) return "Position your face in the circle"
     if (autoCaptureProgress < 100) return "Hold still..."
     return "Capturing..."
@@ -400,6 +411,9 @@ export function FaceScanner({
           <p className="text-white text-base font-medium">
             {getInstructionText()}
           </p>
+          {modelError && !error && (
+            <Button variant="outline" onClick={retryFaceDetection}>Retry face detection</Button>
+          )}
 
           {/* Manual capture button (fallback) */}
           {isCameraReady && !error && (

@@ -1,9 +1,9 @@
 import { z } from "zod"
 export const welcomeIdentitySchema = z.object({
   name: z.string().min(2, "Name is too short"),
-  age: z.number({ invalid_type_error: "Enter a valid age" }).int().min(18).max(80),
-  gender: z.enum(["Male", "Female", "Other"], { required_error: "Select gender" }),
-  createdBy: z.enum(["Self", "Parent", "Sibling", "Other"], { required_error: "Select who created the profile" }),
+  age: z.number({ error: "Enter a valid age" }).int().min(18).max(80),
+  gender: z.enum(["Male", "Female", "Other"], { error: "Select gender" }),
+  createdBy: z.enum(["Self", "Parent", "Sibling", "Other"], { error: "Select who created the profile" }),
   photo: z.any().optional(),
   photoUrls: z.array(z.string().url()).min(2).max(6).optional(),
 })

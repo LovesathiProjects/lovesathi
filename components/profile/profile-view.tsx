@@ -103,14 +103,10 @@ export function ProfileView({ isOwnProfile = false, onBack, userId, onUpgrade }:
         setViewerProfile((viewerData as MatrimonyProfileFull | null) || null)
       }
 
-      const { data: verification } = await supabase
-        .from("id_verifications")
-        .select("verification_status")
-        .eq("user_id", targetUserId)
-        .eq("verification_status", "approved")
-        .maybeSingle()
+      const { data: verifications } = await supabase
+        .rpc("get_lovesathi_verification_statuses", { p_user_ids: [targetUserId] })
 
-      setVerified(!!verification)
+      setVerified(Boolean(verifications?.some((item: { verification_status: string }) => item.verification_status === "approved")))
 
       if (!isOwnProfile && userId) {
         await recordMatrimonyProfileView(user.id, targetUserId)

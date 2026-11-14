@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { deleteAccountStorage } from "@/lib/accountStorage"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -33,33 +34,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Invalid or expired session." }, { status: 401 })
     }
 
-    const buckets = ["verification-documents", "face-scans", "matrimony-photos"]
-
-    for (const bucket of buckets) {
-      try {
-        const { data: files, error: listError } = await supabaseAdmin.storage
-          .from(bucket)
-          .list(user.id, {
-            limit: 1000,
-            sortBy: { column: "name", order: "asc" },
-          })
-
-        if (listError) {
-          console.warn(`Error listing files in ${bucket}:`, listError.message)
-          continue
-        }
-
-        if (files && files.length > 0) {
-          const filePaths = files.map((file) => `${user.id}/${file.name}`)
-          const { error: deleteError } = await supabaseAdmin.storage.from(bucket).remove(filePaths)
-
-          if (deleteError) {
-            console.warn(`Error deleting files from ${bucket}:`, deleteError.message)
-          }
-        }
-      } catch (bucketError: any) {
-        console.warn(`Error processing bucket ${bucket}:`, bucketError.message)
-      }
+    try {
+      await deleteAccountStorage(supabaseAdmin, user.id)
+    } catch (storageError) {
+      console.error("Account upload cleanup failed:", storageError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Some uploads could not be removed. Your account has not been deleted. Please retry or contact support.",
+        },
+        { status: 500 },
+      )
     }
 
     const { error: deleteUserError } = await supabaseAdmin.auth.admin.deleteUser(user.id)

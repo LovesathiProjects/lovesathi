@@ -2,12 +2,12 @@ $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 
-function Resolve-Jdk17Home {
+function Resolve-Jdk21Home {
     $candidates = @(
         $env:JAVA_HOME,
         [Environment]::GetEnvironmentVariable('JAVA_HOME', 'User'),
         [Environment]::GetEnvironmentVariable('JAVA_HOME', 'Machine'),
-        (Join-Path $env:USERPROFILE 'scoop\apps\temurin17-jdk\current')
+        (Join-Path $env:USERPROFILE 'scoop\apps\temurin21-jdk\current')
     ) | Where-Object { $_ } | Select-Object -Unique
 
     foreach ($candidate in $candidates) {
@@ -21,12 +21,12 @@ function Resolve-Jdk17Home {
         $releaseContents = Get-Content -LiteralPath $releaseFile -Raw
         $match = [regex]::Match($releaseContents, 'JAVA_VERSION="(?<major>\d+)')
 
-        if ($match.Success -and [int]$match.Groups['major'].Value -ge 17) {
+        if ($match.Success -and [int]$match.Groups['major'].Value -ge 21) {
             return (Resolve-Path -LiteralPath $candidate).Path
         }
     }
 
-    throw 'JDK 17 or newer was not found. Set JAVA_HOME to a JDK 17+ installation before building Android.'
+    throw 'JDK 21 or newer was not found. Set JAVA_HOME to a JDK 21+ installation before building Android.'
 }
 
 function Resolve-AndroidSdkHome {
@@ -50,7 +50,7 @@ function Resolve-AndroidSdkHome {
     throw 'Android SDK Platform 36 and platform-tools were not found. Install them with Android Studio SDK Manager first.'
 }
 
-$env:JAVA_HOME = Resolve-Jdk17Home
+$env:JAVA_HOME = Resolve-Jdk21Home
 $env:ANDROID_HOME = Resolve-AndroidSdkHome
 $env:ANDROID_SDK_ROOT = $env:ANDROID_HOME
 

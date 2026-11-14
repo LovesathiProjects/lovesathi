@@ -6,6 +6,7 @@ const config = [
       "android/**/build/**",
       "mobile/.expo/**",
       "mobile/node_modules/**",
+      "public/vendor/face-detection/**",
     ],
   },
   ...nextVitals,

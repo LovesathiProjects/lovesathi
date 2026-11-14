@@ -113,20 +113,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password: input.password,
         options: {
           data: {
-            full_name: input.name,
+            full_name: input.name.trim(),
             ...(phone ? { phone } : {}),
           },
         },
       });
 
       if (error) throw error;
+      if (!data.user) throw new Error('Account creation did not finish. Please try again.');
 
-      await AsyncStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, email);
-      if (phone) {
-        await AsyncStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, phone);
-      } else {
-        await AsyncStorage.removeItem(PHONE_VERIFICATION_STORAGE_KEY);
-      }
+      // Pending details can be entered again; their persistence must not turn a
+      // completed signup into a reported failure or encourage duplicate retries.
+      await Promise.allSettled([
+        AsyncStorage.setItem(EMAIL_VERIFICATION_STORAGE_KEY, email),
+        phone ? AsyncStorage.setItem(PHONE_VERIFICATION_STORAGE_KEY, phone)
+          : AsyncStorage.removeItem(PHONE_VERIFICATION_STORAGE_KEY),
+      ]);
 
       if (data.session) {
         setSession(data.session);

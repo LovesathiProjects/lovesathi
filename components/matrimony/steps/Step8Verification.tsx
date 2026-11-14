@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useMatrimonySetupStore } from "@/components/matrimony/store"
-import { uploadAsset, submitProfile } from "@/lib/matrimonyService"
+import { submitProfile } from "@/lib/matrimonyService"
+import { uploadFaceScan, uploadIDDocument } from "@/lib/verificationApi"
 import type { MatrimonyProfile, MatrimonyPreferences } from "@/lib/types"
 import { toast } from "sonner"
 
@@ -66,8 +67,13 @@ export function Step8Verification({ onBack, onFinish }: { onBack: () => void; on
                     <Input type="file" accept="image/*" onChange={async (e)=>{
                       const file = e.target.files?.[0]
                       if (!file) return
-                      const url = await uploadAsset(file)
-                      field.onChange(url)
+                      try {
+                        const result = await uploadFaceScan(file)
+                        if (!result.success || !result.data) throw new Error(result.error || "Selfie upload failed")
+                        field.onChange(result.data.url)
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "Selfie upload failed")
+                      }
                     }} />
                   </FormControl>
                   <FormMessage />
@@ -80,8 +86,13 @@ export function Step8Verification({ onBack, onFinish }: { onBack: () => void; on
                     <Input type="file" accept="image/*,application/pdf" onChange={async (e)=>{
                       const file = e.target.files?.[0]
                       if (!file) return
-                      const url = await uploadAsset(file)
-                      field.onChange(url)
+                      try {
+                        const result = await uploadIDDocument(file)
+                        if (!result.success || !result.data) throw new Error(result.error || "ID upload failed")
+                        field.onChange(result.data.url)
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "ID upload failed")
+                      }
                     }} />
                   </FormControl>
                   <FormMessage />

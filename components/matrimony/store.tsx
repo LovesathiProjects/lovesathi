@@ -230,11 +230,11 @@ export function MatrimonySetupProvider({ children }: { children: React.ReactNode
     }
   }, [])
 
-  const setPartial: MatrimonySetupState["setPartial"] = (section, data) => {
+  const setPartial = React.useCallback<MatrimonySetupState["setPartial"]>((section, data) => {
     setState((prev) => ({ ...prev, [section]: { ...(prev as any)[section], ...data } }))
-  }
+  }, [])
 
-  const reset = () => setState({ ...initialState })
+  const reset = React.useCallback(() => setState({ ...initialState }), [])
 
   const value: MatrimonySetupState = {
     ...state,
